@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SpreadTheSickness extends Card {
 
     public SpreadTheSickness() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new ProliferateEffect());
+        target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ProliferateEffect());
     }
 }

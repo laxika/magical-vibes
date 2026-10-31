@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellOrAbilityAndDestroySourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,7 +29,7 @@ public class TeferisResponse extends Card {
                                 new PermanentControlledBySourceControllerPredicate())))
                 )),
                 "Target must be an opponent-controlled spell or ability that targets a land you control."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellOrAbilityAndDestroySourceEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        )).addSpellEffect(new CounterSpellOrAbilityAndDestroySourceEffect());
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

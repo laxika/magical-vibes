@@ -16,6 +16,6 @@ public class MoonragersSlash extends Card {
     public MoonragersSlash() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new IsNight(), new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
     }
 }

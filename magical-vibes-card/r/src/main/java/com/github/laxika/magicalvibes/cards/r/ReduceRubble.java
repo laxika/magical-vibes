@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 /**
@@ -18,7 +17,7 @@ public class ReduceRubble extends Card {
         setBackFaceCard(new Rubble());
 
         // Counter target spell unless its controller pays {3}.
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(3));
+        addSpellEffect(new CounterUnlessPaysEffect(3));
     }
 
     @Override

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SummonEsperMaduin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -17,9 +16,9 @@ public class EsperOrigins extends Card {
     public EsperOrigins() {
         setBackFaceCard(new SummonEsperMaduin());
 
-        addEffect(EffectSlot.SPELL, new SurveilEffect(2));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
-        addEffect(EffectSlot.SPELL, new ExileSpellAndReturnTransformedEffect(CounterType.FINALITY));
+        addSpellEffect(new SurveilEffect(2));
+        addSpellEffect(new GainLifeEffect(2));
+        addSpellEffect(new ExileSpellAndReturnTransformedEffect(CounterType.FINALITY));
         addCastingOption(new FlashbackCast("{3}{G}"));
     }
 

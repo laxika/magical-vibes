@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -17,8 +16,7 @@ import java.util.Set;
 public class TakeTheFall extends Card {
 
     public TakeTheFall() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new ConditionalReplacementEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                         new ControlsPermanent(new PermanentHasAnySubtypePredicate(Set.of(
                                 CardSubtype.ASSASSIN,
                                 CardSubtype.MERCENARY,
@@ -27,6 +25,6 @@ public class TakeTheFall extends Card {
                                 CardSubtype.WARLOCK))),
                         new BoostTargetCreatureEffect(-1, 0),
                         new BoostTargetCreatureEffect(-4, 0)));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

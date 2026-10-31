@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -34,6 +33,6 @@ public class SelfDestruct extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Second target must be any other target"
         )).bindEffect(targetDamage);
-        addSimultaneousEffects(EffectSlot.SPELL, selfDamage, targetDamage);
+        addSimultaneousSpellEffects(selfDamage, targetDamage);
     }
 }

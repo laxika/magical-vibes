@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -19,7 +18,7 @@ public class Sideswipe extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntrySubtypeInPredicate(Set.of(CardSubtype.ARCANE)),
                 "Target must be an Arcane spell."
-        )).addEffect(EffectSlot.SPELL, new MayEffect(new ChooseNewTargetsForTargetSpellEffect(),
+        )).addSpellEffect(new MayEffect(new ChooseNewTargetsForTargetSpellEffect(),
                 "Change the targets of the spell?"));
     }
 }

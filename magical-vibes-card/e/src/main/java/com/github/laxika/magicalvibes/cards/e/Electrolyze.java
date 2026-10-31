@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
@@ -17,7 +16,7 @@ public class Electrolyze extends Card {
 
     public Electrolyze() {
         // Electrolyze deals 2 damage divided as you choose among one or two targets.
-        target(1, 2).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(2));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        target(1, 2).addSpellEffect(DealDividedDamageEffect.chosenAmongAnyTargets(2));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

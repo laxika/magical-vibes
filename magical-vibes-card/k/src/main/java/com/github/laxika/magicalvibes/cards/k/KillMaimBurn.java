@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -29,7 +28,7 @@ public class KillMaimBurn extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player.");
 
         // Choose one or more —
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact",
                         new DestroyTargetPermanentEffect(), artifactFilter),

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -21,7 +20,7 @@ public class RuthlessPredation extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 2));
+        )).addSpellEffect(new BoostTargetCreatureEffect(1, 2));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -29,6 +28,6 @@ public class RuthlessPredation extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        )).addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+        )).addSpellEffect(new FightTargetsEffect());
     }
 }

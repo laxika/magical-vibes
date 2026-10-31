@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class MaestrosCharm extends Card {
 
     public MaestrosCharm() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top five cards of your library. Put one of those cards into your hand and the rest into your graveyard",
                         LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(5, 1)),

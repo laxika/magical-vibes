@@ -21,10 +21,10 @@ import java.util.Set;
 public class SongOfTotentanz extends Card {
 
     public SongOfTotentanz() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new XValue(), "Rat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.RAT), Set.of(), Set.of())
                 .withTokenEffects(Map.of(EffectSlot.STATIC, new CantBlockEffect())));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
     }
 }

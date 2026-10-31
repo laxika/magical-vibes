@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -275,7 +274,7 @@ public class ExileFreeCastQueueSupport {
                     : card;
         }
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(cardToCast);
-        List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects());
         ChooseOneEffect modal = spellEffects.stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
@@ -462,7 +461,7 @@ public class ExileFreeCastQueueSupport {
         Card backFace = context.cardToCast().getBackFaceCard();
         if (context.cardToCast().isModalDoubleFaced() && backFace != null && castXValue == 1) {
             castCard = backFace;
-            castEffects = new ArrayList<>(backFace.getEffects(EffectSlot.SPELL));
+            castEffects = new ArrayList<>(backFace.getCastingCostsAndSpellEffects());
             castSpellType = exileCastTargetSupport.mapCardTypeToSpellType(backFace);
             castXValue = 0;
         }
@@ -564,7 +563,7 @@ public class ExileFreeCastQueueSupport {
                 : ChooseOneEffect.encodeModeSelection(modal.choicesRequired(), maximumChoices, indices);
 
         Card runtimeCard = card.createRuntimeCopy();
-        List<CardEffect> effects = new ArrayList<>(runtimeCard.getEffects(EffectSlot.SPELL));
+        List<CardEffect> effects = new ArrayList<>(runtimeCard.getCastingCostsAndSpellEffects());
         if (castModal != modal) {
             int modalIndex = effects.indexOf(modal);
             if (modalIndex >= 0) {

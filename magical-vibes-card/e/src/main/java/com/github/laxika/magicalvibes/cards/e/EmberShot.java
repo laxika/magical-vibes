@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class EmberShot extends Card {
 
     public EmberShot() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

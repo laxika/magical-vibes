@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlyingToTargetCreatureOrPlayerEffect;
@@ -28,9 +27,8 @@ public class FlameOn extends Card {
                 )), CountScope.CONTROLLER);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, noncreatureNonlandCards))
-                .addEffect(EffectSlot.SPELL, new GrantFlyingToTargetCreatureOrPlayerEffect());
+                .addSpellEffect(new GrantFlyingToTargetCreatureOrPlayerEffect());
     }
 }

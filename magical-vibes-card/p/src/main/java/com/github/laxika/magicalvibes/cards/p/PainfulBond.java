@@ -18,8 +18,8 @@ import java.util.List;
 public class PainfulBond extends Card {
 
     public PainfulBond() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect(
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect(
                 EffectSlot.ON_SELF_CAST,
                 List.of(new LoseLifeEffect(1)),
                 new CardAllOfPredicate(List.of(

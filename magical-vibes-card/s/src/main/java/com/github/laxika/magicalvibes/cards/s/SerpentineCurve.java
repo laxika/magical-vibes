@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -35,11 +34,11 @@ public class SerpentineCurve extends Card {
                 new CardsInGraveyard(instantSorceries, CountScope.CONTROLLER),
                 new CardsInExile(instantSorceries, CountScope.CONTROLLER));
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Fractal", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                 List.of(CardSubtype.FRACTAL)));
-        addEffect(EffectSlot.SPELL, new PutCountersOnCreatedPermanentsEffect(
+        addSpellEffect(new PutCountersOnCreatedPermanentsEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, counterAmount));
     }
 }

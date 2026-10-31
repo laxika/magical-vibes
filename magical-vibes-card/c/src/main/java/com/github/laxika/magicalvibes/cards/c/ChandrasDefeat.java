@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -24,11 +23,11 @@ public class ChandrasDefeat extends Card {
 
     public ChandrasDefeat() {
         // Deals 5 damage to target red creature or red planeswalker.
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(
+        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                 5, new PermanentColorInPredicate(Set.of(CardColor.RED))));
 
         // If that permanent is a Chandra planeswalker, you may discard a card. If you do, draw a card.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentAllOfPredicate(List.of(
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.CHANDRA)))),

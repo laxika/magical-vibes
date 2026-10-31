@@ -20,9 +20,9 @@ import java.util.List;
 public class TrashTheTown extends Card {
 
     public TrashTheTown() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{2}", "{1}", "{1}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{2}", "{1}", "{1}")));
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on target creature",
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),

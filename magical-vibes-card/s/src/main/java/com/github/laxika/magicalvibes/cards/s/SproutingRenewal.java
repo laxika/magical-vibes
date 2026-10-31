@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -22,7 +21,7 @@ import java.util.Set;
 public class SproutingRenewal extends Card {
 
     public SproutingRenewal() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 2/2 green and white Elf Knight creature token with vigilance",
                         new CreateTokenEffect(

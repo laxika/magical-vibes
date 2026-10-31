@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -21,11 +20,11 @@ public class FistfulOfForce extends Card {
         // the single creature target group; the win-only boost/keyword are gated on WonClash
         // (mirrors Lash Out's base-effect + ClashEffect(null) + ConditionalEffect(WonClash) shape).
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.SPELL, new ClashEffect(null))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new WonClash(),
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(new ClashEffect(null))
+                .addSpellEffect(new ConditionalEffect(new WonClash(),
                         new BoostTargetCreatureEffect(2, 2)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new WonClash(),
+                .addSpellEffect(new ConditionalEffect(new WonClash(),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
     }
 }

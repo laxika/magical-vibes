@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,6 +10,6 @@ public class LegionsEnd extends Card {
 
     public LegionsEnd() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect());
+                .addSpellEffect(new ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect());
     }
 }

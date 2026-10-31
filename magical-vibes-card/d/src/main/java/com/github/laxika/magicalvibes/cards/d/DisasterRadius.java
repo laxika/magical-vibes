@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -24,9 +23,8 @@ import java.util.List;
 public class DisasterRadius extends Card {
 
     public DisasterRadius() {
-        addEffect(EffectSlot.SPELL,
-                new RevealCardFromHandCost(new CardTypePredicate(CardType.CREATURE), "creature", true));
-        addEffect(EffectSlot.SPELL, new DealDamageToEachMatchingPermanentEffect(
+        addCastingCost(new RevealCardFromHandCost(new CardTypePredicate(CardType.CREATURE), "creature", true));
+        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
                 new XValue(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

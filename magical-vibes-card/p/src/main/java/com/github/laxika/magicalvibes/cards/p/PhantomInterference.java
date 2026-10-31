@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -21,8 +20,8 @@ import java.util.Set;
 public class PhantomInterference extends Card {
 
     public PhantomInterference() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{3}", "{1}")));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{3}", "{1}")));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 2/2 white Spirit creature token with flying",
                         new CreateTokenEffect(1, "Spirit", 2, 2, CardColor.WHITE,

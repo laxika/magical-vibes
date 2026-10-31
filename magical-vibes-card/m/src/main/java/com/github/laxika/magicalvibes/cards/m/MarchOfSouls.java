@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class MarchOfSouls extends Card {
 
     public MarchOfSouls() {
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentIsCreaturePredicate(),
                 true,
                 EachPermanentScope.ALL_PLAYERS,

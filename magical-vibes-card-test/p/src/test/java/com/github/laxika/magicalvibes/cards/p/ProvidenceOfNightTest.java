@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.t.TurnToMist;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -197,7 +196,7 @@ class ProvidenceOfNightTest extends BaseCardTest {
         card.setName("Test Life Gain");
         card.setType(CardType.INSTANT);
         card.setManaCost(manaCost);
-        card.addEffect(EffectSlot.SPELL, new GainLifeEffect(1));
+        card.addSpellEffect(new GainLifeEffect(1));
         return card;
     }
 }

@@ -15,7 +15,7 @@ public class ReplicationTechnique extends Card {
 
     public ReplicationTechnique() {
         target(TargetFilters.permanentYouControl())
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect());
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect());
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new DemonstrateEffect(), "Copy Replication Technique?"));
     }

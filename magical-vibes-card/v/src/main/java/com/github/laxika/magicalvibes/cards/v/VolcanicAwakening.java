@@ -12,7 +12,7 @@ public class VolcanicAwakening extends Card {
 
     public VolcanicAwakening() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

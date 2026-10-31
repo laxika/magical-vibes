@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -25,6 +24,6 @@ public class RealityRipple extends Card {
                 )),
                 "Target must be an artifact, creature, or land"
         ))
-                .addEffect(EffectSlot.SPELL, new PhaseOutEffect(PhaseOutSubject.TARGET));
+                .addSpellEffect(new PhaseOutEffect(PhaseOutSubject.TARGET));
     }
 }

@@ -27,7 +27,7 @@ public class SmokyLoungeMistySalon extends Card {
     public SmokyLoungeMistySalon() {
         setRoomDoorManaCosts(List.of("{2}{R}", "{3}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Smoky Lounge", List.of())
                         .withManaCost("{2}{R}"),
                 new ChooseOneEffect.ChooseOneOption("Misty Salon", List.of())

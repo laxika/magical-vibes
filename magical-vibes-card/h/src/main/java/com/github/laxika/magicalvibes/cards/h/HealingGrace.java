@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HealingGrace extends Card {
 
     public HealingGrace() {
-        addEffect(EffectSlot.SPELL, new PreventDamageToTargetFromChosenSourceEffect(3));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        addSpellEffect(new PreventDamageToTargetFromChosenSourceEffect(3));
+        addSpellEffect(new GainLifeEffect(3));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -24,7 +23,7 @@ public class WormHarvest extends Card {
 
     public WormHarvest() {
         // Create a 1/1 black and green Worm creature token for each land card in your graveyard.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER),
                 "Worm", 1, 1, CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN), List.of(CardSubtype.WORM),

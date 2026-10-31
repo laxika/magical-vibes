@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -20,7 +19,7 @@ public class NecromanticSummons extends Card {
         // Put target creature card from a graveyard onto the battlefield under your control.
         // Spell mastery — If there are two or more instant and/or sorcery cards in your graveyard,
         // that creature enters with two additional +1/+1 counters on it.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardTypePredicate(CardType.CREATURE))

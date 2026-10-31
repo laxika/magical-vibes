@@ -16,8 +16,7 @@ public class Evangelize extends Card {
 
     public Evangelize() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{2}{W}{W}"));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                GainControlOfTargetEffect.opponentChosenTarget(ControlDuration.PERMANENT));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        target(TargetFilters.creature()).addSpellEffect(GainControlOfTargetEffect.opponentChosenTarget(ControlDuration.PERMANENT));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

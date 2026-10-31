@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantAttackTargetPlayerThisTurnEffect;
@@ -28,13 +27,13 @@ public class CallForAid extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
 
-        addEffect(EffectSlot.SPELL, new GainControlOfAllPermanentsTargetPlayerControlsEffect(
+        addSpellEffect(new GainControlOfAllPermanentsTargetPlayerControlsEffect(
                 new PermanentIsCreaturePredicate(),
                 ControlDuration.END_OF_TURN,
                 List.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                         new ControllerCantSacrificeTargetThisTurnEffect())));
-        addEffect(EffectSlot.SPELL, new ControllerCantAttackTargetPlayerThisTurnEffect());
+        addSpellEffect(new ControllerCantAttackTargetPlayerThisTurnEffect());
     }
 }

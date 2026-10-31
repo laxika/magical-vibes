@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -27,15 +26,15 @@ public class HellishSideswipe extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 "an artifact or creature"));
         target(new PermanentPredicateTargetFilter(creatureOrVehicle,
                 "Target must be a creature or Vehicle"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(
                 new SacrificedCardMatches(new CardSubtypePredicate(CardSubtype.VEHICLE), "a Vehicle"),
                 new DrawCardEffect(1)));
     }

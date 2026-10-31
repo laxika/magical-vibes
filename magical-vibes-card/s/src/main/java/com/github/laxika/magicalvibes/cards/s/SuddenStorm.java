@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -14,8 +13,8 @@ public class SuddenStorm extends Card {
 
     public SuddenStorm() {
         target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ScryEffect(1));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new ScryEffect(1));
     }
 }

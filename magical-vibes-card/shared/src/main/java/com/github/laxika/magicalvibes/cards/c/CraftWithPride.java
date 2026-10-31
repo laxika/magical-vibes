@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 /**
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 public class CraftWithPride extends Card {
 
     public CraftWithPride() {
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTreasureToken(1));
+        addSpellEffect(CreateTokenEffect.ofTreasureToken(1));
     }
 }

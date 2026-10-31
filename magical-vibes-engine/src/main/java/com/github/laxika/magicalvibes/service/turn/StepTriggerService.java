@@ -128,7 +128,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
@@ -2635,7 +2635,7 @@ public class StepTriggerService {
 
     /** True when the card's only target group is "up to one target" (zero or one, no dynamic minimum). */
     private static boolean hasSingleOptionalTargetGroup(Card card) {
-        List<SpellTarget> groups = card.getSpellTargets();
+        List<TargetGroup> groups = card.getTargetGroups();
         return groups.size() == 1
                 && groups.getFirst().getMinTargets() == 0
                 && groups.getFirst().getMaxTargets() == 1
@@ -6262,7 +6262,7 @@ public class StepTriggerService {
                         }
                         if (conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 || conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                            if (perm.getCard().getSpellTargets().size() > 1
+                            if (perm.getCard().getTargetGroups().size() > 1
                                     || etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
                                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                         perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(),
@@ -6312,7 +6312,7 @@ public class StepTriggerService {
                     } else if (effect.targetSpec().declaredTarget() != null
                             && (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
-                        if (perm.getCard().getSpellTargets().size() > 1) {
+                        if (perm.getCard().getTargetGroups().size() > 1) {
                             // Every target group of the ability is chosen as it goes on the stack.
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(),
@@ -6479,7 +6479,7 @@ public class StepTriggerService {
                         gameData, perm, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
                 if (controllerEndStepEffects.size() > 1
-                        && perm.getCard().getSpellTargets().size() > 1
+                        && perm.getCard().getTargetGroups().size() > 1
                         && controllerEndStepEffects.stream().allMatch(perm.getCard()::hasEffectTargetIndex)
                         && controllerEndStepEffects.stream().allMatch(effect ->
                         effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -6780,7 +6780,7 @@ public class StepTriggerService {
                                 || conditional.condition() instanceof CreatureCardLeftGraveyardThisTurn)) {
                         CardEffect wrapped = conditional.wrapped();
                         if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                            if (perm.getCard().getSpellTargets().size() > 1) {
+                            if (perm.getCard().getTargetGroups().size() > 1) {
                                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                         perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)),
                                         perm.getId(), List.of(), 0, 0));
@@ -6812,7 +6812,7 @@ public class StepTriggerService {
                     } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                         if (effect.targetChosenAtRandom()) {
                             pushRandomlyTargetedControllerEndStepTrigger(gameData, perm, activePlayerId, effect);
-                        } else if (perm.getCard().getSpellTargets().size() > 1
+                        } else if (perm.getCard().getTargetGroups().size() > 1
                                 || etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId(),

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PsychicPuppetry extends Card {
 
     public PsychicPuppetry() {
-        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, new MayEffect(
+        target(TargetFilters.permanent()).addSpellEffect(new MayEffect(
                 new TapOrUntapTargetPermanentEffect(),
                 "Tap or untap target permanent?"
         ));

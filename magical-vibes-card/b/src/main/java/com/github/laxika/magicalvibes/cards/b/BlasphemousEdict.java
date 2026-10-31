@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -24,7 +23,7 @@ public class BlasphemousEdict extends Card {
                 List.of(new ManaCastingCost("{B}")),
                 new AnyPlayerControlsPermanentCount(13, new PermanentIsCreaturePredicate()),
                 false));
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new SacrificePermanentsEffect(
                 13,
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
                 SacrificeRecipient.EACH_PLAYER));

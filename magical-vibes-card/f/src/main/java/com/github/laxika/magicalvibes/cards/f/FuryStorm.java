@@ -20,6 +20,6 @@ public class FuryStorm extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell."
-        )).addEffect(EffectSlot.SPELL, new CopySpellEffect());
+        )).addSpellEffect(new CopySpellEffect());
     }
 }

@@ -23,7 +23,7 @@ public class VenomsHunger extends Card {
                 new ReduceOwnCastCostEffect(new Fixed(2))));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(2));
     }
 }

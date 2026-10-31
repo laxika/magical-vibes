@@ -11,7 +11,7 @@ public class CapturedSunlight extends Card {
 
     public CapturedSunlight() {
         // You gain 4 life.
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
+        addSpellEffect(new GainLifeEffect(4));
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser mana
         // value, may cast it for free, rest to the bottom in a random order (CascadeEffectHandler).

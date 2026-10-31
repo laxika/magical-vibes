@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class MindsDesire extends Card {
 
     public MindsDesire() {
-        addEffect(EffectSlot.SPELL, new ShuffleLibraryEffect(false));
-        addEffect(EffectSlot.SPELL, new ExileTopCardMayPlayThisTurnEffect(true));
+        addSpellEffect(new ShuffleLibraryEffect(false));
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(true));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

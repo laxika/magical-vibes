@@ -16,7 +16,7 @@ public class GorillaTactics extends Card {
     public GorillaTactics() {
         CreateTokenEffect gorilla = new CreateTokenEffect(
                 "Gorilla", 2, 2, CardColor.GREEN, List.of(CardSubtype.GORILLA), Set.of(), Set.of());
-        addEffect(EffectSlot.SPELL, gorilla);
+        addSpellEffect(gorilla);
         addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT, gorilla.withAmount(2));
     }
 }

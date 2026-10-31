@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
@@ -26,7 +25,7 @@ import java.util.List;
 public class FatalPush extends Card {
 
     public FatalPush() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        target(TargetFilters.creature()).addSpellEffect(SequenceEffect.of(
                 new ConditionalEffect(
                         new AllOf(List.of(
                                 new PermanentLeftBattlefieldUnderYourControlThisTurn(),

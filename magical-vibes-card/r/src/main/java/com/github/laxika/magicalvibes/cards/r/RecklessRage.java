@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,6 +16,6 @@ public class RecklessRage extends Card {
         // ...and 2 damage to target creature you control.
         DealDamageToTargetCreatureEffect ownDamage = new DealDamageToTargetCreatureEffect(2);
         target(TargetFilters.creatureYouControl()).bindEffect(ownDamage);
-        addSimultaneousEffects(EffectSlot.SPELL, opposingDamage, ownDamage);
+        addSimultaneousSpellEffects(opposingDamage, ownDamage);
     }
 }

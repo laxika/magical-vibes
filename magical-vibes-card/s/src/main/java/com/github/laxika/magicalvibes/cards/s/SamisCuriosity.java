@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -35,7 +34,7 @@ public class SamisCuriosity extends Card {
     );
 
     public SamisCuriosity() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
-        addEffect(EffectSlot.SPELL, LANDER);
+        addSpellEffect(new GainLifeEffect(2));
+        addSpellEffect(LANDER);
     }
 }

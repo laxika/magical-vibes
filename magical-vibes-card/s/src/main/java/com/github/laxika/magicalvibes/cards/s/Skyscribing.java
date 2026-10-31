@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
@@ -16,7 +15,7 @@ import java.util.List;
 public class Skyscribing extends Card {
 
     public Skyscribing() {
-        addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(new XValue()));
+        addSpellEffect(new EachPlayerDrawsCardEffect(new XValue()));
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -23,9 +22,9 @@ public class DusksLanding extends Card {
                 new OpponentLostLifeThisTurn(1),
                 new GainedLifeThisTurn()
         ));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(seekCondition,
+        addSpellEffect(new ConditionalEffect(seekCondition,
                 new SeekLibraryEffect(2, new CardSubtypePredicate(CardSubtype.VAMPIRE))));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(seekCondition),
+        addSpellEffect(new ConditionalEffect(new NotCondition(seekCondition),
                 new DrawCardEffect(1)));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -23,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class FinaleOfRevelation extends Card {
 
     public FinaleOfRevelation() {
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new SpellXAtLeast(10),
                 new DrawCardEffect(new XValue()),
                 SequenceEffect.of(
@@ -36,6 +35,6 @@ public class FinaleOfRevelation extends Card {
                         new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME)
                 )
         ));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

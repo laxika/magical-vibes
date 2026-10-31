@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -21,7 +20,7 @@ public class SummonTheSchool extends Card {
 
     public SummonTheSchool() {
         // Create two 1/1 blue Merfolk Wizard creature tokens.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 2, "Merfolk Wizard", 1, 1, CardColor.BLUE,
                 List.of(CardSubtype.MERFOLK, CardSubtype.WIZARD),
                 Set.of(), Set.of()));

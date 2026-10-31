@@ -21,7 +21,7 @@ public class SoundTheCall extends Card {
     public SoundTheCall() {
         CardsInGraveyard sameNameCards = new CardsInGraveyard(
                 new CardNamedPredicate("Sound the Call"), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Wolf", 1, 1, CardColor.GREEN, List.of(CardSubtype.WOLF), Set.of(), Set.of(),
                 Map.of(EffectSlot.STATIC, new BoostSelfEffect(sameNameCards, sameNameCards))
         ));

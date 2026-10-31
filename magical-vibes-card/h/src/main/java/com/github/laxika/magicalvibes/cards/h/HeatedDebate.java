@@ -11,6 +11,6 @@ public class HeatedDebate extends Card {
 
     public HeatedDebate() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(4));
+        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(4));
     }
 }

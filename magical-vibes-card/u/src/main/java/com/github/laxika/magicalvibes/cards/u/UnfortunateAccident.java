@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -23,8 +22,8 @@ import java.util.Set;
 public class UnfortunateAccident extends Card {
 
     public UnfortunateAccident() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{2}{B}", "{1}")));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{2}{B}", "{1}")));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature",
                         new DestroyTargetPermanentEffect(),

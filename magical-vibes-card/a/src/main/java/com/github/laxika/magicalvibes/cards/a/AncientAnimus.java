@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -26,7 +25,7 @@ public class AncientAnimus extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, PutCounterOnTargetPermanentEffect.withResolutionCondition(
+        )).addSpellEffect(PutCounterOnTargetPermanentEffect.withResolutionCondition(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
 
         target(new PermanentPredicateTargetFilter(
@@ -35,6 +34,6 @@ public class AncientAnimus extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        )).addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+        )).addSpellEffect(new FightTargetsEffect());
     }
 }

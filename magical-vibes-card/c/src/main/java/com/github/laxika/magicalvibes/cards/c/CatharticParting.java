@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,8 +29,7 @@ public class CatharticParting extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrEnchantmentOpponentControls,
                 "Target must be an artifact or enchantment an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new ShuffleTargetPermanentIntoLibraryEffect());
-        addEffect(EffectSlot.SPELL,
-                ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.optional(null, 4));
+        )).addSpellEffect(new ShuffleTargetPermanentIntoLibraryEffect());
+        addSpellEffect(ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.optional(null, 4));
     }
 }

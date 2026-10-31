@@ -29,9 +29,9 @@ public class Slaughter extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )),
                 "Target must be a nonblack creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(true));
 
         addEffect(EffectSlot.STATIC, new BuybackEffect(new PayLifeCost(4)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -37,7 +36,7 @@ public class DoubleJumpFlyingKick extends Card {
         CardEffect flyingKick = new TargetCreatureDealsPowerDamageToAnyTargetEffect(0, 1, false);
         CardEffect fusedFlyingKick = new TargetCreatureDealsPowerDamageToAnyTargetEffect(1, 2, false);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Double Jump — Put a flying counter on target creature you control. Until end of turn, it has base power and toughness 5/5",
                         doubleJump,

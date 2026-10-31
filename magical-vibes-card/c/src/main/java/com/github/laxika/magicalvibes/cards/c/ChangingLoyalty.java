@@ -15,7 +15,7 @@ import java.util.List;
 public class ChangingLoyalty extends Card {
 
     public ChangingLoyalty() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         target(TargetFilters.creature());
 
         // When enchanted creature dies, return that card to the battlefield under your control.

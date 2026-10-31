@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -20,8 +19,8 @@ import java.util.Set;
 public class GoblinWarParty extends Card {
 
     public GoblinWarParty() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{2}{R}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{2}{R}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create three 1/1 red Goblin creature tokens",
                         new CreateTokenEffect(3, "Goblin", 1, 1, CardColor.RED,

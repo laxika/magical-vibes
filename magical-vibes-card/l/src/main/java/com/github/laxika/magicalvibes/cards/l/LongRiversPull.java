@@ -24,7 +24,7 @@ public class LongRiversPull extends Card {
 
     public LongRiversPull() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
@@ -36,6 +36,6 @@ public class LongRiversPull extends Card {
                 "Target must be a creature spell.",
                 new StackEntryTruePredicate(),
                 "Target must be a spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addSpellEffect(new CounterSpellEffect());
     }
 }

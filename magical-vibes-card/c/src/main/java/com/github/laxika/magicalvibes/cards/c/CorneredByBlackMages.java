@@ -31,7 +31,7 @@ public class CorneredByBlackMages extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+                .addSpellEffect(new SacrificePermanentsEffect(
                         1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER));
 
         Map<EffectSlot, CardEffect> tokenEffects = Map.of(
@@ -39,7 +39,7 @@ public class CorneredByBlackMages extends Card {
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK,
                 List.of(CardSubtype.WIZARD), Set.of(), Set.of(), tokenEffects));
     }

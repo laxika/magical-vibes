@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -22,10 +21,10 @@ public class PathOfTheSchemer extends Card {
 
     public PathOfTheSchemer() {
         // Each player mills two cards.
-        addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(2, MillRecipient.CONTROLLER));
+        addSpellEffect(new MillEffect(2, MillRecipient.EACH_OPPONENT));
         // Then put a creature card from a graveyard onto the battlefield under your control (not optional).
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardTypePredicate(CardType.CREATURE))
@@ -33,6 +32,6 @@ public class PathOfTheSchemer extends Card {
                 .battlefieldEffectGrants(List.of(
                         new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.TARGET)))
                 .build());
-        addEffect(EffectSlot.SPELL, new WillOfThePlaneswalkersEffect());
+        addSpellEffect(new WillOfThePlaneswalkersEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -15,11 +14,11 @@ public class ThoughtweftGambit extends Card {
 
     public ThoughtweftGambit() {
         // Tap all creatures your opponents control (every creature not controlled by you).
-        addEffect(EffectSlot.SPELL, new TapPermanentsEffect(
+        addSpellEffect(new TapPermanentsEffect(
                 TapUntapScope.ALL_CREATURES,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         // Untap all creatures you control.
-        addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(
+        addSpellEffect(new UntapPermanentsEffect(
                 TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
     }
 }

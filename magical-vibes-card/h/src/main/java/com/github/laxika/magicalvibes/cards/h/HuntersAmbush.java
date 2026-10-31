@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -14,7 +13,7 @@ public class HuntersAmbush extends Card {
 
     public HuntersAmbush() {
         // Prevent all combat damage that would be dealt by nongreen creatures this turn.
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatExcept(
+        addSpellEffect(PreventDamageEffect.allCombatExcept(
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
     }
 }

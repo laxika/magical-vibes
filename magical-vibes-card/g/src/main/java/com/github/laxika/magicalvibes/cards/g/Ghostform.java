@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Ghostform extends Card {
 
     public Ghostform() {
-        target(TargetFilters.creature(), 0, 2).addEffect(EffectSlot.SPELL, new MakeCreatureUnblockableEffect());
+        target(TargetFilters.creature(), 0, 2).addSpellEffect(new MakeCreatureUnblockableEffect());
     }
 }

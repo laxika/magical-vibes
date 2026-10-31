@@ -27,10 +27,10 @@ public class BlexVexingPest extends Card {
                         CardSubtype.PEST, CardSubtype.BAT, CardSubtype.INSECT,
                         CardSubtype.SNAKE, CardSubtype.SPIDER))));
         addEffect(EffectSlot.ON_DEATH, new GainLifeEffect(4));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Blex, Vexing Pest", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Search for Blex", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Search for Blex", backFace.getSpellEffects()))));
     }
 
     @Override

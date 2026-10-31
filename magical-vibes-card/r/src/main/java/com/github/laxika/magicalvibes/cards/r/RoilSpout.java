@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -33,13 +32,13 @@ public class RoilSpout extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{W}{U}"))));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
+                .addSpellEffect(new PutTargetOnTopOfLibraryEffect());
 
         target(TargetFilters.landYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(
                                 0, 0,

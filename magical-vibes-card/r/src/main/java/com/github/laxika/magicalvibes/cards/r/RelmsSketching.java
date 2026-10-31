@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -23,6 +22,6 @@ public class RelmsSketching extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, creature, or land"
-        )).addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect());
+        )).addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

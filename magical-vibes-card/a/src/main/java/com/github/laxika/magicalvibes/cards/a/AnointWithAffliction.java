@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -18,7 +17,7 @@ public class AnointWithAffliction extends Card {
 
     public AnointWithAffliction() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentAnyOfPredicate(List.of(
                                 new PermanentMaxManaValuePredicate(3),
                                 new PermanentControllerPoisonCountersAtLeastPredicate(3)))),

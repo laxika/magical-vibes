@@ -21,6 +21,6 @@ public class SpectralDenial extends Card {
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4))), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false));
+        addSpellEffect(new CounterUnlessPaysEffect(0, true, false));
     }
 }

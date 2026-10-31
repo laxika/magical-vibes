@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,7 +15,7 @@ public class LaquatussDisdain extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryCastFromZonePredicate(Zone.GRAVEYARD),
                 "Target must be a spell cast from a graveyard."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        )).addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new DrawCardEffect());
     }
 }

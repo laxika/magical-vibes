@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class ResentfulRevelation extends Card {
 
     public ResentfulRevelation() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
+        addSpellEffect(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
         addCastingOption(new FlashbackCast("{6}{B}"));
     }
 }

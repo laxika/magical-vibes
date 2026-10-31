@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class VisionsOfRuin extends Card {
 
     public VisionsOfRuin() {
-        addEffect(EffectSlot.SPELL, new EachOpponentSacrificesPermanentCreateTokensEffect(
+        addSpellEffect(new EachOpponentSacrificesPermanentCreateTokensEffect(
                 new PermanentIsArtifactPredicate(), CreateTokenEffect.ofTreasureToken(1)));
         addEffect(EffectSlot.STATIC, new ReduceOwnFlashbackCostEffect(new GreatestManaValueAmongOwnedCommandersInPlay()));
         addCastingOption(new FlashbackCast("{8}{R}{R}"));

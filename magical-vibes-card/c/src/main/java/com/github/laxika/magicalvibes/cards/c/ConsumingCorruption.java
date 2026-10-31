@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -30,7 +29,7 @@ public class ConsumingCorruption extends Card {
                         new PermanentIsPlaneswalkerPredicate())),
                 "Target must be a creature or planeswalker");
 
-        target(creatureOrPlaneswalker).addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        target(creatureOrPlaneswalker).addSpellEffect(SequenceEffect.of(
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(swampsYouControl),
                 new GainLifeEffect(swampsYouControl)));
     }

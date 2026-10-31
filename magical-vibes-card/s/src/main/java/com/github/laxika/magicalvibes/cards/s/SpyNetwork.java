@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerHandTopCardAndFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
@@ -17,8 +16,8 @@ public class SpyNetwork extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new LookAtTargetPlayerHandTopCardAndFaceDownCreaturesEffect());
+        )).addSpellEffect(new LookAtTargetPlayerHandTopCardAndFaceDownCreaturesEffect());
 
-        addEffect(EffectSlot.SPELL, new ReorderTopCardsOfLibraryEffect(4, LibraryOwner.CONTROLLER));
+        addSpellEffect(new ReorderTopCardsOfLibraryEffect(4, LibraryOwner.CONTROLLER));
     }
 }

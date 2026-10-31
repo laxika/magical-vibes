@@ -21,8 +21,7 @@ public class VisionsOfDread extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL,
-                new TargetOpponentChoosesCardFromGraveyardEffect(new CardTypePredicate(CardType.CREATURE)));
+        )).addSpellEffect(new TargetOpponentChoosesCardFromGraveyardEffect(new CardTypePredicate(CardType.CREATURE)));
 
         addEffect(EffectSlot.STATIC, new ReduceOwnFlashbackCostEffect(new GreatestManaValueAmongOwnedCommandersInPlay()));
         addCastingOption(new FlashbackCast("{8}{B}{B}"));

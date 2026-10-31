@@ -20,9 +20,9 @@ public class VastwoodSurge extends Card {
 
     public VastwoodSurge() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
+        addSpellEffect(new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
                 LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2,
                         new PermanentIsCreaturePredicate())));
     }

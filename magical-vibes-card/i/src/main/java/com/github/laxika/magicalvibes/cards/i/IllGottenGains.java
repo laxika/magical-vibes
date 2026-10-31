@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToHandEffect;
@@ -13,9 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class IllGottenGains extends Card {
 
     public IllGottenGains() {
-        addEffect(EffectSlot.SPELL, ExileSpellEffect.immediately());
-        addEffect(EffectSlot.SPELL, new DiscardHandEffect(DiscardRecipient.EACH_PLAYER));
-        addEffect(EffectSlot.SPELL, new EachPlayerReturnsCardsFromGraveyardToHandEffect(
+        addSpellEffect(ExileSpellEffect.immediately());
+        addSpellEffect(new DiscardHandEffect(DiscardRecipient.EACH_PLAYER));
+        addSpellEffect(new EachPlayerReturnsCardsFromGraveyardToHandEffect(
                 3, new CardTruePredicate()));
     }
 }

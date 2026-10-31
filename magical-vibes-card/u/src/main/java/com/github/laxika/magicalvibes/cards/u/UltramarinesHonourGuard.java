@@ -17,7 +17,7 @@ import java.util.List;
 public class UltramarinesHonourGuard extends Card {
 
     public UltramarinesHonourGuard() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new RepeatedAdditionalCostPaid("{2}"),
                         new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}"))));

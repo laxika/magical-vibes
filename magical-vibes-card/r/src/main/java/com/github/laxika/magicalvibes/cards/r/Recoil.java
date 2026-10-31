@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
@@ -18,7 +17,7 @@ public class Recoil extends Card {
     public Recoil() {
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Target must be a permanent"))
-                .addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandThenEffect(
+                .addSpellEffect(new ReturnTargetPermanentToHandThenEffect(
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
                         ThenEffectRecipient.TARGET_OWNER_AS_TARGET));
     }

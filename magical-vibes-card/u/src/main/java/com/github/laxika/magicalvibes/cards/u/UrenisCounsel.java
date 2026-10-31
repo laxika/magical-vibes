@@ -17,7 +17,7 @@ public class UrenisCounsel extends Card {
     public UrenisCounsel() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new MatchingCardsInLibrary(CountScope.CONTROLLER, new CardSubtypePredicate(CardSubtype.DRAGON))));
-        addEffect(EffectSlot.SPELL, new SeekEffect(new CardSubtypePredicate(CardSubtype.DRAGON)));
+        addSpellEffect(new SeekEffect(new CardSubtypePredicate(CardSubtype.DRAGON)));
         addCastingOption(new HarmonizeCast("{8}{R}{R}"));
     }
 }

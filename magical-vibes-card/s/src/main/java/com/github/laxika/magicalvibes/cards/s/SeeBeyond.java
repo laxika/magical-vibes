@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleCardsFromHandIntoLibraryThenEffect;
 
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleCardsFromHandIntoLibra
 public class SeeBeyond extends Card {
 
     public SeeBeyond() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new ShuffleCardsFromHandIntoLibraryThenEffect(null));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new ShuffleCardsFromHandIntoLibraryThenEffect(null));
     }
 }

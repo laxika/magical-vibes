@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -34,9 +33,9 @@ public class DesecrateReality extends Card {
         target(new PermanentPredicateTargetFilter(
                 evenPermanentOpponentControls,
                 "Target must be an even-mana-value permanent an opponent controls"), 0, 99)
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
 
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.COLORLESS, 3),
                 new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(

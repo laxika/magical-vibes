@@ -16,6 +16,6 @@ public class WitchstalkerFrenzy extends Card {
         addEffect(EffectSlot.STATIC,
                 new ReduceOwnCastCostEffect(new CreaturesAttackedThisTurn(CountScope.ANY_PLAYER)));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(5));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,12 +21,12 @@ public class PiercingExhale extends Card {
 
     public PiercingExhale() {
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, BeholdCost.optional(CardSubtype.DRAGON));
+        addCastingCost(BeholdCost.optional(CardSubtype.DRAGON));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
+        )).addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -37,7 +36,6 @@ public class PiercingExhale extends Card {
                 "Second target must be a creature or planeswalker"
         ));
 
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new BeholdCostPaid(), new SurveilEffect(2)));
+        addSpellEffect(new ConditionalEffect(new BeholdCostPaid(), new SurveilEffect(2)));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -25,7 +24,7 @@ import java.util.List;
 public class BlessedAlliance extends Card {
 
     public BlessedAlliance() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{2}"));
+        addCastingCost(new EscalateManaCost("{2}"));
         setAllowSharedTargets(true);
 
         var anyPlayerFilter = new PlayerPredicateTargetFilter(
@@ -41,7 +40,7 @@ public class BlessedAlliance extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsAttackingPredicate()));
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player gains 4 life",
                         new TargetPlayerGainsLifeEffect(4),

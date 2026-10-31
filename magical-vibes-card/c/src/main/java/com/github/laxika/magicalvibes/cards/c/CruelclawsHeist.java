@@ -22,12 +22,11 @@ public class CruelclawsHeist extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        )).addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new DrawCardForTargetPlayerEffect(1, false, true)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new ExileNonlandCardFromTargetHandOrGraveyardEffect(true, true)))
-                .addEffect(EffectSlot.SPELL,
-                        new ConditionalEffect(new NotCondition(new GiftPromised()),
+                .addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                                 new ExileNonlandCardFromTargetHandOrGraveyardEffect(false, true)));
     }
 }

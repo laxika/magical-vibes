@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
@@ -24,7 +23,7 @@ public class UltimateMagicMeteor extends Card {
         var artifactOrLand = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new CastFromZone(Zone.EXILE),
                 new MassDamageEffect(7),
                 SequenceEffect.of(

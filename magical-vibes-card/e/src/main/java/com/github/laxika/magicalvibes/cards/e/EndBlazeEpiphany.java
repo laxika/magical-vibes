@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -16,8 +15,8 @@ public class EndBlazeEpiphany extends Card {
 
     public EndBlazeEpiphany() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(
+                .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
                         new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(new EventValue())))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(new XValue()));
     }
 }

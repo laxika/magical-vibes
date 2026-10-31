@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
@@ -43,7 +42,7 @@ public class BindToSecrecy extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("JUD", "54"));
 
     public BindToSecrecy() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target noncreature spell",
                         new CounterSpellEffect(),
@@ -57,7 +56,7 @@ public class BindToSecrecy extends Card {
                         new GraveyardCardPredicateTargetFilter(
                                 new CardTypePredicate(CardType.CREATURE),
                                 GraveyardSearchScope.OPPONENT_GRAVEYARD)))));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new DistinctManaValuesAmongCardsInGraveyardAtLeast(5),
                 new DraftCardFromSpellbookEffect(SPELLBOOK)));
     }

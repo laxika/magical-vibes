@@ -59,7 +59,7 @@ class YouWillKnowTrueSufferingTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL)));
+                scheme.getCastingCostsAndSpellEffects()));
         harness.passBothPriorities();
     }
 }

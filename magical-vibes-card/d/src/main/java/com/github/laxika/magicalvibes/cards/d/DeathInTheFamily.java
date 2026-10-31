@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,6 +22,6 @@ public class DeathInTheFamily extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetCreature,
                 "Target must be a creature with mana value 3 or less"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect(targetCreature));
+        )).addSpellEffect(new ExileTargetPermanentEffect(targetCreature));
     }
 }

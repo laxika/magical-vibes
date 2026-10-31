@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -14,7 +13,7 @@ import java.util.List;
 public class PitilessCarnage extends Card {
 
     public PitilessCarnage() {
-        addEffect(EffectSlot.SPELL, new SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect(
+        addSpellEffect(new SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect(
                 new PermanentTruePredicate()));
 
         // Plot {1}{B}{B}

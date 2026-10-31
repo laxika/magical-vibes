@@ -17,9 +17,8 @@ public class VisionsOfDominance extends Card {
 
     public VisionsOfDominance() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
-                .addEffect(EffectSlot.SPELL, new DoublePlusOneCountersOnTargetCreatureEffect());
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
+                .addSpellEffect(new DoublePlusOneCountersOnTargetCreatureEffect());
         addEffect(EffectSlot.STATIC, new ReduceOwnFlashbackCostEffect(new GreatestManaValueAmongOwnedCommandersInPlay()));
         addCastingOption(new FlashbackCast("{8}{G}{G}"));
     }

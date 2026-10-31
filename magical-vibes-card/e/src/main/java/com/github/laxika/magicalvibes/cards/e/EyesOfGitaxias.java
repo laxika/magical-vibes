@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -17,8 +16,8 @@ import java.util.Set;
 public class EyesOfGitaxias extends Card {
 
     public EyesOfGitaxias() {
-        addEffect(EffectSlot.SPELL, incubate(3));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(incubate(3));
+        addSpellEffect(new DrawCardEffect(1));
     }
 
     private static CreateTokenEffect incubate(int counters) {

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -15,9 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.LookDestination;
 public class SeeTheTruth extends Card {
 
     public SeeTheTruth() {
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(new CastNotFromHand()),
+        addSpellEffect(new ConditionalEffect(new NotCondition(new CastNotFromHand()),
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3))));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastNotFromHand(),
+        addSpellEffect(new ConditionalEffect(new CastNotFromHand(),
                 new LookAtTopCardsEffect(new Fixed(3), new Fixed(3), null,
                         LookDestination.BOTTOM_OF_LIBRARY, false)));
     }

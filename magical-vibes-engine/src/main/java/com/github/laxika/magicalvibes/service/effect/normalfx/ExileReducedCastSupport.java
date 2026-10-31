@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -128,7 +127,7 @@ public class ExileReducedCastSupport {
                 return;
             }
 
-            List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            List<CardEffect> spellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
             StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, playerId, spellEffects, spellType, false, List.of(), genericCostReduction,

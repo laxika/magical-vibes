@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -20,7 +19,7 @@ import java.util.List;
 public class UnitedBattlefront extends Card {
 
     public UnitedBattlefront() {
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsEffect(
+        addSpellEffect(new LookAtTopCardsEffect(
                 new Fixed(7),
                 new Fixed(2),
                 new CardAllOfPredicate(List.of(

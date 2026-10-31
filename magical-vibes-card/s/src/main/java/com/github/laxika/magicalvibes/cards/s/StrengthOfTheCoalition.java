@@ -18,8 +18,8 @@ public class StrengthOfTheCoalition extends Card {
     public StrengthOfTheCoalition() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())));
     }

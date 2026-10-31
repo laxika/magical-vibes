@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -25,7 +24,7 @@ import java.util.Set;
 public class BlotOutTheSky extends Card {
 
     public BlotOutTheSky() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 new XValue(),
                 "Inkling",
@@ -49,7 +48,7 @@ public class BlotOutTheSky extends Card {
         var noncreatureNonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(6),
                 new DestroyAllPermanentsEffect(noncreatureNonland)));
     }

@@ -18,8 +18,8 @@ public class BarrelingAttack extends Card {
         // Target creature gains trample until end of turn. When that creature becomes blocked
         // this turn, it gets +1/+1 until end of turn for each creature blocking it.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_BECOMES_BLOCKED,
                         new BoostTargetCreatureEffect(new CreaturesBlockingSource(true),
                                 new CreaturesBlockingSource(true)), true));

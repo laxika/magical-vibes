@@ -18,7 +18,7 @@ import java.util.List;
 public class WastelandRaider extends Card {
 
     public WastelandRaider() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachPlayerSacrificesCreatureEffect(),
                 TriggerMode.INDEPENDENT);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

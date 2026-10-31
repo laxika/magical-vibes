@@ -433,6 +433,7 @@ public class CopySupport {
             copy.setXValueCap(original.getXValueCap());
         }
 
+        copy.addCastingCostsAndSpellEffectsFrom(original, effect -> !withoutEpic || !(effect instanceof EpicEffect));
         for (EffectSlot slot : EffectSlot.values()) {
             for (var reg : original.getEffectRegistrations(slot)) {
                 if (withoutEpic && reg.effect() instanceof EpicEffect) {

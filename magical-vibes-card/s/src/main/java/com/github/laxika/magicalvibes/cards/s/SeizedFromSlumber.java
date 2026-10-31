@@ -21,6 +21,6 @@ public class SeizedFromSlumber extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate()
                 )), 3));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

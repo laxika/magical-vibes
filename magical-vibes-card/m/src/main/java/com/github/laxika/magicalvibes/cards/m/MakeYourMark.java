@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
@@ -22,8 +21,7 @@ public class MakeYourMark extends Card {
                 Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.SPIRIT));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.SPELL,
-                        new ResolveEffectOnTargetDeathThisTurnEffect(spiritToken));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(spiritToken));
     }
 }

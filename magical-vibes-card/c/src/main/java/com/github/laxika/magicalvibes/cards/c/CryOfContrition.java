@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CryOfContrition extends Card {
 
     public CryOfContrition() {
-        target(anyPlayer()).addEffect(EffectSlot.SPELL,
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        target(anyPlayer()).addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
         target(anyPlayer()).addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -17,7 +16,7 @@ import java.util.Set;
 public class VisionarysDance extends Card {
 
     public VisionarysDance() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Elemental", 3, 3,
+        addSpellEffect(new CreateTokenEffect(2, "Elemental", 3, 3,
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.RED),
                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.FLYING), Set.of()));
 

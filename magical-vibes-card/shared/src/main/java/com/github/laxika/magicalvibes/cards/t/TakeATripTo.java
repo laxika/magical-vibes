@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -36,7 +35,7 @@ public class TakeATripTo extends Card {
     }
 
     public TakeATripTo() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
     }
 }

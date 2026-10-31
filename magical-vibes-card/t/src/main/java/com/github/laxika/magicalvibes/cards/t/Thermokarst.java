@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -24,8 +23,8 @@ public class Thermokarst extends Card {
         // known information (CR 608.2h), so a life-gain prevention effect the land itself provided
         // no longer applies when the life gain happens.
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(
                                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
                         new GainLifeEffect(1)));

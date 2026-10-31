@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class DuskMangler extends Card {
 
     public DuskMangler() {
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
+        addCastingCost(new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SacrificePermanentsEffect(
                         1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));

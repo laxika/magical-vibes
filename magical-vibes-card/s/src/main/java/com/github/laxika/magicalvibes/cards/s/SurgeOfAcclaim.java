@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.JumpStartCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -19,7 +18,7 @@ import java.util.List;
 public class SurgeOfAcclaim extends Card {
 
     public SurgeOfAcclaim() {
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.allWhen(List.of(
+        addSpellEffect(ChooseOneEffect.allWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Seek a card with start your engines!",
                         new SeekLibraryToHandEffect(new CardKeywordPredicate(Keyword.START_YOUR_ENGINES))),

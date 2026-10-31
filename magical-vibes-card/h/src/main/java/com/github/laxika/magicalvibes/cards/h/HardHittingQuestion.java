@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,6 +32,6 @@ public class HardHittingQuestion extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature or planeswalker you don't control"
-        )).addEffect(EffectSlot.SPELL, TargetCreatureDealsPowerDamageToAnyTargetEffect.toTargetPermanent());
+        )).addSpellEffect(TargetCreatureDealsPowerDamageToAnyTargetEffect.toTargetPermanent());
     }
 }

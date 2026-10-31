@@ -44,7 +44,7 @@ public class KellansLightblades extends Card {
         target(new PermanentPredicateTargetFilter(
                 attackingOrBlockingCreature,
                 "Target must be an attacking or blocking creature"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DealDamageToTargetCreatureEffect(3, attackingOrBlockingCreature),
                 new DestroyTargetPermanentEffect(attackingOrBlockingCreature)

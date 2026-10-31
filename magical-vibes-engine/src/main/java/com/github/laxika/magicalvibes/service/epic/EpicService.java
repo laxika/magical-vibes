@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.epic;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -68,7 +67,7 @@ public class EpicService {
                 copyCard,
                 controllerId,
                 "Copy of " + copyCard.getName(),
-                new ArrayList<>(copyCard.getEffects(EffectSlot.SPELL)));
+                new ArrayList<>(copyCard.getCastingCostsAndSpellEffects()));
         copy.setCopy(true);
         copy.setTargetId(targetId);
         copy.setTargetFilter(copyCard.getTargetFilter());

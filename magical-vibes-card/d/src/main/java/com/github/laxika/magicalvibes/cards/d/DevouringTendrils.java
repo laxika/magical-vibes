@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
@@ -31,7 +30,7 @@ public class DevouringTendrils extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature or planeswalker you don't control"
-        )).addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToAnyTargetEffect())
-                .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(new GainLifeEffect(2)));
+        )).addSpellEffect(new TargetCreatureDealsPowerDamageToAnyTargetEffect())
+                .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(new GainLifeEffect(2)));
     }
 }

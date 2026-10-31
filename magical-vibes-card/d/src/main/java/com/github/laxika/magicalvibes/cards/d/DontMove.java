@@ -19,11 +19,11 @@ import java.util.List;
 public class DontMove extends Card {
 
     public DontMove() {
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate()))));
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(
                 EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED,
                 new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING)));
     }

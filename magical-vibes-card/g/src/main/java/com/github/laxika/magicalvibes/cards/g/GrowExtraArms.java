@@ -17,6 +17,6 @@ public class GrowExtraArms extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.SPIDER), 1));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(4, 4));
+                .addSpellEffect(new BoostTargetCreatureEffect(4, 4));
     }
 }

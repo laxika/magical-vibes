@@ -18,7 +18,7 @@ public class GlenElendrasAnswer extends Card {
 
     public GlenElendrasAnswer() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new CounterOpponentsSpellsAndAbilitiesEffect(
+        addSpellEffect(new CounterOpponentsSpellsAndAbilitiesEffect(
                 new CreateTokenEffect(1, "Faerie", 1, 1, CardColor.BLUE,
                         Set.of(CardColor.BLUE, CardColor.BLACK), List.of(CardSubtype.FAERIE),
                         Set.of(Keyword.FLYING), Set.of())));

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -18,10 +17,10 @@ public class Finish extends Card {
 
     public Finish() {
         // As an additional cost to cast this spell, sacrifice a creature.
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        addCastingCost(new SacrificeCreatureCost());
         // Destroy target creature.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{2}{B}"));

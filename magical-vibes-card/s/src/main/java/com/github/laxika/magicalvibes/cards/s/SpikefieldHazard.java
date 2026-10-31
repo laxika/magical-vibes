@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenExileIfDamagedEffect;
@@ -16,7 +15,7 @@ public class SpikefieldHazard extends Card {
         setBackFaceCard(new SpikefieldCave());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Spikefield Hazard",
                         new DealDamageToAnyTargetThenExileIfDamagedEffect(new Fixed(1))),

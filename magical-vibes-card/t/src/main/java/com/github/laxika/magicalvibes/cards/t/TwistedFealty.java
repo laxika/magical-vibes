@@ -31,12 +31,11 @@ public class TwistedFealty extends Card {
         setAllowSharedTargets(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(wickedRoleToken(), PlayerRelation.ANY));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(wickedRoleToken(), PlayerRelation.ANY));
     }
 
     private static CreateTokenEffect wickedRoleToken() {

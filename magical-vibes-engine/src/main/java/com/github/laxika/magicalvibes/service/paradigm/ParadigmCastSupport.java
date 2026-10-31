@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.paradigm;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -79,7 +78,7 @@ public class ParadigmCastSupport {
         gameData.removeFromExile(exileCardId);
 
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
-        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         String playerName = player.getUsername();
 
         if (EffectResolution.needsTarget(card)) {

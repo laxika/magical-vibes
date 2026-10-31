@@ -23,6 +23,6 @@ public class QuicksandWhirlpool extends Card {
                 )), 3));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

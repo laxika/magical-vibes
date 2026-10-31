@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
@@ -9,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class DeepSight extends Card {
 
     public DeepSight() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(1));
+        addSpellEffect(new DrawCardEffect(1));
+        addSpellEffect(new GainLifeEffect(1));
     }
 }

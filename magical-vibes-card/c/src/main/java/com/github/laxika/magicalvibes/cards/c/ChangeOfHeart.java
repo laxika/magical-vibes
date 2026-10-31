@@ -17,7 +17,7 @@ public class ChangeOfHeart extends Card {
     public ChangeOfHeart() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new CantAttackThisTurnEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+                .addSpellEffect(new CantAttackThisTurnEffect(TapUntapScope.TARGET));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

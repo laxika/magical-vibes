@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -22,7 +21,7 @@ public class Giantbaiting extends Card {
         // Create a 4/4 red and green Giant Warrior creature token with haste.
         // Exile it at the beginning of the next end step.
         // (Conspire is handled entirely by the casting flow via the Scryfall keyword.)
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 new Fixed(1),
                 "Giant Warrior",

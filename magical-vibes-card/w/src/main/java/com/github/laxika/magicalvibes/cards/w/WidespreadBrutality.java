@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChosenPermanentDealsPowerDamageToEachMatchingCreatureEffect;
@@ -34,13 +33,11 @@ public class WidespreadBrutality extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ARMY)));
         ControlsPermanent controlsArmy = new ControlsPermanent(army);
 
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(controlsArmy,
+        addSpellEffect(ConditionalEffect.unless(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2, army),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(new NotCondition(controlsArmy),
+        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsArmy),
                         SequenceEffect.of(
                                 new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,
@@ -51,7 +48,6 @@ public class WidespreadBrutality extends Card {
         PermanentPredicate nonArmyCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ARMY))));
-        addEffect(EffectSlot.SPELL,
-                new ChosenPermanentDealsPowerDamageToEachMatchingCreatureEffect(nonArmyCreature));
+        addSpellEffect(new ChosenPermanentDealsPowerDamageToEachMatchingCreatureEffect(nonArmyCreature));
     }
 }

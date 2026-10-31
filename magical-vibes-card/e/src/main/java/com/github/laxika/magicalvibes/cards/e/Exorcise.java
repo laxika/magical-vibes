@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,6 +29,6 @@ public class Exorcise extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactEnchantmentOrLargeCreature,
                 "Target must be an artifact, enchantment, or creature with power 4 or greater"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect(artifactEnchantmentOrLargeCreature));
+        )).addSpellEffect(new ExileTargetPermanentEffect(artifactEnchantmentOrLargeCreature));
     }
 }

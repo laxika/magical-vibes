@@ -25,7 +25,7 @@ public class RestrictedOfficeLectureHall extends Card {
     public RestrictedOfficeLectureHall() {
         setRoomDoorManaCosts(List.of("{2}{W}{W}", "{5}{U}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Restricted Office", List.of())
                         .withManaCost("{2}{W}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Lecture Hall", List.of())

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
@@ -23,7 +22,7 @@ public class RiseFromTheWreck extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardHasNoAbilitiesPredicate()));
 
-        addEffect(EffectSlot.SPELL, new ReturnUpToOneOfEachFilterFromGraveyardToHandEffect(List.of(
+        addSpellEffect(new ReturnUpToOneOfEachFilterFromGraveyardToHandEffect(List.of(
                 creature,
                 new CardSubtypePredicate(CardSubtype.MOUNT),
                 new CardSubtypePredicate(CardSubtype.VEHICLE),

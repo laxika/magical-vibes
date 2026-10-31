@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -32,8 +31,8 @@ public class SpoilsOfEvil extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.COLORLESS, artifactsAndCreatures))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(
+        )).addSpellEffect(new AwardManaEffect(ManaColor.COLORLESS, artifactsAndCreatures))
+                .addSpellEffect(new GainLifeEffect(
                         artifactsAndCreatures, GainLifeRecipient.CONTROLLER, true));
     }
 }

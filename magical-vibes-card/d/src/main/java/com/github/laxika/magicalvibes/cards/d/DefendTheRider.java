@@ -20,7 +20,7 @@ import java.util.Set;
 public class DefendTheRider extends Card {
 
     public DefendTheRider() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target permanent you control gains hexproof and indestructible until end of turn",
                         new GrantKeywordEffect(

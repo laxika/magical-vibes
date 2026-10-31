@@ -21,7 +21,7 @@ public class CrudeAbattoirUnsavoryKitchen extends Card {
     public CrudeAbattoirUnsavoryKitchen() {
         setRoomDoorManaCosts(List.of("{R}", "{2}{R}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Crude Abattoir", List.of())
                         .withManaCost("{R}"),
                 new ChooseOneEffect.ChooseOneOption("Unsavory Kitchen", List.of())

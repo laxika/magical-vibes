@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -22,6 +21,6 @@ public class VantressVisions extends Card {
                                 StackEntryType.TRIGGERED_ABILITY)),
                         new StackEntryControlledByPredicate())),
                 "Target must be an activated or triggered ability you control."
-        )).addEffect(EffectSlot.SPELL, new CopyTargetActivatedOrTriggeredAbilityEffect());
+        )).addSpellEffect(new CopyTargetActivatedOrTriggeredAbilityEffect());
     }
 }

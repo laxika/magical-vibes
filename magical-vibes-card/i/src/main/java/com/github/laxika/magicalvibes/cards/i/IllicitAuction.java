@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.IllicitAuctionEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class IllicitAuction extends Card {
 
     public IllicitAuction() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new IllicitAuctionEffect());
+        target(TargetFilters.creature()).addSpellEffect(new IllicitAuctionEffect());
     }
 }

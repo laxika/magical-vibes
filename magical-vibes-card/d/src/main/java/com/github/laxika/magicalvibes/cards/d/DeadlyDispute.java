@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -28,14 +27,14 @@ import java.util.List;
 public class DeadlyDispute extends Card {
 
     public DeadlyDispute() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()
                 )),
                 "Sacrifice an artifact or creature"
         ));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTreasureToken(1));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(CreateTokenEffect.ofTreasureToken(1));
     }
 }

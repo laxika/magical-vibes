@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,9 +23,8 @@ public class Exterminatus extends Card {
         ));
         var nonlandPermanents = new PermanentNotPredicate(new PermanentIsLandPredicate());
 
-        addEffect(EffectSlot.SPELL,
-                new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS,
+        addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS,
                         opponentsNonlandPermanents));
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(nonlandPermanents));
+        addSpellEffect(new DestroyAllPermanentsEffect(nonlandPermanents));
     }
 }

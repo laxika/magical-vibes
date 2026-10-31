@@ -15,8 +15,7 @@ public class ExpensiveTaste extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL,
-                new ExileTopCardsToSourceEffect(2, true, false, LibraryScope.TARGET_OPPONENT, true));
+        )).addSpellEffect(new ExileTopCardsToSourceEffect(2, true, false, LibraryScope.TARGET_OPPONENT, true));
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, false, true));
     }

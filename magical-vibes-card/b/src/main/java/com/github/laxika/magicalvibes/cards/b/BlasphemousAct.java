@@ -52,6 +52,6 @@ public class BlasphemousAct extends Card {
         // Blasphemous Act costs {1} less to cast for each creature on the battlefield.
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(13));
+        addSpellEffect(new MassDamageEffect(13));
     }
 }

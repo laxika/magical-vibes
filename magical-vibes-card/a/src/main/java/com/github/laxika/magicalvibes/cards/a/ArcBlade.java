@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 
@@ -15,8 +14,8 @@ import java.util.List;
 public class ArcBlade extends Card {
 
     public ArcBlade() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(new ExileSpellEffect(3));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",

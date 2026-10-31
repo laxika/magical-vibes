@@ -254,7 +254,7 @@ public class TargetValidationService {
                     ? " (your graveyard only)" : ""));
         }
         UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
-        if (ctx.sourceCard() != null && ctx.sourceCard().getSpellTargets().size() == 1
+        if (ctx.sourceCard() != null && ctx.sourceCard().getTargetGroups().size() == 1
                 && ctx.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter filter
                 && !predicateEvaluationService.matchesCardPredicate(target, filter.predicate(),
                 sourceCardId, ctx.gameData(), graveyardOwnerId, ctx.sourcePermanentId(),

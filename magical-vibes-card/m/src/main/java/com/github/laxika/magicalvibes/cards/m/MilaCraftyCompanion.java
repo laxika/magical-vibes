@@ -30,10 +30,10 @@ public class MilaCraftyCompanion extends Card {
         addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Mila, Crafty Companion", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Lukka, Wayward Bonder", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Lukka, Wayward Bonder", backFace.getSpellEffects()))));
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -23,7 +22,7 @@ public class StruggleForSkemfar extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new PutCounterOnTargetPermanentEffect(
+        )).addSpellEffect(new PutCounterOnTargetPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         target(new PermanentPredicateTargetFilter(
@@ -32,7 +31,7 @@ public class StruggleForSkemfar extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        ), 0, 1).addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+        ), 0, 1).addSpellEffect(new FightTargetsEffect());
 
         addCastingOption(new ForetellCast("{G}"));
     }

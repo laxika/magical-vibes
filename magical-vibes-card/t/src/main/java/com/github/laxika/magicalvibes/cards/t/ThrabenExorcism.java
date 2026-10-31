@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,6 +30,6 @@ public class ThrabenExorcism extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be a Spirit, a creature with disturb, or an enchantment"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        )).addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

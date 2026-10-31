@@ -32,7 +32,7 @@ public class RebelSalvo extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(5))
-                .addEffect(EffectSlot.SPELL, new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(5))
+                .addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

@@ -23,7 +23,7 @@ public class MeatLockerDrownedDiner extends Card {
     public MeatLockerDrownedDiner() {
         setRoomDoorManaCosts(List.of("{2}{U}", "{3}{U}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Meat Locker", List.of())
                         .withManaCost("{2}{U}"),
                 new ChooseOneEffect.ChooseOneOption("Drowned Diner", List.of())

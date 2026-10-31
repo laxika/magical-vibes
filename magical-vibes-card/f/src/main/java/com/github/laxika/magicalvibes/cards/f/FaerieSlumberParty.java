@@ -23,9 +23,8 @@ import java.util.Set;
 public class FaerieSlumberParty extends Card {
 
     public FaerieSlumberParty() {
-        addEffect(EffectSlot.SPELL,
-                ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new CreateTokenEffect(
                 new Scaled(new OpponentsControllingReturnedPermanents(), 2),
                 "Faerie",
                 1,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -23,7 +22,7 @@ public class BalanceOfPower extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new DrawCardEffect(new Sum(
+        )).addSpellEffect(new DrawCardEffect(new Sum(
                 new CardsInHand(CountScope.TARGET_PLAYER),
                 new Scaled(new CardsInHand(CountScope.CONTROLLER), -1)
         )));

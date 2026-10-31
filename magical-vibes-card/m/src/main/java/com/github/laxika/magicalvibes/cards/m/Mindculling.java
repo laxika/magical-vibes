@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -14,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class Mindculling extends Card {
 
     public Mindculling() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+                .addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
     }
 }

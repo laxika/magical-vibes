@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
@@ -33,7 +32,7 @@ public class TheFinalDays extends Card {
                 List.of(CardSubtype.HORROR), Set.of(), Set.of(), false, true,
                 Map.of(), List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new CastFromZone(Zone.GRAVEYARD), normalTokens, flashbackTokens));
         addCastingOption(new FlashbackCast("{4}{B}{B}"));
     }

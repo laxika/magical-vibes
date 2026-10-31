@@ -22,7 +22,7 @@ public class Outmaneuver extends Card {
                         new PermanentIsBlockedPredicate()
                 )),
                 "Targets must be blocked creatures"
-        ), 100).addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+        ), 100).addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                 EffectSlot.STATIC,
                 new AssignCombatDamageAsThoughUnblockedEffect(true)
         ));

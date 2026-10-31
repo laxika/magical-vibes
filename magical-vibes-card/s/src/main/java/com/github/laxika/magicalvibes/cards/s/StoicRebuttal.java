@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 public class StoicRebuttal extends Card {
 
     public StoicRebuttal() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
         // Stoic Rebuttal costs {1} less to cast if you control three or more artifacts. (metalcraft)
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new Metalcraft(), new ReduceOwnCastCostEffect(new Fixed(1))));

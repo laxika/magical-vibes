@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -16,13 +15,13 @@ import java.util.List;
 public class Dredge extends Card {
 
     public Dredge() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(1,
+        addSpellEffect(new SacrificePermanentsEffect(1,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate()
                 )),
                 SacrificeRecipient.CONTROLLER
         ));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

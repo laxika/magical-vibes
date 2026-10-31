@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -22,7 +21,7 @@ public class OnceAndFuture extends Card {
         List<Integer> minimumTargetCounts = List.of(1, 0);
         List<String> targetDescriptions = List.of("card", "other card");
 
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new ColorSpentToCast(ManaColor.GREEN, 3),
                 new ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
                         filters,
@@ -37,6 +36,6 @@ public class OnceAndFuture extends Card {
                         targetDescriptions,
                         minimumTargetCounts,
                         true)));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

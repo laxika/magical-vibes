@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -27,9 +26,9 @@ public class BondOfPassion extends Card {
 
     public BondOfPassion() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -38,6 +37,6 @@ public class BondOfPassion extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Second target must be any target"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        )).addSpellEffect(new DealDamageToAnyTargetEffect(2));
     }
 }

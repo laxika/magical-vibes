@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class LetsPlayAGame extends Card {
 
     public LetsPlayAGame() {
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures your opponents control get -1/-1 until end of turn",
                         new BoostAllCreaturesEffect(-1, -1,

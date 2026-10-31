@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,12 +19,12 @@ import java.util.Set;
 public class FungalRebirth extends Card {
 
     public FungalRebirth() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Morbid(),
+        addSpellEffect(new ConditionalEffect(new Morbid(),
                 new CreateTokenEffect(2, "Saproling", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.SAPROLING), Set.of(), Set.of())
         ));

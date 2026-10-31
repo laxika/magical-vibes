@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 public class SteadyProgress extends Card {
 
     public SteadyProgress() {
-        addEffect(EffectSlot.SPELL, new ProliferateEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new ProliferateEffect());
+        addSpellEffect(new DrawCardEffect());
     }
 }

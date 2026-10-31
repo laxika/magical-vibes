@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -117,7 +116,7 @@ class CracklingSpellslingerTest extends BaseCardTest {
         card.setName("Life Gain");
         card.setType(CardType.INSTANT);
         card.setManaCost("{1}");
-        card.addEffect(EffectSlot.SPELL, new GainLifeEffect(1));
+        card.addSpellEffect(new GainLifeEffect(1));
         return card;
     }
 }

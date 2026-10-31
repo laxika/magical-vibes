@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,10 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class GoblinGrenade extends Card {
 
     public GoblinGrenade() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                 "Sacrifice a Goblin"
         ));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(5, false));
+        addSpellEffect(new DealDamageToAnyTargetEffect(5, false));
     }
 }

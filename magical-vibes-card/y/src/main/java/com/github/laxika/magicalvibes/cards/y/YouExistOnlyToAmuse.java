@@ -31,7 +31,7 @@ public class YouExistOnlyToAmuse extends Card {
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects);
 
         ControlsPermanentCount sixLands = new ControlsPermanentCount(6, new PermanentIsLandPredicate());
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create three 1/1 red Devil creature tokens",
                         createDevils),

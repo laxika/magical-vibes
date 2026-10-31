@@ -15,7 +15,7 @@ import java.util.Set;
 public class Soulflayer extends Card {
 
     public Soulflayer() {
-        addEffect(EffectSlot.SPELL, new DelveCost());
+        addCastingCost(new DelveCost());
         addEffect(EffectSlot.STATIC, new GainKeywordsOfCreatureCardsExiledWithSourceEffect(
                 Set.of(
                         Keyword.FLYING,

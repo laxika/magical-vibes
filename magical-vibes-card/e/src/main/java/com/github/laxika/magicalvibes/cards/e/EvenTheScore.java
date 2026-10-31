@@ -18,6 +18,6 @@ public class EvenTheScore extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new OpponentDrewAtLeastCardsThisTurn(4),
                 new ReduceOwnColoredCastCostEffect(ManaColor.BLUE, new Fixed(3))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new XValue()));
+        addSpellEffect(new DrawCardEffect(new XValue()));
     }
 }

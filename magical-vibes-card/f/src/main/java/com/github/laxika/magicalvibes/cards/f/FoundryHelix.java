@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -16,10 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class FoundryHelix extends Card {
 
     public FoundryHelix() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentTruePredicate(), "a permanent", false));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(4, false));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new DealDamageToAnyTargetEffect(4, false));
+        addSpellEffect(new ConditionalEffect(
                 new SacrificedCardMatches(new CardTypePredicate(CardType.ARTIFACT), "an artifact"),
                 new GainLifeEffect(4)));
     }

@@ -14,8 +14,7 @@ public class ExcavationTechnique extends Card {
 
     public ExcavationTechnique() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL,
-                        new DestroyTargetPermanentEffect(false, CreateTokenEffect.ofTreasureToken(1), 2, false));
+                .addSpellEffect(new DestroyTargetPermanentEffect(false, CreateTokenEffect.ofTreasureToken(1), 2, false));
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new DemonstrateEffect(), "Copy Excavation Technique?"));
     }

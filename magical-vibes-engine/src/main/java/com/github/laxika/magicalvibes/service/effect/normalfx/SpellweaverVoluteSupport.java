@@ -43,7 +43,7 @@ public class SpellweaverVoluteSupport {
     }
 
     public boolean isSpellweaverVolute(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .anyMatch(SpellweaverVoluteEnterEffect.class::isInstance)
                 || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(SpellweaverVoluteEnterEffect.class::isInstance);

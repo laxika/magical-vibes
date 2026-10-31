@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
@@ -25,6 +24,6 @@ public class RicochetTrap extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryIsSingleTargetPredicate(),
                 "Target spell must have a single target."
-        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
+        )).addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect());
     }
 }

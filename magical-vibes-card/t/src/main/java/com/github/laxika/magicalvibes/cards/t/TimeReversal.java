@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -14,10 +13,10 @@ public class TimeReversal extends Card {
 
     public TimeReversal() {
         // Each player shuffles their hand and graveyard into their library, then draws seven cards.
-        addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
-        addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(7));
+        addSpellEffect(new EachPlayerShufflesZonesIntoLibraryEffect());
+        addSpellEffect(new EachPlayerDrawsCardEffect(7));
 
         // Exile Time Reversal.
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

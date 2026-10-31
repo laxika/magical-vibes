@@ -17,6 +17,6 @@ public class ErtaisScorn extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new OpponentCastTwoOrMoreSpellsThisTurn(),
                 new ReduceOwnColoredCastCostEffect(ManaColor.BLUE, new Fixed(1))));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

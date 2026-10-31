@@ -18,7 +18,7 @@ public class Capsize extends Card {
         // card into your hand as it resolves.)
         // Return target permanent to its owner's hand.
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

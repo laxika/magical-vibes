@@ -16,7 +16,7 @@ public class EpharasDispersal extends Card {
     public EpharasDispersal() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentIsAttackingPredicate(), 2));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new SurveilEffect(2));
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new SurveilEffect(2));
     }
 }

@@ -5299,7 +5299,7 @@ public class LibraryChoiceHandlerService {
         }
 
         sourceCards.removeIf(card -> card.getId().equals(discovered.getId()));
-        if (cast && discovered.getEffects(EffectSlot.SPELL).stream()
+        if (cast && discovered.getCastingCostsAndSpellEffects().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.CostEffect.class::isInstance)) {
             // A spell with additional costs is cast through the free-cast queue, which makes the player pay
             // them; if the cast can't be completed the card is put into the discoverer's hand instead.
@@ -5512,7 +5512,7 @@ public class LibraryChoiceHandlerService {
                 for (Card graveyardCard : gameData.playerGraveyards.getOrDefault(pid, List.of())) {
                     try {
                         targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card,
-                                card.getEffects(EffectSlot.SPELL), graveyardCard.getId(), 0, controllerId);
+                                card.getCastingCostsAndSpellEffects(), graveyardCard.getId(), 0, controllerId);
                         validTargets.add(graveyardCard.getId());
                     } catch (IllegalStateException ignored) {
                         // The graveyard card does not satisfy the spell's target restriction.
@@ -5558,7 +5558,7 @@ public class LibraryChoiceHandlerService {
     }
 
     private ChooseOneEffect spellModal(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
@@ -5590,7 +5590,7 @@ public class LibraryChoiceHandlerService {
             }
             ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);
             Card evaluationCard = card.createRuntimeCopy();
-            List<CardEffect> effects = new ArrayList<>(evaluationCard.getEffects(EffectSlot.SPELL));
+            List<CardEffect> effects = new ArrayList<>(evaluationCard.getCastingCostsAndSpellEffects());
             spellCastingService.prepareModalSpellCast(evaluationCard, effects, modeIndex);
             if (evaluationCard.getManaValue() > spellManaValueLimit) {
                 continue;
@@ -5629,14 +5629,14 @@ public class LibraryChoiceHandlerService {
 
         int modeIndex = ctx.modeIndices().get(selectedOptionIndex);
         Card card = ctx.cardToCast();
-        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         int effectiveXValue = spellCastingService.prepareModalSpellCast(card, spellEffects, modeIndex);
         StackEntryType spellType = ctx.spellType();
         // A modal double-faced card cast by its back face (encoded as 1, as in the hand cast path) is
         // cast as that face, so the back face's spell and permanent are the ones that get created.
         if (card.isModalDoubleFaced() && card.getBackFaceCard() != null && effectiveXValue == 1) {
             card = card.getBackFaceCard();
-            spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            spellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
             spellType = mapCardTypeToSpellType(card);
             effectiveXValue = 0;
         }
@@ -5715,7 +5715,7 @@ public class LibraryChoiceHandlerService {
 
         List<CardEffect> spellEffects = cardToCast.getType().isPermanentType()
                 ? List.of()
-                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects());
         if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
             List<UUID> validTargets = computeCastWithoutPayingTargets(
                     gameData, cardToCast, spellEffects, controllerId);
@@ -5871,7 +5871,7 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        List<CardEffect> spellEffects = new ArrayList<>(castCard.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(castCard.getCastingCostsAndSpellEffects());
 
         if (EffectResolution.needsTarget(castCard) || EffectResolution.needsSpellTarget(castCard)) {
             List<UUID> validTargets = computeCastWithoutPayingTargets(gameData, castCard, playerId);

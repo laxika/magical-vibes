@@ -15,7 +15,7 @@ public class KazanduMammoth extends Card {
         setBackFaceCard(new KazanduValley());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Kazandu Mammoth", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Kazandu Valley", List.of())
         )));

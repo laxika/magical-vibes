@@ -27,7 +27,7 @@ public class MachinistsDismissal extends Card {
                 new StackEntryNotPredicate(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))),
                 "Target must be a noncreature spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addSpellEffect(new CounterSpellEffect());
 
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Sum(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),

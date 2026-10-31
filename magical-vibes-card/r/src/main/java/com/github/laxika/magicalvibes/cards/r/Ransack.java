@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class Ransack extends Card {
 
     public Ransack() {
-        addEffect(EffectSlot.SPELL, new ScryEffect(new Fixed(5), LibraryOwner.TARGET_PLAYER, false,
+        addSpellEffect(new ScryEffect(new Fixed(5), LibraryOwner.TARGET_PLAYER, false,
                 LibraryDecisionMaker.CONTROLLER));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
@@ -17,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 public class Portent extends Card {
 
     public Portent() {
-        addEffect(EffectSlot.SPELL, new ReorderTopCardsOfLibraryEffect(3, LibraryOwner.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new MayEffect(new ShuffleLibraryEffect(true), "You may have that player shuffle their library."));
-        addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect(1));
+        addSpellEffect(new ReorderTopCardsOfLibraryEffect(3, LibraryOwner.TARGET_PLAYER));
+        addSpellEffect(new MayEffect(new ShuffleLibraryEffect(true), "You may have that player shuffle their library."));
+        addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect(1));
     }
 }

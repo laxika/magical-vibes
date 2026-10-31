@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesFromHandEffect;
@@ -24,6 +23,6 @@ public class MindSwords extends Card {
                 false));
 
         // Each player exiles two cards from their hand.
-        addEffect(EffectSlot.SPELL, new EachPlayerExilesFromHandEffect(2));
+        addSpellEffect(new EachPlayerExilesFromHandEffect(2));
     }
 }

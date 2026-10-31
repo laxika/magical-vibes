@@ -27,8 +27,8 @@ public class PassTheTorch extends Card {
                 new RemovePerpetualTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         CastTargetInstantOrSorceryFromGraveyardEffect.class));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.SPELL, new ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffect(
+        addSpellEffect(new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(new ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 List.of(combatDamageAbility),
                 new CardTypePredicate(CardType.CREATURE)));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,8 +15,8 @@ public class Rile extends Card {
 
     public Rile() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(1))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

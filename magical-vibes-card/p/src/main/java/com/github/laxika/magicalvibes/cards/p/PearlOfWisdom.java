@@ -18,6 +18,6 @@ public class PearlOfWisdom extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.OTTER)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

@@ -18,6 +18,6 @@ public class TruckToss extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(new DealDamageToAnyTargetEffect(4));
     }
 }

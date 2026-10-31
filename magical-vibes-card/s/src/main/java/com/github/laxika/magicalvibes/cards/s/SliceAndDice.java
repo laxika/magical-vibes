@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class SliceAndDice extends Card {
 
     public SliceAndDice() {
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(4));
+        addSpellEffect(new MassDamageEffect(4));
 
         addCycling("{2}{R}");
         // "When you cycle this card" is its own triggered ability, so it goes on the stack above the

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -15,6 +14,6 @@ public class SecondGuess extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryIsNthSpellCastThisTurnPredicate(2),
                 "Target must be the second spell cast this turn."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addSpellEffect(new CounterSpellEffect());
     }
 }

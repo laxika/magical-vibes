@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -15,6 +14,6 @@ public class ArcTrail extends Card {
 
     public ArcTrail() {
         target(2, 2)
-                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.ordered(List.of(2, 1)));
+                .addSpellEffect(DealDividedDamageEffect.ordered(List.of(2, 1)));
     }
 }

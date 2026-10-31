@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -25,13 +24,13 @@ public class ReconstructHistory extends Card {
                 new CardTypePredicate(CardType.SORCERY),
                 new CardTypePredicate(CardType.PLANESWALKER)));
 
-        addEffect(EffectSlot.SPELL, ReturnTargetCardsFromGraveyardToHandEffect.upToOnePerCardType(
+        addSpellEffect(ReturnTargetCardsFromGraveyardToHandEffect.upToOnePerCardType(
                 historicCard, Set.of(
                         CardType.ARTIFACT,
                         CardType.ENCHANTMENT,
                         CardType.INSTANT,
                         CardType.SORCERY,
                         CardType.PLANESWALKER)));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

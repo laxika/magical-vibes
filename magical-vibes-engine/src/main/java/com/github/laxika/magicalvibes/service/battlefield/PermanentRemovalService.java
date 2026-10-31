@@ -3824,7 +3824,7 @@ public class PermanentRemovalService {
         returnsThroughLeavesTrigger |= returnsOnSourceLeavesTrigger;
         returnsThroughLeavesTrigger |= hasLeavesTriggerHandExile;
         returnsThroughLeavesTrigger |= hasLeavesTriggerExileAll;
-        returnsThroughLeavesTrigger |= removedPermanent.getCard().getEffects(EffectSlot.SPELL).stream()
+        returnsThroughLeavesTrigger |= removedPermanent.getCard().getCastingCosts().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost.class::isInstance);
         if (returnsThroughLeavesTrigger) {
             if (!hadPrintedAbilities) {

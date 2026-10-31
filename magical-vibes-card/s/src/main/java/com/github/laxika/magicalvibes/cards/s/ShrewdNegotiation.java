@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,7 +29,7 @@ public class ShrewdNegotiation extends Card {
                         artifactOrCreature(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Second target must be an artifact or creature you don't control"))
-                .addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
+                .addSpellEffect(new ExchangeControlOfTargetPermanentsEffect(
                         artifactOrCreature(), false));
     }
 

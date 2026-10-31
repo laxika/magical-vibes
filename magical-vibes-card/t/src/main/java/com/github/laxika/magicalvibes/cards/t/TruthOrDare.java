@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -26,7 +25,7 @@ public class TruthOrDare extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent."
-        )).addEffect(EffectSlot.SPELL, TargetPlayerChoosesOneEffect.forTargetedPlayer(List.of(
+        )).addSpellEffect(TargetPlayerChoosesOneEffect.forTargetedPlayer(List.of(
                 new ChooseOneEffect.ChooseOneOption("Truth", new PlayWithTargetPlayerHandRevealedEffect()),
                 new ChooseOneEffect.ChooseOneOption("Dare", new MillEffect(
                         new Max(new Fixed(0), new Sum(

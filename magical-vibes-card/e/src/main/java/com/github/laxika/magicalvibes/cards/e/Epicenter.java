@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,10 +20,10 @@ public class Epicenter extends Card {
         // "Instead" picks one clause when the spell starts resolving. The threshold clause goes first: the
         // lands it sacrifices only add cards to the graveyard, so the non-threshold clause's check still
         // sees the threshold state from before any sacrifice.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 threshold,
                 new SacrificeEachMatchingPermanentEffect(land)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new NotCondition(threshold),
                 new SacrificePermanentsEffect(1, land, SacrificeRecipient.TARGET_PLAYER)));
     }

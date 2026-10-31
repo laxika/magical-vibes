@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -17,8 +16,8 @@ public class Spiritualize extends Card {
     public Spiritualize() {
         // Until end of turn, whenever target creature deals damage, you gain that much life.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new RegisterDelayedWatchedCreatureDealsDamageEffect(
+                .addSpellEffect(new RegisterDelayedWatchedCreatureDealsDamageEffect(
                         List.of(new GainLifeEffect(new EventValue()))))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

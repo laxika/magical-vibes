@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,7 +17,7 @@ public class AjanisPresence extends Card {
 
         // Any number of target creatures each get +1/+1 and gain indestructible until end of turn.
         target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 1))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

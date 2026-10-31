@@ -18,13 +18,13 @@ public class ArchivalWhorl extends Card {
 
     public ArchivalWhorl() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 ConjureCardToOpponentBattlefieldEffect.gift("WOT", "25")));
-        addEffect(EffectSlot.SPELL, new ShuffleControllerHandAndGraveyardIntoLibraryEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(7));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(new GiftPromised()),
+        addSpellEffect(new ShuffleControllerHandAndGraveyardIntoLibraryEffect());
+        addSpellEffect(new DrawCardEffect(7));
+        addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                 new EachOtherPlayerShufflesHandAndGraveyardIntoLibraryEffect()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(new GiftPromised()),
+        addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                 new EachOtherPlayerDrawsCardEffect(7)));
     }
 }

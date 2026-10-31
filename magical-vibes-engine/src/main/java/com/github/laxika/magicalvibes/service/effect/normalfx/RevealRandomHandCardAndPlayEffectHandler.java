@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -110,7 +109,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                 return;
             }
             StackEntryType spellType = playerInteractionSupport.mapCardTypeToSpellType(revealed);
-            List<CardEffect> spellEffects = new ArrayList<>(revealed.getEffects(EffectSlot.SPELL));
+            List<CardEffect> spellEffects = new ArrayList<>(revealed.getCastingCostsAndSpellEffects());
 
             if (EffectResolution.needsTarget(revealed)) {
                 // Targeted spell — check for valid targets

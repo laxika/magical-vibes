@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -29,12 +28,12 @@ public class LanternFlare extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addCastingOption(AlternateHandCast.cleave("{X}{R}{W}", creatureOrPlaneswalker()));
         target(creatureOrPlaneswalker())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         SequenceEffect.of(
                                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
                                 new GainLifeEffect(new XValue()))))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new NotCondition(new CastForAlternateCost()),
                         SequenceEffect.of(
                                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(creaturesYouControl),

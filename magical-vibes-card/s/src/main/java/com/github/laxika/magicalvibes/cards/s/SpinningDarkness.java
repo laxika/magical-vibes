@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileTopCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -32,9 +31,9 @@ public class SpinningDarkness extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))))),
                 "Target must be a nonblack creature"));
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
         // You gain 3 life.
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        addSpellEffect(new GainLifeEffect(3));
     }
 }

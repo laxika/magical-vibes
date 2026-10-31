@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -19,7 +18,7 @@ public class ConfrontTheUnknown extends Card {
         PermanentCount cluesYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.CLUE), CountScope.CONTROLLER);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1))
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(cluesYouControl, cluesYouControl));
+                .addSpellEffect(CreateTokenEffect.ofClueToken(1))
+                .addSpellEffect(new BoostTargetCreatureEffect(cluesYouControl, cluesYouControl));
     }
 }

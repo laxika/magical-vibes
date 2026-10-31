@@ -19,6 +19,6 @@ public class TorchBreath extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)), 2));
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
+        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
     }
 }

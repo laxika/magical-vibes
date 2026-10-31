@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -31,8 +30,8 @@ public class RendingFlame extends Card {
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"
         ))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(5))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(5))
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)),
                         new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER)
                 ));

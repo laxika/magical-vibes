@@ -273,7 +273,7 @@ public class PsychicBattleSupport {
         }
         if (!entry.getTargetIds().isEmpty()
                 && entry.getTargetId() == null
-                && !entry.getCard().getSpellTargets().isEmpty()) {
+                && !entry.getCard().getTargetGroups().isEmpty()) {
             List<UUID> replacement = new ArrayList<>(entry.getDeclaredTargetIds());
             replacement.set(targetIndex, candidate);
             return hasLegalCompletion(gameData, entry, replacement, targetIndex + 1,

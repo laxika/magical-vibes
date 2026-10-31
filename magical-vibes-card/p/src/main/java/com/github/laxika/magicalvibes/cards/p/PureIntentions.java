@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 public class PureIntentions extends Card {
 
     public PureIntentions() {
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_OPPONENT_DISCARDS,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

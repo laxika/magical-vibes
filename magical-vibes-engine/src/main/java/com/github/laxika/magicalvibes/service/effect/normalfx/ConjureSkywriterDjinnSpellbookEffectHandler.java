@@ -139,9 +139,9 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
     private Card seeTheTruth(UUID ownerId) {
         Card card = spellCard(ownerId, "See the Truth", CardType.SORCERY, "{1}{U}",
                 "Look at the top three cards of your library. Put one of those cards into your hand and the rest on the bottom of your library in any order. If this spell was cast from anywhere other than your hand, put each of those cards into your hand instead.");
-        card.addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastFromZone(Zone.HAND),
+        card.addSpellEffect(new ConditionalEffect(new CastFromZone(Zone.HAND),
                 new LookAtTopCardsHandTopBottomEffect(3)));
-        card.addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastNotFromHand(),
+        card.addSpellEffect(new ConditionalEffect(new CastNotFromHand(),
                 new LookAtTopCardsEffect(new Fixed(3), new Fixed(3), null,
                         LookDestination.BOTTOM_OF_LIBRARY, false)));
         return freeze(card);
@@ -151,21 +151,21 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         Card card = spellCard(ownerId, "Teferi's Time Twist", CardType.INSTANT, "{1}{U}",
                 "Exile target permanent you control. Return that card to the battlefield under its owner's control at the beginning of the next end step. If it enters as a creature, it enters with an additional +1/+1 counter on it.");
         card.target(TargetFilters.permanentYouControl())
-                .addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStepWithCreatureCounters(1));
+                .addSpellEffect(FlickerEffect.exileTargetReturnAtEndStepWithCreatureCounters(1));
         return freeze(card);
     }
 
     private Card floodOfRecollection(UUID ownerId) {
         Card card = spellCard(ownerId, "Flood of Recollection", CardType.SORCERY, "{U}{U}",
                 "Return target instant or sorcery card from your graveyard to your hand. Exile Flood of Recollection.");
-        card.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        card.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))))
                 .targetGraveyard(true)
                 .build());
-        card.addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        card.addSpellEffect(new ExileSpellEffect());
         return freeze(card);
     }
 
@@ -175,19 +175,19 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         card.target(new StackEntryPredicateTargetFilter(
                 new StackEntryTargetsYourPermanentPredicate(),
                 "Target spell must target a permanent you control."))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new DrawCardEffect());
         return freeze(card);
     }
 
     private Card hardEvidence(UUID ownerId) {
         Card card = spellCard(ownerId, "Hard Evidence", CardType.SORCERY, "{U}",
                 "Create a 0/3 blue Crab creature token. Investigate.");
-        card.addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        card.addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Crab", 0, 3, CardColor.BLUE, Set.of(CardColor.BLUE),
                 List.of(CardSubtype.CRAB), Set.of(), Set.of(), false, false, Map.of(), List.of(),
                 false, false, false, 0, Set.of()));
-        card.addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+        card.addSpellEffect(CreateTokenEffect.ofClueToken(1));
         return freeze(card);
     }
 
@@ -195,7 +195,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         Card card = spellCard(ownerId, "Ghostform", CardType.SORCERY, "{1}{U}",
                 "Up to two target creatures can't be blocked this turn.");
         card.target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new MakeCreatureUnblockableEffect());
+                .addSpellEffect(new MakeCreatureUnblockableEffect());
         return freeze(card);
     }
 
@@ -203,16 +203,16 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         Card card = spellCard(ownerId, "Startle", CardType.INSTANT, "{1}{U}",
                 "Target creature gets -2/-0 until end of turn. Create a 2/2 black Zombie creature token with decayed. Draw a card.");
         card.target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-2, 0));
-        card.addEffect(EffectSlot.SPELL, CreateTokenEffect.blackZombieWithDecayed(1));
-        card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new BoostTargetCreatureEffect(-2, 0));
+        card.addSpellEffect(CreateTokenEffect.blackZombieWithDecayed(1));
+        card.addSpellEffect(new DrawCardEffect(1));
         return freeze(card);
     }
 
     private Card hamperingSnare(UUID ownerId) {
         Card card = spellCard(ownerId, "Hampering Snare", CardType.INSTANT, "{1}{U}",
                 "Creatures your opponents control get -2/-0 until end of turn. Cycling {2}");
-        card.addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-2, 0,
+        card.addSpellEffect(new BoostAllCreaturesEffect(-2, 0,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         card.addCycling("{2}");
         return freeze(card);
@@ -225,15 +225,15 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
                 new StackEntryTypeInPredicate(Set.of(
                         StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)),
                 "Target must be an activated or triggered ability."))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                .addSpellEffect(new CounterSpellEffect());
         return freeze(card);
     }
 
     private Card contentiousPlan(UUID ownerId) {
         Card card = spellCard(ownerId, "Contentious Plan", CardType.SORCERY, "{1}{U}",
                 "Proliferate. Draw a card.");
-        card.addEffect(EffectSlot.SPELL, new ProliferateEffect());
-        card.addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        card.addSpellEffect(new ProliferateEffect());
+        card.addSpellEffect(new DrawCardEffect());
         return freeze(card);
     }
 
@@ -244,18 +244,18 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate())),
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+                .addSpellEffect(new AnimatePermanentsEffect(
                         4, 4, List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING),
                         null, Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new DrawCardEffect());
         return freeze(card);
     }
 
     private Card befuddle(UUID ownerId) {
         Card card = spellCard(ownerId, "Befuddle", CardType.INSTANT, "{2}{U}",
                 "Target creature gets -4/-0 until end of turn. Draw a card.");
-        card.addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-4, 0));
-        card.addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        card.addSpellEffect(new BoostTargetCreatureEffect(-4, 0));
+        card.addSpellEffect(new DrawCardEffect());
         return freeze(card);
     }
 
@@ -267,7 +267,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         card.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(attackingCreature, 2));
         card.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                 "Target must be a creature"))
-                .addEffect(EffectSlot.SPELL, new PutTargetPermanentIntoLibraryNFromTopEffect(1));
+                .addSpellEffect(new PutTargetPermanentIntoLibraryNFromTopEffect(1));
         return freeze(card);
     }
 
@@ -275,7 +275,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         Card card = spellCard(ownerId, "Choking Tethers", CardType.INSTANT, "{3}{U}",
                 "Tap up to four target creatures. Cycling {1}{U}");
         card.target(TargetFilters.creature(), 0, 4)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
         card.addCycling("{1}{U}");
         card.addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
                 new TapPermanentsEffect(TapUntapScope.TARGET), "Tap target creature?"));
@@ -290,10 +290,10 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
-                .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+                .addSpellEffect(new AnimatePermanentsEffect(
                         4, 5, List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
                         GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new DrawCardEffect());
         return freeze(card);
     }
 

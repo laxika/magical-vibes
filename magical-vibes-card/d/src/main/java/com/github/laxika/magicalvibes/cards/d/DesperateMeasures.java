@@ -13,8 +13,8 @@ public class DesperateMeasures extends Card {
 
     public DesperateMeasures() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, -1))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(1, -1))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_ANY_CREATURE_DIES,
                         new DrawCardForTargetPlayerEffect(2), true));
     }

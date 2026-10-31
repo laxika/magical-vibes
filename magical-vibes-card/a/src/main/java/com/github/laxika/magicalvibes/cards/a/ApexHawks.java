@@ -14,7 +14,7 @@ import java.util.List;
 public class ApexHawks extends Card {
 
     public ApexHawks() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{1}{W}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{W}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{W}")));
     }

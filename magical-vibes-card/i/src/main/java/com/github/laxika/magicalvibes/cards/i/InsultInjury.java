@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageThisTurnEffect;
 
@@ -20,9 +19,9 @@ public class InsultInjury extends Card {
         setBackFaceCard(new Injury());
 
         // Damage can't be prevented this turn.
-        addEffect(EffectSlot.SPELL, new DamageCantBePreventedThisTurnEffect());
+        addSpellEffect(new DamageCantBePreventedThisTurnEffect());
         // If a source you control would deal damage this turn, it deals double that damage instead.
-        addEffect(EffectSlot.SPELL, new DoubleControllerDamageThisTurnEffect());
+        addSpellEffect(new DoubleControllerDamageThisTurnEffect());
     }
 
     @Override

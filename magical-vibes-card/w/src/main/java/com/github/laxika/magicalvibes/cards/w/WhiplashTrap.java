@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -26,6 +25,6 @@ public class WhiplashTrap extends Card {
                 false));
 
         target(TargetFilters.creature(), 2, 2)
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
     }
 }

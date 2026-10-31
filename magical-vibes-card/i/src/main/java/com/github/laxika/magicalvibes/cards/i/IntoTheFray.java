@@ -14,7 +14,7 @@ public class IntoTheFray extends Card {
 
     public IntoTheFray() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK));
+                .addSpellEffect(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{R}"));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -16,7 +15,7 @@ public class TangledFlorahedron extends Card {
         setBackFaceCard(new TangledVale());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Tangled Florahedron", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Tangled Vale", List.of())
         )));

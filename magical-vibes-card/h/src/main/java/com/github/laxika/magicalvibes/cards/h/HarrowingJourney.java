@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -18,7 +17,7 @@ public class HarrowingJourney extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(3))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+                .addSpellEffect(new DrawCardForTargetPlayerEffect(3))
+                .addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
     }
 }

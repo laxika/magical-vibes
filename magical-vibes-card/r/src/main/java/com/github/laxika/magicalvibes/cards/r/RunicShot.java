@@ -26,7 +26,7 @@ public class RunicShot extends Card {
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new ScryEffect(2)));
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(new Kicked(), new ScryEffect(2)));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -25,11 +24,11 @@ public class GraveyardDig extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ManaCastingCost("{2}{B/G}{B/G}"))));
 
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new ReturnTargetCardsFromGraveyardToHandEffect(
                         new CardTypePredicate(CardType.CREATURE), 2)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()),
                 new ReturnTargetCardsFromGraveyardToHandEffect(
                         new CardAllOfPredicate(List.of(

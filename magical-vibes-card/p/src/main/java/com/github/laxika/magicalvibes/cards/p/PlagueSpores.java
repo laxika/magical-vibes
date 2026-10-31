@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -33,6 +32,6 @@ public class PlagueSpores extends Card {
                 "Second target must be a land"
         ));
 
-        addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect(true));
+        addSpellEffect(new DestroyEachTargetPermanentEffect(true));
     }
 }

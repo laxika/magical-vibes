@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -1527,21 +1527,21 @@ public class CombatAttackService {
                                 // flow. Equipment attachments need individual selections so each
                                 // chosen Equipment is attached when the trigger resolves.
                                 Card attackCard = attacker.getCard();
-                                boolean staticSingleMultiTargetGroup = attackCard.getSpellTargets().size() == 1
-                                        && attackCard.getSpellTargets().getFirst().getMaxTargets() > 1
-                                        && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
-                                        && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
+                                boolean staticSingleMultiTargetGroup = attackCard.getTargetGroups().size() == 1
+                                        && attackCard.getTargetGroups().getFirst().getMaxTargets() > 1
+                                        && attackCard.getTargetGroups().getFirst().getDynamicMinTargets() == null
+                                        && attackCard.getTargetGroups().getFirst().getDynamicMaxTargets() == null;
                                 boolean attachesEquipment = abilityEffects.stream()
                                         .anyMatch(effect -> effect instanceof AttachTargetEquipmentToTriggeringPermanentEffect
                                                 || effect instanceof MayEffect may
                                                 && may.wrapped() instanceof AttachTargetEquipmentToTriggeringPermanentEffect);
-                                boolean declaredGroupsTargetOtherAbilities = !attackCard.getSpellTargets().isEmpty()
-                                        && attackCard.getSpellTargets().stream().allMatch(group ->
+                                boolean declaredGroupsTargetOtherAbilities = !attackCard.getTargetGroups().isEmpty()
+                                        && attackCard.getTargetGroups().stream().allMatch(group ->
                                         attackCard.bindsEffectToTargetGroup(group.getIndex())
                                                 && attackCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
                                                 .noneMatch(attackCard.getEffects(EffectSlot.ON_ATTACK)::contains));
                                 if (!declaredGroupsTargetOtherAbilities
-                                        && (attackCard.getSpellTargets().size() > 1
+                                        && (attackCard.getTargetGroups().size() > 1
                                         || ((!staticSingleMultiTargetGroup || attachesEquipment)
                                         && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard)))) {
                                     gameData.queueInteraction(
@@ -2157,10 +2157,10 @@ public class CombatAttackService {
                         // Talent's ETB "creature you control") does not count.
                         boolean singleBoundTargetGroup = filteredEffects.stream().allMatch(allyAttackCard::hasEffectTargetIndex)
                                 && filteredEffects.stream().map(allyAttackCard::getEffectTargetIndex).distinct().count() == 1
-                                && allyAttackCard.getSpellTargets().stream()
+                                && allyAttackCard.getTargetGroups().stream()
                                 .allMatch(group -> allyAttackCard.bindsEffectToTargetGroup(group.getIndex())
                                         || !bareGroupBelongsToEffects(allyAttackCard, group.getIndex(), filteredEffects));
-                        if (allyAttackCard.getSpellTargets().size() > 1 && !singleBoundTargetGroup) {
+                        if (allyAttackCard.getTargetGroups().size() > 1 && !singleBoundTargetGroup) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), playerId, filteredEffects, perm.getId(),
                                     List.of(), 0, 0, List.of(), attackerIndices.size()));
@@ -4600,7 +4600,7 @@ public class CombatAttackService {
      * the ability of the next bound group after it (or to every ability when no bound group follows it).
      */
     private boolean bareGroupBelongsToEffects(Card card, int groupIndex, List<CardEffect> effects) {
-        for (SpellTarget group : card.getSpellTargets()) {
+        for (TargetGroup group : card.getTargetGroups()) {
             if (group.getIndex() > groupIndex && card.bindsEffectToTargetGroup(group.getIndex())) {
                 return effects.stream().anyMatch(effect -> card.isEffectBoundToTargetGroup(effect, group.getIndex()));
             }

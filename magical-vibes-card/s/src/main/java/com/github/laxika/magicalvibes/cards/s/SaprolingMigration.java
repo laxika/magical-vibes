@@ -21,7 +21,7 @@ public class SaprolingMigration extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
         // Create two 1/1 green Saproling creature tokens.
         // If this spell was kicked, create four of those tokens instead.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                 new CreateTokenEffect(2, "Saproling", 1, 1,
                         CardColor.GREEN, List.of(CardSubtype.SAPROLING),
                         Set.of(), Set.of()),

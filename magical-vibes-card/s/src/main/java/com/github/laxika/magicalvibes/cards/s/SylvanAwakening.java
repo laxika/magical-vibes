@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -22,7 +21,7 @@ import java.util.Set;
 public class SylvanAwakening extends Card {
 
     public SylvanAwakening() {
-        addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+        addSpellEffect(new AnimatePermanentsEffect(
                 2, 2,
                 List.of(CardSubtype.ELEMENTAL),
                 Set.of(Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE),

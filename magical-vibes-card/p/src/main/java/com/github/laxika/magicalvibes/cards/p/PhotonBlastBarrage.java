@@ -12,7 +12,7 @@ public class PhotonBlastBarrage extends Card {
 
     public PhotonBlastBarrage() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(1));
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForXValueEffect());
     }
 }

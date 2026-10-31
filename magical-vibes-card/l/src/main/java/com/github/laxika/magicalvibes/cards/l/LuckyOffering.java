@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,7 +22,7 @@ public class LuckyOffering extends Card {
                 )),
                 "Target must be an artifact with mana value 3 or less"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(3));
     }
 }

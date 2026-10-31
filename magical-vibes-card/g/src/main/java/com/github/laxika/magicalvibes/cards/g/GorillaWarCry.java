@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -19,9 +18,9 @@ public class GorillaWarCry extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.COMBAT_BEFORE_BLOCKERS);
 
         // All creatures gain menace until end of turn.
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_CREATURES));
 
         // Draw a card at the beginning of the next turn's upkeep.
-        addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
+        addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

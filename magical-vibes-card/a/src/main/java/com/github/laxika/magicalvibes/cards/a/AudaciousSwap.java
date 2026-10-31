@@ -18,11 +18,10 @@ public class AudaciousSwap extends Card {
 
     public AudaciousSwap() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(2));
+        addCastingCost(new CasualtyCost(2));
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsEnchantmentPredicate()),
-                "Target must be a nonenchantment permanent")).addEffect(EffectSlot.SPELL,
-                new ShuffleTargetPermanentIntoLibraryEffect(
+                "Target must be a nonenchantment permanent")).addSpellEffect(new ShuffleTargetPermanentIntoLibraryEffect(
                         new ExileTopCardPutLandOntoBattlefieldOrMayCastFreeEffect(),
                         ThenEffectRecipient.TARGET_OWNER));
     }

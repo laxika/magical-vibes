@@ -19,7 +19,7 @@ public class OutOfTheWay extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN)), 2));
         target(TargetFilters.nonlandPermanentAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

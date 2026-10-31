@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.h.HeroicTeamwork;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -96,7 +95,7 @@ class VirtualAssistantTest extends BaseCardTest {
         spell.setName("Teamwork test spell");
         spell.setType(CardType.INSTANT);
         spell.setManaCost("{0}");
-        spell.addEffect(EffectSlot.SPELL, new TeamworkCost(2));
+        spell.addCastingCost(new TeamworkCost(2));
         return spell;
     }
 }

@@ -35,11 +35,10 @@ public class ShatterTheOath extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be a creature or enchantment"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
 
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
     }
 
     private static CreateTokenEffect wickedRoleToken() {

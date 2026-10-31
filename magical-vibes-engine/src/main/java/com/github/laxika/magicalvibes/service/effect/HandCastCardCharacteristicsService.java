@@ -117,7 +117,7 @@ public final class HandCastCardCharacteristicsService {
         fetchHerbs.setColors(List.of(CardColor.GREEN));
         fetchHerbs.setColorIdentity(List.of(CardColor.GREEN));
         fetchHerbs.setCardText("You gain 2 life.");
-        fetchHerbs.addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        fetchHerbs.addSpellEffect(new GainLifeEffect(2));
         fetchHerbs.freeze();
         return fetchHerbs;
     }

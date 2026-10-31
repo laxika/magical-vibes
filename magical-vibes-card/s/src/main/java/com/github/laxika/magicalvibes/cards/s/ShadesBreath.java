@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -19,10 +18,9 @@ import java.util.List;
 public class ShadesBreath extends Card {
 
     public ShadesBreath() {
-        addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.BLACK, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL,
-                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.SHADE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL, new GrantActivatedAbilityEffect(
+        addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLACK, GrantScope.OWN_CREATURES));
+        addSpellEffect(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.SHADE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{B}",

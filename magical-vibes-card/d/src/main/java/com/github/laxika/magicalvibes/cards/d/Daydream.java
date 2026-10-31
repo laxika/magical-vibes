@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +23,7 @@ public class Daydream extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, FlickerEffect.flickerTargetWithCounters(1));
+        )).addSpellEffect(FlickerEffect.flickerTargetWithCounters(1));
 
         addCastingOption(new FlashbackCast("{2}{W}"));
     }

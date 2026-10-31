@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CrimestopperSprite extends Card {
 
     public CrimestopperSprite() {
-        addEffect(EffectSlot.SPELL, new CollectEvidenceCost(6, true));
+        addCastingCost(new CollectEvidenceCost(6, true));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET),

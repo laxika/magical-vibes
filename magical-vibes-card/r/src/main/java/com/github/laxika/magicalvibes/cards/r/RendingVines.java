@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -25,9 +24,9 @@ public class RendingVines extends Card {
         ));
         target(new PermanentPredicateTargetFilter(artifactOrEnchantment,
                 "Target must be an artifact or enchantment"))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentManaValueAtMostSourceControllerHandSizePredicate()),
                         new DestroyTargetPermanentEffect()))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new DrawCardEffect());
     }
 }

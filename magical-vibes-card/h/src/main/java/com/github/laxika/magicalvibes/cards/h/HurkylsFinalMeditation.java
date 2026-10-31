@@ -17,8 +17,8 @@ public class HurkylsFinalMeditation extends Card {
     public HurkylsFinalMeditation() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new NotControllerTurn(), new IncreaseOwnCastCostEffect(3)));
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.allPermanentsMatching(
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatching(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
-        addEffect(EffectSlot.SPELL, new EndTurnEffect());
+        addSpellEffect(new EndTurnEffect());
     }
 }

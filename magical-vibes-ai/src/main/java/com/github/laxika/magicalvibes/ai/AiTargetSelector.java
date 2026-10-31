@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -422,7 +422,7 @@ class AiTargetSelector {
         if (selectsTargetsGroupByGroup(card)) {
             return chooseMultiTargets(gameData, card, aiPlayerId) != null;
         }
-        if (EffectResolution.needsTarget(card.getEffects(EffectSlot.SPELL),
+        if (EffectResolution.needsTarget(card.getCastingCostsAndSpellEffects(),
                 card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), false, false)) {
             return chooseTarget(gameData, card, aiPlayerId) != null;
         }
@@ -430,12 +430,12 @@ class AiTargetSelector {
     }
 
     private boolean selectsTargetsGroupByGroup(Card card) {
-        List<SpellTarget> groups = card.getSpellTargets();
+        List<TargetGroup> groups = card.getTargetGroups();
         if (groups.size() > 1) {
             return true;
         }
         if (groups.size() == 1 && EffectResolution.needsDamageDistribution(card)) {
-            SpellTarget group = groups.getFirst();
+            TargetGroup group = groups.getFirst();
             boolean separateFromDistribution = findEffectsForTargetGroup(card, group.getIndex()).stream()
                     .noneMatch(this::isAmountDistributionEffect);
             return separateFromDistribution && card.getMaxTargets() > 1;
@@ -455,9 +455,9 @@ class AiTargetSelector {
      * ordinary spell-target groups.
      */
     boolean hasSeparateGraveyardTarget(Card card) {
-        boolean hasGroupedGraveyardTarget = card.getSpellTargets().stream()
+        boolean hasGroupedGraveyardTarget = card.getTargetGroups().stream()
                 .anyMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
-        return !hasGroupedGraveyardTarget && card.getEffects(EffectSlot.SPELL).stream()
+        return !hasGroupedGraveyardTarget && card.getCastingCostsAndSpellEffects().stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
     }
 
@@ -467,8 +467,8 @@ class AiTargetSelector {
      */
     boolean hasOnlyGroupedGraveyardTargets(Card card) {
         return !EffectResolution.isTargetlessPermanentSpell(card)
-                && !card.getSpellTargets().isEmpty()
-                && card.getSpellTargets().stream()
+                && !card.getTargetGroups().isEmpty()
+                && card.getTargetGroups().stream()
                 .allMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
     }
 
@@ -481,7 +481,7 @@ class AiTargetSelector {
 
     XScaledTargetSelection chooseXScaledTargets(GameData gameData, Card card, UUID aiPlayerId,
                                                  int preferredXValue) {
-        int maximumX = card.getEffects(EffectSlot.SPELL).stream()
+        int maximumX = card.getCastingCosts().stream()
                 .anyMatch(RepeatableAdditionalManaCost.class::isInstance)
                 ? 1
                 : preferredXValue;
@@ -507,7 +507,7 @@ class AiTargetSelector {
                 .map(Card::getId)
                 .orElse(null);
 
-        boolean graveyardTargetRequired = card.getEffects(EffectSlot.SPELL).stream()
+        boolean graveyardTargetRequired = card.getCastingCostsAndSpellEffects().stream()
                 .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .map(this::unwrapConditionalEffect)
                 .anyMatch(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
@@ -551,7 +551,7 @@ class AiTargetSelector {
         Set<UUID> assignedTargets = distributionAssignments == null
                 ? Set.of() : distributionAssignments.keySet();
         Set<Integer> assignedTargetGroups = new HashSet<>();
-        for (SpellTarget spellTarget : card.getSpellTargets()) {
+        for (TargetGroup spellTarget : card.getTargetGroups()) {
             if (findEffectsForTargetGroup(card, spellTarget.getIndex()).stream()
                     .anyMatch(this::isAmountDistributionEffect)) {
                 assignedTargetGroups.add(spellTarget.getIndex());
@@ -587,7 +587,7 @@ class AiTargetSelector {
                                            Set<Integer> skippedTargetGroups,
                                            Integer xValue) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-        List<SpellTarget> spellTargets = card.getSpellTargets();
+        List<TargetGroup> spellTargets = card.getTargetGroups();
         List<UUID> result = new ArrayList<>();
         Set<UUID> alreadyChosen = new HashSet<>(reservedTargets);
         int maxTargetsAffordable = maxTargetsAffordableWithAdditionalLife(
@@ -595,7 +595,7 @@ class AiTargetSelector {
         int maxAdditionalTargetsAffordable = Math.max(0,
                 maxTargetsAffordable - separatelySelectedTargetCount);
 
-        for (SpellTarget st : spellTargets) {
+        for (TargetGroup st : spellTargets) {
             if (skippedTargetGroups.contains(st.getIndex())) {
                 continue;
             }
@@ -747,7 +747,7 @@ class AiTargetSelector {
      */
     private List<CardEffect> findEffectsForTargetGroup(Card card, int targetIndex) {
         List<CardEffect> result = new ArrayList<>();
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (card.getEffectTargetIndex(effect) == targetIndex) {
                 result.add(effect);
             }
@@ -818,7 +818,7 @@ class AiTargetSelector {
      * candidate first, e.g. Pounce's own-fighter group choosing the AI's strongest creature).
      */
     private List<UUID> pickPermanentTargetsForGroup(GameData gameData, Card card, UUID aiPlayerId,
-                                                    UUID opponentId, SpellTarget st, int maxTargets,
+                                                    UUID opponentId, TargetGroup st, int maxTargets,
                                                     Set<UUID> alreadyChosen, List<CardEffect> groupEffects) {
         TargetFilter groupFilter = st.getFilter();
         boolean beneficial = polarityClassifier.classifyGroup(gameData, groupEffects, aiPlayerId)
@@ -984,7 +984,7 @@ class AiTargetSelector {
         }
         // Run the same @ValidatesTarget validators that spell casting uses
         TargetValidationContext ctx = new TargetValidationContext(gameData, target.getId(), null, card);
-        if (targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.SPELL), ctx).isPresent()) {
+        if (targetValidationService.checkEffectTargets(card.getCastingCostsAndSpellEffects(), ctx).isPresent()) {
             return false;
         }
         if (targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), ctx).isPresent()) {
@@ -994,7 +994,7 @@ class AiTargetSelector {
     }
 
     private boolean hasPossibleCastTimeCreatureType(GameData gameData, Card card, Permanent target) {
-        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+        boolean requiresChoice = card.getSpellEffects().stream()
                 .filter(CastTimeCreatureTypeChoiceEffect.class::isInstance)
                 .map(CastTimeCreatureTypeChoiceEffect.class::cast)
                 .anyMatch(CastTimeCreatureTypeChoiceEffect::requiresCastTimeCreatureTypeChoice);
@@ -1047,7 +1047,7 @@ class AiTargetSelector {
             }
         }
         List<CardEffect> baseSpellEffects = EffectResolution.resolveEffects(
-                card.getEffects(EffectSlot.SPELL), false, null);
+                card.getCastingCostsAndSpellEffects(), false, null);
         for (CardEffect effect : baseSpellEffects) {
             TargetSpec spec = effect.targetSpec();
             if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
@@ -1149,7 +1149,7 @@ class AiTargetSelector {
      */
     List<Card> findValidGraveyardTargets(GameData gameData, Card card, UUID aiPlayerId, int maxAffordableX) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (!effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) continue;
 
             List<Card> candidates;
@@ -1266,7 +1266,7 @@ class AiTargetSelector {
      * (in which case the AI simply declines to cast).
      */
     private Map<UUID, Integer> buildCounterDistribution(GameData gameData, Card card, UUID aiPlayerId) {
-        DistributeCountersAmongTargetsEffect effect = card.getEffects(EffectSlot.SPELL).stream()
+        DistributeCountersAmongTargetsEffect effect = card.getSpellEffects().stream()
                 .filter(e -> e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN)
                 .map(DistributeCountersAmongTargetsEffect.class::cast)
                 .findFirst()
@@ -1309,7 +1309,7 @@ class AiTargetSelector {
         }
 
         // Ignite Disorder: fixed total divided among target creatures (no players).
-        DealDividedDamageEffect creaturesEffect = card.getEffects(EffectSlot.SPELL).stream()
+        DealDividedDamageEffect creaturesEffect = card.getSpellEffects().stream()
                 .filter(e -> e instanceof DealDividedDamageEffect d
                         && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments()
                         && !d.canTargetPlayers() && d.totalDamage() instanceof Fixed)
@@ -1397,7 +1397,7 @@ class AiTargetSelector {
      * including inside kicker replacement wrappers.
      */
     private DealDividedDamageEffect findDividedDamageAnyTargetsEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isChosenAnyTargets(effect)) {
                 return (DealDividedDamageEffect) effect;
             }

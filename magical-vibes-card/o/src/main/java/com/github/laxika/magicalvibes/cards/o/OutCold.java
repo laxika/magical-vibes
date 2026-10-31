@@ -17,8 +17,8 @@ public class OutCold extends Card {
     public OutCold() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new PutCounterOnTargetPermanentEffect(CounterType.STUN))
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.STUN))
+                .addSpellEffect(CreateTokenEffect.ofClueToken(1));
     }
 }

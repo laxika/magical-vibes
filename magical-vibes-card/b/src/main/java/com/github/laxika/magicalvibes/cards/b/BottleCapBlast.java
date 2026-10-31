@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -30,8 +29,8 @@ public class BottleCapBlast extends Card {
                                 new PermanentIsBattlePredicate())),
                         new PlayerRelationPredicate(PlayerRelation.ANY),
                         "Target must be any target"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(5))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new DealDamageToAnyTargetEffect(5))
+                .addSpellEffect(new ConditionalEffect(
                         new EventValueAtLeast(1), CreateTokenEffect.ofTappedTreasureToken(new EventValue())));
     }
 }

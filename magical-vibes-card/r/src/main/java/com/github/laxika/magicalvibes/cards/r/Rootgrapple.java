@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -21,8 +20,8 @@ public class Rootgrapple extends Card {
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 "Target must be a noncreature permanent"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.TREEFOLK)),
                 new DrawCardEffect(1)));
     }

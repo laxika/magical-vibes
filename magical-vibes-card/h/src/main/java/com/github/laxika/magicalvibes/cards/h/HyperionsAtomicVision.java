@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class HyperionsAtomicVision extends Card {
 
     public HyperionsAtomicVision() {
-        addEffect(EffectSlot.SPELL, BeholdCost.optional(CardSubtype.HERO));
+        addCastingCost(BeholdCost.optional(CardSubtype.HERO));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -28,9 +27,8 @@ public class HyperionsAtomicVision extends Card {
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
 
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new BeholdCostPaid(), new ScryEffect(2)));
+        addSpellEffect(new ConditionalEffect(new BeholdCostPaid(), new ScryEffect(2)));
     }
 }

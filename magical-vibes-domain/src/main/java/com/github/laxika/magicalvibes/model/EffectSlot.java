@@ -20,7 +20,6 @@ public enum EffectSlot {
     ON_SELF_BECOMES_CONTROLLED,
     /** Triggers when this permanent changes control away from its current controller. */
     ON_SELF_LOSES_CONTROL,
-    SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
     /** "Whenever a creature or enchantment enters under your control" for a turn-scoped global trigger. */

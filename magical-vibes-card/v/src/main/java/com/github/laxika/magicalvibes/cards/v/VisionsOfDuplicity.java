@@ -28,7 +28,7 @@ public class VisionsOfDuplicity extends Card {
                 creatureNotControlledByCaster, "Target must be a creature you don't control"));
         target(new PermanentPredicateTargetFilter(
                 creatureNotControlledByCaster, "Target must be a creature you don't control"))
-                .addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
+                .addSpellEffect(new ExchangeControlOfTargetPermanentsEffect(
                         new PermanentIsCreaturePredicate(), false, false));
 
         addEffect(EffectSlot.STATIC,

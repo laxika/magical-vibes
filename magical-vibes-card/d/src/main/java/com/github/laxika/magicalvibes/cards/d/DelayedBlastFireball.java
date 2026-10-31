@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class DelayedBlastFireball extends Card {
 
     public DelayedBlastFireball() {
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new CastFromZone(Zone.EXILE),
                 damage(2),
                 damage(5)

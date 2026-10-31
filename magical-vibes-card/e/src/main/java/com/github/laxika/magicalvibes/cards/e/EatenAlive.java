@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -21,14 +20,14 @@ public class EatenAlive extends Card {
     public EatenAlive() {
         // As an additional cost to cast this spell, sacrifice a creature or pay {3}{B}.
         // Exile target creature or planeswalker.
+        addCastingCost(new SacrificePermanentOrPayManaCost(
+                "{3}{B}", new PermanentIsCreaturePredicate(), "a creature"));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentOrPayManaCost(
-                        "{3}{B}", new PermanentIsCreaturePredicate(), "a creature"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

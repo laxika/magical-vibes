@@ -94,7 +94,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -552,7 +551,7 @@ class EasyAiDecisionEngineTest {
             card.setName("Repeatable modal draw");
             card.setType(CardType.SORCERY);
             card.setManaCost("{G}");
-            card.addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+            card.addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                     new ChooseOneEffect.ChooseOneOption("Draw first", new DrawCardEffect(1)),
                     new ChooseOneEffect.ChooseOneOption("Draw second", new DrawCardEffect(1)),
                     new ChooseOneEffect.ChooseOneOption("Draw third", new DrawCardEffect(1))
@@ -777,7 +776,7 @@ class EasyAiDecisionEngineTest {
             modalSpell.setName("Draw and Bolt");
             modalSpell.setType(CardType.SORCERY);
             modalSpell.setManaCost("{R}{W}");
-            modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            modalSpell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
                             new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
                     new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
@@ -1065,8 +1064,7 @@ class EasyAiDecisionEngineTest {
             card.setManaCost("{1}{R}");
             card.setPower(2);
             card.setToughness(2);
-            card.addEffect(EffectSlot.SPELL,
-                    new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+            card.addCastingCost(new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
             return card;
         }
 
@@ -1280,8 +1278,7 @@ class EasyAiDecisionEngineTest {
         sacrificeSpell.setName("Test Artifact Sac");
         sacrificeSpell.setType(CardType.SORCERY);
         sacrificeSpell.setManaCost("{R}");
-        sacrificeSpell.addEffect(EffectSlot.SPELL,
-                new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
+        sacrificeSpell.addCastingCost(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
         gd.playerHands.get(aiPlayer.getId()).add(sacrificeSpell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -1301,7 +1298,7 @@ class EasyAiDecisionEngineTest {
         sacrificeSpell.setName("Test Creature Sac");
         sacrificeSpell.setType(CardType.SORCERY);
         sacrificeSpell.setManaCost("{R}");
-        sacrificeSpell.addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        sacrificeSpell.addCastingCost(new SacrificeCreatureCost());
         gd.playerHands.get(aiPlayer.getId()).add(sacrificeSpell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -1323,7 +1320,7 @@ class EasyAiDecisionEngineTest {
         sacrificeSpell.setName("Test Sac Spell");
         sacrificeSpell.setType(CardType.SORCERY);
         sacrificeSpell.setManaCost("{R}");
-        sacrificeSpell.addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        sacrificeSpell.addCastingCost(new SacrificeCreatureCost());
         gd.playerHands.get(aiPlayer.getId()).add(sacrificeSpell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -1363,8 +1360,7 @@ class EasyAiDecisionEngineTest {
         counterSpell.setName("Test Counter Cost Spell");
         counterSpell.setType(CardType.SORCERY);
         counterSpell.setManaCost("{R}");
-        counterSpell.addEffect(EffectSlot.SPELL,
-                new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1));
+        counterSpell.addCastingCost(new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1));
         gd.playerHands.get(aiPlayer.getId()).add(counterSpell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -1400,7 +1396,7 @@ class EasyAiDecisionEngineTest {
         bounceSpell.setName("Test Bounce Cost Spell");
         bounceSpell.setType(CardType.SORCERY);
         bounceSpell.setManaCost("{R}");
-        bounceSpell.addEffect(EffectSlot.SPELL, new ReturnCreatureToHandCost());
+        bounceSpell.addCastingCost(new ReturnCreatureToHandCost());
         gd.playerHands.get(aiPlayer.getId()).add(bounceSpell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -1757,7 +1753,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
+                .addSpellEffect(DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -1800,7 +1796,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
+                .addSpellEffect(DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -1823,7 +1819,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
+                .addSpellEffect(DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -2629,7 +2625,7 @@ class EasyAiDecisionEngineTest {
         skaab.setManaCost("{1}{U}{U}");
         skaab.setPower(5);
         skaab.setToughness(6);
-        skaab.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE));
+        skaab.addCastingCost(new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE));
 
         gd.playerHands.get(aiPlayer.getId()).add(skaab);
 
@@ -2665,7 +2661,7 @@ class EasyAiDecisionEngineTest {
         skaab.setManaCost("{1}{U}{U}");
         skaab.setPower(5);
         skaab.setToughness(6);
-        skaab.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE));
+        skaab.addCastingCost(new com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost(3, CardType.CREATURE));
 
         gd.playerHands.get(aiPlayer.getId()).add(skaab);
 
@@ -2719,7 +2715,7 @@ class EasyAiDecisionEngineTest {
         pyroclasm.setName("Pyroclasm");
         pyroclasm.setType(CardType.SORCERY);
         pyroclasm.setManaCost("{1}{R}");
-        pyroclasm.addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+        pyroclasm.addSpellEffect(new MassDamageEffect(2));
         gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -2739,7 +2735,7 @@ class EasyAiDecisionEngineTest {
         pyroclasm.setName("Pyroclasm");
         pyroclasm.setType(CardType.SORCERY);
         pyroclasm.setManaCost("{1}{R}");
-        pyroclasm.addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+        pyroclasm.addSpellEffect(new MassDamageEffect(2));
         gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
 
         UUID opponentId = gd.orderedPlayerIds.get(1);
@@ -2782,7 +2778,7 @@ class EasyAiDecisionEngineTest {
         pyroclasm.setName("Pyroclasm");
         pyroclasm.setType(CardType.SORCERY);
         pyroclasm.setManaCost("{1}{R}");
-        pyroclasm.addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+        pyroclasm.addSpellEffect(new MassDamageEffect(2));
         gd.playerHands.get(aiPlayer.getId()).add(pyroclasm);
 
         UUID opponentId = gd.orderedPlayerIds.get(1);
@@ -2885,8 +2881,7 @@ class EasyAiDecisionEngineTest {
             spell.setName("Mixed Graveyard Spell");
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{B}");
-            spell.addEffect(EffectSlot.SPELL,
-                    new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
+            spell.addCastingCost(new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
 
             testHarness.setGraveyard(aiTestPlayer, List.of(
                     new HolyDay(), new GrizzlyBears(), new HolyDay()));

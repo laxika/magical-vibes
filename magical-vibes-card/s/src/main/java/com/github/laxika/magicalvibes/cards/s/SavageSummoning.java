@@ -20,7 +20,7 @@ public class SavageSummoning extends Card {
 
     public SavageSummoning() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.CREATURE));
-        addEffect(EffectSlot.SPELL, new EmpowerNextCreatureSpellThisTurnEffect(true, 1));
+        addSpellEffect(new GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.CREATURE));
+        addSpellEffect(new EmpowerNextCreatureSpellThisTurnEffect(true, 1));
     }
 }

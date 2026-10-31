@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class FieryEncore extends Card {
 
     public FieryEncore() {
-        addEffect(EffectSlot.SPELL, new DiscardCardThenEffect(
+        addSpellEffect(new DiscardCardThenEffect(
                 null,
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                         new LastDiscardedCardManaValue()),
@@ -25,7 +25,7 @@ public class FieryEncore extends Card {
                 false,
                 null,
                 null));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new DrawCardEffect());
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

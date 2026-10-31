@@ -37,6 +37,6 @@ public class RunOver extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
+        )).addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
@@ -15,6 +14,6 @@ public class WarriorsStand extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED);
 
         // Creatures you control get +2/+2 until end of turn.
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 2));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
     }
 }

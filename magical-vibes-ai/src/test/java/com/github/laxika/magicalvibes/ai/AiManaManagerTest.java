@@ -2733,7 +2733,7 @@ class AiManaManagerTest {
 
             Card card = new Card();
             card.setManaCost("{X}{B}");
-            card.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+            card.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.BATTLEFIELD)
                     .targetGraveyard(true)
                     .requiresManaValueEqualsX(true)
@@ -2759,7 +2759,7 @@ class AiManaManagerTest {
 
             Card card = new Card();
             card.setManaCost("{X}{B}");
-            card.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+            card.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.BATTLEFIELD)
                     .targetGraveyard(true)
                     .requiresManaValueEqualsX(true)
@@ -2823,7 +2823,7 @@ class AiManaManagerTest {
 
             Card card = new Card();
             card.setManaCost("{X}{B}");
-            card.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+            card.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.BATTLEFIELD)
                     .targetGraveyard(true)
                     .requiresManaValueEqualsX(true)

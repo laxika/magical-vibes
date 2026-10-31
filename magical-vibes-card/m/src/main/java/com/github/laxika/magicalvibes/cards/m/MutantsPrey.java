@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,6 +25,6 @@ public class MutantsPrey extends Card {
         ));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+                .addSpellEffect(new FightTargetsEffect());
     }
 }

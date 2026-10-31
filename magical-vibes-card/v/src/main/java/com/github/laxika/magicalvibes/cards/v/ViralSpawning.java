@@ -20,7 +20,7 @@ import java.util.Set;
 public class ViralSpawning extends Card {
 
     public ViralSpawning() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
                 "Phyrexian Beast",

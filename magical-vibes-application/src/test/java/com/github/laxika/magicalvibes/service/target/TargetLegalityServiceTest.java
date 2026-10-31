@@ -247,7 +247,7 @@ class TargetLegalityServiceTest {
         card.setType(CardType.INSTANT);
         card.setManaCost("{R}");
         card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        card.addSpellEffect(new DealDamageToAnyTargetEffect(2));
         return card;
     }
 
@@ -257,7 +257,7 @@ class TargetLegalityServiceTest {
         card.setType(CardType.INSTANT);
         card.setManaCost("{1}");
         card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        card.addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Mode 1", mode1Effect),
                 new ChooseOneEffect.ChooseOneOption("Mode 2", mode2Effect)
         )));
@@ -764,7 +764,7 @@ class TargetLegalityServiceTest {
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{3}{U}{U}");
             spell.setColor(CardColor.BLUE);
-            spell.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
+            spell.addSpellEffect(new MillHalfLibraryEffect(false));
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -779,7 +779,7 @@ class TargetLegalityServiceTest {
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{3}{U}{U}");
             spell.setColor(CardColor.BLUE);
-            spell.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
+            spell.addSpellEffect(new MillHalfLibraryEffect(false));
 
             sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id);
         }
@@ -792,7 +792,7 @@ class TargetLegalityServiceTest {
             spell.setType(CardType.INSTANT);
             spell.setManaCost("{B}");
             spell.setColor(CardColor.BLACK);
-            spell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+            spell.addSpellEffect(new DestroyTargetPermanentEffect());
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -808,7 +808,7 @@ class TargetLegalityServiceTest {
             spell.setType(CardType.INSTANT);
             spell.setManaCost("{B}");
             spell.setColor(CardColor.BLACK);
-            spell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+            spell.addSpellEffect(new DestroyTargetPermanentEffect());
 
             sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id);
         }
@@ -1417,7 +1417,7 @@ class TargetLegalityServiceTest {
             card.setManaCost("{R}");
             card.setColor(CardColor.RED);
             card.target(null, minTargets, maxTargets)
-                    .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+                    .addSpellEffect(new DealDamageToAnyTargetEffect(2));
             return card;
         }
 
@@ -1513,11 +1513,11 @@ class TargetLegalityServiceTest {
             spell.setType(CardType.SORCERY);
             spell.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
-                    .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+                    .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)));
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(
                     gd, spell, List.of(player2Id), player1Id, 0, false,
-                    spell.getEffects(EffectSlot.SPELL), List.of(1)))
+                    spell.getCastingCostsAndSpellEffects(), List.of(1)))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("This spell cannot target players");
         }
@@ -1621,7 +1621,7 @@ class TargetLegalityServiceTest {
             // UntapPermanentsEffect(ALL_TARGETS) declares "a player or any permanent" — a spec that
             // restricts nothing — so the legacy creature-only default is what governs the slot.
             spell.target(null, 1, 2)
-                    .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));
+                    .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));
             Permanent target = addPermanent(player2Id, createArtifact());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
@@ -1682,7 +1682,7 @@ class TargetLegalityServiceTest {
                     new PermanentIsCreaturePredicate(), "Target must be a creature"));
             spell.target(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"))
-                    .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+                    .addSpellEffect(new DealDamageToAnyTargetEffect(2));
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             doThrow(new IllegalStateException("Target must be an artifact"))
                     .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
@@ -1716,7 +1716,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -1726,7 +1726,7 @@ class TargetLegalityServiceTest {
         void returnsTrueWhenTargetLeftBattlefield() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, UUID.randomUUID(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, UUID.randomUUID(), Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1736,7 +1736,7 @@ class TargetLegalityServiceTest {
         void returnsFalseForPlayerTarget() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -1748,7 +1748,7 @@ class TargetLegalityServiceTest {
                     createCreatureWithKeyword("Shrouded", CardColor.GREEN, Keyword.SHROUD));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -1761,7 +1761,7 @@ class TargetLegalityServiceTest {
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             when(gameQueryService.hasKeyword(gd, target, Keyword.SHROUD)).thenReturn(false);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.hasKeyword(gd, target, Keyword.HEXPROOF)).thenReturn(true);
@@ -1776,7 +1776,7 @@ class TargetLegalityServiceTest {
                     createCreatureWithKeyword("Hexproof Guy", CardColor.GREEN, Keyword.HEXPROOF));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -1788,7 +1788,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(
                     gd, target, player1Id)).thenReturn(true);
@@ -1809,7 +1809,7 @@ class TargetLegalityServiceTest {
             spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsCreaturePredicate(), "Target must be a creature"));
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Destroy",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             doThrow(new IllegalStateException("Target must be a creature"))
                     .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
@@ -1822,7 +1822,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Spell", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Spell",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             entry.setTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
             doThrow(new IllegalStateException("Target must be an artifact"))
@@ -1839,7 +1839,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedBySpellColor(gd, target, CardColor.RED, player1Id)).thenReturn(true);
 
@@ -1852,7 +1852,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Gaea's Revenge", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
-                    spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
             when(gameQueryService.cantBeTargetedByNonColorSources(gd, target, spell, player1Id)).thenReturn(true);
 
@@ -1929,9 +1929,9 @@ class TargetLegalityServiceTest {
             spell.setType(CardType.INSTANT);
             spell.target(new StackEntryPredicateTargetFilter(
                     new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL)), "Target a spell"));
-            spell.target(1, 1).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+            spell.target(1, 1).addSpellEffect(ReturnToHandEffect.target());
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id,
-                    "Mixed targets", spell.getEffects(EffectSlot.SPELL), 0,
+                    "Mixed targets", spell.getCastingCostsAndSpellEffects(), 0,
                     List.of(targetSpell.getId(), permanent.getId()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -1975,7 +1975,7 @@ class TargetLegalityServiceTest {
         void returnsTrueWhenAllMultiTargetPermanentsGone() {
             Card spell = createTargetingSpell("Multi", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Multi",
-                    spell.getEffects(EffectSlot.SPELL), 0, List.of(UUID.randomUUID(), UUID.randomUUID()));
+                    spell.getCastingCostsAndSpellEffects(), 0, List.of(UUID.randomUUID(), UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1986,7 +1986,7 @@ class TargetLegalityServiceTest {
             Permanent p1 = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Multi", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Multi",
-                    spell.getEffects(EffectSlot.SPELL), 0, List.of(p1.getId(), UUID.randomUUID()));
+                    spell.getCastingCostsAndSpellEffects(), 0, List.of(p1.getId(), UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -1996,7 +1996,7 @@ class TargetLegalityServiceTest {
         void returnsFalseWhenMultiTargetIncludesPlayer() {
             Card spell = createTargetingSpell("Multi", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player1Id, "Multi",
-                    spell.getEffects(EffectSlot.SPELL), 0, List.of(player2Id, UUID.randomUUID()));
+                    spell.getCastingCostsAndSpellEffects(), 0, List.of(player2Id, UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -2036,7 +2036,7 @@ class TargetLegalityServiceTest {
             spell.setMultiTargetConstraint(
                     com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_TOUGHNESS);
             return new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Equal Toughness",
-                    spell.getEffects(EffectSlot.SPELL), 0, targets.stream().map(Permanent::getId).toList());
+                    spell.getCastingCostsAndSpellEffects(), 0, targets.stream().map(Permanent::getId).toList());
         }
 
         @Test
@@ -2187,7 +2187,7 @@ class TargetLegalityServiceTest {
         void returnsTrueWhenTargetPlayerHasHexproof() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
-                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
             when(gameQueryService.playerHasHexproof(gd, player2Id)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -2198,7 +2198,7 @@ class TargetLegalityServiceTest {
         void returnsFalseWhenTargetPlayerHasHexproofButSelf() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
-                    spell.getEffects(EffectSlot.SPELL), 0, player1Id, Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, player1Id, Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -2208,7 +2208,7 @@ class TargetLegalityServiceTest {
         void returnsTrueWhenTargetPlayerHasShroud() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
-                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
             when(gameQueryService.playerHasShroud(gd, player2Id)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
@@ -2219,7 +2219,7 @@ class TargetLegalityServiceTest {
         void returnsFalseWhenTargetPlayerHasNoProtection() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
-                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
         }
@@ -2297,7 +2297,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card card = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, player1Id, "Bolt",
-                    card.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
+                    card.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryIsSingleTargetPredicate(), player2Id))
@@ -2559,7 +2559,7 @@ class TargetLegalityServiceTest {
             Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, p1Creature.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, p1Creature.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
@@ -2573,7 +2573,7 @@ class TargetLegalityServiceTest {
             Permanent p2Creature = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, p2Creature.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, p2Creature.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, p2Creature.getId())).thenReturn(player2Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
@@ -2587,7 +2587,7 @@ class TargetLegalityServiceTest {
             Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Multi", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player2Id, "Multi",
-                    spell.getEffects(EffectSlot.SPELL), 0, List.of(p1Creature.getId()));
+                    spell.getCastingCostsAndSpellEffects(), 0, List.of(p1Creature.getId()));
             when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
@@ -2601,7 +2601,7 @@ class TargetLegalityServiceTest {
             Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, p1Creature.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, p1Creature.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
             when(gameQueryService.isCreature(gd, p1Creature)).thenReturn(true);
 
@@ -2615,7 +2615,7 @@ class TargetLegalityServiceTest {
         void matchesTargetsYouOrCreatureWhenTargetingPlayer() {
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, player1Id, Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, player1Id, Map.of());
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
@@ -2628,7 +2628,7 @@ class TargetLegalityServiceTest {
             Permanent p2Creature = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, p2Creature.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, p2Creature.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, p2Creature.getId())).thenReturn(player2Id);
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
@@ -2641,7 +2641,7 @@ class TargetLegalityServiceTest {
         void rejectsTargetsYouOrCreatureWhenTargetingOpponentPlayer() {
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, player2Id, Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryTargetsYouOrCreatureYouControlPredicate(), player1Id))
@@ -2654,7 +2654,7 @@ class TargetLegalityServiceTest {
             Permanent source = addPermanent(player1Id, createCreature("Mistfolk", CardColor.BLUE));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, source.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, source.getId(), Map.of());
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryTargetsSourcePredicate(), player1Id, source))
@@ -2668,7 +2668,7 @@ class TargetLegalityServiceTest {
             Permanent other = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, other.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, other.getId(), Map.of());
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryTargetsSourcePredicate(), player1Id, source))
@@ -2681,7 +2681,7 @@ class TargetLegalityServiceTest {
             Permanent creature = addPermanent(player1Id, createCreature("Mistfolk", CardColor.BLUE));
             Card spell = createTargetingSpell("Bolt", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player2Id, "Bolt",
-                    spell.getEffects(EffectSlot.SPELL), 0, creature.getId(), Map.of());
+                    spell.getCastingCostsAndSpellEffects(), 0, creature.getId(), Map.of());
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryTargetsSourcePredicate(), player1Id))
@@ -2694,7 +2694,7 @@ class TargetLegalityServiceTest {
             Permanent p1Creature = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Multi", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell, player2Id, "Multi",
-                    spell.getEffects(EffectSlot.SPELL), 0, List.of(p1Creature.getId()));
+                    spell.getCastingCostsAndSpellEffects(), 0, List.of(p1Creature.getId()));
             when(gameQueryService.findPermanentController(gd, p1Creature.getId())).thenReturn(player1Id);
             when(gameQueryService.isCreature(gd, p1Creature)).thenReturn(true);
 
@@ -2841,7 +2841,7 @@ class TargetLegalityServiceTest {
             Card spellCard = new Card();
             spellCard.setName("Raise Dead");
             spellCard.setType(CardType.SORCERY);
-            spellCard.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+            spellCard.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.HAND)
                     .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                     .targetGraveyard(true)
@@ -2862,7 +2862,7 @@ class TargetLegalityServiceTest {
             Card spellCard = new Card();
             spellCard.setName("Disentomb");
             spellCard.setType(CardType.SORCERY);
-            spellCard.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+            spellCard.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.HAND)
                     .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                     .targetGraveyard(true)
@@ -2886,7 +2886,7 @@ class TargetLegalityServiceTest {
             Card spellCard = new Card();
             spellCard.setName("Disentomb");
             spellCard.setType(CardType.SORCERY);
-            spellCard.addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+            spellCard.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.HAND)
                     .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                     .targetGraveyard(true)

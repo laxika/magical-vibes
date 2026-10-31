@@ -15,11 +15,11 @@ import java.util.List;
 public class SuperCombo extends Card {
 
     public SuperCombo() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}"));
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
     }
 }

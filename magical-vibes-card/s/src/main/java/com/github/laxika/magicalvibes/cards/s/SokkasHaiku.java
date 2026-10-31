@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -31,12 +30,12 @@ public class SokkasHaiku extends Card {
                         StackEntryType.BATTLE_SPELL
                 )),
                 "Target must be a spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addSpellEffect(new CounterSpellEffect());
 
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
-        addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.CONTROLLER));
+        addSpellEffect(new DrawCardEffect());
+        addSpellEffect(new MillEffect(3, MillRecipient.CONTROLLER));
 
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

@@ -16,7 +16,7 @@ public class SpellweaverVolute extends Card {
     public SpellweaverVolute() {
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.INSTANT), GraveyardSearchScope.ALL_GRAVEYARDS));
-        addEffect(EffectSlot.SPELL, new SpellweaverVoluteEnterEffect());
+        addSpellEffect(new SpellweaverVoluteEnterEffect());
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellweaverVoluteTriggerEffect());
     }
 }

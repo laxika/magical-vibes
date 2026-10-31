@@ -29,7 +29,7 @@ class CardFreezeTest {
         assertThatThrownBy(() -> card.setName("Other")).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("frozen");
         assertThatThrownBy(() -> card.setPower(3)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1)))
+        assertThatThrownBy(() -> card.addSpellEffect(new DrawCardEffect(1)))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> card.addActivatedAbility(null)).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(card::clearRuntimeSpellTargets).isInstanceOf(IllegalStateException.class);
@@ -64,7 +64,7 @@ class CardFreezeTest {
         original.setMinimumXValue(1);
         original.setTokenCard(true);
         original.addSpellmorph("{2}");
-        original.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        original.addSpellEffect(new DrawCardEffect(1));
         original.freeze();
 
         Card copy = original.createRuntimeCopy();
@@ -74,13 +74,13 @@ class CardFreezeTest {
         assertThat(copy.getMinimumXValue()).isEqualTo(1);
         assertThat(copy.isTokenCard()).isTrue();
         assertThat(copy.isSpellmorph()).isTrue();
-        assertThat(copy.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(copy.getCastingCostsAndSpellEffects()).hasSize(1);
 
         // Copy is mutable and its mutations don't reach the original
         copy.setName("Rewritten");
-        copy.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        copy.addSpellEffect(new DrawCardEffect(2));
         assertThat(original.getName()).isEqualTo("Modal Spell");
-        assertThat(original.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(original.getCastingCostsAndSpellEffects()).hasSize(1);
         assertThatThrownBy(() -> original.setName("X")).isInstanceOf(IllegalStateException.class);
     }
 
@@ -121,6 +121,6 @@ class CardFreezeTest {
         assertThat(instanceFields)
                 .as("Card's instance field count changed — copy the new field in Card(Card source) "
                         + "and update this expected count")
-                .isEqualTo(79);
+                .isEqualTo(80);
     }
 }

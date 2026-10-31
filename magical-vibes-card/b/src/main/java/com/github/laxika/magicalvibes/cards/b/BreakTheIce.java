@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -32,7 +31,7 @@ public class BreakTheIce extends Card {
     public BreakTheIce() {
         PermanentPredicate qualifyingLand = qualifyingLand();
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{B}{B}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new DestroyTargetPermanentEffect(qualifyingLand),
                 new DestroyAllPermanentsEffect(qualifyingLand)));

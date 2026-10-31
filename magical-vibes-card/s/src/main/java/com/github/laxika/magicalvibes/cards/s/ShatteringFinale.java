@@ -16,12 +16,11 @@ public class ShatteringFinale extends Card {
 
     public ShatteringFinale() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(1));
+        addCastingCost(new CasualtyCost(1));
 
         PermanentPredicate opponentCreature = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL,
-                        new PerpetuallyBoostTargetCreatureEffect(0, -3, opponentCreature));
+                .addSpellEffect(new PerpetuallyBoostTargetCreatureEffect(0, -3, opponentCreature));
     }
 }

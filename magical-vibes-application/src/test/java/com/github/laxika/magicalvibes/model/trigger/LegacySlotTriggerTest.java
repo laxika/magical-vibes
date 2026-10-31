@@ -14,14 +14,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LegacySlotTriggerTest {
 
     @ParameterizedTest
-    @EnumSource(value = EffectSlot.class, names = {"SPELL", "STATIC", "COMMAND_ZONE_STATIC"})
-    void slotsOfSpellAndStaticAbilitiesAreNotTriggers(EffectSlot slot) {
+    @EnumSource(value = EffectSlot.class, names = {"STATIC", "COMMAND_ZONE_STATIC"})
+    void slotsOfStaticAbilitiesAreNotTriggers(EffectSlot slot) {
         assertThatThrownBy(() -> new LegacySlotTrigger(slot)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @ParameterizedTest
     @EnumSource(value = EffectSlot.class, mode = EnumSource.Mode.EXCLUDE,
-            names = {"SPELL", "STATIC", "COMMAND_ZONE_STATIC"})
+            names = {"STATIC", "COMMAND_ZONE_STATIC"})
     void everyOtherSlotIsALegacyTrigger(EffectSlot slot) {
         LegacySlotTrigger trigger = new LegacySlotTrigger(slot);
 

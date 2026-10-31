@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -20,8 +19,8 @@ public class VampiricTouch extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT));
+        )).addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT));
 
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        addSpellEffect(new GainLifeEffect(2));
     }
 }

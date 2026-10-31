@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,8 +18,7 @@ import java.util.Set;
 public class QuantumMisalignment extends Card {
 
     public QuantumMisalignment() {
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.SPELL,
-                CreateTokenCopyOfTargetPermanentEffect.nonLegendary(
+        target(TargetFilters.creatureYouControl()).addSpellEffect(CreateTokenCopyOfTargetPermanentEffect.nonLegendary(
                         List.of(), Set.of(), null, null, Map.of()));
     }
 }

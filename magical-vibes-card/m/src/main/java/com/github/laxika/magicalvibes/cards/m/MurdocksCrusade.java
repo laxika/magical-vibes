@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -29,8 +28,8 @@ public class MurdocksCrusade extends Card {
                 new PermanentMinManaValuePredicate(4)
         ));
 
-        addEffect(EffectSlot.SPELL, new TeamworkCost(4));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addCastingCost(new TeamworkCost(4));
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Street Justice — Exile target creature with toughness 4 or greater",
                         new ExileTargetPermanentEffect(),

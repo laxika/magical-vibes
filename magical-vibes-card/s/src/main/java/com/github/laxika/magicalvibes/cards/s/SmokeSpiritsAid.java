@@ -24,8 +24,7 @@ public class SmokeSpiritsAid extends Card {
 
     public SmokeSpiritsAid() {
         targetUpTo(new XValue(), TargetFilters.creature(), 100)
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(smokeBlessingToken(), PlayerRelation.ANY));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(smokeBlessingToken(), PlayerRelation.ANY));
     }
 
     private static CreateTokenEffect smokeBlessingToken() {

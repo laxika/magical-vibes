@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class SkitteringInvasion extends Card {
 
     public SkitteringInvasion() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 5, "Eldrazi Spawn", 0, 1, null, null,
                 List.of(CardSubtype.ELDRAZI, CardSubtype.SPAWN), Set.of(), Set.of(), false, false,
                 Map.of(), List.of(new ActivatedAbility(

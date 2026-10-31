@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,8 +11,8 @@ public class AzoriusPloy extends Card {
     public AzoriusPloy() {
         setAllowSharedTargets(true);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures());
+                .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatToTargetCreatures());
+                .addSpellEffect(PreventDamageEffect.allCombatToTargetCreatures());
     }
 }

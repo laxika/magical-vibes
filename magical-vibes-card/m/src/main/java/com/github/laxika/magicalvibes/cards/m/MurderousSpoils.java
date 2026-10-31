@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetNonblackCreatureAndGainControlOfAttachedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -22,6 +21,6 @@ public class MurderousSpoils extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))))),
                 "Target must be a nonblack creature"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetNonblackCreatureAndGainControlOfAttachedEquipmentEffect());
+                .addSpellEffect(new DestroyTargetNonblackCreatureAndGainControlOfAttachedEquipmentEffect());
     }
 }

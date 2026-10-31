@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -32,7 +31,7 @@ public class MizziumMortars extends Card {
 
     public MizziumMortars() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{R}{R}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new DealDamageToTargetCreatureEffect(4),
                 new MassDamageEffect(4, false, false,

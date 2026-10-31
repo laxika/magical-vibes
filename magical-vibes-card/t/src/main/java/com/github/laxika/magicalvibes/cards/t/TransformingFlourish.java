@@ -33,7 +33,7 @@ public class TransformingFlourish extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be an artifact or creature an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.NONE,
                 new ExileTopUntilNonlandMayCastWithoutPayingManaCostEffect(),
                 ThenEffectRecipient.TARGET_CONTROLLER,

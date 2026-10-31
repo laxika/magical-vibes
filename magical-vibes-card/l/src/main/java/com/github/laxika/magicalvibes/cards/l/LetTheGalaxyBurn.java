@@ -25,7 +25,7 @@ public class LetTheGalaxyBurn extends Card {
                 new PermanentNotPredicate(new PermanentEnteredBattlefieldThisTurnPredicate())));
 
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(
+        addSpellEffect(new MassDamageEffect(
                 new Sum(new XValue(), new Fixed(2)), false, false, creatureNotEnteredThisTurn));
     }
 }

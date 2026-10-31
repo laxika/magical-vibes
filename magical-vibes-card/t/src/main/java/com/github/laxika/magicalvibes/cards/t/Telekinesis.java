@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -15,8 +14,8 @@ public class Telekinesis extends Card {
 
     public Telekinesis() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures())
-                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.TARGET, 2));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures())
+                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET, 2));
     }
 }

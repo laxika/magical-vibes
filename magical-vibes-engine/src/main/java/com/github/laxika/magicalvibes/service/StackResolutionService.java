@@ -1155,7 +1155,7 @@ public class StackResolutionService {
             }
 
             Card enteringCharacteristics = characteristics;
-            if (card.getSelectedRoomDoor() != null && characteristics.getSpellTargets().isEmpty()) {
+            if (card.getSelectedRoomDoor() != null && characteristics.getTargetGroups().isEmpty()) {
                 enteringCharacteristics = characteristics.createRuntimeCopy();
                 enteringCharacteristics.appendSpellTargetingForEffectsFrom(entry.getPhysicalCard(),
                         entry.getPhysicalCard().getEffects(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED));

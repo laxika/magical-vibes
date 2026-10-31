@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -20,8 +19,8 @@ public class CerebralVortex extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2, false, true))
-                .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
+        )).addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true))
+                .addSpellEffect(new DealDamageToPlayersEffect(
                         new CardsDrawnThisTurn(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
     }
 }

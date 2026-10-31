@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseNumberAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -17,8 +16,8 @@ import java.util.List;
 public class ByInvitationOnly extends Card {
 
     public ByInvitationOnly() {
-        addEffect(EffectSlot.SPELL, new ChooseNumberAtResolutionEffect(13));
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new ChooseNumberAtResolutionEffect(13));
+        addSpellEffect(new SacrificePermanentsEffect(
                 new XValue(),
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
                 SacrificeRecipient.EACH_PLAYER).withSimultaneousChoices());

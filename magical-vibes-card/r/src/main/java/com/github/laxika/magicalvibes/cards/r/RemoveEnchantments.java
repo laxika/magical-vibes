@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -54,7 +53,7 @@ public class RemoveEnchantments extends Card {
                 aurasOnAttackingOpponentCreatures
         ));
 
-        addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        addSpellEffect(SequenceEffect.of(
                 ReturnToHandEffect.allPermanentsMatching(returnFilter),
                 new DestroyAllPermanentsEffect(destroyFilter)
         ));

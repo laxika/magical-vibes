@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,7 +18,7 @@ import java.util.List;
 public class RuinInTheirWake extends Card {
 
     public RuinInTheirWake() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryAndConditionalEffect(
+        addSpellEffect(new SearchLibraryAndConditionalEffect(
                 CardPredicateUtils.basicLand(),
                 LibrarySearchDestination.HAND,
                 CardPredicateUtils.basicLand(),

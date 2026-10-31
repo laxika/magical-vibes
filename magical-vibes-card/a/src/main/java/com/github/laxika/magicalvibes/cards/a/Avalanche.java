@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -23,6 +22,6 @@ public class Avalanche extends Card {
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW)
                 )),
                 "Targets must be snow lands"
-        ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), 100).addSpellEffect(new DestroyEachTargetPermanentEffect());
     }
 }

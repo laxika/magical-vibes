@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -16,7 +15,7 @@ import java.util.Set;
 public class SpoilsOfBlood extends Card {
 
     public SpoilsOfBlood() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Horror",
                 new CreatureDeathsThisTurn(CountScope.ANY_PLAYER),
                 new CreatureDeathsThisTurn(CountScope.ANY_PLAYER),

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -14,7 +13,7 @@ public class MindWarp extends Card {
 
     public MindWarp() {
         // Look at target player's hand and choose X cards from it; that player discards them.
-        addEffect(EffectSlot.SPELL, ChooseCardsFromTargetHandEffect.lookAtTargetHand(
+        addSpellEffect(ChooseCardsFromTargetHandEffect.lookAtTargetHand(
                 new XValue(), HandChoiceDestination.DISCARD));
     }
 }

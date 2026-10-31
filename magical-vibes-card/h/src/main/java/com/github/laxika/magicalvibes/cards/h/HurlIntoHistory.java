@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -31,8 +30,8 @@ public class HurlIntoHistory extends Card {
                 "Target must be an artifact or creature spell."
         ))
                 // Record the target's mana value before countering it, then discover X.
-                .addEffect(EffectSlot.SPELL, new RecordTargetSpellManaValueAsXEffect())
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new DiscoverEffect(new XValue()));
+                .addSpellEffect(new RecordTargetSpellManaValueAsXEffect())
+                .addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new DiscoverEffect(new XValue()));
     }
 }

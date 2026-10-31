@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsDownToFewestEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesDownToFewestEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,8 +23,8 @@ public class RestoreBalance extends Card {
                 "Suspend 6\u2014{W}",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(6));
-        addEffect(EffectSlot.SPELL, new EachPlayerSacrificesDownToFewestEffect(new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.SPELL, new EachPlayerSacrificesDownToFewestEffect(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new EachPlayerDiscardsDownToFewestEffect());
+        addSpellEffect(new EachPlayerSacrificesDownToFewestEffect(new PermanentIsLandPredicate()));
+        addSpellEffect(new EachPlayerSacrificesDownToFewestEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new EachPlayerDiscardsDownToFewestEffect());
     }
 }

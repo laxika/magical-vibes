@@ -20,7 +20,7 @@ public class Avenge extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControllerWasAttackedByPlayerLastTurn(),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentIsCreaturePredicate(), new GainLifeEffect(new EventValue())));
     }
 }

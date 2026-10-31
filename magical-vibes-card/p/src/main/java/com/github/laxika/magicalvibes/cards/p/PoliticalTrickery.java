@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +27,7 @@ public class PoliticalTrickery extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                         new PermanentIsLandPredicate())),
                 "Second target must be a land an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
+        )).addSpellEffect(new ExchangeControlOfTargetPermanentsEffect(
                 new PermanentIsLandPredicate(), false));
     }
 }

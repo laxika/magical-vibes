@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,16 +17,16 @@ public class QuickDraw extends Card {
 
     public QuickDraw() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 1))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent."
         ))
-                .addEffect(EffectSlot.SPELL, new RemoveKeywordEffect(Keyword.FIRST_STRIKE,
+                .addSpellEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE,
                         GrantScope.TARGET_PLAYERS_CREATURES))
-                .addEffect(EffectSlot.SPELL, new RemoveKeywordEffect(Keyword.DOUBLE_STRIKE,
+                .addSpellEffect(new RemoveKeywordEffect(Keyword.DOUBLE_STRIKE,
                         GrantScope.TARGET_PLAYERS_CREATURES));
     }
 }

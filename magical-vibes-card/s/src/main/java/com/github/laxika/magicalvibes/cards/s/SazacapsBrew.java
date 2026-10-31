@@ -26,17 +26,17 @@ public class SazacapsBrew extends Card {
 
     public SazacapsBrew() {
         addEffect(EffectSlot.STATIC, new GiftEffect(1));
-        addEffect(EffectSlot.SPELL, new DiscardCardTypeCost(null, null));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addCastingCost(new DiscardCardTypeCost(null, null));
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2, false, true));
+        )).addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true));
 
         targetWhenGiftPromised(TargetFilters.creatureYouControl(), 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new BoostTargetCreatureEffect(2, 0)));
     }
 

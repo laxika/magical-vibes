@@ -22,7 +22,7 @@ public class MirrorRoomFracturedRealm extends Card {
     public MirrorRoomFracturedRealm() {
         setRoomDoorManaCosts(List.of("{2}{U}", "{5}{U}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Mirror Room", List.of())
                         .withManaCost("{2}{U}"),
                 new ChooseOneEffect.ChooseOneOption("Fractured Realm", List.of())

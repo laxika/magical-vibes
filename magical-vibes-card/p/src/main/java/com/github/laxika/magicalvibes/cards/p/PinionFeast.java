@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -24,7 +23,7 @@ public class PinionFeast extends Card {
                 )),
                 "Target must be a creature with flying"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new BolsterEffect(2));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new BolsterEffect(2));
     }
 }

@@ -29,7 +29,7 @@ public class Overload extends Card {
                 new PermanentMaxManaValuePredicate(5)));
 
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
-        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.artifact()).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new ConditionalEffect(new TargetPermanentMatches(artifactWithManaValueTwoOrLess),
                         new DestroyTargetPermanentEffect()),

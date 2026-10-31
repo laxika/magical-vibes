@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
@@ -18,8 +17,8 @@ import java.util.Set;
 public class OneDozenEyes extends Card {
 
     public OneDozenEyes() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{G}{G}{G}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{G}{G}{G}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 5/5 green Beast creature token",
                         new CreateTokenEffect("Beast", 5, 5, CardColor.GREEN, List.of(CardSubtype.BEAST),

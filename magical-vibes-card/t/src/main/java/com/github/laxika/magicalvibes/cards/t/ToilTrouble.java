@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,7 +50,7 @@ public class ToilTrouble extends Card {
         CardEffect trouble = new DealDamageToPlayersEffect(
                 new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Toil — Target player draws two cards and loses 2 life",
                         toil,

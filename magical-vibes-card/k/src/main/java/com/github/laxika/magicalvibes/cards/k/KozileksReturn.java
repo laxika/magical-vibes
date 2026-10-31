@@ -25,7 +25,7 @@ import java.util.List;
 public class KozileksReturn extends Card {
 
     public KozileksReturn() {
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+        addSpellEffect(new MassDamageEffect(2));
 
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(

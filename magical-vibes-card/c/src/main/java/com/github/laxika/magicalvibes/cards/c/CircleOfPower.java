@@ -40,10 +40,10 @@ public class CircleOfPower extends Card {
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD),
                 Set.of(), Set.of(), tokenEffects);
 
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(2));
-        addEffect(EffectSlot.SPELL, wizardToken);
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(1, 0, wizard));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES, wizard));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new LoseLifeEffect(2));
+        addSpellEffect(wizardToken);
+        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 0, wizard));
+        addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES, wizard));
     }
 }

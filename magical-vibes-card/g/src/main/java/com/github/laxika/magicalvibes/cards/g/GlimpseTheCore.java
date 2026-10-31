@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -26,7 +25,7 @@ public class GlimpseTheCore extends Card {
                 new CardSupertypePredicate(CardSupertype.BASIC),
                 new CardSubtypePredicate(CardSubtype.FOREST)));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Search your library for a basic Forest card, put that card onto the battlefield tapped, then shuffle",
                         new SearchLibraryEffect(basicForest, LibrarySearchDestination.BATTLEFIELD_TAPPED)),

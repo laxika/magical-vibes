@@ -16,7 +16,7 @@ public class SavageOffensive extends Card {
 
     public SavageOffensive() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new BoostAllOwnCreaturesEffect(1, 1)));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new BoostAllOwnCreaturesEffect(1, 1)));
     }
 }

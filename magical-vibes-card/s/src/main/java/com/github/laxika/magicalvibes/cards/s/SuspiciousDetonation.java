@@ -19,6 +19,6 @@ public class SuspiciousDetonation extends Card {
                 new ControllerSacrificedArtifactThisTurn(), new ReduceOwnCastCostEffect(new Fixed(3))));
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
     }
 }

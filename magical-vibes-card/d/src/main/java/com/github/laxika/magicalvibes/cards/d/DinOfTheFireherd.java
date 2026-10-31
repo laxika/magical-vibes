@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -27,7 +26,7 @@ public class DinOfTheFireherd extends Card {
     public DinOfTheFireherd() {
         // Create a 5/5 black and red Elemental creature token. Resolved first, so the token counts
         // itself toward both the black- and red-creature counts below.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Elemental", 5, 5, CardColor.BLACK,
                 Set.of(CardColor.BLACK, CardColor.RED), List.of(CardSubtype.ELEMENTAL)));
 
@@ -38,14 +37,14 @@ public class DinOfTheFireherd extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+                .addSpellEffect(new SacrificePermanentsEffect(
                         new PermanentCount(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)))),
                                 CountScope.CONTROLLER),
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
                         SacrificeRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+                .addSpellEffect(new SacrificePermanentsEffect(
                         new PermanentCount(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentColorInPredicate(Set.of(CardColor.RED)))),

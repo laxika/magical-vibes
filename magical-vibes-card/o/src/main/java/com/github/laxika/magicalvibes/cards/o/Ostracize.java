@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,6 +18,6 @@ public class Ostracize extends Card {
     public Ostracize() {
         target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(1, List.of(), List.of(CardType.CREATURE), HandChoiceDestination.DISCARD));
+                .addSpellEffect(new ChooseCardsFromTargetHandEffect(1, List.of(), List.of(CardType.CREATURE), HandChoiceDestination.DISCARD));
     }
 }

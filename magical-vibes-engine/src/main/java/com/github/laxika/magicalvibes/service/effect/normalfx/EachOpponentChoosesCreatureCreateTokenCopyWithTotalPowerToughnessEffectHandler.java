@@ -160,6 +160,7 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
         copy.clearRulesTextAndAbilities();
         copy.removeKeyword(Keyword.CHANGELING);
         copy.removeKeyword(Keyword.DEVOID);
+        copy.addCastingCostsAndSpellEffectsFrom(original, effect -> true);
         for (EffectSlot slot : EffectSlot.values()) {
             for (var registration : original.getEffectRegistrations(slot)) {
                 CardEffect effect = registration.effect();

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -20,8 +19,8 @@ import java.util.List;
 public class FinalShowdown extends Card {
 
     public FinalShowdown() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{1}", "{1}", "{3}{W}{W}")));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{1}", "{1}", "{3}{W}{W}")));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "All creatures lose all abilities until end of turn",
                         new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES, EffectDuration.UNTIL_END_OF_TURN)),

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class RedemptorDreadnought extends Card {
 
     public RedemptorDreadnought() {
-        addEffect(EffectSlot.SPELL, new ExileAnyNumberOfCardsFromGraveyardCost(
+        addCastingCost(new ExileAnyNumberOfCardsFromGraveyardCost(
                 new CardTypePredicate(CardType.CREATURE), 0, 1));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new SourceExiledCardsThreshold(1),

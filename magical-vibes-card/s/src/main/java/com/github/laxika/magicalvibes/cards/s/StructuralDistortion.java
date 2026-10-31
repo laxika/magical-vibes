@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
@@ -24,7 +23,7 @@ public class StructuralDistortion extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+        )).addSpellEffect(new ExileTargetPermanentThenEffect(
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER),
                 ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }

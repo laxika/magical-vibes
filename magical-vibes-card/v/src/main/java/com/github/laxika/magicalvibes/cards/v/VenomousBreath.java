@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTargetAtEndOfCombatEffect;
 
 /**
@@ -15,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTarge
 public class VenomousBreath extends Card {
 
     public VenomousBreath() {
-        addEffect(EffectSlot.SPELL, new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect());
+        addSpellEffect(new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect());
     }
 }

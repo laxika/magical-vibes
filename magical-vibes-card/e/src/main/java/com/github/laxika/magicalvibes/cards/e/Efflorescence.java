@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,8 +20,8 @@ public class Efflorescence extends Card {
         // Put two +1/+1 counters on target creature. Infusion — if you gained life this turn,
         // that creature also gains trample and indestructible until end of turn.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
+                .addSpellEffect(new ConditionalEffect(
                         new GainedLifeThisTurn(),
                         new GrantKeywordEffect(
                                 Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),

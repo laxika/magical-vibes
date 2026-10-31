@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
@@ -25,7 +24,7 @@ import java.util.Set;
 public class WelcomeTheDead extends Card {
 
     public WelcomeTheDead() {
-        addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        addSpellEffect(SequenceEffect.of(
                 new DrawCardEffect(2),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER),
                 new LoseLifeEffect(2),

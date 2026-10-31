@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.r.Ribbons;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 
 /**
@@ -20,7 +19,7 @@ public class CutRibbons extends Card {
         setBackFaceCard(new Ribbons());
 
         // Cut deals 4 damage to target creature.
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +20,6 @@ public class EpicDownfall extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentMinManaValuePredicate(3))),
                 "Target must be a creature with mana value 3 or greater"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        )).addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

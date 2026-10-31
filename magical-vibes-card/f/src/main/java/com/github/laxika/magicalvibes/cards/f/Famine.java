@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -14,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class Famine extends Card {
 
     public Famine() {
-        addSimultaneousEffects(EffectSlot.SPELL,
-                new MassDamageEffect(3),
+        addSimultaneousSpellEffects(new MassDamageEffect(3),
                 new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER));
     }
 }

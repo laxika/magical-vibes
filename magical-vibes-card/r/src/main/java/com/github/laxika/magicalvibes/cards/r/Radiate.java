@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -31,6 +30,6 @@ public class Radiate extends Card {
                                 new StackEntryTargetsAnyPlayerPredicate()))
                 )),
                 "Target must be an instant or sorcery spell that targets only one permanent or player."
-        )).addEffect(EffectSlot.SPELL, CopySpellForEachOtherPermanentOrPlayerEffect.permanentsAndPlayersOnly());
+        )).addSpellEffect(CopySpellForEachOtherPermanentOrPlayerEffect.permanentsAndPlayersOnly());
     }
 }

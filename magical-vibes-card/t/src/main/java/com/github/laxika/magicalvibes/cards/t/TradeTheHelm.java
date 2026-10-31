@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +27,7 @@ public class TradeTheHelm extends Card {
                         artifactOrCreature,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Second target must be an artifact or creature an opponent controls"))
-                .addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
+                .addSpellEffect(new ExchangeControlOfTargetPermanentsEffect(
                         artifactOrCreature, false));
         addCycling("{2}");
     }

@@ -2275,8 +2275,8 @@ public class DeathTriggerCollectorService {
         // "up to one target" (minimum 0): the controller may decline by choosing themselves.
         int targetIndex = match.permanent().getCard().getEffectTargetIndex(conditional);
         boolean optionalTarget = targetIndex >= 0
-                && targetIndex < match.permanent().getCard().getSpellTargets().size()
-                && match.permanent().getCard().getSpellTargets().get(targetIndex).getMinTargets() == 0;
+                && targetIndex < match.permanent().getCard().getTargetGroups().size()
+                && match.permanent().getCard().getTargetGroups().get(targetIndex).getMinTargets() == 0;
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(),
                 new ArrayList<>(List.of(triggerEffect)), playerTargetOnly,
@@ -4497,10 +4497,10 @@ public class DeathTriggerCollectorService {
 
     private TargetFilter targetFilterForDeathTrigger(Card sourceCard, CardEffect effect) {
         int targetIndex = sourceCard.getEffectTargetIndex(effect);
-        if (targetIndex < 0 || targetIndex >= sourceCard.getSpellTargets().size()) {
+        if (targetIndex < 0 || targetIndex >= sourceCard.getTargetGroups().size()) {
             return null;
         }
-        return sourceCard.getSpellTargets().get(targetIndex).getFilter();
+        return sourceCard.getTargetGroups().get(targetIndex).getFilter();
     }
 
     private void logOpponentCreatureDeath(TriggerMatchContext match) {

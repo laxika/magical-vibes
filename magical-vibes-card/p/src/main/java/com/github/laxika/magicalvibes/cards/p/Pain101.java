@@ -15,8 +15,8 @@ public class Pain101 extends Card {
 
     public Pain101() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH, new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)));
     }
 }

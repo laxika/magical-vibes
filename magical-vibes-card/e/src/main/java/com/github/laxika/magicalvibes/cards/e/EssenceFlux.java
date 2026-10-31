@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -27,7 +26,6 @@ public class EssenceFlux extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL,
-                FlickerEffect.flickerTargetWithBonusCounters(CardSubtype.SPIRIT, 1));
+        )).addSpellEffect(FlickerEffect.flickerTargetWithBonusCounters(CardSubtype.SPIRIT, 1));
     }
 }

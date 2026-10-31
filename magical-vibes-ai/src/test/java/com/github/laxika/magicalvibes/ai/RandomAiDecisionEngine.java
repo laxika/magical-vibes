@@ -570,13 +570,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     gameData, aiPlayer.getId(), card);
             if (validDiscardIndices != null) {
                 if (validDiscardIndices.isEmpty()) {
-                    boolean hasDiscardOrPay = card.getEffects(EffectSlot.SPELL).stream()
+                    boolean hasDiscardOrPay = card.getCastingCosts().stream()
                             .anyMatch(DiscardCardOrPayManaCost.class::isInstance);
                     if (!hasDiscardOrPay) {
                         telemetry.recordSkip("spell: discard cost unpayable", card.getName());
                         continue;
                     }
-                } else if (card.getEffects(EffectSlot.SPELL).stream()
+                } else if (card.getCastingCosts().stream()
                         .filter(DiscardCardTypeCost.class::isInstance)
                         .map(DiscardCardTypeCost.class::cast)
                         .anyMatch(cost -> cost.count() > 1)) {
@@ -873,7 +873,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
      * Finds an ExileCardFromGraveyardCost in the card's SPELL effects, if any.
      */
     private ExileCardFromGraveyardCost findExileGraveyardCost(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof ExileCardFromGraveyardCost cost) {
                 return cost;
             }
@@ -904,7 +904,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
      * meaning X must match the graveyard target's mana value (e.g. Postmortem Lunge).
      */
     private boolean hasRequiresManaValueEqualsX(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .anyMatch(e -> e instanceof ReturnCardFromGraveyardEffect rge && rge.requiresManaValueEqualsX());
     }
 
@@ -913,7 +913,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
      * by the spell's chosen X (e.g. Stir the Grave).
      */
     private boolean hasRequiresManaValueAtMostX(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .anyMatch(e -> e instanceof ReturnCardFromGraveyardEffect rge
                         && rge.requiresManaValueAtMostX());
     }
@@ -931,7 +931,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
      */
     private UUID selectRandomSacrificeTarget(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (!(effect instanceof CostEffect cost)
                     || effect instanceof SacrificeMultiplePermanentsCost
                     || effect instanceof TapMultiplePermanentsCost) {
@@ -963,7 +963,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
      */
     private List<UUID> selectRandomMultiSacrificeTargets(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof TapMultiplePermanentsCost tapCost
                     && tapCost.count() instanceof Fixed fixed) {
                 List<Permanent> matching = new ArrayList<>(battlefield.stream()

@@ -14,8 +14,8 @@ import java.util.List;
 public class TrainOfThought extends Card {
 
     public TrainOfThought() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{U}")));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{U}")));
+        addSpellEffect(new DrawCardEffect(1));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{1}{U}"));
     }
 }

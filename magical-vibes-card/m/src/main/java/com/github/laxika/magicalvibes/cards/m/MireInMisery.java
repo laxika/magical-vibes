@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -15,7 +14,7 @@ import java.util.List;
 public class MireInMisery extends Card {
 
     public MireInMisery() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new SacrificePermanentsEffect(
                 1,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

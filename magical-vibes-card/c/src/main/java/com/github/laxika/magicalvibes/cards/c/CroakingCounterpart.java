@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,8 +25,7 @@ public class CroakingCounterpart extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.FROG))
                 )),
                 "Target must be a non-Frog creature"
-        )).addEffect(EffectSlot.SPELL,
-                CreateTokenCopyOfTargetPermanentEffect.withCreatureSubtypeOverride(
+        )).addSpellEffect(CreateTokenCopyOfTargetPermanentEffect.withCreatureSubtypeOverride(
                         List.of(CardSubtype.FROG), CardColor.GREEN, 1, 1));
         addCastingOption(new FlashbackCast("{3}{G}{U}"));
     }

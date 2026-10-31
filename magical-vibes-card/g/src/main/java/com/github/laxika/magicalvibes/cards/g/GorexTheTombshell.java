@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class GorexTheTombshell extends Card {
 
     public GorexTheTombshell() {
-        addEffect(EffectSlot.SPELL,
-                new ExileAnyNumberOfCardsFromGraveyardCost(new CardTypePredicate(CardType.CREATURE), 2));
+        addCastingCost(new ExileAnyNumberOfCardsFromGraveyardCost(new CardTypePredicate(CardType.CREATURE), 2));
         PutRandomCardExiledWithSourceIntoOwnersHandEffect returnExiledCard =
                 new PutRandomCardExiledWithSourceIntoOwnersHandEffect();
         addEffect(EffectSlot.ON_ATTACK, returnExiledCard);

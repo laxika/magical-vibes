@@ -23,7 +23,7 @@ public class EgonGodOfDeath extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ForcedCostOrElseEffect(
                 new ExileNCardsFromGraveyardCost(2, null),
                 List.of(new SacrificeSelfEffect(), new DrawCardEffect(1))));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Egon, God of Death", List.of())
                         .withManaCost("{2}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Throne of Death", List.of())

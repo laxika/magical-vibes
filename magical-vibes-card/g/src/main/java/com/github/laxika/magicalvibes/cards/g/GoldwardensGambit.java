@@ -30,6 +30,6 @@ public class GoldwardensGambit extends Card {
                 CardType.CREATURE, 5, "Rebel", 2, 2, CardColor.RED, null,
                 List.of(CardSubtype.REBEL), Set.of(), Set.of(), false, false,
                 Map.of(), List.of(), false, false, false, 0, Set.of(Keyword.HASTE));
-        addEffect(EffectSlot.SPELL, new CreateTokensAndAttachEquipmentEffect(rebels));
+        addSpellEffect(new CreateTokensAndAttachEquipmentEffect(rebels));
     }
 }

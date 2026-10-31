@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -18,10 +17,10 @@ import java.util.List;
 public class WidowsBite extends Card {
 
     public WidowsBite() {
-        addEffect(EffectSlot.SPELL, new TeamworkCost(3));
+        addCastingCost(new TeamworkCost(3));
 
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.allWhen(List.of(
+        addSpellEffect(ChooseOneEffect.allWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains deathtouch until end of turn",
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),

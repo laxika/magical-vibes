@@ -25,8 +25,7 @@ public class ColossalGrowth extends Card {
         // Target creature gets +3/+3 until end of turn.
         // If this spell was kicked, instead that creature gets +4/+4 and gains trample and haste
         // until end of turn.
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new ConditionalReplacementEffect(new Kicked(),
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                         new BoostTargetCreatureEffect(3, 3),
                         SequenceEffect.of(
                                 new BoostTargetCreatureEffect(4, 4),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -37,7 +36,7 @@ public class OrzhovCharm extends Card {
         // • Return target creature you control and all Auras you control attached to it to their owner's hand.
         // • Destroy target creature and you lose life equal to its toughness.
         // • Return target creature card with mana value 1 or less from your graveyard to the battlefield.
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature you control and all Auras you control attached to it to their owner's hand",
                         new ReturnTargetAndAttachedMatchingToHandEffect(

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BenedictionOfMoons extends Card {
 
     public BenedictionOfMoons() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        addSpellEffect(new GainLifeEffect(2));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
         addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new GainLifeEffect(2));
     }

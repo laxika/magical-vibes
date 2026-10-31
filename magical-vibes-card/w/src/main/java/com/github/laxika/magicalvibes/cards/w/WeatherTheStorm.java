@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class WeatherTheStorm extends Card {
 
     public WeatherTheStorm() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        addSpellEffect(new GainLifeEffect(3));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

@@ -36,10 +36,10 @@ public class PeterParker extends Card {
                 "{1}{G}{W}{U}: Transform Peter Parker. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Peter Parker", List.of())
                         .withManaCost("{1}{W}"),
-                new ChooseOneEffect.ChooseOneOption("Amazing Spider-Man", backFace.getEffects(EffectSlot.SPELL))
+                new ChooseOneEffect.ChooseOneOption("Amazing Spider-Man", backFace.getSpellEffects())
                         .withManaCost("{1}{G}{W}{U}")
         )));
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.DisorientingChoiceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,6 +28,6 @@ public class DisorientingChoice extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(new PermanentPredicateTargetFilter(artifactOrEnchantmentOpponentControls,
                 "Target must be an artifact or enchantment an opponent controls"), 0, 99)
-                .addEffect(EffectSlot.SPELL, new DisorientingChoiceEffect());
+                .addSpellEffect(new DisorientingChoiceEffect());
     }
 }

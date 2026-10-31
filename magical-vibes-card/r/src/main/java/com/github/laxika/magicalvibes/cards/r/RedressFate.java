@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MiracleCast;
@@ -21,7 +20,7 @@ public class RedressFate extends Card {
         // Return all artifact and enchantment cards from your graveyard to the battlefield.
         // Miracle {3}{W}
         addCastingOption(new MiracleCast("{3}{W}"));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .chooseAuraAttachment(true)
                 .filter(new CardAnyOfPredicate(List.of(

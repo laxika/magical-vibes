@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -17,7 +16,7 @@ import java.util.List;
 public class ReachTheHorizon extends Card {
 
     public ReachTheHorizon() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 new Fixed(2),
                 new CardAnyOfPredicate(List.of(
                         CardPredicateUtils.basicLand(),

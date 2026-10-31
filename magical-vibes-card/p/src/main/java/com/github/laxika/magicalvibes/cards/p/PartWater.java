@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,7 +15,6 @@ public class PartWater extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 1000).addEffect(EffectSlot.SPELL,
-                new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.TARGET));
+        ), 1000).addSpellEffect(new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.TARGET));
     }
 }

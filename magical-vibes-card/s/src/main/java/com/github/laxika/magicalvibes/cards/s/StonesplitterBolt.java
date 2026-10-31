@@ -38,7 +38,7 @@ public class StonesplitterBolt extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new Scaled(new XValue(), 2))

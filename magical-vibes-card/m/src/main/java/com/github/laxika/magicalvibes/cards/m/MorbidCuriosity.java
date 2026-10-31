@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -16,7 +15,7 @@ import java.util.List;
 public class MorbidCuriosity extends Card {
 
     public MorbidCuriosity() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()
@@ -27,6 +26,6 @@ public class MorbidCuriosity extends Card {
                 true,
                 false
         ));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new XValue()));
+        addSpellEffect(new DrawCardEffect(new XValue()));
     }
 }

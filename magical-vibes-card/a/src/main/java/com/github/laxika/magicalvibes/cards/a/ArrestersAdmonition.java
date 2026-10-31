@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ArrestersAdmonition extends Card {
 
     public ArrestersAdmonition() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new AllOf(java.util.List.of(new WasCast(), new ControllerMainPhase())), new DrawCardEffect(1)));
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new ConditionalEffect(new AllOf(java.util.List.of(new WasCast(), new ControllerMainPhase())), new DrawCardEffect(1)));
     }
 }

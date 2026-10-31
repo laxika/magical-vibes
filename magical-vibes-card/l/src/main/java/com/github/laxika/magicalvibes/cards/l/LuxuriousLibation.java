@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -18,8 +17,8 @@ public class LuxuriousLibation extends Card {
 
     public LuxuriousLibation() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(new XValue(), new XValue()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(new XValue(), new XValue()));
+        addSpellEffect(new CreateTokenEffect(
                 "Citizen", 1, 1, CardColor.GREEN,
                 Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN)));
     }

@@ -17,7 +17,7 @@ public class RunawayGrowth extends Card {
 
     public RunawayGrowth() {
         // Starting intensity 1.
-        addEffect(EffectSlot.SPELL, new InitializeSourceIntensityEffect(1));
+        addSpellEffect(new InitializeSourceIntensityEffect(1));
 
         // Whenever enchanted land is tapped for mana, its controller adds green mana equal to this
         // enchantment's intensity. Then this enchantment intensifies by 1.

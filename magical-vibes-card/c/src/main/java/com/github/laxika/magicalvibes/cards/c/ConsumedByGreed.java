@@ -35,9 +35,9 @@ public class ConsumedByGreed extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        )).addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new DrawCardForTargetPlayerEffect(1, false, true)))
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+                .addSpellEffect(new SacrificePermanentsEffect(
                         1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
@@ -45,7 +45,7 @@ public class ConsumedByGreed extends Card {
                         SacrificeRecipient.TARGET_PLAYER));
         targetWhenGiftPromised(new GraveyardCardPredicateTargetFilter(
                 creatureCards, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(creatureCards)

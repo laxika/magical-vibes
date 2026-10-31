@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -15,7 +14,7 @@ import java.util.List;
 public class YoureAmbushedOnTheRoad extends Card {
 
     public YoureAmbushedOnTheRoad() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Make a Retreat — Return target creature you control to its owner's hand",
                         ReturnToHandEffect.target(),

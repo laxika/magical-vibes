@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -21,6 +20,6 @@ public class Foil extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new DiscardCardCastingCost(new CardSubtypePredicate(CardSubtype.ISLAND), "an Island card"),
                 new DiscardCardCastingCost(null, "another card"))));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

@@ -12,6 +12,6 @@ public class InescapableBlaze extends Card {
 
     public InescapableBlaze() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(6));
+        addSpellEffect(new DealDamageToAnyTargetEffect(6));
     }
 }

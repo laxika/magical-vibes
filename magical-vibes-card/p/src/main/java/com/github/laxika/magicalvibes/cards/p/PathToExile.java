@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -70,7 +69,7 @@ public class PathToExile extends Card {
         // Exile target creature. Its controller may search their library for a basic land card,
         // put that card onto the battlefield tapped, then shuffle.
         // The controller first chooses whether to search; declining neither searches nor shuffles.
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ExileTargetPermanentThenEffect(
                 new MayEffect(new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSupertypePredicate(CardSupertype.BASIC),

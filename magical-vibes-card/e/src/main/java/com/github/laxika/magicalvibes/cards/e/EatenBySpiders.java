@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -24,7 +23,7 @@ public class EatenBySpiders extends Card {
                 )),
                 "Target must be a creature with flying"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new DestroyAttachmentsOnTargetCreatureEffect(false, true));
     }
 }

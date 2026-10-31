@@ -38,7 +38,7 @@ public class RoadsideBlowout extends Card {
         target(new PermanentPredicateTargetFilter(
                 opponentCreatureOrVehicle,
                 "Target must be a creature or Vehicle an opponent controls"))
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

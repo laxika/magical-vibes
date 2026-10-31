@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnE
 public class EmergentGrowth extends Card {
 
     public EmergentGrowth() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(5, 5));
-        addEffect(EffectSlot.SPELL, new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BE_BLOCKED));
+        addSpellEffect(new BoostTargetCreatureEffect(5, 5));
+        addSpellEffect(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BE_BLOCKED));
     }
 }

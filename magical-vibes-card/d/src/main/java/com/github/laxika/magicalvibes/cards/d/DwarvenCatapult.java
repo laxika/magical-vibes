@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,7 +18,6 @@ public class DwarvenCatapult extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL,
-                new DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect(new XValue()));
+        )).addSpellEffect(new DealDamageDividedEvenlyAmongCreaturesTargetControlsEffect(new XValue()));
     }
 }

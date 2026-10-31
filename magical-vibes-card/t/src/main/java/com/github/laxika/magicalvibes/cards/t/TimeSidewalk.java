@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class TimeSidewalk extends Card {
 
     public TimeSidewalk() {
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ControllerExtraTurnEffect(1));
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
                 new ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect(),
                 "Exile this card from your opening hand?"

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantChosenCardCharacteristicsEffect;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class WoodlandInvestigation extends Card {
 
     public WoodlandInvestigation() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryAndConditionalEffect(
+        addSpellEffect(new SearchLibraryAndConditionalEffect(
                 CardPredicateUtils.basicLand(),
                 LibrarySearchDestination.HAND,
                 new CardTruePredicate(),

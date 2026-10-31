@@ -22,6 +22,6 @@ public class Combust extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE)),
                 "Target must be a white or blue creature."
         ))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5, true));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(5, true));
     }
 }

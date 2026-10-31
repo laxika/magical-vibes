@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -13,7 +12,7 @@ public class RenewingTouch extends Card {
 
     public RenewingTouch() {
         // Shuffle any number of target creature cards from your graveyard into your library.
-        addEffect(EffectSlot.SPELL, new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
+        addSpellEffect(new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.ANY_NUMBER, false, true));
     }

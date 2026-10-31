@@ -19,8 +19,8 @@ public class RatOut extends Card {
 
     public RatOut() {
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, -1));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(-1, -1));
+        addSpellEffect(new CreateTokenEffect(
                 1,
                 "Rat",
                 1,

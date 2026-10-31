@@ -21,9 +21,9 @@ public class DreadmawsIre extends Card {
 
     public DreadmawsIre() {
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -20,7 +19,7 @@ import java.util.List;
 public class KaylasReconstruction extends Card {
 
     public KaylasReconstruction() {
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsEffect(
+        addSpellEffect(new LookAtTopCardsEffect(
                 new Fixed(7), new XValue(),
                 new CardAllOfPredicate(List.of(
                         new CardAnyOfPredicate(List.of(

@@ -33,6 +33,6 @@ public class OfOneMind extends Card {
                         new ControlsPermanent(humanCreature),
                         new ControlsPermanent(nonHumanCreature))),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

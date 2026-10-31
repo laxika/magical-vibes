@@ -16,7 +16,7 @@ public class ResoundingSilence extends Card {
     public ResoundingSilence() {
         // Exile target attacking creature.
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
 
         // Cycling {5}{G}{W}{U} ({5}{G}{W}{U}, Discard this card: Draw a card.) — discard cost is intrinsic.
         // "When you cycle this card, exile up to two target attacking creatures." The targets are

@@ -8279,7 +8279,7 @@ public class GameData {
             entry.setBestowOriginalCard(transformedBestow);
         }
         if (convertSpellState && isSpellEntry(entry.getEntryType())) {
-            entry.convertToBombardmentMissileSpell(missile.getEffects(EffectSlot.SPELL));
+            entry.convertToBombardmentMissileSpell(missile.getCastingCostsAndSpellEffects());
         }
     }
 
@@ -9215,7 +9215,7 @@ public class GameData {
     }
 
     private int startingIntensity(Card card) {
-        return Math.max(card.getStartingIntensity(), card.getEffects(EffectSlot.SPELL).stream()
+        return Math.max(card.getStartingIntensity(), card.getSpellEffects().stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect.class::cast)
                 .mapToInt(com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect::amount)

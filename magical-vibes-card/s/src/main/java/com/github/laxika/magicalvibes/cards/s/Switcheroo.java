@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +15,7 @@ public class Switcheroo extends Card {
         // if both end up under the same controller the exchange does nothing (CR 701.12b).
         target(TargetFilters.creature());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
+                .addSpellEffect(new ExchangeControlOfTargetPermanentsEffect(
                         new PermanentIsCreaturePredicate(), false, false));
     }
 }

@@ -11,7 +11,7 @@ public class DeathPulse extends Card {
 
     public DeathPulse() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-4, -4));
+                .addSpellEffect(new BoostTargetCreatureEffect(-4, -4));
 
         addCycling("{1}{B}{B}");
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_CYCLED,

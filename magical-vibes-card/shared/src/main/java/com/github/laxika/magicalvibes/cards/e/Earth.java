@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -19,7 +18,7 @@ public class Earth extends Card {
 
     public Earth() {
         // Earth deals X damage to each creature without flying.
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(
+        addSpellEffect(new MassDamageEffect(
                 0, true, false,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
 

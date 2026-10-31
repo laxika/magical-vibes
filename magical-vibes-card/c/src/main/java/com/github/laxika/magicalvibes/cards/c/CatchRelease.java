@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -31,7 +30,7 @@ public class CatchRelease extends Card {
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
         CardEffect releaseHalf = new EachPlayerSacrificesOneOfEachTypeEffect();
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Catch — Gain control of target permanent until end of turn. Untap it. It gains haste until end of turn",
                         catchHalf,

@@ -732,7 +732,7 @@ public class GameActionAvailabilityService {
         // Spells whose declared targets are all optional ("up to one/N target …") can always be
         // cast by choosing zero targets, even if no legal target exists (e.g. Stress Dream).
         List<CardEffect> targetingSpellEffects = EffectResolution.resolveEffects(
-                card.getEffects(EffectSlot.SPELL), false, null);
+                card.getCastingCostsAndSpellEffects(), false, null);
         boolean needsSpellCastTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         Integer maxXValue = maxAnnounceableX(card, pool);
@@ -762,7 +762,7 @@ public class GameActionAvailabilityService {
                         && (returnEffect.xScaled() || returnEffect.minTargets() == 0)
                         || effect instanceof DealDividedDamageEffect dividedDamage
                         && dividedDamage.maxTargets() == 0);
-        boolean allTargetsOptional = allEffectTargetsOptional || !card.getSpellTargets().isEmpty()
+        boolean allTargetsOptional = allEffectTargetsOptional || !card.getTargetGroups().isEmpty()
                 && (card.getMinTargets() == 0
                 || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0
                 || externalXCanBeZero);
@@ -781,7 +781,7 @@ public class GameActionAvailabilityService {
         }
 
         // MTG rule 601.2b: can't cast if additional cost requiring N graveyard cards can't be paid
-        ExileNCardsFromGraveyardCost exileCost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).stream()
+        ExileNCardsFromGraveyardCost exileCost = (ExileNCardsFromGraveyardCost) card.getCastingCosts().stream()
                 .filter(ExileNCardsFromGraveyardCost.class::isInstance)
                 .findFirst().orElse(null);
         if (exileCost != null && !exileCost.onlyFromGraveyard()) {
@@ -796,7 +796,7 @@ public class GameActionAvailabilityService {
             }
         }
 
-        ExileNCardsFromGraveyardOrPayManaCost exileOrPayCost = card.getEffects(EffectSlot.SPELL).stream()
+        ExileNCardsFromGraveyardOrPayManaCost exileOrPayCost = card.getCastingCosts().stream()
                 .filter(ExileNCardsFromGraveyardOrPayManaCost.class::isInstance)
                 .map(ExileNCardsFromGraveyardOrPayManaCost.class::cast)
                 .findFirst().orElse(null);
@@ -815,7 +815,7 @@ public class GameActionAvailabilityService {
         }
 
         SacrificePermanentAndReturnTargetCardsFromGraveyardEffect sacrificeAndReturnEffect =
-                card.getEffects(EffectSlot.SPELL).stream()
+                card.getSpellEffects().stream()
                         .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
                         .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
                         .findFirst().orElse(null);
@@ -1044,7 +1044,7 @@ public class GameActionAvailabilityService {
      */
     private static List<ManaCost> castableCosts(Card card) {
         ManaCost printed = card.getParsedManaCost();
-        ChooseOneEffect modal = card.getEffects(EffectSlot.SPELL).stream()
+        ChooseOneEffect modal = card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
@@ -1542,7 +1542,7 @@ public class GameActionAvailabilityService {
     /** Checks the mana plus artifact/creature contributions for a spell's Waterbend cost. */
     private boolean canPayWaterbendCost(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                          ManaCost spellCost, int additionalGenericCost) {
-        WaterbendCost waterbend = card.getEffects(EffectSlot.SPELL).stream()
+        WaterbendCost waterbend = card.getCastingCosts().stream()
                 .filter(WaterbendCost.class::isInstance)
                 .map(WaterbendCost.class::cast)
                 .findFirst()
@@ -2051,7 +2051,7 @@ public class GameActionAvailabilityService {
             // For GraveyardCast with ExileNCardsFromGraveyardCost, check that enough
             // qualifying cards exist in the graveyard (excluding the card being cast)
             if (isGraveyardCast) {
-                ExileNCardsFromGraveyardCost exileNCost = card.getEffects(EffectSlot.SPELL).stream()
+                ExileNCardsFromGraveyardCost exileNCost = card.getCastingCosts().stream()
                         .filter(ExileNCardsFromGraveyardCost.class::isInstance)
                         .map(ExileNCardsFromGraveyardCost.class::cast)
                         .findFirst().orElse(null);

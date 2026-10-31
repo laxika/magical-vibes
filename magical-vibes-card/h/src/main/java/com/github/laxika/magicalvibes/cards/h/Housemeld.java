@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Housemeld extends Card {
 
     public Housemeld() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndStepEffect());
+        target(TargetFilters.creature()).addSpellEffect(new ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndStepEffect());
     }
 }

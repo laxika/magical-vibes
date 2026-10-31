@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -19,6 +18,6 @@ public class StolenGoods extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Must target an opponent"
-        )).addEffect(EffectSlot.SPELL, new ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect());
+        )).addSpellEffect(new ExileTopUntilNonlandOfTargetOpponentMayCastThisTurnEffect());
     }
 }

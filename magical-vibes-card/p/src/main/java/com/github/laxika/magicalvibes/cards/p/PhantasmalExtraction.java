@@ -30,8 +30,7 @@ public class PhantasmalExtraction extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent."
-        )).addEffect(EffectSlot.SPELL,
-                new ExileNonlandCardFromTargetHandOrGraveyardEffect(
+        )).addSpellEffect(new ExileNonlandCardFromTargetHandOrGraveyardEffect(
                         false,
                         false,
                         new CardAllOfPredicate(List.of(

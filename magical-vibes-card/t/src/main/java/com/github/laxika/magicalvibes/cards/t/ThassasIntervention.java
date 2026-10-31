@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -16,7 +15,7 @@ import java.util.List;
 public class ThassasIntervention extends Card {
 
     public ThassasIntervention() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top X cards of your library. Put up to two of them into your hand and the rest on the bottom of your library in a random order",
                         LookAtTopCardsEffect.chooseUpToNToHandRestOnBottomRandom(new XValue(), 2)),

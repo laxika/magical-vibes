@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
@@ -25,7 +24,7 @@ public class FaebloomTrick extends Card {
         var opponentCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
-        addEffect(EffectSlot.SPELL, new CreateTokenThenEffect(
+        addSpellEffect(new CreateTokenThenEffect(
                 new CreateTokenEffect(2, "Faerie", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), Set.of()),
                 new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature)));

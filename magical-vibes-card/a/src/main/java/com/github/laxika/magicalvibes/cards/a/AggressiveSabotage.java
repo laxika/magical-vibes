@@ -24,10 +24,8 @@ public class AggressiveSabotage extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ));
-        targetPlayer.addEffect(EffectSlot.SPELL,
-                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
-        targetPlayer.addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new Kicked(),
+        targetPlayer.addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        targetPlayer.addSpellEffect(new ConditionalEffect(new Kicked(),
                         new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER)));
     }
 }

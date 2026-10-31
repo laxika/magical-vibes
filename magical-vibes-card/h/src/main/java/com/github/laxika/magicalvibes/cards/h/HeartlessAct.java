@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromTargetEffect;
@@ -27,7 +26,7 @@ public class HeartlessAct extends Card {
             new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ANY))));
 
     public HeartlessAct() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature with no counters on it",
                         new DestroyTargetPermanentEffect(CREATURE_WITHOUT_COUNTERS),

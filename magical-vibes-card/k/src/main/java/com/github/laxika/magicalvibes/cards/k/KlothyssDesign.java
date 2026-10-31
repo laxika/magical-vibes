@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -12,6 +11,6 @@ public class KlothyssDesign extends Card {
 
     public KlothyssDesign() {
         DevotionToColor greenDevotion = new DevotionToColor(ManaColor.GREEN);
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(greenDevotion, greenDevotion));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(greenDevotion, greenDevotion));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class SpaceTimeAnomaly extends Card {
 
     public SpaceTimeAnomaly() {
-        addEffect(EffectSlot.SPELL, new MillEffect(new ControllerLifeTotal(), MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(new ControllerLifeTotal(), MillRecipient.TARGET_PLAYER));
     }
 }

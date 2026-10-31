@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -28,8 +27,7 @@ public class TandemTakedown extends Card {
         ));
 
         var sourceTargets = target(TargetFilters.creatureYouControl(), 0, 2);
-        sourceTargets.addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0));
-        victimTarget.addEffect(EffectSlot.SPELL,
-                new TargetCreatureDealsPowerDamageToAnyTargetEffect(1, 0, false));
+        sourceTargets.addSpellEffect(new BoostTargetCreatureEffect(1, 0));
+        victimTarget.addSpellEffect(new TargetCreatureDealsPowerDamageToAnyTargetEffect(1, 0, false));
     }
 }

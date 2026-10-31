@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class SolarBlast extends Card {
 
     public SolarBlast() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
         addCycling("{1}{R}{R}");
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(

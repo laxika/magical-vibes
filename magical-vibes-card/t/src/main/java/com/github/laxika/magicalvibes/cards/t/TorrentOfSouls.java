@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,7 +28,7 @@ public class TorrentOfSouls extends Card {
     public TorrentOfSouls() {
         // Return up to one target creature card from your graveyard to the battlefield
         // if {B} was spent to cast this spell.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -43,10 +42,10 @@ public class TorrentOfSouls extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED),
                         new BoostAllCreaturesEffect(2, 0, EachPermanentScope.TARGET_PLAYER)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET_PLAYERS_CREATURES)));
     }

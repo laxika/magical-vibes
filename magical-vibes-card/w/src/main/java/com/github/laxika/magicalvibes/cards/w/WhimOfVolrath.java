@@ -20,7 +20,7 @@ public class WhimOfVolrath extends Card {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{2}"));
         // The buyback return is queued ahead of the text change: the text change suspends resolution
         // on a player choice, and effects queued behind a suspending effect are not resumed.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
-        addEffect(EffectSlot.SPELL, new ChangeColorTextEffect(true, true, false, true));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ChangeColorTextEffect(true, true, false, true));
     }
 }

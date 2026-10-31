@@ -29,13 +29,10 @@ public class SurgeToVictory extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(
                 instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL,
-                        new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(
+                .addSpellEffect(new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(
                                 instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL,
-                        new BoostAllOwnCreaturesEffect(new TargetCardsManaValueSum(), new Fixed(0)))
-                .addEffect(EffectSlot.SPELL,
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostAllOwnCreaturesEffect(new TargetCardsManaValueSum(), new Fixed(0)))
+                .addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                                 EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                                 new CopyImprintedCardAndMayCastCopyEffect(false)));
     }

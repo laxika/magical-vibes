@@ -26,7 +26,7 @@ public class JenniferWalters extends Card {
                 List.of(new TransformSelfEffect()),
                 "{3}{G}{W}{W}: Transform Jennifer Walters. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Jennifer Walters", List.of())
                         .withManaCost("{1}{W}"),
                 new ChooseOneEffect.ChooseOneOption("The Sensational She-Hulk", List.of())

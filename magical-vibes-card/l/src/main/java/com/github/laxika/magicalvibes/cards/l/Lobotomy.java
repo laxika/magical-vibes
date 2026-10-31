@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealHandChooseCardFromItAndExileAllCopiesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -18,7 +17,7 @@ public class Lobotomy extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new RevealHandChooseCardFromItAndExileAllCopiesEffect(
+        )).addSpellEffect(new RevealHandChooseCardFromItAndExileAllCopiesEffect(
                 new CardNotPredicate(CardPredicateUtils.basicLand()), true));
     }
 }

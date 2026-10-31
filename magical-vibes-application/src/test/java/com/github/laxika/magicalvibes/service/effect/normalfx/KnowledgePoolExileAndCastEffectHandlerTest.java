@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -321,7 +320,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
             void noLegalTargetKeepsCardExiled() {
                 Player player = new Player(player1Id, "Player1");
                 Card chosenCard = createSorceryCard("Vindicate");
-                chosenCard.addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                chosenCard.addSpellEffect(new ExileTargetPermanentEffect());
                 UUID kpId = UUID.randomUUID();
 
                 gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
@@ -344,7 +343,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
             void playerOnlySpellDoesNotOfferCreatureTargets() {
                 Player player = new Player(player1Id, "Player1");
                 Card chosenCard = createSorceryCard("Traumatize");
-                chosenCard.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
+                chosenCard.addSpellEffect(new MillHalfLibraryEffect(false));
                 UUID kpId = UUID.randomUUID();
 
                 gd.queueInteraction(new PendingKnowledgePoolCast(kpId));

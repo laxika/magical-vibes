@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,6 +19,6 @@ public class SeaGodsScorn extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsEnchantmentPredicate())),
                         "Targets must be creatures or enchantments"), 0, 3)
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
     }
 }

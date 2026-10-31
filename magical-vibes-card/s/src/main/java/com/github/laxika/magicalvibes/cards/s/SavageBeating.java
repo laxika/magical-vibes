@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
@@ -26,8 +25,8 @@ public class SavageBeating extends Card {
 
     public SavageBeating() {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.YOUR_COMBAT);
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{1}{R}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{1}{R}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain double strike until end of turn",
                         new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE), GrantScope.OWN_CREATURES)),

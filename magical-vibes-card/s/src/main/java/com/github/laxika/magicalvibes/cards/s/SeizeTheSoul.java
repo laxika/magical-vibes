@@ -22,8 +22,8 @@ public class SeizeTheSoul extends Card {
 
     public SeizeTheSoul() {
         target(nonWhiteNonBlackCreature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.whiteSpirit(1));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(CreateTokenEffect.whiteSpirit(1));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
         target(nonWhiteNonBlackCreature())
                 .addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new DestroyTargetPermanentEffect())

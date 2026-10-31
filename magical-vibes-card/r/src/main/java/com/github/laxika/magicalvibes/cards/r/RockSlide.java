@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -22,7 +21,7 @@ public class RockSlide extends Card {
     public RockSlide() {
         // Rock Slide deals X damage divided as you choose among any number of target
         // attacking or blocking creatures without flying.
-        addEffect(EffectSlot.SPELL, new DealDividedDamageEffect(
+        addSpellEffect(new DealDividedDamageEffect(
                 new XValue(),
                 null,
                 DivisionMode.CHOSEN,

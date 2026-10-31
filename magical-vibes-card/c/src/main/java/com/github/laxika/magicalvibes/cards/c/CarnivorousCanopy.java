@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
@@ -33,7 +32,7 @@ public class CarnivorousCanopy extends Card {
                         ))
                 )),
                 "Target must be an artifact, enchantment, or creature with flying."
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.NONE,
                 new ProliferateEffect(),
                 ThenEffectRecipient.CONTROLLER,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesOwnedCreaturesIntoLibraryThenRevealsCreatureEffect;
 
 @CardRegistration(set = "NEC", collectorNumber = "19")
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesOwnedCreatu
 public class CollisionOfRealms extends Card {
 
     public CollisionOfRealms() {
-        addEffect(EffectSlot.SPELL, new EachPlayerShufflesOwnedCreaturesIntoLibraryThenRevealsCreatureEffect());
+        addSpellEffect(new EachPlayerShufflesOwnedCreaturesIntoLibraryThenRevealsCreatureEffect());
     }
 }

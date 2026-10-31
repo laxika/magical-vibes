@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -18,7 +17,7 @@ import java.util.List;
 public class GlacialRevelation extends Card {
 
     public GlacialRevelation() {
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsEffect(
+        addSpellEffect(new LookAtTopCardsEffect(
                 new Fixed(6),
                 new Fixed(6),
                 new CardAllOfPredicate(List.of(

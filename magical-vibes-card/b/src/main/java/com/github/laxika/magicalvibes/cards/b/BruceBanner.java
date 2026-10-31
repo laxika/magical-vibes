@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.t.TheIncredibleHulk;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -32,7 +31,7 @@ public class BruceBanner extends Card {
                 List.of(new TransformSelfEffect()),
                 "{2}{R}{R}{G}{G}: Transform Bruce Banner. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Bruce Banner", List.of())
                         .withManaCost("{U}"),
                 new ChooseOneEffect.ChooseOneOption("The Incredible Hulk", List.of())

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -22,7 +21,7 @@ public class SpectacularShowdown extends Card {
 
     public SpectacularShowdown() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{R}{R}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new PutCountersOnTargetPermanentThenReflexiveEffect(
                         CounterType.DOUBLE_STRIKE, 1, null,

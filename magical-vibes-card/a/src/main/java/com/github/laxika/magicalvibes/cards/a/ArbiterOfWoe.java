@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class ArbiterOfWoe extends Card {
 
     public ArbiterOfWoe() {
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        addCastingCost(new SacrificeCreatureCost());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),

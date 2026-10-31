@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class Resupply extends Card {
 
     public Resupply() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(6));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new GainLifeEffect(6));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

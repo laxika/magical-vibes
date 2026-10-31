@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndMayCastRandomSideboardCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,6 +11,6 @@ public class WormholeWarp extends Card {
 
     public WormholeWarp() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new ExileTargetCreatureAndMayCastRandomSideboardCardEffect());
+                .addSpellEffect(new ExileTargetCreatureAndMayCastRandomSideboardCardEffect());
     }
 }

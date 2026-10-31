@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -43,6 +42,6 @@ public class PowerSink extends Card {
                                 new PermanentIsLandPredicate(),
                                 new PermanentHasManaAbilityPredicate()))),
                 new TargetPlayerLosesAllUnspentManaEffect());
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false, ifNotPaid));
+        addSpellEffect(new CounterUnlessPaysEffect(0, true, false, ifNotPaid));
     }
 }

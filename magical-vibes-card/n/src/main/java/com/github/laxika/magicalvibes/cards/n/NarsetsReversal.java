@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
@@ -23,7 +22,7 @@ public class NarsetsReversal extends Card {
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell."
         ))
-                .addEffect(EffectSlot.SPELL, new CopySpellEffect())
-                .addEffect(EffectSlot.SPELL, new ReturnTargetSpellToHandEffect());
+                .addSpellEffect(new CopySpellEffect())
+                .addSpellEffect(new ReturnTargetSpellToHandEffect());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -30,7 +29,7 @@ public class OkibaSalvage extends Card {
                 new ControlsPermanent(new PermanentIsArtifactPredicate()),
                 new ControlsPermanent(new PermanentIsEnchantmentPredicate())));
 
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(creatureOrVehicle)
                 .targetGraveyard(true)

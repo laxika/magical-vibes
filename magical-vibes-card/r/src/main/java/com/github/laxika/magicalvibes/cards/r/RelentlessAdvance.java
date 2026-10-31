@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -37,14 +36,12 @@ public class RelentlessAdvance extends Card {
         // three +1/+1 counters on an Army you control (you must choose one if you control several) and
         // make it a Zombie. The token is created before the counter choice so doubled token creation
         // (Parallel Lives) still leaves the player choosing among the new Armies.
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(new NotCondition(controlsArmy),
+        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsArmy),
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,
                                 List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of(),
                                 false, false, Map.of(), List.of(), false, false, false, 0, Set.of())));
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(controlsArmy,
+        addSpellEffect(ConditionalEffect.unless(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3), army, false, true),

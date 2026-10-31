@@ -35,12 +35,12 @@ public class BraveTheWilds extends Card {
                 "an artifact, enchantment, or token"
         ));
         targetWhenKicked(TargetFilters.landYouControl(), 0, 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new AnimatePermanentsEffect(
                                 3, 3,
                                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
                                 null, Set.of(),
                                 GrantScope.TARGET, EffectDuration.PERMANENT)));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(CardPredicateUtils.basicLand()));
+        addSpellEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand()));
     }
 }

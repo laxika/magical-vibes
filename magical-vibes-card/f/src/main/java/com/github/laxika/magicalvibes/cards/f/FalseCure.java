@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 public class FalseCure extends Card {
 
     public FalseCure() {
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_ANY_PLAYER_GAINS_LIFE,
                 new LoseLifeEffect(new Scaled(new EventValue(), 2), LoseLifeRecipient.TRIGGERING_PLAYER)));
     }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -15,7 +14,6 @@ public class BurglarPlot extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.SHARE_CARD_TYPE);
         target(TargetFilters.nonlandPermanent());
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL,
-                        ExchangeControlOfTargetPermanentsEffect.withSharedCardType(nonland));
+                .addSpellEffect(ExchangeControlOfTargetPermanentsEffect.withSharedCardType(nonland));
     }
 }

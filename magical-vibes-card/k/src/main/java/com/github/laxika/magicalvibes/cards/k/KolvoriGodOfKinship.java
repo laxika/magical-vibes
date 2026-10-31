@@ -50,7 +50,7 @@ public class KolvoriGodOfKinship extends Card {
                         )))
         ), "{1}{G}, {T}: Look at the top six cards of your library. You may reveal a legendary creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Kolvori, God of Kinship", List.of())
                         .withManaCost("{2}{G}{G}"),
                 new ChooseOneEffect.ChooseOneOption("The Ringhart Crest", List.of())

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -154,7 +153,7 @@ public class RaceEvaluator {
     int getBurnToFaceDamage(Card card) {
         int maxDamage = 0;
 
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof ChooseOneEffect coe) {
                 for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
                     for (CardEffect modeEffect : option.effects()) {

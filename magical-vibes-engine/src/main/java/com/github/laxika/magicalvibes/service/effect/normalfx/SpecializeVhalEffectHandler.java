@@ -65,7 +65,7 @@ public class SpecializeVhalEffectHandler implements NormalEffectHandlerBean {
     public void enqueueSpecializedTrigger(GameData gameData, StackEntry entry, Card specialized,
                                           CardColor color, int removedStudyCounters) {
         CardEffect specializedTrigger = VhalEagerScholar.specializedTrigger(color);
-        if (specialized.getSpellTargets().isEmpty()) {
+        if (specialized.getTargetGroups().isEmpty()) {
             enqueueNonTargetingTrigger(gameData, entry, specialized, specializedTrigger, removedStudyCounters);
         } else {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(

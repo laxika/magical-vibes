@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastT
 public class DualStrike extends Card {
 
     public DualStrike() {
-        addEffect(EffectSlot.SPELL, new CopyNextInstantOrSorceryCastThisTurnEffect(4));
+        addSpellEffect(new CopyNextInstantOrSorceryCastThisTurnEffect(4));
         addCastingOption(new ForetellCast("{R}"));
     }
 }

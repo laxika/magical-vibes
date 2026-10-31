@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 public class HeadlessSkaab extends Card {
 
     public HeadlessSkaab() {
-        addEffect(EffectSlot.SPELL, new ExileNCardsFromGraveyardCost(1, CardType.CREATURE));
+        addCastingCost(new ExileNCardsFromGraveyardCost(1, CardType.CREATURE));
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
     }
 }

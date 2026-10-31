@@ -16,8 +16,8 @@ public class ScoutTheWilderness extends Card {
 
     public ScoutTheWilderness() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(2)));
+        addSpellEffect(new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(2)));
     }
 }

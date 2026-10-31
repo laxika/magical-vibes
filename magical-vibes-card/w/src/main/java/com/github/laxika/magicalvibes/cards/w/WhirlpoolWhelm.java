@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,10 +23,10 @@ public class WhirlpoolWhelm extends Card {
         // finds nothing and no-ops), declining or losing the clash falls through to the bounce — which
         // is exactly the "on top of its owner's library instead" replacement.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ClashEffect(null))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new WonClash(),
+                .addSpellEffect(new ClashEffect(null))
+                .addSpellEffect(new ConditionalEffect(new WonClash(),
                         new MayEffect(new PutTargetOnTopOfLibraryEffect(),
                                 "You may put that creature on top of its owner's library instead.")))
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
     }
 }

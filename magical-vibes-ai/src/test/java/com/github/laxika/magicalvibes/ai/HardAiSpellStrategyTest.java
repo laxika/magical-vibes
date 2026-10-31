@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -576,7 +575,7 @@ class HardAiSpellStrategyTest extends HardAiDecisionEngineTestSupport {
 
         WrathOfGod wrath = new WrathOfGod();
         StackEntry wrathOnStack = new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
-                wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0);
+                wrath.getName(), wrath.getCastingCostsAndSpellEffects(), 0);
         gd.stack.add(wrathOnStack);
         givePlayerIslands(player1, 3);
         harness.setHand(player1, List.of(new Cancel()));
@@ -609,7 +608,7 @@ class HardAiSpellStrategyTest extends HardAiDecisionEngineTestSupport {
         // Opponent casts Doom Blade (MV=2) targeting the Angel
         DoomBlade doomBlade = new DoomBlade();
         StackEntry removalOnStack = new StackEntry(StackEntryType.INSTANT_SPELL, doomBlade, player2.getId(),
-                doomBlade.getName(), doomBlade.getEffects(EffectSlot.SPELL), 0, angel.getId(), null);
+                doomBlade.getName(), doomBlade.getCastingCostsAndSpellEffects(), 0, angel.getId(), null);
         gd.stack.add(removalOnStack);
 
         givePlayerIslands(player1, 3);
@@ -682,7 +681,7 @@ class HardAiSpellStrategyTest extends HardAiDecisionEngineTestSupport {
         // Opponent casts Wrath of God A?€�t the most threatening spell possible against a big board
         WrathOfGod wrath = new WrathOfGod();
         StackEntry wrathOnStack = new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
-                wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0);
+                wrath.getName(), wrath.getCastingCostsAndSpellEffects(), 0);
         gd.stack.add(wrathOnStack);
 
         givePlayerIslands(player1, 3);

@@ -16,6 +16,6 @@ public class DistortedCuriosity extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new OpponentPoisoned(3),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

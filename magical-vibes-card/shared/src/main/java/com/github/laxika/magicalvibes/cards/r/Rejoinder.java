@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -14,8 +13,7 @@ public class Rejoinder extends Card {
 
     public Rejoinder() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new MayEffect(new TapOrUntapTargetPermanentEffect(null, true), "Tap or untap target creature?"))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new MayEffect(new TapOrUntapTargetPermanentEffect(null, true), "Tap or untap target creature?"))
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

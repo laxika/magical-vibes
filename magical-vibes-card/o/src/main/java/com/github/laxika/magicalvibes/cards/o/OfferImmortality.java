@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,7 +15,6 @@ public class OfferImmortality extends Card {
 
     public OfferImmortality() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
     }
 }

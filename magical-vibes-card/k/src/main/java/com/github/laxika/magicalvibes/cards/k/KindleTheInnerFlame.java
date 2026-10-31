@@ -20,11 +20,11 @@ public class KindleTheInnerFlame extends Card {
 
     public KindleTheInnerFlame() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
                         false, false, null, Set.of(Keyword.HASTE), false,
                         Map.of(EffectSlot.END_STEP_TRIGGERED, List.of(new SacrificeSelfEffect()))));
         addCastingOption(new FlashbackCast("{1}{R}"));
-        addEffect(EffectSlot.SPELL, new BeholdCost(CardSubtype.ELEMENTAL, 3));
+        addCastingCost(new BeholdCost(CardSubtype.ELEMENTAL, 3));
     }
 }

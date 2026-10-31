@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -681,7 +680,7 @@ public class GraveyardTargetingService {
 
         int maxTargets = target == null ? 1 : target.maxTargets();
         int minTargets = target == null ? 1 : target.minTargets();
-        if (!card.getSpellTargets().isEmpty()) {
+        if (!card.getTargetGroups().isEmpty()) {
             maxTargets = Math.min(maxTargets, Math.max(1, card.getMaxTargets()));
             minTargets = Math.min(minTargets, card.getMinTargets());
         }
@@ -991,7 +990,7 @@ public class GraveyardTargetingService {
                                                StackEntryType entryType, int xValue) {
         handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, xValue,
                 new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(CardType.CREATURE),
-                "to exile", card.getEffects(EffectSlot.SPELL), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+                "to exile", card.getCastingCostsAndSpellEffects(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
     }
 
     public void handleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -1006,7 +1005,7 @@ public class GraveyardTargetingService {
                                                      StackEntryType entryType, int targetCount,
                                                      CardPredicate filter, String destination) {
         handleExactNGraveyardSpellTargeting(gameData, controllerId, card, entryType, targetCount,
-                filter, destination, card.getEffects(EffectSlot.SPELL), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+                filter, destination, card.getCastingCostsAndSpellEffects(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
     }
 
     public void handleExactNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -1051,7 +1050,7 @@ public class GraveyardTargetingService {
     public void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                                         StackEntryType entryType, CardPredicate filter) {
         handleAnyNumberGraveyardSpellTargeting(gameData, controllerId, card, entryType, filter,
-                card.getEffects(EffectSlot.SPELL));
+                card.getCastingCostsAndSpellEffects());
     }
 
     public void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
@@ -1389,10 +1388,10 @@ public class GraveyardTargetingService {
 
     private GraveyardCardPredicateTargetFilter graveyardTargetFilterFor(Card card, CardEffect effect) {
         int targetGroupIndex = card.getEffectTargetIndex(effect);
-        if (targetGroupIndex < 0 || targetGroupIndex >= card.getSpellTargets().size()) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= card.getTargetGroups().size()) {
             return null;
         }
-        if (card.getSpellTargets().get(targetGroupIndex).getFilter()
+        if (card.getTargetGroups().get(targetGroupIndex).getFilter()
                 instanceof GraveyardCardPredicateTargetFilter filter) {
             return filter;
         }

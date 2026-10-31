@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect;
@@ -23,13 +22,11 @@ public class TwistAllegiance extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL,
-                new ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect(creature, ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.CONTROLLED, creature))
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(
+        )).addSpellEffect(new ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect(creature, ControlDuration.END_OF_TURN))
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.CONTROLLED, creature))
+                .addSpellEffect(new UntapPermanentsEffect(
                         TapUntapScope.TARGET_PLAYERS_PERMANENTS, creature))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES))
-                .addEffect(EffectSlot.SPELL,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET_PLAYERS_CREATURES));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET_PLAYERS_CREATURES));
     }
 }

@@ -202,7 +202,7 @@ public class ExileFreeCastSupport {
             return;
         }
         Card card = face == 1 ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard()) : physicalCard;
-        ChooseOneEffect splitModes = card.getEffects(EffectSlot.SPELL).stream()
+        ChooseOneEffect splitModes = card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
                 .filter(modal -> modal.options().stream().anyMatch(option -> option.manaCost() != null)
                         || (modal.choicesRequired() == 1 && !modal.modesMayRepeat()))
@@ -223,7 +223,7 @@ public class ExileFreeCastSupport {
                 return;
             }
             card = card.createRuntimeCopy();
-            chosenEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            chosenEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
             spellCastingService.prepareModalSpellCast(gameData, playerId, card, chosenEffects, face - 2);
         }
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
@@ -268,14 +268,14 @@ public class ExileFreeCastSupport {
         String playerName = player.getUsername();
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = chosenEffects != null ? chosenEffects
-                : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(card.getCastingCostsAndSpellEffects());
 
         // A spell with no declared target groups (auto-derived targeting) cannot be cast without a target.
         // A modal spell's targets belong to the chosen mode, whose effects were unwrapped above.
         boolean needsTarget = chosenEffects != null
                 ? EffectResolution.needsTarget(spellEffects, List.of(), card.isAuraThatRequiresAttachment(),
                 card.isEnchantPlayer())
-                : EffectResolution.needsTarget(card) || (!card.getSpellTargets().isEmpty()
+                : EffectResolution.needsTarget(card) || (!card.getTargetGroups().isEmpty()
                 && !EffectResolution.targetsOnlyWithEtbAbilities(card));
         List<UUID> firstCandidates = !needsTarget ? List.of()
                 : chosenEffects != null

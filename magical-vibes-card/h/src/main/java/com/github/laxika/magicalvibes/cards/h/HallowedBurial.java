@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutAllPermanentsOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HallowedBurial extends Card {
 
     public HallowedBurial() {
-        addEffect(EffectSlot.SPELL, new PutAllPermanentsOnBottomOfLibraryEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new PutAllPermanentsOnBottomOfLibraryEffect(new PermanentIsCreaturePredicate()));
     }
 }

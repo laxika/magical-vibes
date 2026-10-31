@@ -15,8 +15,8 @@ public class RabidAttack extends Card {
         // Until end of turn, any number of target creatures you control each get +1/+0 and gain
         // "When this creature dies, draw a card." Both effects fan over the shared target list.
         target(TargetFilters.creatureYouControl(), 0, 99)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH, new DrawCardEffect()));
     }
 }

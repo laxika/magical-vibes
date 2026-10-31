@@ -28,8 +28,7 @@ public class ContainmentBreach extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact or enchantment"
-        )).addEffect(EffectSlot.SPELL,
-                new DestroyTargetPermanentWithManaValueConditionalEffect(2, pestToken()));
+        )).addSpellEffect(new DestroyTargetPermanentWithManaValueConditionalEffect(2, pestToken()));
     }
 
     private static CreateTokenEffect pestToken() {

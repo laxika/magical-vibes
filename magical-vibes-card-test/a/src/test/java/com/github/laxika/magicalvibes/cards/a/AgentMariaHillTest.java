@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.h.HelicarrierStrike;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
@@ -119,7 +118,7 @@ class AgentMariaHillTest extends BaseCardTest {
         Card spell = card("Teamwork test spell");
         spell.setType(CardType.INSTANT);
         spell.setManaCost("{0}");
-        spell.addEffect(EffectSlot.SPELL, new TeamworkCost(requiredPower));
+        spell.addCastingCost(new TeamworkCost(requiredPower));
         return spell;
     }
 

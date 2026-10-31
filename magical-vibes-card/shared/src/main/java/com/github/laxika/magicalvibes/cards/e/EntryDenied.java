@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,6 +23,6 @@ public class EntryDenied extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetCreature,
                 "Target must be a creature you don't control with mana value 3 or less"
-        )).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        )).addSpellEffect(ReturnToHandEffect.target());
     }
 }

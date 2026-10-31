@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -30,7 +29,7 @@ public class SylvanReclamation extends Card {
                 "Target must be an artifact or enchantment"
         );
         target(artifactOrEnchantment, 0, 2)
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
 
         addHandActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),

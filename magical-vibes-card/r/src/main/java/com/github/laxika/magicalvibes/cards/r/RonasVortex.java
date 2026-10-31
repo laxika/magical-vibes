@@ -33,7 +33,7 @@ public class RonasVortex extends Card {
                         creatureOrPlaneswalker,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a creature or planeswalker an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 ReturnToHandEffect.target(),
                 new PutTargetOnBottomOfLibraryEffect()

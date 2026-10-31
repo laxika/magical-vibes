@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -22,9 +21,9 @@ import java.util.Set;
 public class EssenceFeed extends Card {
 
     public EssenceFeed() {
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new GainLifeEffect(3));
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 3,
                 "Eldrazi Spawn",

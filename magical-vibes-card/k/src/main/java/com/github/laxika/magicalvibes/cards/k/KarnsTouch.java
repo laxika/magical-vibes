@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -26,7 +25,7 @@ public class KarnsTouch extends Card {
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate())
                 )),
                 "Target must be a noncreature artifact"
-        )).addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+        )).addSpellEffect(new AnimatePermanentsEffect(
                 new TargetManaValue(), new TargetManaValue(),
                 List.of(), Set.of(), null, Set.of(),
                 GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, null

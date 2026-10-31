@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MendingHands extends Card {
 
     public MendingHands() {
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.nextToTarget(4));
+        addSpellEffect(PreventDamageEffect.nextToTarget(4));
     }
 }

@@ -10,7 +10,7 @@ public class ResoundingRoar extends Card {
 
     public ResoundingRoar() {
         // Target creature gets +3/+3 until end of turn. Targeting auto-derived from the effect's TargetSpec.
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
+        addSpellEffect(new BoostTargetCreatureEffect(3, 3));
 
         // Cycling {5}{R}{G}{W} ({5}{R}{G}{W}, Discard this card: Draw a card.)
         // "When you cycle this card, target creature gets +6/+6 until end of turn." The reflexive trigger is

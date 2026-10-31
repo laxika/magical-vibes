@@ -26,7 +26,7 @@ public class MythosOfIlluna extends Card {
                 CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(
                         false, Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(fightEffect)));
 
-        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.permanent()).addSpellEffect(new ConditionalReplacementEffect(
                 new AllConditions(List.of(
                         new ColorSpentToCast(ManaColor.RED),
                         new ColorSpentToCast(ManaColor.GREEN))),

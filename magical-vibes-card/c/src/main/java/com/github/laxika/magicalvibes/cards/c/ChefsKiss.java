@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetSpellAndCopyWithRandomTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -32,7 +31,6 @@ public class ChefsKiss extends Card {
         target(new StackEntryPredicateTargetFilter(
                 spellFilter,
                 "Target must be a spell that targets only a single permanent or player."
-        )).addEffect(EffectSlot.SPELL,
-                new GainControlOfTargetSpellAndCopyWithRandomTargetsEffect(spellFilter));
+        )).addSpellEffect(new GainControlOfTargetSpellAndCopyWithRandomTargetsEffect(spellFilter));
     }
 }

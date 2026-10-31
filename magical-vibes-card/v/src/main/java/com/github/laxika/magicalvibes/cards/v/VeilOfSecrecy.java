@@ -23,8 +23,8 @@ public class VeilOfSecrecy extends Card {
 
     public VeilOfSecrecy() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new MakeCreatureUnblockableEffect());
+                .addSpellEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.TARGET))
+                .addSpellEffect(new MakeCreatureUnblockableEffect());
         // Splice onto Arcane—Return a blue creature you control to its owner's hand. The splice cost
         // has no mana component, so only the return filter is supplied.
         addEffect(EffectSlot.STATIC, SpliceEffect.returning(CardSubtype.ARCANE, new PermanentAllOfPredicate(List.of(

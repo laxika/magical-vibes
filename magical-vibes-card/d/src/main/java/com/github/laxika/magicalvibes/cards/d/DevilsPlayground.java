@@ -20,7 +20,7 @@ public class DevilsPlayground extends Card {
     public DevilsPlayground() {
         Map<EffectSlot, CardEffect> tokenEffects =
                 Map.of(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 4, "Devil", 1, 1, CardColor.RED,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), tokenEffects));
     }

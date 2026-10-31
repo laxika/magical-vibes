@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
@@ -923,7 +924,7 @@ public class SpellCastingService {
         }
 
         List<CardEffect> graveyardEffects = EffectResolution
-                .expandConditionalTargetingEffects(card.getEffects(EffectSlot.SPELL)).stream()
+                .expandConditionalTargetingEffects(card.getCastingCostsAndSpellEffects()).stream()
                 .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .toList();
         if (graveyardEffects.isEmpty()) {
@@ -948,7 +949,7 @@ public class SpellCastingService {
     }
 
     private static boolean isModalSpell(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream().anyMatch(ChooseOneEffect.class::isInstance)
+        return card.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance)
                 || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(ChooseOneEffect.class::isInstance);
     }
 
@@ -1001,7 +1002,7 @@ public class SpellCastingService {
     }
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, int announcedXValue) {
-        var declaredCastTimeAmount = card.getEffects(EffectSlot.SPELL).stream()
+        var declaredCastTimeAmount = card.getSpellEffects().stream()
                 .filter(CastTimeXValueEffect.class::isInstance)
                 .map(CastTimeXValueEffect.class::cast)
                 .map(CastTimeXValueEffect::castTimeXValue)
@@ -1014,7 +1015,7 @@ public class SpellCastingService {
                             controllerId, announcedXValue, card));
         } else {
             DistributeCountersAmongTargetsEffect distribution =
-                    findChosenCounterDistribution(card.getEffects(EffectSlot.SPELL));
+                    findChosenCounterDistribution(card.getCastingCostsAndSpellEffects());
             if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()
                     && distribution != null && !(distribution.total() instanceof Fixed)) {
                 effectiveXValue = amountEvaluationService.evaluate(gameData, distribution.total(),
@@ -1405,8 +1406,8 @@ public class SpellCastingService {
             ReturnTargetCardsFromGraveyardToHandEffect effect, boolean kicked, boolean giftPromised) {
         int requiredTargets = effect.minTargets();
         int targetGroupIndex = card.getEffectTargetIndex(effect);
-        if (targetGroupIndex >= 0 && targetGroupIndex < card.getSpellTargets().size()) {
-            SpellTarget targetGroup = card.getSpellTargets().get(targetGroupIndex);
+        if (targetGroupIndex >= 0 && targetGroupIndex < card.getTargetGroups().size()) {
+            TargetGroup targetGroup = card.getTargetGroups().get(targetGroupIndex);
             if (targetGroup.getFilter() instanceof GraveyardCardPredicateTargetFilter) {
                 int groupMinTargets = giftPromised
                         ? targetGroup.getGiftPromisedMinTargets()
@@ -1535,7 +1536,7 @@ public class SpellCastingService {
     private static Card selectedSplitModeCharacteristics(Card card, int modeEncoding) {
         if (card == null || card.getName() == null || !card.getName().contains(" // ")
                 || card.getSubtypes().contains(CardSubtype.ROOM)) return card;
-        ChooseOneEffect modal = card.getEffects(EffectSlot.SPELL).stream()
+        ChooseOneEffect modal = card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
         if (modal == null) return card;
@@ -1560,7 +1561,7 @@ public class SpellCastingService {
         if (split != card || !card.isModalDoubleFaced()) {
             return split;
         }
-        ChooseOneEffect modal = card.getEffects(EffectSlot.SPELL).stream()
+        ChooseOneEffect modal = card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
         if (modal == null) {
@@ -1990,7 +1991,7 @@ public class SpellCastingService {
     }
 
     private boolean isOpponentChosenTargetSpell(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .filter(GainControlOfTargetEffect.class::isInstance)
                 .map(GainControlOfTargetEffect.class::cast)
                 .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget);
@@ -2050,7 +2051,7 @@ public class SpellCastingService {
     }
 
     private boolean hasRequiredSpellOnStackTargetGroup(Card card, List<CardEffect> targetingSpellEffects) {
-        return card.getSpellTargets().stream()
+        return card.getSpellTargetGroups().stream()
                 .filter(group -> group.getMinTargets() > 0)
                 .anyMatch(group -> targetingSpellEffects.stream()
                         .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
@@ -2059,7 +2060,7 @@ public class SpellCastingService {
 
     private int targetGroupIndexForPosition(Card card, int positionIndex) {
         int positionOffset = 0;
-        for (SpellTarget target : card.getSpellTargets()) {
+        for (TargetGroup target : card.getTargetGroups()) {
             int targetCount = target.getMaxTargets();
             if (positionIndex < positionOffset + targetCount) {
                 return target.getIndex();
@@ -2485,7 +2486,7 @@ public class SpellCastingService {
 
         List<UUID> declaredTargetIds = targetIds != null ? targetIds : List.of();
         if (targetId != null) {
-            if (EffectResolution.needsSpellTarget(adventureCard.getEffects(EffectSlot.SPELL))) {
+            if (EffectResolution.needsSpellTarget(adventureCard.getCastingCostsAndSpellEffects())) {
                 targetLegalityService.validateSpellTargetOnStack(
                         gameData, targetId, adventureCard.getTargetFilter(), playerId, effectiveXValue);
             } else {
@@ -2497,7 +2498,7 @@ public class SpellCastingService {
                 gameData, playerId, adventureCard, gameData.playerManaPools.get(playerId), 0)) {
             throw new IllegalStateException("Card is not playable");
         }
-        List<CardEffect> effects = adventureCard.getEffects(EffectSlot.SPELL);
+        List<CardEffect> effects = adventureCard.getCastingCostsAndSpellEffects();
         if (targetId == null && declaredTargetIds.isEmpty()
                 && (adventureCard.getMinTargets() > 0 || EffectResolution.needsTarget(adventureCard))) {
             throw new IllegalStateException("Spell requires a target");
@@ -2578,7 +2579,7 @@ public class SpellCastingService {
 
         List<UUID> declaredTargetIds = targetIds != null ? targetIds : List.of();
         if (targetId != null) {
-            if (EffectResolution.needsSpellTarget(omenCard.getEffects(EffectSlot.SPELL))) {
+            if (EffectResolution.needsSpellTarget(omenCard.getCastingCostsAndSpellEffects())) {
                 targetLegalityService.validateSpellTargetOnStack(
                         gameData, targetId, omenCard.getTargetFilter(), playerId, effectiveXValue);
             } else {
@@ -2591,7 +2592,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Too many targets");
             }
             for (UUID declaredTargetId : declaredTargetIds) {
-                if (EffectResolution.needsSpellTarget(omenCard.getEffects(EffectSlot.SPELL))) {
+                if (EffectResolution.needsSpellTarget(omenCard.getCastingCostsAndSpellEffects())) {
                     targetLegalityService.validateSpellTargetOnStack(
                             gameData, declaredTargetId, omenCard.getTargetFilter(), playerId, effectiveXValue);
                 } else {
@@ -2604,7 +2605,7 @@ public class SpellCastingService {
                 gameData, playerId, omenCard, gameData.playerManaPools.get(playerId), 0)) {
             throw new IllegalStateException("Card is not playable");
         }
-        List<CardEffect> effects = omenCard.getEffects(EffectSlot.SPELL);
+        List<CardEffect> effects = omenCard.getCastingCostsAndSpellEffects();
         if (targetId == null && declaredTargetIds.isEmpty()
                 && omenCard.getMinTargets() > 0) {
             throw new IllegalStateException("Spell requires a target");
@@ -2655,7 +2656,7 @@ public class SpellCastingService {
         if (attempted != null && attempted.getBackFaceCard() != null
                 && attempted.getCastingOption(AdventureCast.class).isPresent()
                 && targetId == null && (targetIds == null || targetIds.isEmpty())
-                && attempted.getBackFaceCard().getEffects(EffectSlot.SPELL).stream()
+                && attempted.getBackFaceCard().getSpellEffects().stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                         || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect)) {
             // Graveyard targets are chosen through the interactive prompt of the main casting path.
@@ -2729,7 +2730,7 @@ public class SpellCastingService {
         }
 
         List<UUID> declaredTargetIds = targetIds != null ? targetIds : List.of();
-        List<CardEffect> effects = new ArrayList<>(adventureCard.getEffects(EffectSlot.SPELL));
+        List<CardEffect> effects = new ArrayList<>(adventureCard.getCastingCostsAndSpellEffects());
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.extractAndRemove(gameData, playerId, adventureCard, effects);
         AdditionalSpellCostService.CostSelection costSelection = new AdditionalSpellCostService.CostSelection(
@@ -2913,7 +2914,7 @@ public class SpellCastingService {
         }
 
         List<UUID> declaredTargetIds = targetIds != null ? targetIds : List.of();
-        List<CardEffect> effects = adventureCard.getEffects(EffectSlot.SPELL);
+        List<CardEffect> effects = adventureCard.getCastingCostsAndSpellEffects();
         if (EffectResolution.needsSpellTarget(effects)) {
             // Ability targets are addressed by the card of the activated or triggered ability; map them
             // to the stack entry they name before validating against the stack.
@@ -3617,7 +3618,7 @@ public class SpellCastingService {
                 }
                 bargainedFromHand = candidate.hasKeyword(Keyword.BARGAIN);
                 if (candidate.getAdditionalCostPerExtraTarget() > 0 && targetIds != null
-                        && targetIds.size() > 1 && candidate.getEffects(EffectSlot.SPELL).stream()
+                        && targetIds.size() > 1 && candidate.getCastingCosts().stream()
                         .anyMatch(effect -> effect instanceof RepeatableAdditionalManaCost repeated
                                 && repeated.multikicker())) {
                     kicked = true;
@@ -3996,7 +3997,7 @@ public class SpellCastingService {
                 .getOrDefault(playerId, List.of()).stream().collect(java.util.stream.Collectors.toMap(
                         Card::getId, candidate -> gameData.graveyardEntryVersion(candidate.getId())));
         targetLegalityService.validateGraveyardChoicePowerLimit(
-                gameData, physicalHandCard, targetIds, physicalHandCard.getEffects(EffectSlot.SPELL));
+                gameData, physicalHandCard, targetIds, physicalHandCard.getCastingCostsAndSpellEffects());
         if (casterPool != null && gameQueryService.canSpendManaAsAnyColorToCastCard(
                 gameData, playerId, physicalHandCard)) {
             casterPool.setAllManaSpendableAsAnyColor(true);
@@ -4067,23 +4068,23 @@ public class SpellCastingService {
                     selectingModalBackFace || castingTransformedAlternateCost
                             ? cardCheck.getBackFaceCard() : cardCheck, effectiveXValue);
             boolean suppliedExiledCardTarget = targetId != null
-                    && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                    && cardCheck.getCastingCostsAndSpellEffects().stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
             boolean suppliedCollectEvidenceAdditionalCost = exileGraveyardCardIndices != null
                     && !exileGraveyardCardIndices.isEmpty()
-                    && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                    && cardCheck.getCastingCosts().stream()
                     .anyMatch(CollectEvidenceCost.class::isInstance);
             boolean suppliedExileFromHandAdditionalCost = discardHandCardIndices != null
                     && !discardHandCardIndices.isEmpty()
-                    && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                    && cardCheck.getCastingCosts().stream()
                     .anyMatch(ExileAnyNumberOfCardsFromHandCost.class::isInstance);
             boolean suppliedExileFromGraveyardAdditionalCost = exileGraveyardCardIndices != null
                     && !exileGraveyardCardIndices.isEmpty()
-                    && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                    && cardCheck.getCastingCosts().stream()
                     .anyMatch(ExileAnyNumberOfCardsFromGraveyardCost.class::isInstance);
             boolean suppliedTapCreaturesForManaCost = additionalCostSacrificePermanentIds != null
                     && !additionalCostSacrificePermanentIds.isEmpty()
-                    && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                    && cardCheck.getCastingCosts().stream()
                     .anyMatch(TapCreaturesForManaCost.class::isInstance);
             boolean suppliedGiftTarget = giftPromised
                     && (targetId != null || targetIds != null && !targetIds.isEmpty())
@@ -4093,7 +4094,7 @@ public class SpellCastingService {
                     && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0);
             boolean suppliedCounterDistribution = damageAssignments != null
-                    && findChosenCounterDistribution(selectedFaceCheck.getEffects(EffectSlot.SPELL)) != null
+                    && findChosenCounterDistribution(selectedFaceCheck.getCastingCostsAndSpellEffects()) != null
                     && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0);
             if (suppliedGiftTarget) {
@@ -4166,10 +4167,10 @@ public class SpellCastingService {
                         : damageAssignments != null && !damageAssignments.isEmpty()
                         ? List.copyOf(damageAssignments.keySet()) : List.of();
                 boolean suppliedTeamworkCost = !additionalCostSacrificePermanentIds.isEmpty()
-                        && cardCheck.getEffects(EffectSlot.SPELL).stream().anyMatch(TeamworkCost.class::isInstance);
+                        && cardCheck.getCastingCosts().stream().anyMatch(TeamworkCost.class::isInstance);
                 boolean explicitExileTarget = targetId != null
                         && gameData.findExiledCard(targetId) != null
-                        && cardCheck.getEffects(EffectSlot.SPELL).stream()
+                        && cardCheck.getCastingCostsAndSpellEffects().stream()
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
                 if (targetId != null
                         && cardCheck.getTargetFilter() != null
@@ -4273,22 +4274,22 @@ public class SpellCastingService {
                 mutationSupport.validateCastTarget(gameData, card, playerId, targetId);
             }
         }
-        if (!usingAlternateCost && card.getSpellTargets().stream().anyMatch(group -> {
-            List<CardEffect> bound = card.getEffects(EffectSlot.SPELL).stream()
+        if (!usingAlternateCost && card.getSpellTargetGroups().stream().anyMatch(group -> {
+            List<CardEffect> bound = card.getCastingCostsAndSpellEffects().stream()
                     .filter(effect -> card.isEffectBoundToTargetGroup(effect, group.getIndex())).toList();
             return !bound.isEmpty() && bound.stream().allMatch(effect ->
                     effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof CastForAlternateCost);
         })) {
-            int ordinaryMaxTargets = card.getSpellTargets().stream().mapToInt(group -> {
-                List<CardEffect> bound = card.getEffects(EffectSlot.SPELL).stream()
+            int ordinaryMaxTargets = card.getSpellTargetGroups().stream().mapToInt(group -> {
+                List<CardEffect> bound = card.getCastingCostsAndSpellEffects().stream()
                         .filter(effect -> card.isEffectBoundToTargetGroup(effect, group.getIndex())).toList();
                 boolean alternateOnly = !bound.isEmpty() && bound.stream().allMatch(effect ->
                         effect instanceof ConditionalEffect conditional
                                 && conditional.condition() instanceof CastForAlternateCost);
                 return alternateOnly ? 0 : group.getMaxTargets();
             }).sum();
-            boolean unboundCounterTarget = card.getEffects(EffectSlot.SPELL).stream()
+            boolean unboundCounterTarget = card.getSpellEffects().stream()
                     .anyMatch(effect -> effect instanceof CounterSpellEffect && !card.hasEffectTargetIndex(effect));
             if (unboundCounterTarget) {
                 ordinaryMaxTargets++;
@@ -4326,7 +4327,7 @@ public class SpellCastingService {
         boolean hasModalEtb = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
-        List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         if (!fromGraveyard) {
             filteredSpellEffects.removeIf(effect -> effect instanceof ExileNCardsFromGraveyardCost cost
                     && cost.onlyFromGraveyard());
@@ -4378,7 +4379,7 @@ public class SpellCastingService {
         // Tajuru) or sets an amount, and spells whose repeatable cost buys no targets (Taste of
         // Paradise), leave the announced X unconstrained.
         if (additionalCosts.repeatableManaCost() != null
-                && card.getSpellTargets().stream().anyMatch(spellTarget -> spellTarget.isXScaled()
+                && card.getTargetGroups().stream().anyMatch(spellTarget -> spellTarget.isXScaled()
                 && spellTarget.getMinTargets() == spellTarget.getMaxTargets())
                 && effectiveXValue != 1 + repeatedAdditionalCosts.size()) {
             throw new IllegalStateException("X must be " + (1 + repeatedAdditionalCosts.size())
@@ -4471,7 +4472,7 @@ public class SpellCastingService {
         filteredSpellEffects = EffectResolution.resolveAlternateCostEffects(filteredSpellEffects, usingAlternateCost);
         DealDividedDamageEffect castTimeDividedDamage = findChosenDividedDamageEffect(filteredSpellEffects);
         if (castTimeDividedDamage != null && damageAssignments != null && !damageAssignments.isEmpty()
-                && card.getSpellTargets().size() > 1) {
+                && card.getTargetGroups().size() > 1) {
             List<UUID> damageTargetIds = List.copyOf(damageAssignments.keySet());
             int otherTargetCount = targetIds.size();
             List<UUID> combinedTargetIds = new ArrayList<>(damageTargetIds);
@@ -4584,15 +4585,15 @@ public class SpellCastingService {
                     .map(id -> StackEntry.resolveTargetableId(gameData.stack, id)).toList();
         }
         if (wasModal && unwrappedNeedsSpellTarget && targetId == null && targetIds.size() == 1
-                && card.getSpellTargets().isEmpty() && card.getMaxTargets() <= 1) {
+                && card.getTargetGroups().isEmpty() && card.getMaxTargets() <= 1) {
             targetId = targetIds.getFirst();
             targetIds = List.of();
         }
         // ETB triggered abilities choose targets after a permanent enters; this helper only sees
         // the spell's effects and therefore does not make ETB targets cast-time requirements.
         boolean modalHasBattlefieldOrPlayerTarget = wasModal && card.getSelectedRoomDoor() == null
-                && card.getSpellTargets().stream()
-                .map(SpellTarget::getFilter)
+                && card.getTargetGroups().stream()
+                .map(TargetGroup::getFilter)
                 .anyMatch(filter -> filter != null
                         && !(filter instanceof StackEntryPredicateTargetFilter)
                         && !(filter instanceof GraveyardCardPredicateTargetFilter));
@@ -4634,7 +4635,7 @@ public class SpellCastingService {
                 && !multipleSpellTargets && targetIds.isEmpty();
         boolean mixedSpellAndPermanentTargets = unwrappedNeedsSpellTarget && unwrappedNeedsTarget
                 && !multipleSpellTargets && !targetIds.isEmpty();
-        boolean firstDeclaredGroupTargetsSpell = card.getSpellTargets().stream()
+        boolean firstDeclaredGroupTargetsSpell = card.getTargetGroups().stream()
                 .filter(group -> group.getIndex() == 0)
                 .findFirst()
                 .map(group -> targetingSpellEffects.stream()
@@ -4642,11 +4643,11 @@ public class SpellCastingService {
                         .anyMatch(EffectResolution::targetsSpellOnStack))
                 .orElse(false);
         boolean variableMixedTargetGroups = firstDeclaredGroupTargetsSpell
-                && card.getSpellTargets().size() == 2
-                && card.getSpellTargets().getFirst().getMaxTargets() > 1
-                && card.getSpellTargets().get(1).getMaxTargets() > 1
-                && card.getSpellTargets().getFirst().getFilter() instanceof StackEntryPredicateTargetFilter
-                && card.getSpellTargets().get(1).getFilter() instanceof PermanentPredicateTargetFilter;
+                && card.getTargetGroups().size() == 2
+                && card.getTargetGroups().getFirst().getMaxTargets() > 1
+                && card.getTargetGroups().get(1).getMaxTargets() > 1
+                && card.getTargetGroups().getFirst().getFilter() instanceof StackEntryPredicateTargetFilter
+                && card.getTargetGroups().get(1).getFilter() instanceof PermanentPredicateTargetFilter;
         int variableMixedStackTargetCount = 0;
         if (variableMixedTargetGroups) {
             List<UUID> allTargetIds = new ArrayList<>();
@@ -5208,7 +5209,7 @@ public class SpellCastingService {
                 // An optional spell target ("up to one target creature spell") may be declined.
                 TargetFilter stackTargetFilter = card.getTargetFilter() instanceof StackEntryPredicateTargetFilter
                         ? card.getTargetFilter()
-                        : card.getSpellTargets().stream().map(SpellTarget::getFilter)
+                        : card.getTargetGroups().stream().map(TargetGroup::getFilter)
                         .filter(StackEntryPredicateTargetFilter.class::isInstance).findFirst().orElse(null);
                 targetLegalityService.validateSpellTargetOnStack(
                         gameData, targetId, stackTargetFilter, playerId, effectiveXValue, kicked,
@@ -5230,7 +5231,7 @@ public class SpellCastingService {
                 .map(SpellCastingService::unwrapConditional)
                 .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                 .anyMatch(e -> card.getEffectTargetIndex(e) >= 0);
-        boolean hasGraveyardTargetGroup = card.getSpellTargets().stream()
+        boolean hasGraveyardTargetGroup = card.getTargetGroups().stream()
                 .anyMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
         if (!targetIds.isEmpty() && hasGraveyardTargetGroup) {
             targetLegalityService.validateGraveyardChoicePowerLimit(
@@ -5414,7 +5415,7 @@ public class SpellCastingService {
         }
 
         if (card.isAura() && targetIds.size() > 1
-                && card.getEffects(EffectSlot.SPELL).stream()
+                && card.getCastingCostsAndSpellEffects().stream()
                 .noneMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
             throw new IllegalStateException("An Aura spell requires only its enchant target");
         }
@@ -5452,7 +5453,7 @@ public class SpellCastingService {
             throw new IllegalStateException("All targets must be different");
         }
         List<Integer> modalTargetGroupSizes = List.of();
-        List<SpellTarget> modalGroups = card.getSpellTargets();
+        List<TargetGroup> modalGroups = card.getTargetGroups();
         if (!wasModal && targetId == null && modalGroups.size() > 1
                 && modalGroups.stream().allMatch(group -> group.getMinTargets() == 0 && group.getMaxTargets() >= 1
                 && TargetGroupAssignmentService.isPermanentGroupFilter(group.getFilter()))
@@ -5481,9 +5482,9 @@ public class SpellCastingService {
                         group.getMinTargets() < group.getMaxTargets()).count() == 1) {
             int fixedTargets = modalGroups.stream()
                     .filter(group -> group.getMinTargets() == group.getMaxTargets())
-                    .mapToInt(SpellTarget::getMinTargets).sum();
+                    .mapToInt(TargetGroup::getMinTargets).sum();
             List<Integer> sizes = new ArrayList<>();
-            for (SpellTarget group : modalGroups) {
+            for (TargetGroup group : modalGroups) {
                 sizes.add(group.getMinTargets() == group.getMaxTargets()
                         ? group.getMinTargets() : targetIds.size() - fixedTargets);
             }
@@ -5491,7 +5492,7 @@ public class SpellCastingService {
         }
         validateBeholdConditionalTargetGroups(card, targetId, targetIds,
                 isBeholdCostPaid(additionalCosts, costSelection));
-        if (!variableMixedTargetGroups && kicked && targetId != null && card.getSpellTargets().size() > 1
+        if (!variableMixedTargetGroups && kicked && targetId != null && card.getTargetGroups().size() > 1
                 && !multipleSpellTargets) {
             targetLegalityService.validateSpellTargetGroupsAfterPrimary(
                     gameData, card, targetIds, playerId, effectiveXValue, true);
@@ -5500,7 +5501,7 @@ public class SpellCastingService {
                 && (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
                 || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT
                 || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT_IF_ABLE)
-                && card.getEffects(EffectSlot.SPELL).stream().anyMatch(
+                && card.getCastingCostsAndSpellEffects().stream().anyMatch(
                         effect -> effect.targetSpec().declaredTarget() != null)))) {
             if (!modalTargetGroupSizes.isEmpty()) {
                 targetLegalityService.validateMultiSpellTargets(
@@ -5705,7 +5706,7 @@ public class SpellCastingService {
 
         // Validate graveyard targets for spells that target creature cards in graveyard
         ExileCreaturesFromGraveyardAndCreateTokensEffect graveyardCreatureTargetingEffect =
-                card.getEffects(EffectSlot.SPELL).stream()
+                card.getSpellEffects().stream()
                         .filter(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance)
                         .map(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::cast)
                         .findFirst().orElse(null);
@@ -5755,7 +5756,7 @@ public class SpellCastingService {
             }
         }
         ReturnTargetCardsFromGraveyardToHandEffect xScaledToHandEffect =
-                card.getEffects(EffectSlot.SPELL).stream()
+                card.getSpellEffects().stream()
                         .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
                         .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
                         .filter(ReturnTargetCardsFromGraveyardToHandEffect::xScaled)
@@ -6621,7 +6622,7 @@ public class SpellCastingService {
 
             // Check for "any number of target cards from graveyard" spells (e.g. Frantic Salvage)
             PutTargetCardsFromGraveyardOnTopOfLibraryEffect graveyardToTopEffect =
-                    (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getEffects(EffectSlot.SPELL).stream()
+                    (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getSpellEffects().stream()
                             .filter(PutTargetCardsFromGraveyardOnTopOfLibraryEffect.class::isInstance)
                             .findFirst().orElse(null);
 
@@ -6979,8 +6980,8 @@ public class SpellCastingService {
                                         playerId, null, targetId, 0, 0));
                 int graveyardMinTargets = graveyardToHandEffect.minTargets();
                 int targetGroupIndex = card.getEffectTargetIndex(graveyardToHandEffect);
-                if (targetGroupIndex >= 0 && targetGroupIndex < card.getSpellTargets().size()) {
-                    SpellTarget targetGroup = card.getSpellTargets().get(targetGroupIndex);
+                if (targetGroupIndex >= 0 && targetGroupIndex < card.getTargetGroups().size()) {
+                    TargetGroup targetGroup = card.getTargetGroups().get(targetGroupIndex);
                     if (targetGroup.getFilter() instanceof GraveyardCardPredicateTargetFilter) {
                         boolean kickedTargetGroup = kicked && kickerEffect != null;
                         graveyardMinTargets = Math.max(graveyardMinTargets,
@@ -7139,7 +7140,7 @@ public class SpellCastingService {
                         null, null, null, List.of(), List.of()
                 ));
             } else if (returnToBattlefieldEffect != null && !targetIds.isEmpty()
-                    && card.getSpellTargets().stream().anyMatch(group ->
+                    && card.getTargetGroups().stream().anyMatch(group ->
                     group.getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(), filteredSpellEffects, resolvedXValue,
@@ -7161,8 +7162,8 @@ public class SpellCastingService {
                                 playerId, null, null, resolvedXValue, 0)));
                 int returnTargetGroupIndex = card.getEffectTargetIndex(returnToBattlefieldEffect);
                 GraveyardCardPredicateTargetFilter returnTargetFilter = returnTargetGroupIndex >= 0
-                        && returnTargetGroupIndex < card.getSpellTargets().size()
-                        && card.getSpellTargets().get(returnTargetGroupIndex).getFilter()
+                        && returnTargetGroupIndex < card.getTargetGroups().size()
+                        && card.getTargetGroups().get(returnTargetGroupIndex).getFilter()
                         instanceof GraveyardCardPredicateTargetFilter filter
                         ? filter : null;
                 long matchingCount = graveyardOwners.stream()
@@ -7343,7 +7344,7 @@ public class SpellCastingService {
                         // 2014-11-24); only an X-scaled target count with X = 0 allows choosing none.
                         boolean zeroTargetsChosen = damageAssignments.isEmpty() && dividedEffect.maxTargets() == 0
                                 && resolvedXValue == 0
-                                && card.getSpellTargets().stream().anyMatch(st -> st.isXScaled());
+                                && card.getTargetGroups().stream().anyMatch(st -> st.isXScaled());
                         if (totalDamage != fixedTotal.value() && !zeroTargetsChosen) {
                             throw new IllegalStateException("Damage assignments must sum to " + fixedTotal.value());
                         }
@@ -7522,8 +7523,8 @@ public class SpellCastingService {
                 // The primary target belongs in the flat list only when the first declared group
                 // actually consumes it. A zero-sized first group is an indexing placeholder for a
                 // primary target stored on the entry itself (for example, Orim's Thunder).
-                if (card.getSpellTargets().size() > 1
-                        && card.getSpellTargets().getFirst().getKickedMaxTargets() > 0) {
+                if (card.getTargetGroups().size() > 1
+                        && card.getTargetGroups().getFirst().getKickedMaxTargets() > 0) {
                     kickedTargetIds = new ArrayList<>();
                     kickedTargetIds.add(targetId);
                     kickedTargetIds.addAll(targetIds);
@@ -7899,11 +7900,11 @@ public class SpellCastingService {
      */
     private void validateBeholdConditionalTargetGroups(Card card, UUID targetId, List<UUID> targetIds,
                                                        boolean beholdPaid) {
-        List<SpellTarget> groups = card.getSpellTargets();
+        List<TargetGroup> groups = card.getSpellTargetGroups();
         int total = targetIds.size() + (targetId != null && !targetIds.contains(targetId) ? 1 : 0);
         int offset = 0;
-        for (SpellTarget group : groups) {
-            List<CardEffect> bound = card.getEffects(EffectSlot.SPELL).stream()
+        for (TargetGroup group : groups) {
+            List<CardEffect> bound = card.getCastingCostsAndSpellEffects().stream()
                     .filter(effect -> card.isEffectBoundToTargetGroup(effect, group.getIndex()))
                     .toList();
             boolean beholdConditional = !bound.isEmpty() && bound.stream().allMatch(effect ->
@@ -11015,7 +11016,7 @@ public class SpellCastingService {
         // graveyard position (CR 601.2h). The spell itself still sits in this graveyard here
         // (removed further down), so the caller's post-removal indices are checked with the
         // spell's own slot excluded.
-        List<CardEffect> spellEffects = new ArrayList<>(castHalf.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(castHalf.getCastingCostsAndSpellEffects());
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.extractAndRemove(gameData, playerId, castHalf, spellEffects);
         if (spellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance)) {
@@ -12457,7 +12458,7 @@ public class SpellCastingService {
         // going to a graveyard or becoming a permanent card.
         copy = copy || gameData.discordCopySourcePermanents.containsKey(exileCardId);
         if (targetIds.isEmpty() && targetId != null
-                && card.getSpellTargets().stream().anyMatch(SpellTarget::isXScaled)) {
+                && card.getTargetGroups().stream().anyMatch(TargetGroup::isXScaled)) {
             // "Up to X target creatures": the single supplied target is validated as a group of targets so
             // the number of targets is held to the announced X.
             targetIds = List.of(targetId);
@@ -12578,16 +12579,16 @@ public class SpellCastingService {
                 && !sourceManaValueLifeAlternative
                 && (gameData.exilePlayWithoutPayingManaCost.contains(exileCardId) || sourceFreeCast);
         boolean supportedAdditionalManaCost = additionalCosts.discardCardOrPayManaCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(effect -> effect instanceof DiscardCardOrPayManaCost || effect instanceof ChooseXValueCost);
         boolean supportedSacrificeOrPayManaCost = additionalCosts.sacrificePermanentOrPayManaCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(effect -> effect instanceof SacrificePermanentOrPayManaCost
                         || effect instanceof ChooseXValueCost);
         boolean supportedAdditionalDiscardCost = additionalCosts.discardCost() != null
                 && !EffectResolution.needsTarget(card)
-                && !EffectResolution.needsSpellTarget(card.getEffects(EffectSlot.SPELL))
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && !EffectResolution.needsSpellTarget(card.getCastingCostsAndSpellEffects())
+                && card.getCastingCosts().stream()
                 .allMatch(effect -> effect instanceof DiscardCardTypeCost || effect instanceof ChooseXValueCost);
         if (supportedAdditionalDiscardCost
                 && !additionalSpellCostService.satisfiable(gameData, playerId, card)) {
@@ -12595,32 +12596,32 @@ public class SpellCastingService {
         }
         boolean supportedDeclinedOptionalPutCounterCost = additionalCosts.putCounterCost() != null
                 && additionalCosts.putCounterCost().optional()
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof PutCounterOnControlledCreatureCost put && put.optional()
                         || cost instanceof ChooseXValueCost);
         // "Any number of times" costs (squad, multikicker, replicate) are optional: casting with no
         // repetitions pays nothing extra, which this exile path can do. Paying repetitions is still rejected.
         boolean supportedDeclinedRepeatableManaCost = additionalCosts.repeatableManaCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof RepeatableAdditionalManaCost
                         || cost instanceof ChooseXValueCost);
         boolean supportedDeclinedSacrificeAnyNumberCost = additionalCosts.sacrificeAnyNumberCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof SacrificeAnyNumberOfPermanentsCost
                         || cost instanceof ChooseXValueCost);
         boolean supportedDeclinedExileFromHandCost = additionalCosts.exileAnyNumberOfCardsFromHandCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof ExileAnyNumberOfCardsFromHandCost
                         || cost instanceof ChooseXValueCost);
         boolean supportedOptionalTeamworkCost = additionalCosts.teamworkCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof TeamworkCost || cost instanceof ChooseXValueCost);
         boolean supportedBeholdCost = additionalCosts.beholdCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof BeholdAndExileCost || cost instanceof ChooseXValueCost);
         boolean supportedOptionalEvidenceCost = additionalCosts.collectEvidenceCost() != null
                 && additionalCosts.collectEvidenceCost().optional()
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof CollectEvidenceCost evidence && evidence.optional()
                         || cost instanceof ChooseXValueCost);
         if (supportedBeholdCost && !additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, card)) {
@@ -12628,22 +12629,22 @@ public class SpellCastingService {
         }
         boolean supportedSacrificePermanentCost = additionalCosts.sacrificePermanentCost() != null
                 && !additionalCosts.sacrificePermanentCost().optional()
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(SacrificePermanentCost.class::isInstance);
         if (supportedSacrificePermanentCost && !additionalSpellCostService.satisfiable(gameData, playerId, card)) {
             throw new IllegalStateException("No permanent can pay the sacrifice cost");
         }
         boolean supportedSacrificeCreatureCost = additionalCosts.sacrificeCreatureCost() != null
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(SacrificeCreatureCost.class::isInstance);
         if (supportedSacrificeCreatureCost && !additionalSpellCostService.satisfiable(gameData, playerId, card)) {
             throw new IllegalStateException("No creature can pay the sacrifice cost");
         }
         boolean freeCastSkipsDelve = additionalCosts.delveCost() != null && playWithoutPaying;
         boolean delveWithoutExilingCards = additionalCosts.delveCost() != null && !playWithoutPaying
-                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                && card.getCastingCosts().stream()
                 .allMatch(cost -> cost instanceof DelveCost || cost instanceof ChooseXValueCost);
-        List<CardEffect> effectsWithoutCasualty = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> effectsWithoutCasualty = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         effectsWithoutCasualty.removeIf(effect -> effect instanceof CasualtyCost);
         boolean onlyOptionalCasualtyCost = additionalCosts.casualtyCost() != null
                 && !additionalSpellCostService.extractAndRemove(gameData, playerId, card, effectsWithoutCasualty).any();
@@ -12945,7 +12946,7 @@ public class SpellCastingService {
         List<CardEffect> effectsToResolve;
         if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)
                 || card.hasType(CardType.EMBLEM)) {
-            effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            effectsToResolve = new ArrayList<>(card.getCastingCostsAndSpellEffects());
             additionalSpellCostService.extractAndRemove(effectsToResolve);
             if (fromOutsideGame
                     && gameData.outsideGameAdditionalModalModePermissions.contains(exileCardId)) {
@@ -13768,7 +13769,7 @@ public class SpellCastingService {
                 ? 0 : resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
         if (!castFaceDown && !isModalSpell(card)) {
-            if (EffectResolution.needsSpellTarget(card.getEffects(EffectSlot.SPELL))) {
+            if (EffectResolution.needsSpellTarget(card.getCastingCostsAndSpellEffects())) {
                 if (targetId != null) {
                     targetLegalityService.validateSpellTargetOnStack(
                             gameData, targetId, card.getTargetFilter(), playerId, effectiveXValue);
@@ -13805,7 +13806,7 @@ public class SpellCastingService {
 
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.peek(gameData, playerId, card);
-        List<CardEffect> otherAdditionalEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> otherAdditionalEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         otherAdditionalEffects.removeIf(effect -> effect instanceof SacrificeCreatureCost
                 || effect instanceof SacrificeCreatureOrPayManaCost
                 || effect instanceof SacrificePermanentOrPayManaCost
@@ -13824,18 +13825,18 @@ public class SpellCastingService {
                 ? additionalCosts.sacrificePermanentCost() : null;
         boolean hasSacrificeOrManaCost = additionalCosts.sacrificePermanentOrPayManaCost() != null
                 && hasOnlySupportedAdditionalCosts;
-        List<CardEffect> effectsWithoutCasualty = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> effectsWithoutCasualty = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         effectsWithoutCasualty.removeIf(effect -> effect instanceof CasualtyCost);
         boolean onlyOptionalCasualtyCost = additionalCosts.casualtyCost() != null
                 && !additionalSpellCostService.extractAndRemove(gameData, playerId, card, effectsWithoutCasualty).any();
-        List<CardEffect> effectsWithoutDelve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> effectsWithoutDelve = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         effectsWithoutDelve.removeIf(effect -> effect instanceof DelveCost);
         // Delve isn't an additional cost (CR 702.66b): a spell cast from the library may delve nothing and
         // pay its whole cost with mana.
         boolean onlyDelveCost = additionalCosts.delveCost() != null
                 && !additionalSpellCostService.extractAndRemove(gameData, playerId, card, effectsWithoutDelve).any();
         // With an empty hand, a sole "discard a card or pay N life" cost can only be paid with life.
-        List<CardEffect> effectsWithoutDiscardOrPayLife = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> effectsWithoutDiscardOrPayLife = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         effectsWithoutDiscardOrPayLife.removeIf(effect -> effect instanceof DiscardCardOrPayLifeCost);
         boolean onlyDiscardOrPayLifeWithEmptyHand = additionalCosts.discardCardOrPayLifeCost() != null
                 && gameData.playerHands.get(playerId).isEmpty()
@@ -13934,7 +13935,7 @@ public class SpellCastingService {
         List<CardEffect> effectsToResolve;
         if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)
                 || card.hasType(CardType.EMBLEM)) {
-            effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            effectsToResolve = new ArrayList<>(card.getCastingCostsAndSpellEffects());
             additionalSpellCostService.extractAndRemove(effectsToResolve);
             effectiveXValue = unwrapChooseOneEffect(gameData, playerId, card, effectsToResolve, effectiveXValue);
         } else {
@@ -14064,7 +14065,7 @@ public class SpellCastingService {
         List<CardEffect> effectsToResolve = castCard.hasType(CardType.SORCERY)
                 || castCard.hasType(CardType.INSTANT)
                 || castCard.hasType(CardType.EMBLEM)
-                ? new ArrayList<>(castCard.getEffects(EffectSlot.SPELL))
+                ? new ArrayList<>(castCard.getCastingCostsAndSpellEffects())
                 : new ArrayList<>();
         additionalSpellCostService.extractAndRemove(effectsToResolve);
         effectiveXValue = unwrapChooseOneEffect(gameData, playerId, castCard, effectsToResolve, effectiveXValue);
@@ -15696,7 +15697,7 @@ public class SpellCastingService {
                 .filter(index -> index >= 0)
                 .boxed()
                 .collect(java.util.stream.Collectors.toSet());
-        return card.getSpellTargets().stream()
+        return card.getTargetGroups().stream()
                 .filter(target -> !card.bindsEffectToTargetGroup(target.getIndex())
                         || targetGroupIndices.contains(target.getIndex()))
                 .mapToInt(target -> {
@@ -15853,7 +15854,7 @@ public class SpellCastingService {
                                                       Map<UUID, Integer> assignments,
                                                       DealDividedDamageEffect dividedEffect) {
         if (assignments.isEmpty() && (card.hasXScaledTargets()
-                || !card.getSpellTargets().isEmpty() && card.getMinTargets() == 0)) {
+                || !card.getTargetGroups().isEmpty() && card.getMinTargets() == 0)) {
             return;
         }
         int totalDamage = assignments.values().stream().mapToInt(Integer::intValue).sum();
@@ -16114,11 +16115,11 @@ public class SpellCastingService {
             if (splice == null) {
                 throw new IllegalStateException(spliceCard.getName() + " cannot be spliced onto " + hostSpell.getName());
             }
-            List<CardEffect> splicedEffects = new ArrayList<>(spliceCard.getEffects(EffectSlot.SPELL));
+            List<CardEffect> splicedEffects = new ArrayList<>(spliceCard.getCastingCostsAndSpellEffects());
             splicedEffects.addAll(splice.splicedEffects());
             additionalSpellCostService.extractAndRemove(splicedEffects);
             hostSpell.appendSpellTargetingFrom(spliceCard);
-            if (!spliceCard.getSpellTargets().isEmpty()) {
+            if (!spliceCard.getTargetGroups().isEmpty()) {
                 // The spliced text has its own "target" words (CR 702.47c), so it may target an
                 // object the host spell also targets (CR 115.3).
                 hostSpell.setAllowSharedTargets(true);

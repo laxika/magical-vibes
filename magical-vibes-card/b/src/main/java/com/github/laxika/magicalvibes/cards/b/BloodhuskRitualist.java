@@ -18,7 +18,7 @@ import java.util.List;
 public class BloodhuskRitualist extends Card {
 
     public BloodhuskRitualist() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{B}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{B}")));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

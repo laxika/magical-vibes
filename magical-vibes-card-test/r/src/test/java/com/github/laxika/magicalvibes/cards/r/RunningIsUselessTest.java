@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -75,7 +74,7 @@ class RunningIsUselessTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL)));
+                scheme.getCastingCostsAndSpellEffects()));
         harness.passBothPriorities();
     }
 }

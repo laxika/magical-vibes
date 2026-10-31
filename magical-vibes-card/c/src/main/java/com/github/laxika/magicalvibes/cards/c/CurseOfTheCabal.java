@@ -30,7 +30,7 @@ public class CurseOfTheCabal extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+                .addSpellEffect(new SacrificePermanentsEffect(
                         new Divided(new PermanentCount(allPermanents, CountScope.TARGET_PLAYER), 2),
                         allPermanents,
                         SacrificeRecipient.TARGET_PLAYER));

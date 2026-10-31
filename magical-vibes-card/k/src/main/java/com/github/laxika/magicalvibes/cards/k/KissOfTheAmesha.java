@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -18,7 +17,7 @@ public class KissOfTheAmesha extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new TargetPlayerGainsLifeEffect(7))
-                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2));
+                .addSpellEffect(new TargetPlayerGainsLifeEffect(7))
+                .addSpellEffect(new DrawCardForTargetPlayerEffect(2));
     }
 }

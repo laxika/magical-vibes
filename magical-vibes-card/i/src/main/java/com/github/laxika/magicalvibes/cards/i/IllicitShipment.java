@@ -12,7 +12,7 @@ public class IllicitShipment extends Card {
 
     public IllicitShipment() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(3));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect());
+        addCastingCost(new CasualtyCost(3));
+        addSpellEffect(new SearchLibraryEffect());
     }
 }

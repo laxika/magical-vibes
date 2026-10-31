@@ -17,7 +17,7 @@ import java.util.List;
 public class HatcherySliver extends Card {
 
     public HatcherySliver() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{G}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{G}")));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{1}{G}"));
         addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.REPLICATE, new CardSubtypePredicate(CardSubtype.SLIVER)));

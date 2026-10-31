@@ -17,7 +17,7 @@ public class BoldDefense extends Card {
 
     public BoldDefense() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}{W}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new BoostAllOwnCreaturesEffect(1, 1),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(2, 2),

@@ -13,6 +13,6 @@ public class SurgingFlame extends Card {
     public SurgingFlame() {
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new RippleEffect(4), "Reveal the top four cards of your library?"));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(new DealDamageToAnyTargetEffect(2));
     }
 }

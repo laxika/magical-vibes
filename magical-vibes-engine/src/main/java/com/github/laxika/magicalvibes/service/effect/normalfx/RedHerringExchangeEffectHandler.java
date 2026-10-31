@@ -161,10 +161,10 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
         if (targetingEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || targetingEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 || targetingEntry.getCard() == null
-                || targetingEntry.getCard().getSpellTargets().size() != 1) {
+                || targetingEntry.getCard().getTargetGroups().size() != 1) {
             return true;
         }
-        var filter = targetingEntry.getCard().getSpellTargets().getFirst().getFilter(false);
+        var filter = targetingEntry.getCard().getTargetGroups().getFirst().getFilter(false);
         if (filter == null) {
             return true;
         }

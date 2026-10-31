@@ -22,6 +22,6 @@ public class SublimeExhalation extends Card {
                 new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
 
         // Destroy all creatures.
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
     }
 }

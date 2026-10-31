@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutLandsFromHandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -17,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 public class TheGreatAurora extends Card {
 
     public TheGreatAurora() {
-        addEffect(EffectSlot.SPELL, new EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffect());
-        addEffect(EffectSlot.SPELL, new EachPlayerMayPutLandsFromHandToBattlefieldEffect());
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffect());
+        addSpellEffect(new EachPlayerMayPutLandsFromHandToBattlefieldEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

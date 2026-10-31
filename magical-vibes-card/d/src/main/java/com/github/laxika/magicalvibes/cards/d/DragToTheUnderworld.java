@@ -16,6 +16,6 @@ public class DragToTheUnderworld extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.BLACK)));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

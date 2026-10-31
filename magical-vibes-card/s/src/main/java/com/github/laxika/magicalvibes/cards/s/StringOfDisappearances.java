@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,8 +15,8 @@ public class StringOfDisappearances extends Card {
 
     public StringOfDisappearances() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target())
-                .addEffect(EffectSlot.SPELL, new MayPayManaEffect(
+                .addSpellEffect(ReturnToHandEffect.target())
+                .addSpellEffect(new MayPayManaEffect(
                         "{U}{U}",
                         new MayEffect(new CopyThisSpellForTargetControllerEffect(),
                                 "Copy String of Disappearances?", null, MayChoicePlayer.LAST_MANA_PAYMENT_PLAYER),

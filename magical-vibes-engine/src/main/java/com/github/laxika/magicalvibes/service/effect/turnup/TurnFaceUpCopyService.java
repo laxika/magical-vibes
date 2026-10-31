@@ -185,7 +185,7 @@ public class TurnFaceUpCopyService {
             }
             boolean usesMultiTargetSelection = effects.stream()
                     .anyMatch(source.getCard()::hasEffectTargetIndex)
-                    && (source.getCard().getSpellTargets().size() > 1
+                    && (source.getCard().getTargetGroups().size() > 1
                     || triggerCollectionService.needsSlotBySlotTargetSelection(source.getCard()));
             if (usesMultiTargetSelection) {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(

@@ -2212,7 +2212,7 @@ public class TriggerCollectionService {
                     log.info("Game {} - {} self-cast graveyard-target trigger queued for {}",
                             gameData.id, spellCard.getName(), castingPlayerId);
                 } else if (needsPlayerTarget || needsPermanentTarget) {
-                    boolean multiTarget = spellCard.getSpellTargets().size() > 1
+                    boolean multiTarget = spellCard.getTargetGroups().size() > 1
                             || etbTokenTargetService.needsSlotBySlotTargetSelection(spellCard);
                     if (multiTarget) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -2222,12 +2222,12 @@ public class TriggerCollectionService {
                                 gameData.id, spellCard.getName(), castingPlayerId);
                     } else {
                         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
-                        boolean optionalTarget = spellCard.getSpellTargets().size() == 1
-                                && spellCard.getSpellTargets().getFirst().getMinTargets() == 0
-                                && spellCard.getSpellTargets().getFirst().getMaxTargets() == 1
+                        boolean optionalTarget = spellCard.getTargetGroups().size() == 1
+                                && spellCard.getTargetGroups().getFirst().getMinTargets() == 0
+                                && spellCard.getTargetGroups().getFirst().getMaxTargets() == 1
                                 && selfCastTriggeredEffects.stream().anyMatch(effect ->
                                 spellCard.getEffectTargetIndex(effect)
-                                        == spellCard.getSpellTargets().getFirst().getIndex());
+                                        == spellCard.getTargetGroups().getFirst().getIndex());
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                                 spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
                                 playerTargetOnly, spellCard.getTargetFilter(), 0, null, optionalTarget));
@@ -6932,8 +6932,8 @@ public class TriggerCollectionService {
                         .orElse(null);
                 if (declaredTargetEffect != null) {
                     int targetIndex = source.getCard().getEffectTargetIndex(declaredTargetEffect);
-                    if (targetIndex < source.getCard().getSpellTargets().size()) {
-                        targetFilter = source.getCard().getSpellTargets().get(targetIndex).getFilter();
+                    if (targetIndex < source.getCard().getTargetGroups().size()) {
+                        targetFilter = source.getCard().getTargetGroups().get(targetIndex).getFilter();
                         permanentTargetControllerId = targetFilter instanceof ControlledPermanentPredicateTargetFilter
                                 ? null : triggeringEntry.getControllerId();
                     }
@@ -7219,7 +7219,7 @@ public class TriggerCollectionService {
                     gameData, source, EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL));
             if (effects.isEmpty()) continue;
 
-            if (source.getCard().getSpellTargets().size() > 1
+            if (source.getCard().getTargetGroups().size() > 1
                     || etbTokenTargetService.needsSlotBySlotTargetSelection(source.getCard())) {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         source.getCard(), creatureControllerId, effects, source.getId(), List.of(), 0, 0));
@@ -9246,8 +9246,8 @@ public class TriggerCollectionService {
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     int targetGroupIndex = permanent.getCard().getEffectTargetIndex(effect);
                     TargetFilter targetFilter = targetGroupIndex >= 0
-                            && targetGroupIndex < permanent.getCard().getSpellTargets().size()
-                            ? permanent.getCard().getSpellTargets().get(targetGroupIndex).getFilter()
+                            && targetGroupIndex < permanent.getCard().getTargetGroups().size()
+                            ? permanent.getCard().getTargetGroups().get(targetGroupIndex).getFilter()
                             : permanent.getCard().getTargetFilter();
                     boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
@@ -14210,7 +14210,7 @@ public class TriggerCollectionService {
                     if (leavingPermanent.getCard().isToken()) continue;
                     resolved = aware.boundToLeavingCreatureName(leavingPermanent.getCard().getName());
                 }
-                if (!perm.getCard().getSpellTargets().isEmpty()
+                if (!perm.getCard().getTargetGroups().isEmpty()
                         && resolved.targetSpec().declaredTarget() != null) {
                     // The card declares the trigger's target (Extractor Demon's "target player"), which is
                     // chosen as the trigger is put on the stack.
@@ -17890,15 +17890,15 @@ public class TriggerCollectionService {
             if (needsPlayerTarget || needsPermanentTarget) {
                 int targetGroupIndex = resolvedEffects.stream()
                         .mapToInt(perm.getCard()::getEffectTargetIndex)
-                        .filter(index -> index >= 0 && index < perm.getCard().getSpellTargets().size())
+                        .filter(index -> index >= 0 && index < perm.getCard().getTargetGroups().size())
                         .findFirst()
                         .orElse(-1);
                 TargetFilter targetFilter = targetGroupIndex >= 0
-                        ? perm.getCard().getSpellTargets().get(targetGroupIndex).getFilter()
+                        ? perm.getCard().getTargetGroups().get(targetGroupIndex).getFilter()
                         : perm.getCard().getTargetFilter();
                 boolean optionalTarget = targetGroupIndex >= 0
-                        && perm.getCard().getSpellTargets().get(targetGroupIndex).getMinTargets() == 0
-                        && perm.getCard().getSpellTargets().get(targetGroupIndex).getMaxTargets() == 1;
+                        && perm.getCard().getTargetGroups().get(targetGroupIndex).getMinTargets() == 0
+                        && perm.getCard().getTargetGroups().get(targetGroupIndex).getMaxTargets() == 1;
                 for (int i = 0; i < permanentTriggerCount; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(),
@@ -18116,7 +18116,7 @@ public class TriggerCollectionService {
                 for (CardEffect effect : matchingEffects) {
                     int targetGroup = object.getCard().getEffectTargetIndex(effect);
                     TargetFilter filter = targetGroup >= 0
-                            ? object.getCard().getSpellTargets().get(targetGroup).getFilter() : null;
+                            ? object.getCard().getTargetGroups().get(targetGroup).getFilter() : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             object.getCard(), planarControllerId, List.of(effect),
                             !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT), filter,

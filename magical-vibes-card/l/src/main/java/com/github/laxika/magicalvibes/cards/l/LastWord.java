@@ -11,6 +11,6 @@ public class LastWord extends Card {
 
     public LastWord() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -37,27 +36,27 @@ public class Dragonshift extends Card {
 
     public Dragonshift() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}{U}{R}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN),
                 new LosesAllAbilitiesEffect(GrantScope.OWN_CREATURES, EffectDuration.UNTIL_END_OF_TURN)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantColorUntilEndOfTurnEffect(CardColor.BLUE),
                 new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantColorUntilEndOfTurnEffect(CardColor.RED, true, GrantScope.TARGET, false),
                 new GrantColorUntilEndOfTurnEffect(CardColor.RED, true, GrantScope.OWN_CREATURES, false)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON, GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new SetBasePowerToughnessEffect(4, 4),
                 new SetAllOwnCreaturesBasePowerToughnessEffect(4, 4)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES)));

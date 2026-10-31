@@ -21,7 +21,7 @@ import java.util.List;
 public class ExileIntoDarkness extends Card {
 
     public ExileIntoDarkness() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new SacrificePermanentsEffect(
                 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

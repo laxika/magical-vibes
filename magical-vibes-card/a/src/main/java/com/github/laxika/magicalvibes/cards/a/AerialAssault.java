@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -27,8 +26,8 @@ public class AerialAssault extends Card {
                 )),
                 "Target must be a tapped creature"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new PermanentCount(
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasKeywordPredicate(Keyword.FLYING)

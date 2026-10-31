@@ -14,6 +14,6 @@ public class ThisTownAintBigEnough extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 TargetFilters.nonlandPermanent().predicate(), 3, true));
         target(TargetFilters.nonlandPermanent(), 0, 2)
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BurningInquiry extends Card {
 
     public BurningInquiry() {
-        addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(3));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(3, DiscardRecipient.EACH_PLAYER, true));
+        addSpellEffect(new EachPlayerDrawsCardEffect(3));
+        addSpellEffect(new DiscardEffect(3, DiscardRecipient.EACH_PLAYER, true));
     }
 }

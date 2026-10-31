@@ -14,7 +14,7 @@ public class FastForward extends Card {
 
     public FastForward() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new OpponentsAttackedThisTurn()));
-        addEffect(EffectSlot.SPELL, new GoadCreaturesUntilNextTurnSnapshotEffect(
+        addSpellEffect(new GoadCreaturesUntilNextTurnSnapshotEffect(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 public class RoadkillRodney extends Card {
 
     public RoadkillRodney() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{3}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{3}"),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}"))));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -31,7 +30,7 @@ public class WretchedConfluence extends Card {
     public WretchedConfluence() {
         var creatureCard = new CardTypePredicate(CardType.CREATURE);
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+        addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target player draws a card and loses 1 life",
                         () -> SequenceEffect.of(

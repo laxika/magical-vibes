@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
@@ -16,7 +15,7 @@ public class WrapInFlames extends Card {
 
     public WrapInFlames() {
         target(TargetFilters.creature(), 0, 3)
-                .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)))
-                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)))
+                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
     }
 }

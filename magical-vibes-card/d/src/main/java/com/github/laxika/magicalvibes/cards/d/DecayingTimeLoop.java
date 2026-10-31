@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatMan
 public class DecayingTimeLoop extends Card {
 
     public DecayingTimeLoop() {
-        addEffect(EffectSlot.SPELL, new DiscardOwnHandThenDrawThatManyEffect());
+        addSpellEffect(new DiscardOwnHandThenDrawThatManyEffect());
         addCastingOption(new Retrace());
     }
 }

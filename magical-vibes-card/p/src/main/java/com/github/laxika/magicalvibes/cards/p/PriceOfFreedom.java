@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -33,11 +32,11 @@ public class PriceOfFreedom extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be an artifact or land an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 new MayEffect(
                         new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a basic land card?"),
                 ThenEffectRecipient.TARGET_CONTROLLER
-        )).addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        )).addSpellEffect(new DrawCardEffect(1));
     }
 }

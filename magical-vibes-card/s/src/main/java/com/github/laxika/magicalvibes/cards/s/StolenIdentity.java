@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -24,8 +23,7 @@ public class StolenIdentity extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate())),
                         "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL,
-                        new MayEffect(new CipherEncodeEffect(), "Encode this spell on a creature you control?"));
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect())
+                .addSpellEffect(new MayEffect(new CipherEncodeEffect(), "Encode this spell on a creature you control?"));
     }
 }

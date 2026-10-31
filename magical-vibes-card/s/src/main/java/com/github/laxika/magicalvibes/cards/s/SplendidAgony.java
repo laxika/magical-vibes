@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -17,7 +16,6 @@ public class SplendidAgony extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
-        ), 1, 2).addEffect(EffectSlot.SPELL,
-                DistributeCountersAmongTargetsEffect.evenlyAmongTargets(CounterType.MINUS_ONE_MINUS_ONE, 2));
+        ), 1, 2).addSpellEffect(DistributeCountersAmongTargetsEffect.evenlyAmongTargets(CounterType.MINUS_ONE_MINUS_ONE, 2));
     }
 }

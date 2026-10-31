@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 public class LostInTheMist extends Card {
 
     public LostInTheMist() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(ReturnToHandEffect.target());
     }
 }

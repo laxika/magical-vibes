@@ -25,8 +25,8 @@ public class WallOff extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS)));
 
         // Create a 0/4 colorless Wall creature token with defender. You gain 4 life.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Wall", 0, 4, null,
+        addSpellEffect(new CreateTokenEffect("Wall", 0, 4, null,
                 List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.<CardType>of()));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
+        addSpellEffect(new GainLifeEffect(4));
     }
 }

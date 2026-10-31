@@ -17,7 +17,7 @@ public class SheoldredsRestoration extends Card {
 
     public SheoldredsRestoration() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
@@ -30,6 +30,6 @@ public class SheoldredsRestoration extends Card {
                         .targetGraveyard(true)
                         .gainLifeEqualToManaValue(true)
                         .build()));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

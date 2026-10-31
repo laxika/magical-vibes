@@ -16,6 +16,6 @@ public class IntoTheStory extends Card {
     public IntoTheStory() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new OpponentGraveyardAtLeast(7), new ReduceOwnCastCostEffect(new Fixed(3))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(4));
+        addSpellEffect(new DrawCardEffect(4));
     }
 }

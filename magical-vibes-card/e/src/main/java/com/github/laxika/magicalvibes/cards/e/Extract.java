@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,7 +15,6 @@ public class Extract extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player."
-        )).addEffect(EffectSlot.SPELL,
-                new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE, false));
+        )).addSpellEffect(new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE, false));
     }
 }

@@ -27,7 +27,7 @@ public class NotDeadAfterAll extends Card {
 
     public NotDeadAfterAll() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH,
                         SequenceEffect.of(
                                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(true),

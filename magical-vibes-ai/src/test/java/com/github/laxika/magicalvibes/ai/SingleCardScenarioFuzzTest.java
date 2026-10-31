@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -194,7 +193,7 @@ class SingleCardScenarioFuzzTest {
         if (cost.hasX()) {
             return true;
         }
-        if (card.getSpellTargets().size() > 1) {
+        if (card.getTargetGroups().size() > 1) {
             return true;
         }
         if (EffectResolution.needsDamageDistribution(card)) {
@@ -203,7 +202,7 @@ class SingleCardScenarioFuzzTest {
         if (EffectResolution.needsSpellTarget(card)) {
             return true;
         }
-        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect
                     || e instanceof SacrificeCreatureCost
                     || e instanceof SacrificePermanentCost

@@ -21,7 +21,6 @@ public class SlaughterGames extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL,
-                new ChooseCardNameAndExileFromZonesEffect(List.of(CardType.LAND)));
+        )).addSpellEffect(new ChooseCardNameAndExileFromZonesEffect(List.of(CardType.LAND)));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,8 +36,8 @@ public class DesperatePlea extends Card {
         TargetFilter creaturePermanent = new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature");
 
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost(false, true));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new SacrificeCreatureCost(false, true));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to the battlefield if its power is less than or equal to the sacrificed creature's power",
                         returnCreature, creatureCard),

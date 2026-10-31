@@ -26,6 +26,6 @@ public class ExquisiteFirecraft extends Card {
         )))));
 
         // Exquisite Firecraft deals 4 damage to any target.
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(new DealDamageToAnyTargetEffect(4));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesAllUnspentManaEffect;
@@ -27,9 +26,9 @@ public class ManaShort extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new TapPermanentsEffect(
+        )).addSpellEffect(new TapPermanentsEffect(
                         TapUntapScope.TARGET_PLAYERS_PERMANENTS,
                         new PermanentIsLandPredicate()))
-                .addEffect(EffectSlot.SPELL, new TargetPlayerLosesAllUnspentManaEffect());
+                .addSpellEffect(new TargetPlayerLosesAllUnspentManaEffect());
     }
 }

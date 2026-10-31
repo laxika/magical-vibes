@@ -19,9 +19,9 @@ public class VinesOfVastwood extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(
                         TargetingRestrictionEffect.opponentSpellsAndAbilities()))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new Kicked(), new BoostTargetCreatureEffect(4, 4)));
     }
 }

@@ -75,7 +75,7 @@ class CardViewFactoryTest {
         Card card = card("Wax // Wane", CardType.INSTANT);
         card.setKeywords(Set.of(Keyword.FUSE));
         card.setSplitHalves(List.of(splitHalf("Wax", "{G}"), splitHalf("Wane", "{W}")));
-        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        card.addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Wax", List.of(new DrawCardEffect(1))).withManaCost("{G}"),
                 new ChooseOneEffect.ChooseOneOption("Wane", List.of(new DrawCardEffect(1))).withManaCost("{W}"),
                 new ChooseOneEffect.ChooseOneOption("Fuse — Wax and then Wane",

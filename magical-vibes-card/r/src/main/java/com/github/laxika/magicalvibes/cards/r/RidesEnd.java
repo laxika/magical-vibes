@@ -27,6 +27,6 @@ public class RidesEnd extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)
                 )),
                 "Target must be a creature or Vehicle"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        )).addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

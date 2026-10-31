@@ -440,7 +440,7 @@ public final class EffectResolution {
      */
     public static Set<TargetType> computeAllowedTargets(Card card) {
         return computeAllowedTargets(
-                card.getEffects(EffectSlot.SPELL), List.of(),
+                card.getCastingCostsAndSpellEffects(), List.of(),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
     }
 
@@ -450,7 +450,7 @@ public final class EffectResolution {
      */
     public static boolean needsTarget(Card card) {
         return needsTarget(
-                card.getEffects(EffectSlot.SPELL), List.of(),
+                card.getCastingCostsAndSpellEffects(), List.of(),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
     }
 
@@ -478,7 +478,7 @@ public final class EffectResolution {
             return false;
         }
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
-        return !card.getSpellTargets().isEmpty()
+        return !card.getTargetGroups().isEmpty()
                 || !computeAllowedTargets(List.of(), etbEffects, false, false).isEmpty()
                 || etbEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
                 || etbEffects.stream().anyMatch(EffectResolution::hasTargetedModalOption);
@@ -496,7 +496,7 @@ public final class EffectResolution {
      * Returns true if the spell itself requires a target to be cast (MTG rule 601.2c, union semantics).
      */
     public static boolean needsSpellCastTarget(Card card) {
-        return needsSpellCastTarget(card.getEffects(EffectSlot.SPELL),
+        return needsSpellCastTarget(card.getCastingCostsAndSpellEffects(),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
     }
 
@@ -504,7 +504,7 @@ public final class EffectResolution {
      * Returns true if the card's effects target a spell on the stack (union semantics).
      */
     public static boolean needsSpellTarget(Card card) {
-        return needsSpellTarget(card.getEffects(EffectSlot.SPELL));
+        return needsSpellTarget(card.getCastingCostsAndSpellEffects());
     }
 
     /**
@@ -512,7 +512,7 @@ public final class EffectResolution {
      * Checks both spell effects and activated ability effects.
      */
     public static boolean needsDamageDistribution(Card card) {
-        boolean inSpell = needsDamageDistribution(card.getEffects(EffectSlot.SPELL));
+        boolean inSpell = needsDamageDistribution(card.getCastingCostsAndSpellEffects());
         boolean inAbility = card.getActivatedAbilities().stream()
                 .flatMap(a -> a.getEffects().stream())
                 .anyMatch(EffectResolution::isChosenDivision);
@@ -543,7 +543,7 @@ public final class EffectResolution {
     public static boolean hasConvergeEffect(Card card) {
         return (card.getKeywords().contains(Keyword.CONVERGE)
                 || card.getKeywords().contains(Keyword.SUNBURST))
-                || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
+                || hasConvergeEffect(card.getCastingCostsAndSpellEffects());
     }
 
     /**
@@ -569,8 +569,8 @@ public final class EffectResolution {
      * Intruders and Catharsis).
      */
     public static boolean hasColorSpentCondition(Card card) {
-        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
-                .flatMap(slot -> card.getEffects(slot).stream())
+        return java.util.stream.Stream.concat(card.getCastingCostsAndSpellEffects().stream(),
+                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream())
                 .anyMatch(EffectResolution::effectUsesColorSpentMana);
     }
 
@@ -602,8 +602,8 @@ public final class EffectResolution {
      * the permanent's entry replacements and entry triggers have resolved.
      */
     public static boolean hasColorManaPairsSpentToCastAmount(Card card) {
-        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
-                .flatMap(slot -> card.getEffects(slot).stream())
+        return java.util.stream.Stream.concat(card.getCastingCostsAndSpellEffects().stream(),
+                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream())
                 .anyMatch(EffectResolution::effectUsesColorManaPairsSpentToCast);
     }
 
@@ -656,8 +656,9 @@ public final class EffectResolution {
      * must snapshot total mana spent into the stack entry's {@code xValue}.
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
-        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_SELF_CAST, EffectSlot.ON_ENTER_BATTLEFIELD)
-                .flatMap(slot -> card.getEffects(slot).stream())
+        return java.util.stream.Stream.concat(card.getCastingCostsAndSpellEffects().stream(),
+                        java.util.stream.Stream.of(EffectSlot.ON_SELF_CAST, EffectSlot.ON_ENTER_BATTLEFIELD)
+                                .flatMap(slot -> card.getEffects(slot).stream()))
                 .anyMatch(EffectResolution::effectUsesManaSpentToCast);
     }
 

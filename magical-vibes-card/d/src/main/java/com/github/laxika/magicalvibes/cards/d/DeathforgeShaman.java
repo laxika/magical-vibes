@@ -18,7 +18,7 @@ import java.util.List;
 public class DeathforgeShaman extends Card {
 
     public DeathforgeShaman() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{R}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{R}")));
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),

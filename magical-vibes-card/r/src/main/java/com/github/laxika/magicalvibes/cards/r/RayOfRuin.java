@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +31,7 @@ public class RayOfRuin extends Card {
                         ))
                 )),
                 "Target must be a creature, Vehicle, or nonbasic land"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new ScryEffect(1));
+        )).addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new ScryEffect(1));
     }
 }

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class HellishRebuke extends Card {
 
     public HellishRebuke() {
-        addEffect(EffectSlot.SPELL, new GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect(
+        addSpellEffect(new GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect(
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_DAMAGE_TO_PLAYER,
                         new DamagedPlayerOnlyEffect(null,

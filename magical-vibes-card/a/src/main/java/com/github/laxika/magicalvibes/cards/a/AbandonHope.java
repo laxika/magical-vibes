@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -18,9 +17,9 @@ public class AbandonHope extends Card {
 
     public AbandonHope() {
         // Additional cost: discard X cards (the same X the spell is cast for).
-        addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
+        addCastingCost(new DiscardXCardsCost());
         // Look at target opponent's hand and choose X cards from it; that player discards them.
-        addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
+        addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 new XValue(), List.of(), List.of(), HandChoiceDestination.DISCARD,
                 false, null, 0, false, false, false, false));
         target(new PlayerPredicateTargetFilter(

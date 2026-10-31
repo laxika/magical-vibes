@@ -23,8 +23,7 @@ public class AsinineAntics extends Card {
 
     public AsinineAntics() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{U}{U}")), null, true));
-        addEffect(EffectSlot.SPELL,
-                new CreateTokensAttachedToOpposingCreaturesEffect(cursedRoleToken()));
+        addSpellEffect(new CreateTokensAttachedToOpposingCreaturesEffect(cursedRoleToken()));
     }
 
     private static CreateTokenEffect cursedRoleToken() {

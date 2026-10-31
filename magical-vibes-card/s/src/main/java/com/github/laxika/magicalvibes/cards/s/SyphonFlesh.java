@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureCreateTokensEffect;
 
@@ -20,7 +19,7 @@ import java.util.Set;
 public class SyphonFlesh extends Card {
 
     public SyphonFlesh() {
-        addEffect(EffectSlot.SPELL, new EachOpponentSacrificesCreatureCreateTokensEffect(
+        addSpellEffect(new EachOpponentSacrificesCreatureCreateTokensEffect(
                 new CreateTokenEffect("Zombie", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE), Set.of(), Set.of())));
     }

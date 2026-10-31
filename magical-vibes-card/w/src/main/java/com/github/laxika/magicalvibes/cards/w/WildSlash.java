@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
@@ -19,13 +18,13 @@ import java.util.List;
 public class WildSlash extends Card {
 
     public WildSlash() {
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4)
                 ))),
                 new DamageCantBePreventedThisTurnEffect()
         ));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(new DealDamageToAnyTargetEffect(2));
     }
 }

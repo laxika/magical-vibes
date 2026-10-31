@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
 import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.CreateRandomCardCopyAndMayCastEffect;
 
@@ -28,7 +27,7 @@ public class JundEmOut extends Card {
             Tarmogoyf::new);
 
     public JundEmOut() {
-        addEffect(EffectSlot.SPELL, new CreateRandomCardCopyAndMayCastEffect(JUND_CARDS));
+        addSpellEffect(new CreateRandomCardCopyAndMayCastEffect(JUND_CARDS));
         addCastingOption(new Retrace());
     }
 }

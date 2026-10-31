@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -19,8 +18,8 @@ import java.util.List;
 public class OozeSpill extends Card {
 
     public OozeSpill() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofArtifactToken(
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(CreateTokenEffect.ofArtifactToken(
                 1,
                 "Mutagen",
                 List.of(CardSubtype.MUTAGEN),

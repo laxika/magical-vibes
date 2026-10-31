@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +24,7 @@ public class Decimate extends Card {
         // instance is bound to every target group and all four are destroyed at the same time.
         CardEffect destroy = new DestroyTargetPermanentEffect();
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.SPELL, destroy);
+                .addSpellEffect(destroy);
         target(TargetFilters.creature())
                 .bindEffect(destroy);
         target(TargetFilters.enchantment())

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherPlayerGainsControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -23,8 +22,8 @@ public class FatefulHandoff extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature you control"
-        )).addEffect(EffectSlot.SPELL, new DrawCardEffect(new TargetManaValue()));
+        )).addSpellEffect(new DrawCardEffect(new TargetManaValue()));
 
-        addEffect(EffectSlot.SPELL, new ChooseAnotherPlayerGainsControlOfTargetPermanentEffect());
+        addSpellEffect(new ChooseAnotherPlayerGainsControlOfTargetPermanentEffect());
     }
 }

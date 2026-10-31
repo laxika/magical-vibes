@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -25,8 +24,8 @@ public class BrokersSafeguard extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()))),
                 "Target must be a nonartifact creature you control"))
-                .addEffect(EffectSlot.SPELL, new PerpetuallyGrantStaticEffectToTargetCreatureEffect(
+                .addSpellEffect(new PerpetuallyGrantStaticEffectToTargetCreatureEffect(
                         new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1))))
-                .addEffect(EffectSlot.SPELL, FlickerEffect.flickerTarget());
+                .addSpellEffect(FlickerEffect.flickerTarget());
     }
 }

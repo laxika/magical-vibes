@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.p.PillarvergePathway;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -19,7 +18,7 @@ public class NeedlevergePathway extends Card {
         setModalDoubleFaced(true);
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Needleverge Pathway", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Pillarverge Pathway", List.of())
         )));

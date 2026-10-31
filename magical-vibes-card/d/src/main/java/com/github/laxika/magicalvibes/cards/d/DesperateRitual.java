@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 public class DesperateRitual extends Card {
 
     public DesperateRitual() {
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED, 3));
+        addSpellEffect(new AwardManaEffect(ManaColor.RED, 3));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{R}"));
     }
 }

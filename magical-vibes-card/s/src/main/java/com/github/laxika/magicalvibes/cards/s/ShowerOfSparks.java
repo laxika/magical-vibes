@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -24,6 +23,6 @@ public class ShowerOfSparks extends Card {
                 "Second target must be a player or planeswalker"
         ));
 
-        addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+        addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)));
     }
 }

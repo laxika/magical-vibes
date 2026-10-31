@@ -16,7 +16,6 @@ public class BlinkmothInfusion extends Card {
     public BlinkmothInfusion() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL,
-                new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsArtifactPredicate()));
+        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentIsArtifactPredicate()));
     }
 }

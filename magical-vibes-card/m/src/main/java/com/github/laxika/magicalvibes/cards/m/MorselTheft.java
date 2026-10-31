@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -30,11 +29,10 @@ public class MorselTheft extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+                .addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new GainLifeEffect(3));
 
         // If this spell's prowl cost was paid, draw a card.
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new CastForProwlCost(), new DrawCardEffect()));
+        addSpellEffect(new ConditionalEffect(new CastForProwlCost(), new DrawCardEffect()));
     }
 }

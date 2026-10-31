@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -22,7 +21,7 @@ public class SongOfInspiration extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(
                 new CardIsPermanentPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 2)
-                .addEffect(EffectSlot.SPELL, RollD20Effect.withAddedAmount(
+                .addSpellEffect(RollD20Effect.withAddedAmount(
                         new TargetCardsManaValueSum(true),
                         returnCards,
                         // Life gain is evaluated while the cards are still in the graveyard, so only

@@ -14,7 +14,7 @@ import java.util.List;
 public class EssenceOfAjani extends Card {
 
     public EssenceOfAjani() {
-        addEffect(EffectSlot.SPELL, new PutResolvingSpellIntoCommandZoneEffect());
+        addSpellEffect(new PutResolvingSpellIntoCommandZoneEffect());
         addEffect(EffectSlot.COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null, List.of(new GainLifeEffect(1))));
     }

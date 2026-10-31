@@ -35,12 +35,12 @@ public class HuntingWilds extends Card {
                 GrantScope.OWN_PERMANENTS, EffectDuration.PERMANENT);
 
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}{G}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new SearchLibraryEffect(new Fixed(2), forestFilter, LibrarySearchDestination.BATTLEFIELD_TAPPED),
                 new SearchLibraryEffect(new Fixed(2), forestFilter,
                         LibrarySearchDestination.BATTLEFIELD_TAPPED, null, 1, false,
                         false, false, false, animation, LibrarySearchPlayer.CONTROLLER,
                         false, false, true)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new UntapSearchedPermanentsEffect()));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new UntapSearchedPermanentsEffect()));
     }
 }

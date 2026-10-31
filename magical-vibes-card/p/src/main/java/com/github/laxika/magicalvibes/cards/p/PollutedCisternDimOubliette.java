@@ -26,7 +26,7 @@ public class PollutedCisternDimOubliette extends Card {
     public PollutedCisternDimOubliette() {
         setRoomDoorManaCosts(List.of("{1}{B}", "{4}{B}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Polluted Cistern", List.of())
                         .withManaCost("{1}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Dim Oubliette", List.of())

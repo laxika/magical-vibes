@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect;
@@ -19,8 +18,7 @@ public class GlyphOfLife extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.WALL),
                 "Target must be a Wall"
-        )).addEffect(EffectSlot.SPELL,
-                new RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect(
+        )).addSpellEffect(new RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect(
                         List.of(new GainLifeEffect(new EventValue()))));
     }
 }

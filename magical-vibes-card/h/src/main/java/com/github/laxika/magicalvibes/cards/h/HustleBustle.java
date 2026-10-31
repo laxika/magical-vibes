@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -27,7 +26,7 @@ public class HustleBustle extends Card {
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES),
                 new MayEffect(new TurnOwnCreatureFaceUpEffect(), "Turn a creature you control face up?"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Hustle - Target creature attacks or blocks this turn if able",
                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK_OR_BLOCK),

@@ -18,6 +18,6 @@ public class ThingSwing extends Card {
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect(2));
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(2));
     }
 }

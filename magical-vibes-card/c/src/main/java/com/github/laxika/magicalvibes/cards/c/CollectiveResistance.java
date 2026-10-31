@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class CollectiveResistance extends Card {
 
     public CollectiveResistance() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{G}"));
+        addCastingCost(new EscalateManaCost("{G}"));
 
         setAllowSharedTargets(true);
         var artifactFilter = new PermanentPredicateTargetFilter(
@@ -34,7 +33,7 @@ public class CollectiveResistance extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature.");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact",
                         new DestroyTargetPermanentEffect(),

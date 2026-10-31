@@ -19,6 +19,6 @@ public class Whack extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE)), 3));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-4, -4));
+                .addSpellEffect(new BoostTargetCreatureEffect(-4, -4));
     }
 }

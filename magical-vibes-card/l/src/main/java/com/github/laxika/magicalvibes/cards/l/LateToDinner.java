@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,12 +23,12 @@ public class LateToDinner extends Card {
         var creatureCard = new CardTypePredicate(CardType.CREATURE);
         target(new GraveyardCardPredicateTargetFilter(
                 creatureCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(creatureCard)
                         .targetGraveyard(true)
                         .build())
-                .addEffect(EffectSlot.SPELL, foodToken());
+                .addSpellEffect(foodToken());
     }
 
     private static CreateTokenEffect foodToken() {

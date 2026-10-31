@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -27,7 +26,7 @@ public class ShelteringWord extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a creature you control"))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetToughness()));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
+                .addSpellEffect(new GainLifeEffect(new TargetToughness()));
     }
 }

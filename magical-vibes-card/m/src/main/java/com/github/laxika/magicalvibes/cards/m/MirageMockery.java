@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
@@ -26,8 +25,8 @@ public class MirageMockery extends Card {
                 new PermanentNotPredicate(new PermanentIsArtifactPredicate()),
                 new PermanentIsCreaturePredicate()));
 
-        addEffect(EffectSlot.SPELL, new EntwineManaCost("{2}{U}"));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addCastingCost(new EntwineManaCost("{2}{U}"));
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a token that's a copy of target artifact creature you control",
                         new CreateTokenCopyOfTargetPermanentEffect(),

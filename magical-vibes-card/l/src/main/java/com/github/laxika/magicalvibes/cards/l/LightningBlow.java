@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,8 +15,8 @@ public class LightningBlow extends Card {
     public LightningBlow() {
         // "Target creature gains first strike until end of turn."
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
         // "Draw a card at the beginning of the next turn's upkeep."
-        addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
+        addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

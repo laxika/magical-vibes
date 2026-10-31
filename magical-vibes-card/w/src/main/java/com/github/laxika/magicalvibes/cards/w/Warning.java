@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -12,6 +11,6 @@ public class Warning extends Card {
 
     public Warning() {
         // Prevent all combat damage that would be dealt by target attacking creature this turn.
-        target(TargetFilters.attackingCreature()).addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures());
+        target(TargetFilters.attackingCreature()).addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures());
     }
 }

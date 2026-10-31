@@ -15,6 +15,6 @@ public class VoidRend extends Card {
     public VoidRend() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -23,7 +22,7 @@ public class CaravanVigil extends Card {
     public CaravanVigil() {
         // Search your library for a basic land card, reveal it, put it into your hand, then shuffle.
         // Morbid — If a creature died this turn, you may put that card onto the battlefield instead.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Morbid(), 
+        addSpellEffect(new ConditionalReplacementEffect(new Morbid(), 
                 new SearchLibraryEffect(CardPredicateUtils.basicLand()),
                 new MayEffect(
                         new SearchLibraryEffect(

@@ -47,7 +47,7 @@ public class ShadrixSilverquill extends Card {
 
         registerEffectTargetIndex(tokenEffect, target(anyPlayer).getIndex());
         registerEffectTargetIndex(drawEffect, target(anyPlayer).getIndex());
-        registerEffectTargetIndex(loseLifeEffect, getSpellTargets().get(1).getIndex());
+        registerEffectTargetIndex(loseLifeEffect, getTargetGroups().get(1).getIndex());
         registerEffectTargetIndex(counterEffect, target(anyPlayer).getIndex());
 
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ChooseOneEffect(List.of(

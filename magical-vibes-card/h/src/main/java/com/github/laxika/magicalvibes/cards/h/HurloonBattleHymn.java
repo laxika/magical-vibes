@@ -28,7 +28,7 @@ public class HurloonBattleHymn extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(4));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new GainLifeEffect(4)));
+                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(4));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new GainLifeEffect(4)));
     }
 }

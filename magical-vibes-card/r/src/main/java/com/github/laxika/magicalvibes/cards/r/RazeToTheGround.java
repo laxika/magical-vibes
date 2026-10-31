@@ -17,7 +17,7 @@ public class RazeToTheGround extends Card {
     public RazeToTheGround() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
                         new DrawCardEffect(),
                         ThenEffectRecipient.CONTROLLER,

@@ -18,9 +18,9 @@ public class SocialSnub extends Card {
     public SocialSnub() {
         addEffect(EffectSlot.ON_SELF_CAST, CopyThisSpellIfConditionEffect.whenCastWhile(
                 new ControlsPermanent(new PermanentIsCreaturePredicate()), true));
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER));
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(1));
+        addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+        addSpellEffect(new GainLifeEffect(1));
     }
 }

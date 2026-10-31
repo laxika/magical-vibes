@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class ChampionOfThePath extends Card {
 
     public ChampionOfThePath() {
-        addEffect(EffectSlot.SPELL, new BeholdAndExileCost(CardSubtype.ELEMENTAL));
+        addCastingCost(new BeholdAndExileCost(CardSubtype.ELEMENTAL));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ELEMENTAL),
                         new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT)));

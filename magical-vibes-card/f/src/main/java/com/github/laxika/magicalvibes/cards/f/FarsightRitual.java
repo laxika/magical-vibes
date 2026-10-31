@@ -28,7 +28,7 @@ public class FarsightRitual extends Card {
                 )),
                 "an artifact, enchantment, or token"
         ));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new Fixed(4), 2),
                 LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new Fixed(8), 2)

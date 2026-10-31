@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -21,7 +20,7 @@ public class RoilingWaters extends Card {
         ));
         SpellTarget creatures = target(TargetFilters.creatureAnOpponentControls(), 0, 2);
 
-        creatures.addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        player.addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2, false, true));
+        creatures.addSpellEffect(ReturnToHandEffect.target());
+        player.addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true));
     }
 }

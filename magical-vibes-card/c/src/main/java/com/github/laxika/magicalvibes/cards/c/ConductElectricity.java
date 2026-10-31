@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,6 +28,6 @@ public class ConductElectricity extends Card {
                 )),
                 "Target must be a creature token"
         ), 0, 1).bindEffect(tokenDamage);
-        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, tokenDamage);
+        addSimultaneousSpellEffects(creatureDamage, tokenDamage);
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -23,7 +22,7 @@ public class WanderwineFarewell extends Card {
 
     public WanderwineFarewell() {
         target(TargetFilters.nonlandPermanent(), 1, 2)
-                .addEffect(EffectSlot.SPELL, new ReturnTargetPermanentsThenEffect(
+                .addSpellEffect(new ReturnTargetPermanentsThenEffect(
                         new ConditionalEffect(
                                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
                                 new CreateTokenEffect(CardType.CREATURE, new EventValue(), "Merfolk", 1, 1,

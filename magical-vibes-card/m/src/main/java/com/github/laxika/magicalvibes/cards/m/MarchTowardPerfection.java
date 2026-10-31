@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
@@ -37,8 +36,7 @@ public class MarchTowardPerfection extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("ONE", "246"));
 
     public MarchTowardPerfection() {
-        addEffect(EffectSlot.SPELL,
-                RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
+        addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardSubtypePredicate(CardSubtype.PHYREXIAN))),
@@ -47,6 +45,6 @@ public class MarchTowardPerfection extends Card {
                                         CounterType.PLUS_ONE_PLUS_ONE, 1),
                                 new GrantAdditionalCounterToTriggeringCreatureSpellEffect(
                                         CounterType.DEATHTOUCH, 1))));
-        addEffect(EffectSlot.SPELL, new DraftCardFromSpellbookEffect(SPELLBOOK));
+        addSpellEffect(new DraftCardFromSpellbookEffect(SPELLBOOK));
     }
 }

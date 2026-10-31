@@ -13,7 +13,7 @@ public class ExplosiveGrowth extends Card {
 
     public ExplosiveGrowth() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{5}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new BoostTargetCreatureEffect(2, 2),
                 new BoostTargetCreatureEffect(5, 5)

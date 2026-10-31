@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -23,6 +22,6 @@ public class Flashfreeze extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryColorInPredicate(Set.of(CardColor.RED, CardColor.GREEN)),
                 "Target spell must be red or green."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addSpellEffect(new CounterSpellEffect());
     }
 }

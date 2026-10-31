@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.LearnEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -23,8 +22,7 @@ public class FieldTrip extends Card {
                 new CardSupertypePredicate(CardSupertype.BASIC),
                 new CardSubtypePredicate(CardSubtype.FOREST)));
 
-        addEffect(EffectSlot.SPELL,
-                new SearchLibraryEffect(basicForest, LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.SPELL, new LearnEffect());
+        addSpellEffect(new SearchLibraryEffect(basicForest, LibrarySearchDestination.BATTLEFIELD_TAPPED));
+        addSpellEffect(new LearnEffect());
     }
 }

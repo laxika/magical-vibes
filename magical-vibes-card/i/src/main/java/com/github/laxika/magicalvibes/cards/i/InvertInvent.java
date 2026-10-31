@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -41,7 +40,7 @@ public class InvertInvent extends Card {
         CardEffect searchSorcery = new SearchLibraryEffect(new CardTypePredicate(CardType.SORCERY))
                 .asContinuationOfPreviousSearch();
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Invert — Switch the power and toughness of each of up to two target creatures until end of turn",
                         List.of(invert),

@@ -16,6 +16,6 @@ public class IntoThinAir extends Card {
     public IntoThinAir() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
-        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.artifact()).addSpellEffect(ReturnToHandEffect.target());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -16,6 +15,6 @@ public class WildSwing extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsEnchantmentPredicate()),
                 "Target must be a nonenchantment permanent"
-        ), 3, 3).addEffect(EffectSlot.SPELL, new DestroyOneOfTargetsAtRandomEffect());
+        ), 3, 3).addSpellEffect(new DestroyOneOfTargetsAtRandomEffect());
     }
 }

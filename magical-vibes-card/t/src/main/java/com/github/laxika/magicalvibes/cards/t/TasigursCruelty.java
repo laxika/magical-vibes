@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 public class TasigursCruelty extends Card {
 
     public TasigursCruelty() {
-        addEffect(EffectSlot.SPELL, new DelveCost());
-        addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT));
+        addCastingCost(new DelveCost());
+        addSpellEffect(new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT));
     }
 }

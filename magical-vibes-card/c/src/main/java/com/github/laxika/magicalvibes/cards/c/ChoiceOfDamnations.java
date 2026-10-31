@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -29,8 +28,8 @@ public class ChoiceOfDamnations extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new TargetPlayerChoosesNumberEffect())
-                .addEffect(EffectSlot.SPELL, new MayEffect(
+                .addSpellEffect(new TargetPlayerChoosesNumberEffect())
+                .addSpellEffect(new MayEffect(
                         new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER),
                         "Have that player lose that much life?",
                         new SacrificePermanentsEffect(

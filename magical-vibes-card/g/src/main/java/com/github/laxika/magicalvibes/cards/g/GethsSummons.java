@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -20,7 +19,6 @@ public class GethsSummons extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(new GraveyardCardPredicateTargetFilter(creatureCards,
                 GraveyardSearchScope.ALL_GRAVEYARDS, 3), 0, 99)
-                .addEffect(EffectSlot.SPELL,
-                        ReturnTargetCardsFromGraveyardToBattlefieldEffect.fromAllGraveyards(creatureCards));
+                .addSpellEffect(ReturnTargetCardsFromGraveyardToBattlefieldEffect.fromAllGraveyards(creatureCards));
     }
 }

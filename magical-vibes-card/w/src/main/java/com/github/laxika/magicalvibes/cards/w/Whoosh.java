@@ -22,7 +22,7 @@ public class Whoosh extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        )).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new DrawCardEffect()));
+        )).addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new ConditionalEffect(new Kicked(), new DrawCardEffect()));
     }
 }

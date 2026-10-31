@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -23,13 +22,13 @@ import java.util.Set;
 public class SubterraneanTremors extends Card {
 
     public SubterraneanTremors() {
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(
+        addSpellEffect(new MassDamageEffect(
                 new XValue(), false, false,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4),
                 new DestroyAllPermanentsEffect(new PermanentIsArtifactPredicate())));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(8),
                 new CreateTokenEffect("Lizard", 8, 8, CardColor.RED,
                         List.of(CardSubtype.LIZARD), Set.of(), Set.of())));

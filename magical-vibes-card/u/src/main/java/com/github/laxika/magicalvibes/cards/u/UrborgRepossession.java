@@ -26,16 +26,16 @@ public class UrborgRepossession extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(
                 creature, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(creature)
                         .targetGraveyard(true)
                         .build());
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        addSpellEffect(new GainLifeEffect(2));
 
         targetWhenKicked(new GraveyardCardPredicateTargetFilter(
                 permanent, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new Kicked(), ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(permanent)

@@ -14,8 +14,7 @@ import java.util.List;
 public class NightmareVoid extends Card {
 
     public NightmareVoid() {
-        addEffect(EffectSlot.SPELL,
-                new ChooseCardsFromTargetHandEffect(1, List.of(), HandChoiceDestination.DISCARD));
+        addSpellEffect(new ChooseCardsFromTargetHandEffect(1, List.of(), HandChoiceDestination.DISCARD));
         addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(2));
     }
 }

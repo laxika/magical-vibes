@@ -13,7 +13,7 @@ public class XandersPact extends Card {
 
     public XandersPact() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(2));
-        addEffect(EffectSlot.SPELL, new ExileTopCardOfEachOpponentAndMayCastForLifeThisTurnEffect());
+        addCastingCost(new CasualtyCost(2));
+        addSpellEffect(new ExileTopCardOfEachOpponentAndMayCastForLifeThisTurnEffect());
     }
 }

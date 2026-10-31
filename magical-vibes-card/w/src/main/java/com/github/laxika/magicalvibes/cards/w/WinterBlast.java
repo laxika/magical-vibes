@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
@@ -28,8 +27,8 @@ public class WinterBlast extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new DealDamageToEachTargetEffect(
                         new Fixed(2), new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

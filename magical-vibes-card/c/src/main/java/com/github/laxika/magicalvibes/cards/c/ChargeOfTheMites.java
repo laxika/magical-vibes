@@ -27,7 +27,7 @@ import java.util.Set;
 public class ChargeOfTheMites extends Card {
 
     public ChargeOfTheMites() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Charge of the Mites deals damage equal to the number of creatures you control to target creature or planeswalker",
                         new DealDamageToTargetCreatureOrPlaneswalkerEffect(

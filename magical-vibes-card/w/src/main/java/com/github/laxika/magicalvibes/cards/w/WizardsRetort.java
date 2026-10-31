@@ -18,6 +18,6 @@ public class WizardsRetort extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

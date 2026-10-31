@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -18,12 +17,12 @@ public class InspireAwe extends Card {
 
     public InspireAwe() {
         // Enchanted creatures and enchantment creatures are exempt from the combat-damage prevention.
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatExcept(
+        addSpellEffect(PreventDamageEffect.allCombatExcept(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsEnchantedPredicate(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsEnchantmentPredicate()))))));
-        addEffect(EffectSlot.SPELL, new ScryEffect(2));
+        addSpellEffect(new ScryEffect(2));
     }
 }

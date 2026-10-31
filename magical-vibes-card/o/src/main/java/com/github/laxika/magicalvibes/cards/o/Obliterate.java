@@ -19,7 +19,7 @@ public class Obliterate extends Card {
 
     public Obliterate() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate(),

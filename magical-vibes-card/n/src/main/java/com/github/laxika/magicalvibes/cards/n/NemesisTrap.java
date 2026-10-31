@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndCreateTokenCopyEffect;
@@ -31,6 +30,6 @@ public class NemesisTrap extends Card {
                 false));
 
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentAndCreateTokenCopyEffect());
+                .addSpellEffect(new ExileTargetPermanentAndCreateTokenCopyEffect());
     }
 }

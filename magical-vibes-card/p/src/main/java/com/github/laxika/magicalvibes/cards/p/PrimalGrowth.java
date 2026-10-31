@@ -20,7 +20,7 @@ public class PrimalGrowth extends Card {
     public PrimalGrowth() {
         addEffect(EffectSlot.STATIC, new KickerEffect(
                 new PermanentIsCreaturePredicate(), "a creature"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD),
                 new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),

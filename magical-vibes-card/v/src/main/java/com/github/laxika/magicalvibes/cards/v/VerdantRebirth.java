@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VerdantRebirth extends Card {
 
     public VerdantRebirth() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+        target(TargetFilters.creature()).addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                 EffectSlot.ON_DEATH, new ReturnSourceCardFromGraveyardToOwnerHandEffect()))
-          .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+          .addSpellEffect(new DrawCardEffect());
     }
 }

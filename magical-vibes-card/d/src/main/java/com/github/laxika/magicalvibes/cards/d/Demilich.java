@@ -34,7 +34,7 @@ public class Demilich extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
                                 instantOrSorcery, ownGraveyard, false));
-        addEffect(EffectSlot.SPELL, new ExileNCardsFromGraveyardCost(4, null, instantOrSorcery, true));
+        addCastingCost(new ExileNCardsFromGraveyardCost(4, null, instantOrSorcery, true));
         addCastingOption(new GraveyardCast());
     }
 }

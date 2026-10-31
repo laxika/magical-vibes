@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -15,13 +14,13 @@ public class ShardConvergence extends Card {
         // Reveal those cards, put them into your hand, then shuffle." Each restricted subtype search
         // reveals its pick and may fail to find; a card found for one subtype leaves the library
         // before the next search, so a dual-type card can only satisfy one subtype (CR-consistent).
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS))
+        addSpellEffect(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS))
                 .withoutShuffle());
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ISLAND))
+        addSpellEffect(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ISLAND))
                 .withoutShuffle().asContinuationOfPreviousSearch());
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP))
+        addSpellEffect(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP))
                 .withoutShuffle().asContinuationOfPreviousSearch());
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN))
+        addSpellEffect(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN))
                 .asContinuationOfPreviousSearch());
     }
 }

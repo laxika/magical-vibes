@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForNonlandCardAndRevealEffect;
@@ -15,7 +14,7 @@ import java.util.List;
 public class GrimReminder extends Card {
 
     public GrimReminder() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryForNonlandCardAndRevealEffect(6));
+        addSpellEffect(new SearchLibraryForNonlandCardAndRevealEffect(6));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

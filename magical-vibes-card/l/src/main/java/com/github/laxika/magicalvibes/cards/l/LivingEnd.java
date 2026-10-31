@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.effect.l.LivingDeathEffect;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 
 import java.util.List;
 
@@ -16,7 +15,7 @@ import java.util.List;
 public class LivingEnd extends Card {
 
     public LivingEnd() {
-        addEffect(EffectSlot.SPELL, new LivingDeathEffect());
+        addSpellEffect(new LivingDeathEffect());
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{B}{B}",

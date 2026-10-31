@@ -19,7 +19,7 @@ import java.util.Set;
 public class WolfbriarElemental extends Card {
 
     public WolfbriarElemental() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{G}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{G}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 new RepeatedAdditionalCostCount("{G}"),
                 "Wolf", 2, 2, CardColor.GREEN, List.of(CardSubtype.WOLF), Set.of(), Set.of()));

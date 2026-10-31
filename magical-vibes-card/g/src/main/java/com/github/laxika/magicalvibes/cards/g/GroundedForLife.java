@@ -14,6 +14,6 @@ public class GroundedForLife extends Card {
     public GroundedForLife() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentIsTappedPredicate(), 3));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

@@ -14,8 +14,7 @@ public class VolcanicFallout extends Card {
 
     public VolcanicFallout() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addSimultaneousEffects(EffectSlot.SPELL,
-                new MassDamageEffect(2),
+        addSimultaneousSpellEffects(new MassDamageEffect(2),
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_PLAYER));
     }
 }

@@ -18,9 +18,9 @@ public class WorthyCause extends Card {
         // Buyback {2}.
         addEffect(EffectSlot.STATIC, new BuybackEffect("{2}"));
         // Additional cost: sacrifice a creature; its toughness is snapshotted into xValue.
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost(false, false, true));
+        addCastingCost(new SacrificeCreatureCost(false, false, true));
         // You gain life equal to the sacrificed creature's toughness.
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new GainLifeEffect(new XValue()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

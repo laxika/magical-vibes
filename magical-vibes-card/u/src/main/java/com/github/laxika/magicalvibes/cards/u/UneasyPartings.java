@@ -23,7 +23,6 @@ public class UneasyPartings extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))), 1));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
+        target(TargetFilters.creature()).addSpellEffect(new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
     }
 }

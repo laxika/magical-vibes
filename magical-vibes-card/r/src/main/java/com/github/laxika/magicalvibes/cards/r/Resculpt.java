@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -29,7 +28,7 @@ public class Resculpt extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+        )).addSpellEffect(new ExileTargetPermanentThenEffect(
                 new CreateTokenEffect("Elemental", 4, 4, CardColor.BLUE,
                         Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)),
                 ThenEffectRecipient.TARGET_CONTROLLER));

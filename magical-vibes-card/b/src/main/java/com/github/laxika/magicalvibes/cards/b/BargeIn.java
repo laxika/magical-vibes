@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -20,10 +19,9 @@ import java.util.List;
 public class BargeIn extends Card {
 
     public BargeIn() {
-        target(TargetFilters.attackingCreature()).addEffect(EffectSlot.SPELL,
-                new BoostTargetCreatureEffect(2, 2));
+        target(TargetFilters.attackingCreature()).addSpellEffect(new BoostTargetCreatureEffect(2, 2));
 
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_CREATURES,
+        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))

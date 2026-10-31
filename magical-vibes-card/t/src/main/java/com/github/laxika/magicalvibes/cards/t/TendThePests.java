@@ -19,8 +19,8 @@ import java.util.Set;
 public class TendThePests extends Card {
 
     public TendThePests() {
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost(false, true));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addCastingCost(new SacrificeCreatureCost(false, true));
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(),

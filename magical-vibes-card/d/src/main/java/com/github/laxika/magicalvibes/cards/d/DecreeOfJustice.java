@@ -22,7 +22,7 @@ import java.util.Set;
 public class DecreeOfJustice extends Card {
 
     public DecreeOfJustice() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(new XValue(), "Angel", 4, 4,
+        addSpellEffect(new CreateTokenEffect(new XValue(), "Angel", 4, 4,
                 CardColor.WHITE, List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of()));
 
         addEffect(EffectSlot.ON_SELF_CYCLED, new PayXManaCreateXTokensEffect(CreateTokenEffect.whiteSoldier(1)));

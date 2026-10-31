@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -72,7 +71,7 @@ class YouAreUnworthyOfMercyTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL)));
+                scheme.getCastingCostsAndSpellEffects()));
         harness.passBothPriorities();
     }
 }

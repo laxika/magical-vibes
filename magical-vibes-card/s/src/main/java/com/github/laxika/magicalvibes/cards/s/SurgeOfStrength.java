@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
@@ -20,12 +19,12 @@ import java.util.List;
 public class SurgeOfStrength extends Card {
 
     public SurgeOfStrength() {
-        addEffect(EffectSlot.SPELL, new DiscardCardTypeCost(
+        addCastingCost(new DiscardCardTypeCost(
                 new CardAnyOfPredicate(List.of(
                         new CardColorPredicate(CardColor.RED),
                         new CardColorPredicate(CardColor.GREEN))),
                 "red or green"));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(new TargetManaValue(), new Fixed(0)));
+        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        addSpellEffect(new BoostTargetCreatureEffect(new TargetManaValue(), new Fixed(0)));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -20,8 +19,7 @@ public class CeaseFire extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL,
-                new TargetPlayerCantCastSpellTypesThisTurnEffect(Set.of(CardType.CREATURE)))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        )).addSpellEffect(new TargetPlayerCantCastSpellTypesThisTurnEffect(Set.of(CardType.CREATURE)))
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

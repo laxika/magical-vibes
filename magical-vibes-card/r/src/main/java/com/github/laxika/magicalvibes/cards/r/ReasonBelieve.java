@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.b.Believe;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 /**
@@ -19,7 +18,7 @@ public class ReasonBelieve extends Card {
         setBackFaceCard(new Believe());
 
         // Scry 3.
-        addEffect(EffectSlot.SPELL, new ScryEffect(3));
+        addSpellEffect(new ScryEffect(3));
     }
 
     @Override

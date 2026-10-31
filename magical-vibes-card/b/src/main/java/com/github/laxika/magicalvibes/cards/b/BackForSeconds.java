@@ -26,8 +26,7 @@ public class BackForSeconds extends Card {
                 )),
                 "an artifact, enchantment, or token"
         ));
-        addEffect(EffectSlot.SPELL,
-                new ReturnTargetCardsFromGraveyardToHandEffect(new CardTypePredicate(CardType.CREATURE), 2)
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(new CardTypePredicate(CardType.CREATURE), 2)
                         .withBargainedBattlefieldReplacement(4));
     }
 }

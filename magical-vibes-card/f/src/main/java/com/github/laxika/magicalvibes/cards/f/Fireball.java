@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -34,6 +33,6 @@ public class Fireball extends Card {
 
     public Fireball() {
         setAdditionalCostPerExtraTarget(1);
-        target(0, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.xDividedEvenly());
+        target(0, Integer.MAX_VALUE).addSpellEffect(DealDividedDamageEffect.xDividedEvenly());
     }
 }

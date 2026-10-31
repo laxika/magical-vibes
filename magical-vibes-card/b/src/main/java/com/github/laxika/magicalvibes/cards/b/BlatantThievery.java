@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -20,7 +19,6 @@ public class BlatantThievery extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                 "Target must be a permanent an opponent controls"
-        ), 1, 99).addEffect(EffectSlot.SPELL,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+        ), 1, 99).addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT));
     }
 }

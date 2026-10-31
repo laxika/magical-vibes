@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -15,8 +14,7 @@ public class ScatteringStroke extends Card {
     public ScatteringStroke() {
         // Counter target spell. Clash with an opponent. If you win, at the beginning of your next
         // main phase, you may add an amount of {C} equal to that spell's mana value.
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL,
-                new ClashEffect(new RegisterDelayedManaEqualToTargetSpellManaValueEffect(ManaColor.COLORLESS)));
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new ClashEffect(new RegisterDelayedManaEqualToTargetSpellManaValueEffect(ManaColor.COLORLESS)));
     }
 }

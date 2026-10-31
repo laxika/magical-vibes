@@ -23,13 +23,12 @@ public class MegaFlare extends Card {
 
     public MegaFlare() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}{R}{R}"));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new CreateTokenEffect("Dragon", 6, 6, CardColor.RED, List.of(CardSubtype.DRAGON),
                         Set.of(Keyword.FLYING), Set.of())));
 
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
-                .addEffect(EffectSlot.SPELL,
-                        new DealDamageToEachTargetEffect(new GreatestPowerAmongControlled()));
+                .addSpellEffect(new DealDamageToEachTargetEffect(new GreatestPowerAmongControlled()));
     }
 }

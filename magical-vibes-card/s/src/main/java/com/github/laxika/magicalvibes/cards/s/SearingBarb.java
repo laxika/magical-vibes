@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -37,7 +36,7 @@ public class SearingBarb extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target."
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                         new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
                         new DealDamageToAnyTargetEffect(2),
                         SequenceEffect.of(
@@ -45,7 +44,7 @@ public class SearingBarb extends Card {
                                 new CantBlockThisTurnEffect(TapUntapScope.TARGET))
                 ));
 
-        addEffect(EffectSlot.SPELL, incubate(1));
+        addSpellEffect(incubate(1));
     }
 
     private static CreateTokenEffect incubate(int counters) {

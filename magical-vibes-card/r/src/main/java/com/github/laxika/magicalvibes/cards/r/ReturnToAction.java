@@ -18,9 +18,9 @@ public class ReturnToAction extends Card {
         // Until end of turn, target creature gets +1/+0 and gains lifelink and "When this creature
         // dies, return it to the battlefield tapped under its owner's control."
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH, new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)));
     }
 }

@@ -18,10 +18,9 @@ public class MistsOfLRien extends Card {
 
     public MistsOfLRien() {
         PermanentNotPredicate nonlandPermanent = new PermanentNotPredicate(new PermanentIsLandPredicate());
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{U}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}")));
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL,
-                        new ReturnTargetPermanentAndAllWithSameManaValueToHandEffect(
+                .addSpellEffect(new ReturnTargetPermanentAndAllWithSameManaValueToHandEffect(
                                 nonlandPermanent, nonlandPermanent));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{U}"));
     }

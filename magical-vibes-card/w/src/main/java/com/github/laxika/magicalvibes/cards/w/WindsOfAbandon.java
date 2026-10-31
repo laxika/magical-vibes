@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -29,7 +28,7 @@ public class WindsOfAbandon extends Card {
 
     public WindsOfAbandon() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{W}{W}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new ExileTargetPermanentThenEffect(
                         new SearchLibraryEffect(

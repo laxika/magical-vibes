@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -23,7 +22,7 @@ public class DevastatingOnslaught extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 "Target must be an artifact or creature you control"))
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(), true, false, true, false,
                         false, false, null, Set.of(), false, Map.of(), List.of(), false, new XValue()));
     }

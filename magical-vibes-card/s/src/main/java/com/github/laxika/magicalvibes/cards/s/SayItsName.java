@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
@@ -28,7 +27,7 @@ import java.util.List;
 public class SayItsName extends Card {
 
     public SayItsName() {
-        addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        addSpellEffect(SequenceEffect.of(
                 new MillEffect(3, MillRecipient.CONTROLLER),
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()

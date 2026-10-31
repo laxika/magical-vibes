@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentsThenEffect;
@@ -26,7 +25,7 @@ public class ParadoxicalOutcome extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                 "Target must be a nonland, nontoken permanent you control"), 0, 99)
-                .addEffect(EffectSlot.SPELL, ReturnTargetPermanentsThenEffect.countingCardsReturnedToYourHand(
+                .addSpellEffect(ReturnTargetPermanentsThenEffect.countingCardsReturnedToYourHand(
                         new DrawCardEffect(new EventValue())));
     }
 }

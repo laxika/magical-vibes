@@ -18,11 +18,10 @@ import java.util.Set;
 public class LeapOfFlame extends Card {
 
     public LeapOfFlame() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{U}{R}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}{R}")));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.SPELL,
-                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE), GrantScope.TARGET));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE), GrantScope.TARGET));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{U}{R}"));
     }
 }

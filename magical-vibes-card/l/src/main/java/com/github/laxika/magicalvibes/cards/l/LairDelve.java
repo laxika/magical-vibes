@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -22,7 +21,7 @@ public class LairDelve extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardTypePredicate(CardType.LAND)));
 
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsEffect(
+        addSpellEffect(new LookAtTopCardsEffect(
                 new Fixed(2), new Fixed(2), creatureOrLand,
                 LookDestination.BOTTOM_OF_LIBRARY, true));
     }

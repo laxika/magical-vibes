@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GoblinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.WheelOfMisfortuneEffect;
 
@@ -14,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.WheelOfMisfortuneEffect;
 public class WheelOfMisfortune extends Card {
 
     public WheelOfMisfortune() {
-        addEffect(EffectSlot.SPELL, GoblinGameEffect.wheelOfMisfortune());
+        addSpellEffect(GoblinGameEffect.wheelOfMisfortune());
     }
 }

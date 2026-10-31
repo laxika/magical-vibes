@@ -25,7 +25,7 @@ public class HeatShimmer extends Card {
         // its copiable values, so it loses the exile ability with its other abilities and a copy of
         // the token inherits it.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(),
                         false, false, false, false,
                         false, false, null, Set.of(Keyword.HASTE),

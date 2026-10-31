@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -22,7 +21,7 @@ import java.util.List;
 public class RustlerRampage extends Card {
 
     public RustlerRampage() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{1}", "{1}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{1}", "{1}")));
 
         var playerFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
@@ -31,7 +30,7 @@ public class RustlerRampage extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature.");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap all creatures target player controls",
                         new UntapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS,

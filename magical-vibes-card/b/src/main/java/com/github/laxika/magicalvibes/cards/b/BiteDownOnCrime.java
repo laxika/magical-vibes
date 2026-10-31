@@ -16,13 +16,13 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BiteDownOnCrime extends Card {
 
     public BiteDownOnCrime() {
-        addEffect(EffectSlot.SPELL, new CollectEvidenceCost(6, true));
+        addCastingCost(new CollectEvidenceCost(6, true));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new CollectEvidenceCostPaid(), new ReduceOwnCastCostEffect(new Fixed(2))));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0));
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 0));
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
     }
 }

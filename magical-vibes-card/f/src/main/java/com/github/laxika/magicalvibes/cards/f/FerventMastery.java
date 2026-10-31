@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -20,9 +19,9 @@ public class FerventMastery extends Card {
 
     public FerventMastery() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new OpponentDiscardsAnyNumberThenDrawsThatManyEffect()));
-        addEffect(EffectSlot.SPELL, SearchLibraryEffect.upToCountToHand(new Fixed(3)));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(3, DiscardRecipient.CONTROLLER, true));
+        addSpellEffect(SearchLibraryEffect.upToCountToHand(new Fixed(3)));
+        addSpellEffect(new DiscardEffect(3, DiscardRecipient.CONTROLLER, true));
     }
 }

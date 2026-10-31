@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +21,7 @@ public class TriumphantSurge extends Card {
                         new PermanentPowerAtLeastPredicate(4)
                 )),
                 "Target must be a creature with power 4 or greater"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(false))
+                .addSpellEffect(new GainLifeEffect(3));
     }
 }

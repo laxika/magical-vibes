@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -16,8 +15,7 @@ import java.util.Set;
 public class TropicalStorm extends Card {
 
     public TropicalStorm() {
-        addSimultaneousEffects(EffectSlot.SPELL,
-                new MassDamageEffect(0, true, false, new PermanentHasKeywordPredicate(Keyword.FLYING)),
+        addSimultaneousSpellEffects(new MassDamageEffect(0, true, false, new PermanentHasKeywordPredicate(Keyword.FLYING)),
                 new MassDamageEffect(new Fixed(1), false, false, new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
     }
 }

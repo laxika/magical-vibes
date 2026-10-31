@@ -43,7 +43,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
     }
 }
 ```
@@ -162,7 +162,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(DAMAGE, false));
+        addSpellEffect(new DealDamageToAnyTargetEffect(DAMAGE, false));
     }
 }
 ```
@@ -256,7 +256,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(DRAW_COUNT));
+        addSpellEffect(new DrawCardEffect(DRAW_COUNT));
     }
 }
 ```
@@ -333,7 +333,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(CANT_REGENERATE));
+        addSpellEffect(new DestroyTargetPermanentEffect(CANT_REGENERATE));
         setTargetFilter(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate()));
     }
 }
@@ -493,8 +493,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.KEYWORD, GrantScope.OWN_CREATURES));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        addSpellEffect(new GrantKeywordEffect(Keyword.KEYWORD, GrantScope.OWN_CREATURES));
     }
 }
 ```
@@ -543,7 +543,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }
 ```
@@ -634,8 +634,8 @@ public class CARDNAME extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.SPELL_TYPE)),
                 "Target must be a SPELL_TYPE_LABEL spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-          .addEffect(EffectSlot.SPELL, new BONUS_EFFECT_CLASS(BONUS_ARGS));
+        )).addSpellEffect(new CounterSpellEffect())
+          .addSpellEffect(new BONUS_EFFECT_CLASS(BONUS_ARGS));
     }
 }
 ```

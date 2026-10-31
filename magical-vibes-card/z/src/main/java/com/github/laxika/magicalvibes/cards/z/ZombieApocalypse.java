@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -24,7 +23,7 @@ public class ZombieApocalypse extends Card {
     public ZombieApocalypse() {
         // Return all Zombie creature cards from your graveyard to the battlefield tapped,
         // then destroy all Humans.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
@@ -33,7 +32,7 @@ public class ZombieApocalypse extends Card {
                 .returnAll(true)
                 .enterTapped(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
     }
 }

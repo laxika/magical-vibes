@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromOutsideGameThisTurnEffect;
 
 @CardRegistration(set = "AFR", collectorNumber = "166")
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromOutsideGame
 public class Wish extends Card {
 
     public Wish() {
-        addEffect(EffectSlot.SPELL, new AllowPlayCardsFromOutsideGameThisTurnEffect());
+        addSpellEffect(new AllowPlayCardsFromOutsideGameThisTurnEffect());
     }
 }

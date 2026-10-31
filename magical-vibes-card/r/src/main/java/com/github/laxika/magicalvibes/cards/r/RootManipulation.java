@@ -15,13 +15,12 @@ public class RootManipulation extends Card {
 
     public RootManipulation() {
         // Until end of turn, creatures you control get +2/+2 and gain menace.
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 2));
-        addEffect(EffectSlot.SPELL,
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
 
         // Until end of turn, creatures you control gain
         // "Whenever this creature attacks, you gain 1 life."
-        addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 EffectSlot.ON_ATTACK, new GainLifeEffect(1)));
     }
 }

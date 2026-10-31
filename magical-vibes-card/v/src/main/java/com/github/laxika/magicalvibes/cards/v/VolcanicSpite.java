@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPutCardFromHandOnBottomOfLibraryThenDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -24,7 +23,7 @@ public class VolcanicSpite extends Card {
                         new PermanentIsBattlePredicate()
                 )),
                 "Target must be a creature, planeswalker, or battle."
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetPermanentEffect(3))
-                .addEffect(EffectSlot.SPELL, new MayPutCardFromHandOnBottomOfLibraryThenDrawEffect());
+        )).addSpellEffect(new DealDamageToTargetPermanentEffect(3))
+                .addSpellEffect(new MayPutCardFromHandOnBottomOfLibraryThenDrawEffect());
     }
 }

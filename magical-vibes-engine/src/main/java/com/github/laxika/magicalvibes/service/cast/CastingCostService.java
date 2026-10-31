@@ -2288,7 +2288,7 @@ public class CastingCostService {
         int graveyardManaValue = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                 .mapToInt(Card::getManaValue)
                 .sum();
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCosts().stream()
                 .filter(CollectEvidenceCost.class::isInstance)
                 .map(CollectEvidenceCost.class::cast)
                 .anyMatch(cost -> graveyardManaValue >= cost.minimumManaValue());

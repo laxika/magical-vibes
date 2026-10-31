@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
@@ -14,6 +13,6 @@ import java.util.Set;
 public class Geosurge extends Card {
 
     public Geosurge() {
-        addEffect(EffectSlot.SPELL, new AwardRestrictedManaEffect(ManaColor.RED, 7, new ManaRestriction.SpellTypes(Set.of(CardType.CREATURE, CardType.ARTIFACT))));
+        addSpellEffect(new AwardRestrictedManaEffect(ManaColor.RED, 7, new ManaRestriction.SpellTypes(Set.of(CardType.CREATURE, CardType.ARTIFACT))));
     }
 }

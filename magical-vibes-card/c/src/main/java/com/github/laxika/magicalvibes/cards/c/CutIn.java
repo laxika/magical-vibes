@@ -28,10 +28,9 @@ public class CutIn extends Card {
     public CutIn() {
         setAllowSharedTargets(true);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(youngHeroRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(youngHeroRoleToken()));
     }
 
     private static CreateTokenEffect youngHeroRoleToken() {

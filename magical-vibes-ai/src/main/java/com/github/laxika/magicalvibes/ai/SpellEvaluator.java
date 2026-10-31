@@ -354,7 +354,7 @@ public class SpellEvaluator {
             // Evaluate by scanning effects across all slots
             baseValue = 0;
 
-            baseValue += evaluateEffects(gameData, card, card.getEffects(EffectSlot.SPELL),
+            baseValue += evaluateEffects(gameData, card, card.getCastingCostsAndSpellEffects(),
                     aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
             baseValue += evaluateEffects(gameData, card, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
                     aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
@@ -419,7 +419,7 @@ public class SpellEvaluator {
     }
 
     private boolean hasCardDrawEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isDrawEffect(effect)) return true;
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
@@ -439,7 +439,7 @@ public class SpellEvaluator {
     }
 
     private boolean hasBoardWipeEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isBoardWipeEffect(effect)) return true;
         }
         return false;
@@ -512,7 +512,7 @@ public class SpellEvaluator {
     }
 
     private boolean hasLifeGainEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isLifeGainEffect(effect)) return true;
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
@@ -850,7 +850,7 @@ public class SpellEvaluator {
         boolean hasSacCost = false;
 
         // Check spell-level sacrifice costs
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof CostEffect cost && cost.sacrificesChosenCreature()) {
                 hasSacCost = true;
                 break;
@@ -980,7 +980,7 @@ public class SpellEvaluator {
     private double tokenMakerWithDeathTriggersBonus(GameData gameData, Card card, UUID aiPlayerId, List<Permanent> aiBattlefield) {
         // Check if this card creates creature tokens
         int tokenCount = 0;
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE) {
                 tokenCount += amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                         AmountContext.forEstimation(aiPlayerId));
@@ -1111,7 +1111,7 @@ public class SpellEvaluator {
      * Returns 0 when the cast would grant no additional attacks.
      */
     public double extraCombatDamageGain(GameData gameData, Card card, UUID aiPlayerId) {
-        boolean untapsAttackers = card != null && card.getEffects(EffectSlot.SPELL).stream()
+        boolean untapsAttackers = card != null && card.getSpellEffects().stream()
                 .anyMatch(e -> e instanceof UntapPermanentsEffect untap
                         && untap.scope() == TapUntapScope.ATTACKED_CREATURES);
         boolean afterCombat = gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
@@ -1492,7 +1492,7 @@ public class SpellEvaluator {
     }
 
     boolean hasRemovalEffects(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isRemovalEffect(effect)) return true;
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {

@@ -13,7 +13,7 @@ public class ALittleChat extends Card {
 
     public ALittleChat() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(1));
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(2)));
+        addCastingCost(new CasualtyCost(1));
+        addSpellEffect(LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(2)));
     }
 }

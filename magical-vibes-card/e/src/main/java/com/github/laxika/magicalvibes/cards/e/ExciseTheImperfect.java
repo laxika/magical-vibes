@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
@@ -25,7 +24,7 @@ public class ExciseTheImperfect extends Card {
 
     public ExciseTheImperfect() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+                .addSpellEffect(new ExileTargetPermanentThenEffect(
                         EventStat.MANA_VALUE,
                         new CreateXTokenWithXCountersEffect(
                                 incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE),

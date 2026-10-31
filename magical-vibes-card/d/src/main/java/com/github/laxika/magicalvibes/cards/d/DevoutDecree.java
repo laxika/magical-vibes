@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -30,7 +29,7 @@ public class DevoutDecree extends Card {
                 )),
                 "Target must be a black or red creature or planeswalker"
         ))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new ScryEffect(1));
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new ScryEffect(1));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
@@ -21,11 +20,11 @@ public class SnarlSong extends Card {
         // Converge creates two 0/0 green and blue Fractal creature tokens and puts X +1/+1
         // counters on each of them, where X is the number of colors spent to cast this spell.
         // Both Fractals are created by one instruction, so they are a single token-creation event.
-        addEffect(EffectSlot.SPELL, new CreateXTokenWithXCountersEffect(
+        addSpellEffect(new CreateXTokenWithXCountersEffect(
                 new CreateTokenEffect(2, "Fractal", 0, 0,
                         CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                         List.of(CardSubtype.FRACTAL)),
                 new XValue(), CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
+        addSpellEffect(new GainLifeEffect(new XValue()));
     }
 }

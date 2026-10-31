@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoomsdayEffect;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.Divided;
@@ -24,8 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class Doomsday extends Card {
 
     public Doomsday() {
-        addEffect(EffectSlot.SPELL, new DoomsdayEffect());
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(
+        addSpellEffect(new DoomsdayEffect());
+        addSpellEffect(new LoseLifeEffect(
                 new Divided(new Sum(new ControllerLifeTotal(), new Fixed(1)), 2),
                 LoseLifeRecipient.CONTROLLER));
     }

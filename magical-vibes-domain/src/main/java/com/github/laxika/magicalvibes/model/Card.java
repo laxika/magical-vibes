@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -280,9 +281,12 @@ public class Card {
      */
     private boolean targetControllersFixedAtCast;
 
-    // Target-first targeting system: each target() call adds a SpellTarget
+    /**
+     * The target groups in the order {@code target()} declared them; see {@link #getTargetGroups()}.
+     * The spell ability's groups come first and are mirrored in it ({@link SpellAbility#targets()}).
+     */
     @Getter(AccessLevel.NONE)
-    private final List<SpellTarget> spellTargets = new ArrayList<>();
+    private final List<TargetGroup> targetGroups = new ArrayList<>();
     @Getter(AccessLevel.NONE)
     private final Map<CardEffect, List<Integer>> effectTargetIndexMap = new IdentityHashMap<>();
     // Runtime override set by modal spells (ChooseOneEffect) at cast time — only ever written on
@@ -355,6 +359,12 @@ public class Card {
     /** The per-slot view of {@link #abilities}, built on first use and dropped whenever they change. */
     @Getter(AccessLevel.NONE)
     private volatile SlotIndex slotIndex;
+    /**
+     * The additional costs to cast this card (CR 601.2b, 601.2f), in the order they were added; see
+     * {@link #getCastingCosts()}. They are not part of its spell ability.
+     */
+    @Getter(AccessLevel.NONE)
+    private List<CostEffect> castingCosts = new ArrayList<>();
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
     /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
@@ -405,9 +415,8 @@ public class Card {
     /**
      * Copy constructor backing {@link #createRuntimeCopy()}. Copies every field, including the
      * id, but not {@link #frozen} — the copy starts mutable. Collection fields are copied into
-     * fresh containers (elements shared: effects and abilities are immutable). The copied
-     * {@link SpellTarget}s keep their back-reference to the source card; that reference is only
-     * used by the construction-time builder API, never at runtime. Note the copy is a plain
+     * fresh containers (elements shared: effects, abilities and target groups are immutable). Note
+     * the copy is a plain
      * {@code Card} — subclass identity (only used for oracle-registry lookup at construction
      * and {@code getBackFaceClassName()} at set load) is not preserved.
      *
@@ -475,7 +484,7 @@ public class Card {
         this.attackTriggerGrantedByEquipment = source.attackTriggerGrantedByEquipment;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.targetControllersFixedAtCast = source.targetControllersFixedAtCast;
-        this.spellTargets.addAll(source.spellTargets);
+        this.targetGroups.addAll(source.targetGroups);
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 this.effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         this.castTimeTargetFilter = source.castTimeTargetFilter;
@@ -503,6 +512,7 @@ public class Card {
         this.abilities = new ArrayList<>(source.abilities);
         // The index holds no reference to its card, so the copy shares it until either changes.
         this.slotIndex = source.slotIndex;
+        this.castingCosts = new ArrayList<>(source.castingCosts);
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(source.handActivatedAbilities);
@@ -551,7 +561,9 @@ public class Card {
         copy.abilities = new ArrayList<>(textSource.abilities);
         copy.slotIndex = textSource.slotIndex;
 
-        copy.spellTargets.clear();
+        copy.castingCosts = new ArrayList<>(textSource.castingCosts);
+
+        copy.targetGroups.clear();
         copy.effectTargetIndexMap.clear();
         copy.copyTargetingFrom(textSource);
 
@@ -615,8 +627,8 @@ public class Card {
         this.opponentChosenSpellTargetIndices = face.opponentChosenSpellTargetIndices;
         this.multiTargetConstraint = face.multiTargetConstraint;
         this.targetControllersFixedAtCast = face.targetControllersFixedAtCast;
-        this.spellTargets.clear();
-        this.spellTargets.addAll(face.spellTargets);
+        this.targetGroups.clear();
+        this.targetGroups.addAll(face.targetGroups);
         this.effectTargetIndexMap.clear();
         face.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 this.effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
@@ -640,6 +652,7 @@ public class Card {
         this.attachRestriction = face.attachRestriction;
         this.abilities = new ArrayList<>(face.abilities);
         this.slotIndex = face.slotIndex;
+        this.castingCosts = new ArrayList<>(face.castingCosts);
         this.activatedAbilities = new ArrayList<>(face.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(face.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(face.handActivatedAbilities);
@@ -867,10 +880,11 @@ public class Card {
         morphSacrificeCost = null;
         morphDiscardCost = null;
         morphLifeCost = null;
-        spellTargets.clear();
+        targetGroups.clear();
         effectTargetIndexMap.clear();
         abilities.clear();
         slotIndex = null;
+        castingCosts.clear();
         activatedAbilities.clear();
         graveyardActivatedAbilities.clear();
         handActivatedAbilities.clear();
@@ -881,8 +895,7 @@ public class Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any target")).addEffect(EffectSlot.SPELL,
-                new DealDamageToAnyTargetEffect(2));
+                "Target must be any target")).addSpellEffect(new DealDamageToAnyTargetEffect(2));
     }
 
     // ── Target-first builder API ──────────────────────────────────────
@@ -892,7 +905,8 @@ public class Card {
         assertMutable();
         abilities.clear();
         slotIndex = null;
-        spellTargets.clear();
+        castingCosts.clear();
+        targetGroups.clear();
         effectTargetIndexMap.clear();
         activatedAbilities.clear();
         graveyardActivatedAbilities.clear();
@@ -920,19 +934,14 @@ public class Card {
      * whose {@code addEffect()} associates effects with this target.
      */
     public SpellTarget target(TargetFilter filter, int minTargets, int maxTargets) {
-        assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets, spellTargets.size());
-        spellTargets.add(st);
-        return st;
+        return declareTargetGroup(filter, filter, minTargets, maxTargets, minTargets, maxTargets, false, null, null,
+                minTargets);
     }
 
     public SpellTarget targetWhenGiftPromised(TargetFilter filter, int minTargets, int maxTargets,
                                               int giftPromisedMinTargets) {
-        assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets, minTargets, maxTargets,
-                spellTargets.size(), false, null, null, giftPromisedMinTargets);
-        spellTargets.add(st);
-        return st;
+        return declareTargetGroup(filter, filter, minTargets, maxTargets, minTargets, maxTargets, false, null, null,
+                giftPromisedMinTargets);
     }
 
     /**
@@ -950,11 +959,8 @@ public class Card {
     public SpellTarget targetWhenKicked(TargetFilter filter, TargetFilter kickedFilter,
                                         int minTargets, int maxTargets,
                                         int kickedMinTargets, int kickedMaxTargets) {
-        assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, kickedFilter, minTargets, maxTargets,
-                kickedMinTargets, kickedMaxTargets, spellTargets.size(), false, null, null);
-        spellTargets.add(st);
-        return st;
+        return declareTargetGroup(filter, kickedFilter, minTargets, maxTargets, kickedMinTargets, kickedMaxTargets,
+                false, null, null, minTargets);
     }
 
     /**
@@ -963,10 +969,7 @@ public class Card {
      * targets is bounded by X at cast time; {@code cap} is only a sanity ceiling.
      */
     public SpellTarget targetX(TargetFilter filter, int cap) {
-        assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), true);
-        spellTargets.add(st);
-        return st;
+        return declareTargetGroup(filter, filter, 0, cap, 0, cap, true, null, null, 0);
     }
 
     /**
@@ -974,10 +977,7 @@ public class Card {
      * position handling and should be at least as large as any practical X value.
      */
     public SpellTarget targetExactlyX(TargetFilter filter, int cap) {
-        assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, cap, cap, spellTargets.size(), true);
-        spellTargets.add(st);
-        return st;
+        return declareTargetGroup(filter, filter, cap, cap, cap, cap, true, null, null, cap);
     }
 
     /**
@@ -985,10 +985,7 @@ public class Card {
      * the stack. The fixed cap is only a sanity ceiling for target-position handling.
      */
     public SpellTarget targetUpTo(DynamicAmount dynamicMaxTargets, TargetFilter filter, int cap) {
-        assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), false, dynamicMaxTargets);
-        spellTargets.add(st);
-        return st;
+        return declareTargetGroup(filter, filter, 0, cap, 0, cap, false, null, dynamicMaxTargets, 0);
     }
 
     /**
@@ -996,11 +993,7 @@ public class Card {
      * A zero count produces no target, while a positive count requires that many targets.
      */
     public SpellTarget targetWithDynamicCount(DynamicAmount dynamicTargetCount, TargetFilter filter, int cap) {
-        assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), false,
-                dynamicTargetCount, dynamicTargetCount);
-        spellTargets.add(st);
-        return st;
+        return declareTargetGroup(filter, filter, 0, cap, 0, cap, false, dynamicTargetCount, dynamicTargetCount, 0);
     }
 
     /**
@@ -1010,11 +1003,26 @@ public class Card {
      */
     public SpellTarget targetWithDynamicRange(DynamicAmount dynamicMinTargets,
                                               DynamicAmount dynamicMaxTargets, TargetFilter filter, int cap) {
+        return declareTargetGroup(filter, filter, 0, cap, 0, cap, false, dynamicMinTargets, dynamicMaxTargets, 0);
+    }
+
+    private SpellTarget declareTargetGroup(TargetFilter filter, TargetFilter kickedFilter, int minTargets,
+                                           int maxTargets, int kickedMinTargets, int kickedMaxTargets,
+                                           boolean xScaled, DynamicAmount dynamicMinTargets,
+                                           DynamicAmount dynamicMaxTargets, int giftPromisedMinTargets) {
         assertMutable();
-        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), false,
-                dynamicMinTargets, dynamicMaxTargets);
-        spellTargets.add(st);
-        return st;
+        int index = targetGroups.size();
+        targetGroups.add(new TargetGroup(filter, kickedFilter, minTargets, maxTargets, kickedMinTargets,
+                kickedMaxTargets, index, xScaled, dynamicMinTargets, dynamicMaxTargets, giftPromisedMinTargets));
+        syncSpellTargets();
+        return new SpellTarget(this, index);
+    }
+
+    /** Puts the target group at {@code index} in the mode {@code scope}; see {@link SpellTarget#inDistinctScope}. */
+    void setTargetGroupDistinctScope(int index, int scope) {
+        assertMutable();
+        targetGroups.set(index, targetGroups.get(index).inDistinctScope(scope));
+        syncSpellTargets();
     }
 
     /**
@@ -1024,76 +1032,81 @@ public class Card {
      * able to look up the group by the effect instance it actually receives.
      */
     public void registerEffectTargetIndex(CardEffect effect, int targetIndex) {
+        bindEffectToTargetGroup(effect, targetIndex);
+        syncSpellTargets();
+    }
+
+    private void bindEffectToTargetGroup(CardEffect effect, int targetIndex) {
         if (effect == null) {
             return;
         }
         assertMutable();
         effectTargetIndexMap.computeIfAbsent(effect, ignored -> new ArrayList<>()).add(targetIndex);
         switch (effect) {
-            case ConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case QueueReflexiveAbilityEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
+            case ConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case QueueReflexiveAbilityEffect e -> bindEffectToTargetGroup(e.effect(), targetIndex);
             case ConditionalReplacementEffect e -> {
-                if (e.baseEffect() != null) registerEffectTargetIndex(e.baseEffect(), targetIndex);
-                registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
+                if (e.baseEffect() != null) bindEffectToTargetGroup(e.baseEffect(), targetIndex);
+                bindEffectToTargetGroup(e.upgradedEffect(), targetIndex);
             }
-            case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case MayEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             case ExileSourceCardFromGraveyardThenEffect e ->
-                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
+                    bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case ExilePermanentYouControlAndTrackWithSourceEffect e ->
-                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
-            case SacrificePermanentThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
-            case SacrificeSelfThenEffect e -> registerEffectTargetIndex(e.thenEffect(), targetIndex);
+                    bindEffectToTargetGroup(e.thenEffect(), targetIndex);
+            case SacrificePermanentThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);
+            case SacrificeSelfThenEffect e -> bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case StateTriggerEffect e -> e.effects().forEach(innerEffect ->
-                    registerEffectTargetIndex(innerEffect, targetIndex));
+                    bindEffectToTargetGroup(innerEffect, targetIndex));
             case MayPayManaEffect e -> {
-                if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
-                if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
+                if (e.wrapped() != null) bindEffectToTargetGroup(e.wrapped(), targetIndex);
+                if (e.elseEffect() != null) bindEffectToTargetGroup(e.elseEffect(), targetIndex);
             }
             case MayPayTapPermanentsEffect e -> {
-                if (e.wrapped() != null) registerEffectTargetIndex(e.wrapped(), targetIndex);
-                if (e.elseEffect() != null) registerEffectTargetIndex(e.elseEffect(), targetIndex);
+                if (e.wrapped() != null) bindEffectToTargetGroup(e.wrapped(), targetIndex);
+                if (e.elseEffect() != null) bindEffectToTargetGroup(e.elseEffect(), targetIndex);
             }
             case MayPayTapAndSacrificePermanentEffect e ->
-                    registerEffectTargetIndex(e.thenEffect(), targetIndex);
+                    bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case ForcedCostOrElseEffect e -> {
-                e.paidEffects().forEach(innerEffect -> registerEffectTargetIndex(innerEffect, targetIndex));
+                e.paidEffects().forEach(innerEffect -> bindEffectToTargetGroup(innerEffect, targetIndex));
                 if (e.elseEffects() != null) {
-                    e.elseEffects().forEach(innerEffect -> registerEffectTargetIndex(innerEffect, targetIndex));
+                    e.elseEffects().forEach(innerEffect -> bindEffectToTargetGroup(innerEffect, targetIndex));
                 }
             }
-            case OncePerTurnTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case OnceOnlyTriggerEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case OncePerTurnTriggerEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case OnceOnlyTriggerEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             // Ally combat-damage triggers resolve their wrapped effect when the trigger fires;
             // preserve its target-group binding for deferred trigger-time target selection.
-            case AllyCombatDamageTriggerEffect e -> registerEffectTargetIndex(e.effect(), targetIndex);
+            case AllyCombatDamageTriggerEffect e -> bindEffectToTargetGroup(e.effect(), targetIndex);
             case RollD20Effect e -> {
-                if (e.zeroOrLess() != null) registerEffectTargetIndex(e.zeroOrLess(), targetIndex);
-                if (e.oneToNine() != null) registerEffectTargetIndex(e.oneToNine(), targetIndex);
-                if (e.tenToNineteen() != null) registerEffectTargetIndex(e.tenToNineteen(), targetIndex);
-                if (e.twenty() != null) registerEffectTargetIndex(e.twenty(), targetIndex);
+                if (e.zeroOrLess() != null) bindEffectToTargetGroup(e.zeroOrLess(), targetIndex);
+                if (e.oneToNine() != null) bindEffectToTargetGroup(e.oneToNine(), targetIndex);
+                if (e.tenToNineteen() != null) bindEffectToTargetGroup(e.tenToNineteen(), targetIndex);
+                if (e.twenty() != null) bindEffectToTargetGroup(e.twenty(), targetIndex);
             }
             case RollD6Effect e -> e.branches().forEach(branch ->
-                    registerEffectTargetIndex(branch, targetIndex));
+                    bindEffectToTargetGroup(branch, targetIndex));
             case RollDiceEffect e -> {
-                if (e.oddResult() != null) registerEffectTargetIndex(e.oddResult(), targetIndex);
-                if (e.evenResult() != null) registerEffectTargetIndex(e.evenResult(), targetIndex);
+                if (e.oddResult() != null) bindEffectToTargetGroup(e.oddResult(), targetIndex);
+                if (e.evenResult() != null) bindEffectToTargetGroup(e.evenResult(), targetIndex);
             }
             // SequenceEffect splices its steps into the resolution list; each step must keep the
             // sequence's target group (fuse halves that bundle multi-step one-target instructions).
             case SequenceEffect e -> {
                 for (CardEffect step : e.steps()) {
-                    registerEffectTargetIndex(step, targetIndex);
+                    bindEffectToTargetGroup(step, targetIndex);
                 }
             }
             case SpellCastTriggerEffect e -> {
                 for (CardEffect resolvedEffect : e.resolvedEffects()) {
-                    registerEffectTargetIndex(resolvedEffect, targetIndex);
+                    bindEffectToTargetGroup(resolvedEffect, targetIndex);
                 }
             }
             case ChooseOneForTargetPermanentEffect e -> {
                 for (var option : e.options()) {
                     for (CardEffect optionEffect : option.effects()) {
-                        registerEffectTargetIndex(optionEffect, targetIndex);
+                        bindEffectToTargetGroup(optionEffect, targetIndex);
                     }
                 }
             }
@@ -1101,12 +1114,12 @@ public class Card {
             // dies") are unwrapped to their inner effect when the trigger is serviced, so the inner
             // effect must resolve to the same declared target group — otherwise the card-level target
             // filter (e.g. opponent-only) is lost after unwrapping.
-            case TriggeringCardConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case TriggeringPermanentConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case ConditionalTriggeringPermanentEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case TriggeringArtifactControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case TriggeringPermanentControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
-            case TriggeringRoomDoorConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case TriggeringCardConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case TriggeringPermanentConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case ConditionalTriggeringPermanentEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case TriggeringArtifactControllerConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case TriggeringPermanentControllerConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case TriggeringRoomDoorConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
             default -> { }
         }
     }
@@ -1118,27 +1131,14 @@ public class Card {
      */
     public void appendSpellTargetingFrom(Card source) {
         assertMutable();
-        int targetIndexOffset = spellTargets.size();
+        int targetIndexOffset = targetGroups.size();
         int targetPositionOffset = getMultiTargetFilters().size();
-        for (SpellTarget sourceTarget : source.spellTargets) {
-            SpellTarget target = new SpellTarget(
-                    this,
-                    sourceTarget.getFilter(),
-                    sourceTarget.getKickedFilter(),
-                    sourceTarget.getMinTargets(),
-                    sourceTarget.getMaxTargets(),
-                    sourceTarget.getKickedMinTargets(),
-                    sourceTarget.getKickedMaxTargets(),
-                    targetIndexOffset + sourceTarget.getIndex(),
-                    sourceTarget.isXScaled(),
-                    sourceTarget.getDynamicMinTargets(),
-                    sourceTarget.getDynamicMaxTargets(),
-                    sourceTarget.getGiftPromisedMinTargets());
-            spellTargets.add(target);
+        for (TargetGroup sourceTarget : source.targetGroups) {
+            targetGroups.add(sourceTarget.atIndex(targetIndexOffset + sourceTarget.getIndex()));
         }
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 targetIndices.forEach(targetIndex ->
-                        registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
+                        bindEffectToTargetGroup(effect, targetIndexOffset + targetIndex)));
         if (!source.opponentChosenSpellTargetIndices.isEmpty()) {
             List<Integer> appendedIndices = new ArrayList<>(opponentChosenSpellTargetIndices);
             source.opponentChosenSpellTargetIndices.stream()
@@ -1146,6 +1146,7 @@ public class Card {
                     .forEach(appendedIndices::add);
             opponentChosenSpellTargetIndices = List.copyOf(appendedIndices);
         }
+        syncSpellTargets();
     }
 
     /**
@@ -1173,13 +1174,12 @@ public class Card {
         }
 
         Map<Integer, Integer> targetIndexMap = new HashMap<>();
-        for (SpellTarget sourceTarget : source.spellTargets) {
+        for (TargetGroup sourceTarget : source.targetGroups) {
             if (!sourceTargetIndices.contains(sourceTarget.getIndex())) {
                 continue;
             }
-            int targetIndex = spellTargets.size();
-            spellTargets.add(new SpellTarget(
-                    this,
+            int targetIndex = targetGroups.size();
+            targetGroups.add(new TargetGroup(
                     sourceTarget.getFilter(),
                     sourceTarget.getKickedFilter(),
                     sourceTarget.getMinTargets(),
@@ -1189,7 +1189,8 @@ public class Card {
                     targetIndex,
                     sourceTarget.isXScaled(),
                     sourceTarget.getDynamicMinTargets(),
-                    sourceTarget.getDynamicMaxTargets()));
+                    sourceTarget.getDynamicMaxTargets(),
+                    sourceTarget.getMinTargets()));
             targetIndexMap.put(sourceTarget.getIndex(), targetIndex);
         }
 
@@ -1200,10 +1201,11 @@ public class Card {
             targetIndices.forEach(sourceTargetIndex -> {
                 Integer targetIndex = targetIndexMap.get(sourceTargetIndex);
                 if (targetIndex != null) {
-                    registerEffectTargetIndex(effect, targetIndex);
+                    bindEffectToTargetGroup(effect, targetIndex);
                 }
             });
         });
+        syncSpellTargets();
     }
 
     /**
@@ -1213,9 +1215,10 @@ public class Card {
      */
     public void clearRuntimeSpellTargets() {
         assertMutable();
-        spellTargets.clear();
+        targetGroups.clear();
         effectTargetIndexMap.clear();
         opponentChosenSpellTargetIndices = List.of();
+        syncSpellTargets();
     }
 
     // ── Derived targeting getters (replace old stored fields) ────────
@@ -1245,8 +1248,8 @@ public class Card {
 
     /** Returns the declared target filter for the selected kicker branch. */
     public TargetFilter getDeclaredTargetFilter(boolean kicked) {
-        if (spellTargets.isEmpty()) return null;
-        return spellTargets.getFirst().getFilter(kicked);
+        if (targetGroups.isEmpty()) return null;
+        return targetGroups.getFirst().getFilter(kicked);
     }
 
     /**
@@ -1261,14 +1264,14 @@ public class Card {
 
     /** Returns per-position target filters for the selected kicker branch. */
     public List<TargetFilter> getMultiTargetFilters(boolean kicked) {
-        int positionCount = (int) Math.min(Integer.MAX_VALUE, spellTargets.stream()
+        int positionCount = (int) Math.min(Integer.MAX_VALUE, targetGroups.stream()
                 .mapToLong(st -> Math.max(st.getMaxTargets(), st.getKickedMaxTargets())).sum());
         return new java.util.AbstractList<>() {
             @Override
             public TargetFilter get(int index) {
                 java.util.Objects.checkIndex(index, positionCount);
                 int remaining = index;
-                for (SpellTarget st : spellTargets) {
+                for (TargetGroup st : targetGroups) {
                     int count = Math.max(st.getMaxTargets(), st.getKickedMaxTargets());
                     if (remaining < count) return st.getFilter(kicked);
                     remaining -= count;
@@ -1287,7 +1290,7 @@ public class Card {
      * Returns the minimum total number of targets required.
      */
     public int getMinTargets() {
-        return spellTargets.stream().mapToInt(SpellTarget::getMinTargets).sum();
+        return targetGroups.stream().mapToInt(TargetGroup::getMinTargets).sum();
     }
 
     /**
@@ -1305,7 +1308,7 @@ public class Card {
      */
     public int getMaxTargets() {
         // Saturates so an "any number of targets" group (Integer.MAX_VALUE) beside others can't overflow.
-        return (int) Math.min(Integer.MAX_VALUE, spellTargets.stream()
+        return (int) Math.min(Integer.MAX_VALUE, targetGroups.stream()
                 .mapToLong(st -> Math.max(st.getMaxTargets(), st.getKickedMaxTargets()))
                 .sum());
     }
@@ -1314,11 +1317,11 @@ public class Card {
      * Returns true if any target group scales its target count with the spell's X value.
      */
     public boolean hasXScaledTargets() {
-        return spellTargets.stream().anyMatch(SpellTarget::isXScaled);
+        return targetGroups.stream().anyMatch(TargetGroup::isXScaled);
     }
 
     public boolean hasDynamicTargetCount() {
-        return spellTargets.stream().anyMatch(st -> st.getDynamicMinTargets() != null
+        return targetGroups.stream().anyMatch(st -> st.getDynamicMinTargets() != null
                 || st.getDynamicMaxTargets() != null);
     }
 
@@ -1336,7 +1339,7 @@ public class Card {
     }
 
     public int getEffectiveMinTargets(int xValue, boolean kicked, boolean giftPromised) {
-        return spellTargets.stream()
+        return targetGroups.stream()
                 .mapToInt(st -> {
                     int min = giftPromised
                             ? st.getGiftPromisedMinTargets()
@@ -1356,7 +1359,7 @@ public class Card {
 
     /** Returns the maximum total number of targets for the given X value and kicker state. */
     public int getEffectiveMaxTargets(int xValue, boolean kicked) {
-        return spellTargets.stream()
+        return targetGroups.stream()
                 .mapToInt(st -> {
                     int max = kicked ? st.getKickedMaxTargets() : st.getMaxTargets();
                     return st.isXScaled() ? Math.min(xValue, max) : max;
@@ -1365,10 +1368,22 @@ public class Card {
     }
 
     /**
-     * Returns the spell target declarations.
+     * Every target group the card declares, in order: the spell ability's first (see
+     * {@link #getSpellTargetGroups()}), then those bound to its other abilities' effects, which stay
+     * here until their trigger families leave {@link EffectSlot}. A group's index is its position.
      */
-    public List<SpellTarget> getSpellTargets() {
-        return spellTargets;
+    public List<TargetGroup> getTargetGroups() {
+        return Collections.unmodifiableList(targetGroups);
+    }
+
+    /**
+     * The target groups of the spell this card is cast as: its spell ability's
+     * ({@link SpellAbility#targets()}), or, for a card without one (an Aura spell, whose enchant
+     * ability defines its target, CR 303.4a), every group it declares.
+     */
+    public List<TargetGroup> getSpellTargetGroups() {
+        SpellAbility spell = spellAbilityOrNull();
+        return spell == null ? getTargetGroups() : spell.targets();
     }
 
     /**
@@ -1461,9 +1476,9 @@ public class Card {
 
     /** Returns whether a target position allows players for the selected kicker branch. */
     public boolean doesPositionAllowPlayerTargets(int expandedPosition, boolean kicked) {
-        if (spellTargets.isEmpty()) return false;
+        if (targetGroups.isEmpty()) return false;
         int cumulative = 0;
-        for (SpellTarget st : spellTargets) {
+        for (TargetGroup st : targetGroups) {
             cumulative += kicked ? st.getKickedMaxTargets() : st.getMaxTargets();
             if (expandedPosition < cumulative) {
                 TargetFilter filter = st.getFilter(kicked);
@@ -1489,18 +1504,15 @@ public class Card {
      */
     public void copyTargetingFrom(Card original) {
         assertMutable();
-        for (SpellTarget st : original.spellTargets) {
-            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getKickedFilter(),
-                    st.getMinTargets(), st.getMaxTargets(),
-                    st.getKickedMinTargets(), st.getKickedMaxTargets(), st.getIndex(), st.isXScaled(),
-                    st.getDynamicMinTargets(), st.getDynamicMaxTargets(),
-                    st.getGiftPromisedMinTargets()));
+        for (TargetGroup st : original.targetGroups) {
+            targetGroups.add(st.atIndex(st.getIndex()));
         }
         original.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         opponentChosenSpellTargetIndices = original.opponentChosenSpellTargetIndices;
         castTimeTargetFilter = original.castTimeTargetFilter;
         allowSharedTargets = original.allowSharedTargets;
+        syncSpellTargets();
     }
 
     // ── Effect management ───────────────────────────────────────────
@@ -1509,17 +1521,99 @@ public class Card {
      * The card's spell, triggered and static abilities, in the order they were added. Activated
      * abilities are still in the per-zone lists ({@link #getActivatedAbilities()} and the others).
      *
-     * <p>Until each family leaves {@link EffectSlot}, these are built from slot registrations by
-     * {@link #addEffect(EffectSlot, CardEffect, TriggerMode)} and {@link #addSimultaneousEffects}:
-     * {@code SPELL} effects form one {@link SpellAbility}, each {@code STATIC} or
-     * {@code COMMAND_ZONE_STATIC} effect is a {@link StaticAbility} of the battlefield or the command
-     * zone, and every other slot's effects form {@link TriggeredAbility}s with a
+     * <p>{@link #addSpellEffect} and {@link #addSimultaneousSpellEffects} build the one
+     * {@link SpellAbility}. Until each other family leaves {@link EffectSlot}, the rest are built from
+     * slot registrations by {@link #addEffect(EffectSlot, CardEffect, TriggerMode)} and
+     * {@link #addSimultaneousEffects}: each {@code STATIC} or {@code COMMAND_ZONE_STATIC} effect is a
+     * {@link StaticAbility} of the battlefield or the command zone, and every other slot's effects form
+     * {@link TriggeredAbility}s with a
      * {@link LegacySlotTrigger}, grouped as that slot's collectors group them
      * ({@link LegacySlotGrouping}). The collectors still read the slot views, so the grouping changes
      * nothing yet.
      */
     public List<Ability> getAbilities() {
         return Collections.unmodifiableList(abilities);
+    }
+
+    /** The card's spell ability, if it has one (CR 113.3a). */
+    public Optional<SpellAbility> getSpellAbility() {
+        return Optional.ofNullable(spellAbilityOrNull());
+    }
+
+    /** The effects of the card's spell ability in the order they resolve; empty when it has none. */
+    public List<CardEffect> getSpellEffects() {
+        SpellAbility spell = spellAbilityOrNull();
+        return spell == null ? List.of() : LegacySlots.effectsOf(spell);
+    }
+
+    /** The registrations of the card's spell ability in the order they resolve; empty when it has none. */
+    public List<EffectRegistration> getSpellEffectRegistrations() {
+        SpellAbility spell = spellAbilityOrNull();
+        return spell == null ? List.of() : spell.effects();
+    }
+
+    /**
+     * The additional costs to cast this card (CR 601.2b, 601.2f), such as "as an additional cost to
+     * cast this spell, sacrifice a creature", multikicker or delve. They are paid as the card is cast,
+     * whatever its type, and are not part of its spell ability.
+     */
+    public List<CostEffect> getCastingCosts() {
+        return Collections.unmodifiableList(castingCosts);
+    }
+
+    /**
+     * The casting costs followed by the spell ability's effects, for the cast paths that take the
+     * costs out of one list as the spell is cast ({@code AdditionalSpellCostService.extractAndRemove})
+     * and put the rest on the stack.
+     */
+    public List<CardEffect> getCastingCostsAndSpellEffects() {
+        List<CardEffect> spellEffects = getSpellEffects();
+        if (castingCosts.isEmpty()) {
+            return spellEffects;
+        }
+        List<CardEffect> all = new ArrayList<>(castingCosts.size() + spellEffects.size());
+        all.addAll(castingCosts);
+        all.addAll(spellEffects);
+        return Collections.unmodifiableList(all);
+    }
+
+    /** Adds an additional cost to cast this card; see {@link #getCastingCosts()}. */
+    public void addCastingCost(CostEffect cost) {
+        assertMutable();
+        castingCosts.add(java.util.Objects.requireNonNull(cost, "cost"));
+    }
+
+    /**
+     * Adds the casting costs and spell effects of {@code source} that {@code keep} accepts, each spell
+     * effect on its own, as the engine's copy paths copy every other slot's effects.
+     */
+    public void addCastingCostsAndSpellEffectsFrom(Card source, Predicate<CardEffect> keep) {
+        assertMutable();
+        for (CostEffect cost : source.castingCosts) {
+            if (keep.test(cost)) {
+                addCastingCost(cost);
+            }
+        }
+        for (EffectRegistration registration : source.getSpellEffectRegistrations()) {
+            if (keep.test(registration.effect())) {
+                addSpellEffect(registration.effect());
+            }
+        }
+    }
+
+    /** Adds an effect to the end of the card's spell ability, creating it if it has none. */
+    public void addSpellEffect(CardEffect effect) {
+        assertMutable();
+        addSpellRegistrations(List.of(new EffectRegistration(effect)));
+    }
+
+    /**
+     * Adds spell effects that happen at the same time ("deals 4 damage to any target and 2 damage to
+     * you"); see {@link #addSimultaneousEffects}.
+     */
+    public void addSimultaneousSpellEffects(CardEffect... effects) {
+        assertMutable();
+        addSpellRegistrations(simultaneousGroup(effects, TriggerMode.NORMAL, null));
     }
 
     /** The effects of every ability in {@code slot}, in the order they were added. */
@@ -1549,10 +1643,12 @@ public class Card {
     }
 
     /**
-     * Removes every registered effect for which {@code filter} holds, given the effect's slot. An
-     * ability left without effects is removed; an effect that was simultaneous with a removed one
-     * becomes the first of its ability, so it is no longer marked simultaneous.
+     * Removes every registered effect for which {@code filter} holds, given the effect's slot, which is
+     * {@code null} for a spell effect or a casting cost. An ability left without effects is removed; an
+     * effect that was simultaneous with a removed one becomes the first of its ability, so it is no
+     * longer marked simultaneous.
      */
+
     public void removeSlotEffectsIf(BiPredicate<EffectSlot, CardEffect> filter) {
         assertMutable();
         List<Ability> kept = new ArrayList<>(abilities.size());
@@ -1564,6 +1660,8 @@ public class Card {
         }
         abilities = kept;
         slotIndex = null;
+        castingCosts.removeIf(cost -> filter.test(null, cost));
+        syncSpellTargets();
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
@@ -1590,15 +1688,21 @@ public class Card {
 
     public void addSimultaneousEffects(EffectSlot slot, TriggerMode triggerMode, CardEffect... effects) {
         assertMutable();
+        addRegistrations(slot, simultaneousGroup(effects, triggerMode, slot));
+    }
+
+    private List<EffectRegistration> simultaneousGroup(CardEffect[] effects, TriggerMode triggerMode, EffectSlot slot) {
         if (effects.length < 2) {
             throw new IllegalArgumentException("Simultaneous effects need at least two effects, got " + effects.length);
         }
         List<EffectRegistration> group = new ArrayList<>(effects.length);
         for (int i = 0; i < effects.length; i++) {
-            validateEffectSlotType(slot, effects[i]);
+            if (slot != null) {
+                validateEffectSlotType(slot, effects[i]);
+            }
             group.add(new EffectRegistration(effects[i], triggerMode, i > 0));
         }
-        addRegistrations(slot, group);
+        return group;
     }
 
     /**
@@ -1609,12 +1713,17 @@ public class Card {
         assertMutable();
         EffectSlot slot = slotOf(ability);
         List<EffectRegistration> registrations = switch (ability) {
+            // Its target groups are this card's first groups, so they follow from this card's own.
             case SpellAbility spell -> spell.effects();
             case TriggeredAbility triggered -> triggered.effects();
             case StaticAbility statik -> statik.effects().stream().map(EffectRegistration::new).toList();
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities are added with addActivatedAbility");
         };
+        if (slot == null) {
+            addSpellRegistrations(registrations);
+            return;
+        }
         List<EffectRegistration> group = new ArrayList<>();
         for (EffectRegistration registration : registrations) {
             if (!registration.simultaneousWithPrevious() && !group.isEmpty()) {
@@ -1629,6 +1738,11 @@ public class Card {
 
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
     public boolean isSimultaneousWithPrevious(CardEffect effect) {
+        for (EffectRegistration reg : getSpellEffectRegistrations()) {
+            if (reg.effect() == effect) {
+                return reg.simultaneousWithPrevious();
+            }
+        }
         for (SlotView view : slotIndex().views()) {
             for (EffectRegistration reg : view.registrations()) {
                 if (reg.effect() == effect) {
@@ -1653,21 +1767,6 @@ public class Card {
     private void addRegistrations(EffectSlot slot, List<EffectRegistration> group) {
         EffectRegistration first = group.getFirst();
         switch (slot) {
-            case SPELL -> {
-                // A spell ability doesn't trigger either, so its effects keep no trigger mode.
-                List<EffectRegistration> spellGroup = group.stream()
-                        .map(registration -> registration.triggerMode() == TriggerMode.NORMAL ? registration
-                                : new EffectRegistration(registration.effect(), TriggerMode.NORMAL,
-                                registration.simultaneousWithPrevious()))
-                        .toList();
-                int index = indexOfFirstAbility(slot);
-                if (index < 0) {
-                    abilities.add(new SpellAbility(spellGroup));
-                } else {
-                    abilities.set(index, new SpellAbility(
-                            concat(((SpellAbility) abilities.get(index)).effects(), spellGroup)));
-                }
-            }
             case STATIC, COMMAND_ZONE_STATIC -> {
                 // A static ability doesn't trigger, so a trigger mode means nothing here (token copies add
                 // their "except it has" effects as INDEPENDENT in every slot), and each effect stays its
@@ -1694,6 +1793,75 @@ public class Card {
             }
         }
         slotIndex = null;
+    }
+
+    /**
+     * Adds {@code group}, one registration or a group of simultaneous ones, to the end of the spell
+     * ability, which is created where the first one is added. A spell ability doesn't trigger, so its
+     * effects keep no trigger mode.
+     */
+    private void addSpellRegistrations(List<EffectRegistration> group) {
+        List<EffectRegistration> spellGroup = group.stream()
+                .map(registration -> registration.triggerMode() == TriggerMode.NORMAL ? registration
+                        : new EffectRegistration(registration.effect(), TriggerMode.NORMAL,
+                        registration.simultaneousWithPrevious()))
+                .toList();
+        int index = indexOfSpellAbility();
+        if (index < 0) {
+            abilities.add(new SpellAbility(spellGroup));
+        } else {
+            SpellAbility spell = (SpellAbility) abilities.get(index);
+            abilities.set(index, spell.withEffects(concat(spell.effects(), spellGroup)));
+        }
+        syncSpellTargets();
+    }
+
+    private int indexOfSpellAbility() {
+        for (int i = 0; i < abilities.size(); i++) {
+            if (abilities.get(i) instanceof SpellAbility) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private SpellAbility spellAbilityOrNull() {
+        for (Ability ability : abilities) {
+            if (ability instanceof SpellAbility spell) {
+                return spell;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Keeps the spell ability's target groups in step with the card's: they are the card's leading
+     * groups that are bound to a spell effect or to no effect at all (a positional group another
+     * effect reads), up to the first group bound only to other abilities' effects.
+     */
+    private void syncSpellTargets() {
+        int index = indexOfSpellAbility();
+        if (index < 0) {
+            return;
+        }
+        SpellAbility spell = (SpellAbility) abilities.get(index);
+        Set<Integer> spellBound = new java.util.HashSet<>();
+        for (EffectRegistration registration : spell.effects()) {
+            List<Integer> indices = effectTargetIndexMap.get(registration.effect());
+            if (indices != null) {
+                spellBound.addAll(indices);
+            }
+        }
+        Set<Integer> bound = new java.util.HashSet<>();
+        effectTargetIndexMap.values().forEach(bound::addAll);
+        int count = 0;
+        while (count < targetGroups.size() && (spellBound.contains(count) || !bound.contains(count))) {
+            count++;
+        }
+        List<TargetGroup> targets = List.copyOf(targetGroups.subList(0, count));
+        if (!targets.equals(spell.targets())) {
+            abilities.set(index, spell.withTargets(targets));
+        }
     }
 
     private int indexOfFirstAbility(EffectSlot slot) {
@@ -1729,7 +1897,7 @@ public class Card {
         return switch (ability) {
             case SpellAbility spell -> {
                 List<EffectRegistration> kept = keptRegistrations(spell.effects(), slot, filter);
-                yield kept == spell.effects() ? spell : kept.isEmpty() ? null : new SpellAbility(kept);
+                yield kept == spell.effects() ? spell : kept.isEmpty() ? null : spell.withEffects(kept);
             }
             case TriggeredAbility triggered -> {
                 List<EffectRegistration> kept = keptRegistrations(triggered.effects(), slot, filter);
@@ -1800,7 +1968,10 @@ public class Card {
         static SlotIndex of(List<Ability> abilities) {
             Map<EffectSlot, List<Ability>> bySlot = new TreeMap<>();
             for (Ability ability : abilities) {
-                bySlot.computeIfAbsent(slotOf(ability), slot -> new ArrayList<>()).add(ability);
+                EffectSlot abilitySlot = slotOf(ability);
+                if (abilitySlot != null) {
+                    bySlot.computeIfAbsent(abilitySlot, slot -> new ArrayList<>()).add(ability);
+                }
             }
             List<SlotView> views = new ArrayList<>(bySlot.size());
             bySlot.forEach((slot, slotAbilities) -> {
@@ -1808,7 +1979,8 @@ public class Card {
                 TriggeredAbility firstTriggered = null;
                 for (Ability ability : slotAbilities) {
                     switch (ability) {
-                        case SpellAbility spell -> registrations.addAll(spell.effects());
+                        case SpellAbility spell -> {
+                        }
                         case TriggeredAbility triggered -> {
                             registrations.addAll(triggered.effects());
                             if (firstTriggered == null) {

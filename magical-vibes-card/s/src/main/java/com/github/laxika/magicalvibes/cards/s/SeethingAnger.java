@@ -15,7 +15,7 @@ public class SeethingAnger extends Card {
 
     public SeethingAnger() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 0));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new BoostTargetCreatureEffect(3, 0));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

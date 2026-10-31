@@ -13,7 +13,7 @@ public class SpoilsOfAdventure extends Card {
 
     public SpoilsOfAdventure() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new PartySize()));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
+        addSpellEffect(new GainLifeEffect(3));
+        addSpellEffect(new DrawCardEffect(3));
     }
 }

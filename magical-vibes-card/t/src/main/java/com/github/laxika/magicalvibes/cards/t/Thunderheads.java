@@ -21,8 +21,8 @@ import java.util.Set;
 public class Thunderheads extends Card {
 
     public Thunderheads() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}{U}")));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}{U}")));
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Weird", 3, 3, CardColor.BLUE, null,
                 List.of(CardSubtype.WEIRD), Set.of(Keyword.DEFENDER, Keyword.FLYING), Set.of(),
                 false, false, Map.of(), List.of(), false, true, false, 0, Set.of()));

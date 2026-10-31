@@ -13,7 +13,7 @@ public class FieldResearch extends Card {
 
     public FieldResearch() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DrawCardEffect(2),
                 new DrawCardEffect(3)

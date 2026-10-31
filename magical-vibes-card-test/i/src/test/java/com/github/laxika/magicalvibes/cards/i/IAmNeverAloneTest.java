@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.o.OmarthisGhostfireInitiate;
 import com.github.laxika.magicalvibes.cards.t.ThePrismaticPiper;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -227,7 +226,7 @@ class IAmNeverAloneTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL)));
+                scheme.getCastingCostsAndSpellEffects()));
         harness.passBothPriorities();
     }
 }

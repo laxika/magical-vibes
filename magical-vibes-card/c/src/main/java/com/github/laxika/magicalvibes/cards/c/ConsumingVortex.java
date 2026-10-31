@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ConsumingVortex extends Card {
 
     public ConsumingVortex() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{3}{U}"));
     }
 }

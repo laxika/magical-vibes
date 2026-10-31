@@ -14,7 +14,7 @@ public class DemonicCollusion extends Card {
 
     public DemonicCollusion() {
         addEffect(EffectSlot.STATIC, new BuybackEffect(2));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new SearchLibraryEffect());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

@@ -24,6 +24,6 @@ public class TearsOfValakut extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )),
                 "Target must be a creature with flying."
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+        )).addSpellEffect(new DealDamageToTargetCreatureEffect(5));
     }
 }

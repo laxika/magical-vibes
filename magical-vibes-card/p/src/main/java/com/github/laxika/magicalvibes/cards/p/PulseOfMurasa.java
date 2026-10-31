@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class PulseOfMurasa extends Card {
 
     public PulseOfMurasa() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardAnyOfPredicate(List.of(
@@ -30,6 +29,6 @@ public class PulseOfMurasa extends Card {
                 )))
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(6));
+        addSpellEffect(new GainLifeEffect(6));
     }
 }

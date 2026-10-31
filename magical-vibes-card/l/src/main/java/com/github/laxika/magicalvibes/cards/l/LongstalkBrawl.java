@@ -28,14 +28,13 @@ public class LongstalkBrawl extends Card {
 
     public LongstalkBrawl() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new GiftPromised(),
+        )).addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
 
         target(new PermanentPredicateTargetFilter(
@@ -44,7 +43,7 @@ public class LongstalkBrawl extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        )).addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+        )).addSpellEffect(new FightTargetsEffect());
     }
 
     private static CreateTokenEffect fishToken() {

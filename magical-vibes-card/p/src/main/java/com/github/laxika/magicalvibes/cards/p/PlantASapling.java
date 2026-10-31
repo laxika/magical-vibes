@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.FullyGrownTreefolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -44,9 +43,9 @@ public class PlantASapling extends Card {
     public PlantASapling() {
         setBackFaceCard(new FullyGrownTreefolk());
 
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND, null, false));
-        addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect(true));
+        addSpellEffect(new ShuffleIntoLibraryEffect(true));
     }
 
     @Override

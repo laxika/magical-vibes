@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -31,7 +30,7 @@ public class FlowerFlourish extends Card {
                 new CardAnyOfPredicate(List.of(basicForest, basicPlains)));
         CardEffect flourish = new BoostAllOwnCreaturesEffect(2, 2);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Flower — Search your library for a basic Forest or Plains card, reveal it, put it into your hand, then shuffle",
                         flower).withManaCost("{G/W}"),

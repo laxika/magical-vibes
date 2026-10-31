@@ -16,6 +16,6 @@ public class ClawsOut extends Card {
     public ClawsOut() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.CAT), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 2));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
     }
 }

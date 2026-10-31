@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -21,7 +20,7 @@ import java.util.List;
 public class ChampionOfTheWeird extends Card {
 
     public ChampionOfTheWeird() {
-        addEffect(EffectSlot.SPELL, new BeholdAndExileCost(CardSubtype.GOBLIN));
+        addCastingCost(new BeholdAndExileCost(CardSubtype.GOBLIN));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -17,7 +16,7 @@ public class NeutralizeTheGuards extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-1, -1, EachPermanentScope.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new SurveilEffect(2));
+        )).addSpellEffect(new BoostAllCreaturesEffect(-1, -1, EachPermanentScope.TARGET_PLAYER))
+                .addSpellEffect(new SurveilEffect(2));
     }
 }

@@ -27,7 +27,7 @@ public final class InstantCategoryClassifier {
     private InstantCategoryClassifier() {}
 
     public static InstantCategory classify(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             // Modal spells: classify each option's effects and return the highest-priority
             // usable category. Counter modes are skipped because the AI can't target spells.
             if (effect instanceof ChooseOneEffect coe) {

@@ -30,11 +30,11 @@ public class DewdropCure extends Card {
         addEffect(EffectSlot.STATIC, new GiftEffect(2));
         target(new GraveyardCardPredicateTargetFilter(
                 creatureCards, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 3)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new EachOtherPlayerDrawsCardEffect(1)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new ReturnTargetCardsFromGraveyardToBattlefieldEffect(creatureCards, 3, false, false)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(new GiftPromised()),
+                .addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                         new ReturnTargetCardsFromGraveyardToBattlefieldEffect(creatureCards, 2, false, false)));
     }
 }

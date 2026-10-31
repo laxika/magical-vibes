@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -34,7 +33,7 @@ public class RestartTurnEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<ExiledCardEntry> earlierRestartExiles = gameData.exiledCards.stream()
-                .filter(exiled -> exiled.card().getEffects(EffectSlot.SPELL).stream()
+                .filter(exiled -> exiled.card().getSpellEffects().stream()
                         .anyMatch(RestartTurnEffect.class::isInstance))
                 .toList();
         boolean restored = gameData.restoreTurnStartSnapshot();

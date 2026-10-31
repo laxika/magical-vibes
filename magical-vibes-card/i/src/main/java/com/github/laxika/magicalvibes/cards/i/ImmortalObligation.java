@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
@@ -26,7 +25,7 @@ import java.util.List;
 public class ImmortalObligation extends Card {
 
     public ImmortalObligation() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)
@@ -38,7 +37,7 @@ public class ImmortalObligation extends Card {
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.OPPONENT_GRAVEYARD));
 
-        addEffect(EffectSlot.SPELL, new GrantEffectsToCounterBearersEffect(CounterType.DUTY, List.of(
+        addSpellEffect(new GrantEffectsToCounterBearersEffect(CounterType.DUTY, List.of(
                 new GoadCreaturesUntilNextTurnEffect(new PermanentHasCountersPredicate(CounterType.DUTY)),
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate()), false, null, true),

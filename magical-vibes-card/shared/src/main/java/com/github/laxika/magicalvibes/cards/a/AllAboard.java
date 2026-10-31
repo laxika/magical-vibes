@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -26,6 +25,6 @@ public class AllAboard extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.PILOT))
                 )),
                 "Target must be a non-Pilot creature you control"
-        )).addEffect(EffectSlot.SPELL, FlickerEffect.flickerTarget());
+        )).addSpellEffect(FlickerEffect.flickerTarget());
     }
 }

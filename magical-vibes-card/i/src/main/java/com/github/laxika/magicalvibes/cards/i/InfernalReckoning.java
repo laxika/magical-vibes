@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -25,7 +24,7 @@ public class InfernalReckoning extends Card {
                 )),
                 "Target must be a colorless creature"
         ))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetPower()));
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(new TargetPower()));
     }
 }

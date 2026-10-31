@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
@@ -23,6 +22,6 @@ public class HorriblyAwry extends Card {
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                         new StackEntryMaxManaValuePredicate(4))),
                 "Target must be a creature spell with mana value 4 or less."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect(CounteredSpellDestination.EXILE));
+        )).addSpellEffect(new CounterSpellEffect(CounteredSpellDestination.EXILE));
     }
 }

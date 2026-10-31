@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -24,6 +23,6 @@ public class Strafe extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.RED)))
                 )),
                 "Target must be a nonred creature"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+        )).addSpellEffect(new DealDamageToTargetCreatureEffect(3));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -30,7 +29,7 @@ public class DarkSalvation extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new CreateTokenForTargetPlayerEffect(
+                .addSpellEffect(new CreateTokenForTargetPlayerEffect(
                         new CreateTokenEffect(
                                 new XValue(),
                                 "Zombie", 2, 2, CardColor.BLACK,
@@ -39,7 +38,7 @@ public class DarkSalvation extends Card {
         PermanentCount zombies = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), CountScope.TARGET_PLAYER);
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureByTargetPlayerCountEffect(
+                .addSpellEffect(new BoostTargetCreatureByTargetPlayerCountEffect(
                         new Scaled(zombies, -1),
                         new Scaled(zombies, -1),
                         true));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -33,7 +32,7 @@ public class MobRule extends Card {
                 new PermanentPowerAtMostPredicate(3)
         ));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 mode("Gain control of all creatures with power 4 or greater", largeCreatures),
                 mode("Gain control of all creatures with power 3 or less", smallCreatures)
         )));

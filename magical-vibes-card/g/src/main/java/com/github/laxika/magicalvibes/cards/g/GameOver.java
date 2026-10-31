@@ -23,6 +23,6 @@ public class GameOver extends Card {
                         ControllerLifeAtMost.atHalfStartingLife(),
                         new AnOpponentLifeAtOrBelowHalfStartingLife())),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
     }
 }

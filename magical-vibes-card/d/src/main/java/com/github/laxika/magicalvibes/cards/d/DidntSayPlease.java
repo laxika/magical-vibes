@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class DidntSayPlease extends Card {
 
     public DidntSayPlease() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.TARGET_SPELL_CONTROLLER));
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new MillEffect(3, MillRecipient.TARGET_SPELL_CONTROLLER));
     }
 }

@@ -17,6 +17,6 @@ public class MysticalDispute extends Card {
     public MysticalDispute() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingStackEntryEffect(
                 new StackEntryColorInPredicate(Set.of(CardColor.BLUE)), 2));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(3));
+        addSpellEffect(new CounterUnlessPaysEffect(3));
     }
 }

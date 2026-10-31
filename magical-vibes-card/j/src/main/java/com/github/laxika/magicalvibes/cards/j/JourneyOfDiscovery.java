@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -17,8 +16,8 @@ import java.util.List;
 public class JourneyOfDiscovery extends Card {
 
     public JourneyOfDiscovery() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{2}{G}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{2}{G}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Search your library for up to two basic land cards, reveal them, and put them into your hand",
                         new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),

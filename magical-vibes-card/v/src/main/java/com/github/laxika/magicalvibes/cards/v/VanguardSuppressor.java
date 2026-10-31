@@ -15,7 +15,7 @@ public class VanguardSuppressor extends Card {
 
     public VanguardSuppressor() {
         // Squad {2}
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
 
         // Create a token copy of Vanguard Suppressor for each time its squad cost was paid.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

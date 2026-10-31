@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -27,7 +26,7 @@ public class HapatrasMark extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a creature you control"))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, CounterRemovalSubject.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
+                .addSpellEffect(new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, CounterRemovalSubject.TARGET));
     }
 }

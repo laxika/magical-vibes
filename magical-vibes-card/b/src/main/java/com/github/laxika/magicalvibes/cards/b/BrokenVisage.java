@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -24,6 +23,6 @@ public class BrokenVisage extends Card {
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())
                 )),
                 "Target must be a nonartifact attacking creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffect());
+        )).addSpellEffect(new DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffect());
     }
 }

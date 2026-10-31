@@ -52,12 +52,14 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
         if (source == null || source.getOriginalCard() == null || source.getOriginalCard() == boost.card()) {
             return boost.card();
         }
+        java.util.List<CardEffect> candidates = new java.util.ArrayList<>(source.getCard().getCastingCostsAndSpellEffects());
         for (EffectSlot slot : EffectSlot.values()) {
-            for (CardEffect candidate : source.getCard().getEffects(slot)) {
-                if (candidate == boost
-                        || candidate instanceof PerpetuallyBoostCardEffect other && other.card() == boost.card()) {
-                    return source.getOriginalCard();
-                }
+            candidates.addAll(source.getCard().getEffects(slot));
+        }
+        for (CardEffect candidate : candidates) {
+            if (candidate == boost
+                    || candidate instanceof PerpetuallyBoostCardEffect other && other.card() == boost.card()) {
+                return source.getOriginalCard();
             }
         }
         return boost.card();

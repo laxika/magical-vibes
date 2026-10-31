@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -43,8 +42,7 @@ public class ViviensInvocation extends Card {
     };
 
     public ViviensInvocation() {
-        addEffect(EffectSlot.SPELL,
-                LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(7,
+        addSpellEffect(LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(7,
                         new CardTypePredicate(CardType.CREATURE), DAMAGE_FOLLOW_UP));
     }
 }

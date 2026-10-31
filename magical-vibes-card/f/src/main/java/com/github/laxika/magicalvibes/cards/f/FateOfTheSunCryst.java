@@ -23,6 +23,6 @@ public class FateOfTheSunCryst extends Card {
                 )), 2));
 
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

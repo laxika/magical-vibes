@@ -22,7 +22,7 @@ public class ReachOfBranches extends Card {
 
     public ReachOfBranches() {
         // Create a 2/5 green Treefolk Shaman creature token.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(1, "Treefolk Shaman", 2, 5, CardColor.GREEN,
+        addSpellEffect(new CreateTokenEffect(1, "Treefolk Shaman", 2, 5, CardColor.GREEN,
                 List.of(CardSubtype.TREEFOLK, CardSubtype.SHAMAN), Set.of(), Set.of()));
 
         // Whenever a Forest you control enters, you may return this card from your graveyard to your hand.

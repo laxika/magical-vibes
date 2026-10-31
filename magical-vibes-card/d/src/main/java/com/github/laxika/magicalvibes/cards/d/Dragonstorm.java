@@ -22,7 +22,7 @@ public class Dragonstorm extends Card {
 
     public Dragonstorm() {
         // Search your library for a Dragon permanent card, put it onto the battlefield, then shuffle.
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 new CardAllOfPredicate(List.of(new CardIsPermanentPredicate(), new CardSubtypePredicate(CardSubtype.DRAGON))),
                 LibrarySearchDestination.BATTLEFIELD));
 

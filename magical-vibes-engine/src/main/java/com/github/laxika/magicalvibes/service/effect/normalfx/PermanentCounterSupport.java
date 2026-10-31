@@ -2254,11 +2254,11 @@ public class PermanentCounterSupport {
     private TargetFilter targetFilterForCounterTrigger(Card card, List<CardEffect> effects) {
         int targetGroupIndex = effects.stream()
                 .mapToInt(card::getEffectTargetIndex)
-                .filter(index -> index >= 0 && index < card.getSpellTargets().size())
+                .filter(index -> index >= 0 && index < card.getTargetGroups().size())
                 .findFirst()
                 .orElse(-1);
         return targetGroupIndex >= 0
-                ? card.getSpellTargets().get(targetGroupIndex).getFilter()
+                ? card.getTargetGroups().get(targetGroupIndex).getFilter()
                 : card.getTargetFilter();
     }
 

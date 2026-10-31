@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 public class RiteOfHarmony extends Card {
 
     public RiteOfHarmony() {
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new DrawCardEffect()));
         addCastingOption(new FlashbackCast("{2}{G}{W}"));

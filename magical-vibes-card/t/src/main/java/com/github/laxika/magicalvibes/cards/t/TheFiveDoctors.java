@@ -20,7 +20,7 @@ public class TheFiveDoctors extends Card {
     public TheFiveDoctors() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{5}"));
         CardSubtypePredicate doctor = new CardSubtypePredicate(CardSubtype.DOCTOR);
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new SearchLibraryAndOrGraveyardForCardsEffect(doctor, 5),
                 new SearchLibraryAndOrGraveyardForCardsEffect(

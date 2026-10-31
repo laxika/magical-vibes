@@ -16,6 +16,6 @@ public class KaerveksTorch extends Card {
         addEffect(EffectSlot.STATIC, new IncreaseCostOfSpellsTargetingThisSpellEffect(2));
 
         // Kaervek's Torch deals X damage to any target.
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
     }
 }

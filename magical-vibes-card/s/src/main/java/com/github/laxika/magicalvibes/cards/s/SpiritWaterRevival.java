@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -17,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 public class SpiritWaterRevival extends Card {
 
     public SpiritWaterRevival() {
-        addEffect(EffectSlot.SPELL, WaterbendCost.optional(6));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addCastingCost(WaterbendCost.optional(6));
+        addSpellEffect(new ConditionalReplacementEffect(
                 new WaterbendCostPaid(),
                 new DrawCardEffect(2),
                 SequenceEffect.of(
@@ -27,6 +26,6 @@ public class SpiritWaterRevival extends Card {
                         new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME)
                 )
         ));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

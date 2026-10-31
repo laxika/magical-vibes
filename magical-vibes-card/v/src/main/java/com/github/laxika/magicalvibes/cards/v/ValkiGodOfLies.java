@@ -26,7 +26,7 @@ public class ValkiGodOfLies extends Card {
                 false, "{X}", List.of(new BecomeCopyOfExiledCreatureWithManaValueEffect()),
                 "{X}: Choose a creature card exiled with Valki with mana value X. Valki becomes a copy of that card."
         ));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Valki, God of Lies", List.of())
                         .withManaCost("{1}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Tibalt, Cosmic Impostor", List.of())

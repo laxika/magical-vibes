@@ -33,11 +33,11 @@ public class PartingGust extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                 )),
                 "Target must be a nontoken creature"))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         TargetOpponentCreatesTokenEffect.gift(fishToken())))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new ExileTargetPermanentEffect()))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(new GiftPromised()),
+                .addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                         FlickerEffect.exileTargetReturnAtEndStepWithCounters(1)));
     }
 

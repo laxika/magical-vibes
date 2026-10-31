@@ -29,6 +29,6 @@ public class ExoticPets extends Card {
                 Map.of(EffectSlot.STATIC, new CantBeBlockedEffect())
         );
 
-        addEffect(EffectSlot.SPELL, new CreateTokensWithCountersFromControlledCreaturesEffect(fish));
+        addSpellEffect(new CreateTokensWithCountersFromControlledCreaturesEffect(fish));
     }
 }

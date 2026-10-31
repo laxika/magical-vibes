@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -118,7 +117,7 @@ class KneelBeforeMyLegionsTest extends BaseCardTest {
                 sourceCard,
                 player1.getId(),
                 sourceCard.getName() + "'s set-in-motion ability",
-                sourceCard.getEffects(EffectSlot.SPELL)));
+                sourceCard.getCastingCostsAndSpellEffects()));
         harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
         resolveAllTriggers();

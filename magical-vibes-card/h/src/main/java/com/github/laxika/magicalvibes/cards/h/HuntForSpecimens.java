@@ -18,7 +18,7 @@ import java.util.Set;
 public class HuntForSpecimens extends Card {
 
     public HuntForSpecimens() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(),
@@ -26,6 +26,6 @@ public class HuntForSpecimens extends Card {
                 Map.of(EffectSlot.ON_DEATH, new GainLifeEffect(1)),
                 List.of(), false, false, false, 0, Set.of()));
 
-        addEffect(EffectSlot.SPELL, new LearnEffect());
+        addSpellEffect(new LearnEffect());
     }
 }

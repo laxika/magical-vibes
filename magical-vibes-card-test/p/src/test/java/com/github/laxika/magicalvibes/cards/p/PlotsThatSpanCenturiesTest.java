@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.i.ICallForSlaughter;
 import com.github.laxika.magicalvibes.cards.m.MyLaughterEchoes;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -52,6 +51,6 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL));
+                scheme.getCastingCostsAndSpellEffects());
     }
 }

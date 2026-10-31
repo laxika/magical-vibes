@@ -13,12 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 public class HealingTechnique extends Card {
 
     public HealingTechnique() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .targetGraveyard(true)
                 .gainLifeEqualToManaValue(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new DemonstrateEffect(), "Copy Healing Technique?"));
     }

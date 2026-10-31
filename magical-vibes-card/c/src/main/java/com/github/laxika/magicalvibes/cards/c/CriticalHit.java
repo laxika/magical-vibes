@@ -14,8 +14,7 @@ public class CriticalHit extends Card {
 
     public CriticalHit() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20,
                 new ReturnSourceCardFromGraveyardToOwnerHandEffect());
     }

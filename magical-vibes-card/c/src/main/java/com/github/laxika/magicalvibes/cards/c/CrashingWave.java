@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -21,11 +20,11 @@ import java.util.List;
 public class CrashingWave extends Card {
 
     public CrashingWave() {
-        addEffect(EffectSlot.SPELL, new ChooseXValueCost(0, Integer.MAX_VALUE));
-        addEffect(EffectSlot.SPELL, WaterbendCost.x());
+        addCastingCost(new ChooseXValueCost(0, Integer.MAX_VALUE));
+        addCastingCost(WaterbendCost.x());
         targetX(TargetFilters.creature(), 100)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SPELL, new DistributeCountersAmongControlledCreaturesEffect(
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+        addSpellEffect(new DistributeCountersAmongControlledCreaturesEffect(
                 CounterType.STUN, 3,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsTappedPredicate(),

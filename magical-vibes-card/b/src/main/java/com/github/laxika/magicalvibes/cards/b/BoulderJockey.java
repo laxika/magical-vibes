@@ -20,7 +20,7 @@ import java.util.Set;
 public class BoulderJockey extends Card {
 
     public BoulderJockey() {
-        addEffect(EffectSlot.SPELL, new LandDropCost());
+        addCastingCost(new LandDropCost());
         addEffect(EffectSlot.ON_ATTACK, new MayPayLandDropEffect(
                 SequenceEffect.of(
                         new CreateTokenEffect(

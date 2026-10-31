@@ -24,10 +24,10 @@ public class WanderingArchaic extends Card {
         setBackFaceCard(backFace);
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Wandering Archaic", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Explore the Vastlands", backFace.getEffects(EffectSlot.SPELL)).withManaCost("{3}")
+                        "Explore the Vastlands", backFace.getSpellEffects()).withManaCost("{3}")
         )));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAnyOfPredicate(List.of(

@@ -223,7 +223,7 @@ class SpellCastingServiceTest {
 
         assertThat(spellEffects).isEmpty();
         assertThat(room.getSelectedRoomDoor()).isZero();
-        assertThat(room.getSpellTargets().get(room.getEffectTargetIndex(counter)).getMaxTargets()).isEqualTo(2);
+        assertThat(room.getTargetGroups().get(room.getEffectTargetIndex(counter)).getMaxTargets()).isEqualTo(2);
     }
 
     @Test
@@ -231,7 +231,7 @@ class SpellCastingServiceTest {
     void fusedModeRequiresTheFuseKeyword() {
         Card card = splitCard(Set.of());
         gd.playerHands.get(player1Id).add(card);
-        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
 
         assertThatThrownBy(() -> svc.prepareModalSpellCast(gd, player1Id, card, spellEffects, 2))
                 .isInstanceOf(IllegalStateException.class)
@@ -244,19 +244,19 @@ class SpellCastingServiceTest {
         Card card = splitCard(Set.of(Keyword.FUSE));
 
         assertThatThrownBy(() -> svc.prepareModalSpellCast(gd, player1Id, card,
-                new ArrayList<>(card.getEffects(EffectSlot.SPELL)), 2))
+                new ArrayList<>(card.getCastingCostsAndSpellEffects()), 2))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("This mode can only be cast from hand");
         assertThatThrownBy(() -> svc.prepareModalSpellCast(gd, player1Id, card,
-                new ArrayList<>(card.getEffects(EffectSlot.SPELL)), 2, false))
+                new ArrayList<>(card.getCastingCostsAndSpellEffects()), 2, false))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("This mode can only be cast from hand");
 
-        List<CardEffect> fromHand = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> fromHand = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         svc.prepareModalSpellCast(gd, player1Id, card, fromHand, 2, true);
         assertThat(fromHand).hasSize(2).allMatch(DrawCardEffect.class::isInstance);
 
-        List<CardEffect> oneHalf = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> oneHalf = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         svc.prepareModalSpellCast(gd, player1Id, card, oneHalf, 0);
         assertThat(oneHalf).hasSize(1);
     }
@@ -268,7 +268,7 @@ class SpellCastingServiceTest {
         card.setType(CardType.INSTANT);
         card.setKeywords(keywords);
         card.setSplitHalves(List.of(splitHalf("Wax", "{G}"), splitHalf("Wane", "{W}")));
-        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        card.addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Wax", List.of(new DrawCardEffect(1))).withManaCost("{G}"),
                 new ChooseOneEffect.ChooseOneOption("Wane", List.of(new DrawCardEffect(1))).withManaCost("{W}"),
                 new ChooseOneEffect.ChooseOneOption("Fuse — Wax and then Wane",
@@ -394,11 +394,10 @@ class SpellCastingServiceTest {
     @DisplayName("Tracks a sacrificed permanent's mana value in the spell stack entry")
     void tracksSacrificedPermanentManaValue() {
         Card spell = createInstant("Forge Armor", "{4}{R}");
+        spell.addCastingCost(new SacrificePermanentCost(
+                new PermanentIsArtifactPredicate(), "an artifact", false, false, true, false));
         spell.target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
-                        new PermanentIsArtifactPredicate(), "an artifact", false, false, true, false))
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new XValue()));
         Permanent artifact = new Permanent(createArtifact("Test Ingot", "{3}"));
@@ -425,9 +424,9 @@ class SpellCastingServiceTest {
     @DisplayName("Pays a single-permanent sacrifice cost when casting flashback from the graveyard")
     void paysSinglePermanentSacrificeCostFromGraveyard() {
         Card spell = createSorcery("Graveyard Sacrifice Spell", "{W}{B}");
-        spell.addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        spell.addCastingCost(new SacrificePermanentCost(
                 new PermanentIsArtifactPredicate(), "an artifact"));
-        spell.addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        spell.addSpellEffect(new DrawCardEffect());
         spell.addCastingOption(new FlashbackCast("{2}{W}{B}"));
         Permanent artifact = new Permanent(createArtifact("Test Ingot", "{1}"));
         gd.playerBattlefields.get(player1Id).add(artifact);
@@ -475,7 +474,7 @@ class SpellCastingServiceTest {
     void snapshotsConvergeColorsWhenCastingFlashback() {
         Card spell = createSorcery("Converge Flashback Spell", "{1}{R}");
         spell.setKeywords(EnumSet.of(Keyword.CONVERGE));
-        spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+        spell.addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
         spell.addCastingOption(new FlashbackCast("{4}{R}"));
         gd.playerGraveyards.get(player1Id).add(spell);
         addMana(player1Id, ManaColor.RED, 1);
@@ -512,9 +511,8 @@ class SpellCastingServiceTest {
 
     private Card prepareFlashbackDiscardSpell() {
         Card spell = createInstant("Discard Flashback Spell", "{2}{R}");
-        spell.addEffect(EffectSlot.SPELL,
-                new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null));
-        spell.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        spell.addCastingCost(new com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost(null, null));
+        spell.addSpellEffect(new DrawCardEffect(2));
         spell.addCastingOption(new FlashbackCast("{3}{R}"));
         gd.playerGraveyards.get(player1Id).add(spell);
         addMana(player1Id, ManaColor.RED, 1);
@@ -545,7 +543,7 @@ class SpellCastingServiceTest {
         Card spell = createInstant("Strive Spell", "{W}");
         spell.setAdditionalManaCostPerExtraTarget("{2}{W}");
         spell.target(TargetFilters.creature(), 0, 99)
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new DrawCardEffect());
         Permanent firstTarget = new Permanent(createCreature("First Target", "{1}"));
         Permanent secondTarget = new Permanent(createCreature("Second Target", "{1}"));
         gd.playerBattlefields.get(player1Id).add(firstTarget);
@@ -567,10 +565,10 @@ class SpellCastingServiceTest {
     void addsSplicedSpellTargetGroups() {
         Card host = createInstant("Arcane Host", "{1}");
         host.setSubtypes(List.of(CardSubtype.ARCANE));
-        host.target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        host.target(TargetFilters.creature()).addSpellEffect(new DrawCardEffect());
 
         Card spliced = createInstant("Spliced Spell", "{1}");
-        spliced.target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        spliced.target(TargetFilters.creature()).addSpellEffect(new DrawCardEffect());
         spliced.addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}"));
 
         UUID firstTarget = UUID.randomUUID();
@@ -584,7 +582,7 @@ class SpellCastingServiceTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactlyElementsOf(targetIds);
-        assertThat(gd.stack.getFirst().getCard().getSpellTargets()).hasSize(2);
+        assertThat(gd.stack.getFirst().getCard().getTargetGroups()).hasSize(2);
         assertThat(gd.playerHands.get(player1Id)).containsExactly(spliced);
     }
 
@@ -593,7 +591,7 @@ class SpellCastingServiceTest {
     void allowsOptionalCounterDistributionWithNoTargets() {
         Card spell = createSorcery("Optional Counter Spell", "{2}{G}{G}");
         spell.target(TargetFilters.creatureYouControl(), 0, 4)
-                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
+                .addSpellEffect(DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4), null));
         setHand(player1Id, List.of(spell));
         addMana(player1Id, ManaColor.GREEN, 4);
@@ -612,7 +610,7 @@ class SpellCastingServiceTest {
         Card front = createCreature("Test Creature", "{4}{R}");
         Card adventure = createSorcery("Test Adventure", "{2}{R}");
         adventure.target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
         front.setBackFaceCard(adventure);
         front.addCastingOption(new AdventureCast("{2}{R}"));
         setHand(player1Id, List.of(front));
@@ -967,7 +965,7 @@ class SpellCastingServiceTest {
         @DisplayName("Sorcery with spell-level targeting validates hexproof at cast time")
         void sorceryWithSpellTargetingValidatesHexproof() {
             Card sorcery = createSorcery("Test Burn", "{R}");
-            sorcery.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            sorcery.addSpellEffect(new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(sorcery));
             addMana(player1Id, ManaColor.RED, 1);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1082,7 +1080,7 @@ class SpellCastingServiceTest {
         @DisplayName("Instant with spell-level targeting validates hexproof at cast time")
         void instantWithSpellTargetingValidatesHexproof() {
             Card instant = createInstant("Test Bolt", "{R}");
-            instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            instant.addSpellEffect(new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1107,7 +1105,7 @@ class SpellCastingServiceTest {
         @DisplayName("Instant goes on the stack as INSTANT_SPELL")
         void instantGoesOnStack() {
             Card instant = createInstant("Test Bolt", "{R}");
-            instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            instant.addSpellEffect(new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1126,7 +1124,7 @@ class SpellCastingServiceTest {
         @DisplayName("Instant carries its spell effects on the stack entry")
         void instantCarriesEffects() {
             Card instant = createInstant("Test Bolt", "{R}");
-            instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            instant.addSpellEffect(new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1141,7 +1139,7 @@ class SpellCastingServiceTest {
         @DisplayName("Zero per-target life cost is not gated on the life total")
         void zeroPerTargetLifeCostIsNotGatedOnLifeTotal() {
             Card instant = createInstant("Test Bolt", "{R}");
-            instant.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            instant.addSpellEffect(new DealDamageToAnyTargetEffect(3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             // CR 119.4 gates only payments greater than 0 on the life total, so a card with no
@@ -1164,7 +1162,7 @@ class SpellCastingServiceTest {
             Card instant = createInstant("Test Purge", "{R}");
             instant.setAdditionalLifeCostPerTarget(3);
             instant.target(0, 99);
-            instant.addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+            instant.addSpellEffect(new DestroyEachTargetPermanentEffect());
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             gd.playerLifeTotals.put(player1Id, 5);
@@ -1193,7 +1191,7 @@ class SpellCastingServiceTest {
             Card instant = createInstant("Test Purge", "{R}");
             instant.setAdditionalLifeCostPerTarget(3);
             instant.target(0, 99);
-            instant.addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+            instant.addSpellEffect(new DestroyEachTargetPermanentEffect());
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.RED, 1);
             // CR 119.4 allows the payment when the life total is greater than or equal to it,
@@ -1227,7 +1225,7 @@ class SpellCastingServiceTest {
         @DisplayName("Sorcery goes on the stack as SORCERY_SPELL")
         void sorceryGoesOnStack() {
             Card sorcery = createSorcery("Test Draw", "{U}");
-            sorcery.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+            sorcery.addSpellEffect(new DrawCardEffect(2));
             setHand(player1Id, List.of(sorcery));
             addMana(player1Id, ManaColor.BLUE, 1);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1303,7 +1301,7 @@ class SpellCastingServiceTest {
         @DisplayName("Throws when X value is negative")
         void throwsForNegativeX() {
             Card xSpell = createInstant("Test X Spell", "{X}{R}");
-            xSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(0));
+            xSpell.addSpellEffect(new DealDamageToAnyTargetEffect(0));
             setHand(player1Id, List.of(xSpell));
             addMana(player1Id, ManaColor.RED, 5);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1317,7 +1315,7 @@ class SpellCastingServiceTest {
         @DisplayName("Throws when not enough mana for X cost")
         void throwsWhenNotEnoughManaForX() {
             Card xSpell = createInstant("Test X Spell", "{X}{R}");
-            xSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(0));
+            xSpell.addSpellEffect(new DealDamageToAnyTargetEffect(0));
             setHand(player1Id, List.of(xSpell));
             addMana(player1Id, ManaColor.RED, 3);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1332,8 +1330,7 @@ class SpellCastingServiceTest {
         @DisplayName("Applies an optional hand-exile reduction to an X spell")
         void appliesHandExileReductionToXSpell() {
             Card xSpell = createInstant("Test X Spell", "{X}{U}");
-            xSpell.addEffect(EffectSlot.SPELL,
-                    new ExileAnyNumberOfCardsFromHandCost(
+            xSpell.addCastingCost(new ExileAnyNumberOfCardsFromHandCost(
                             new CardColorPredicate(CardColor.BLUE), 2));
             Card blueCard = createInstant("Blue Card", "{U}");
             blueCard.setColor(CardColor.BLUE);
@@ -1365,7 +1362,7 @@ class SpellCastingServiceTest {
         @DisplayName("Throws when mode index is out of range")
         void throwsForInvalidMode() {
             Card modal = createSorcery("Test Modal", "{U}");
-            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            modal.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect(1)),
                     new ChooseOneEffect.ChooseOneOption("Deal 2 damage", new DealDamageToAnyTargetEffect(2))
             )));
@@ -1383,7 +1380,7 @@ class SpellCastingServiceTest {
         @DisplayName("Unwraps chosen mode effect into stack entry")
         void unwrapsChosenMode() {
             Card modal = createSorcery("Test Modal", "{U}");
-            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            modal.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect(1)),
                     new ChooseOneEffect.ChooseOneOption("Draw two cards", new DrawCardEffect(2))
             )));
@@ -1405,7 +1402,7 @@ class SpellCastingServiceTest {
         @DisplayName("Pays the additional cost from the chosen modal mode")
         void paysAdditionalCostFromChosenMode() {
             Card modal = createInstant("Test Modal Sacrifice", "{2}{R}");
-            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            modal.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Sacrifice and draw", List.of(
                             new SacrificeCreatureCost(false, true), new DrawCardEffect(1))),
                     new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1))
@@ -1435,7 +1432,7 @@ class SpellCastingServiceTest {
         void dispatchesDividedDamageFromSelectedMode() {
             DealDividedDamageEffect damage = DealDividedDamageEffect.chosenAmongAnyTargets(2);
             Card modal = createInstant("Test Split", "{1}{R}");
-            modal.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            modal.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption(
                             "Fire",
                             List.<CardEffect>of(damage),

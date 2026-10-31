@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -41,7 +40,7 @@ public class ChoreographedSparks extends Card {
 
         // Copy an instant/sorcery spell — the copy allows choosing new targets (handled by CopySpellEffectHandler).
         // Copy a creature spell — the copy is a token that gains haste and is sacrificed at the next end step.
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Copy target instant or sorcery spell you control. You may choose new targets for the copy",
                         new CopySpellEffect(),

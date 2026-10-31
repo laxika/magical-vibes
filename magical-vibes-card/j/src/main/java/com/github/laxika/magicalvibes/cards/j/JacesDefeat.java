@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -25,8 +24,8 @@ public class JacesDefeat extends Card {
                 "Target spell must be blue."));
         // The counter resolves first; the scry check then reads the countered spell's last-known card
         // (Jace planeswalkers all carry the Jace subtype).
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new ConditionalEffect(
                 new TargetSpellMatches(new StackEntrySubtypeInPredicate(Set.of(CardSubtype.JACE))),
                 new ScryEffect(2)));
     }

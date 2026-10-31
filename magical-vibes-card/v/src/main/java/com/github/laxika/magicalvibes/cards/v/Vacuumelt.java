@@ -15,8 +15,8 @@ import java.util.List;
 public class Vacuumelt extends Card {
 
     public Vacuumelt() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}{U}")));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}{U}")));
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}{U}"));
     }
 }

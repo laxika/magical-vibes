@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,9 +22,8 @@ public class DayOfBlackSun extends Card {
     ));
 
     public DayOfBlackSun() {
-        addEffect(EffectSlot.SPELL,
-                new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES, AFFECTED_CREATURE,
+        addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES, AFFECTED_CREATURE,
                         EffectDuration.UNTIL_END_OF_TURN));
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(AFFECTED_CREATURE));
+        addSpellEffect(new DestroyAllPermanentsEffect(AFFECTED_CREATURE));
     }
 }

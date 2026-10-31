@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -24,18 +27,21 @@ class CardAbilitiesTest {
     private static final CardEffect GAIN_ONE = new GainLifeEffect(1);
     private static final CardEffect GAIN_TWO = new GainLifeEffect(2);
 
+    private static final CostEffect SACRIFICE_A_CREATURE = new SacrificeCreatureCost();
+    private static final CostEffect DELVE = new DelveCost();
+
     private final Card card = new Card();
 
     @Test
     void spellEffectsFormOneSpellAbility() {
-        card.addEffect(EffectSlot.SPELL, DRAW_ONE);
-        card.addSimultaneousEffects(EffectSlot.SPELL, GAIN_ONE, GAIN_TWO);
+        card.addSpellEffect(DRAW_ONE);
+        card.addSimultaneousSpellEffects(GAIN_ONE, GAIN_TWO);
 
         assertThat(card.getAbilities()).containsExactly(new SpellAbility(List.of(
                 new EffectRegistration(DRAW_ONE),
                 new EffectRegistration(GAIN_ONE),
                 new EffectRegistration(GAIN_TWO, TriggerMode.NORMAL, true))));
-        assertThat(card.getEffects(EffectSlot.SPELL)).containsExactly(DRAW_ONE, GAIN_ONE, GAIN_TWO);
+        assertThat(card.getSpellEffects()).containsExactly(DRAW_ONE, GAIN_ONE, GAIN_TWO);
     }
 
     @Test
@@ -156,11 +162,11 @@ class CardAbilitiesTest {
 
     @Test
     void anEffectLeftFirstInItsAbilityIsNoLongerSimultaneous() {
-        card.addSimultaneousEffects(EffectSlot.SPELL, DRAW_ONE, GAIN_ONE, GAIN_TWO);
+        card.addSimultaneousSpellEffects(DRAW_ONE, GAIN_ONE, GAIN_TWO);
 
         card.removeEffectsIf(DRAW_ONE::equals);
 
-        assertThat(card.getEffectRegistrations(EffectSlot.SPELL)).containsExactly(
+        assertThat(card.getSpellEffectRegistrations()).containsExactly(
                 new EffectRegistration(GAIN_ONE), new EffectRegistration(GAIN_TWO, TriggerMode.NORMAL, true));
     }
 
@@ -229,15 +235,132 @@ class CardAbilitiesTest {
 
     @Test
     void clearingAbilitiesEmptiesEverySlot() {
-        card.addEffect(EffectSlot.SPELL, DRAW_ONE);
+        card.addSpellEffect(DRAW_ONE);
         card.addEffect(EffectSlot.STATIC, DRAW_TWO);
         card.addEffect(EffectSlot.ON_DEATH, GAIN_ONE);
 
         card.clearRulesTextAndAbilities();
 
         assertThat(card.getAbilities()).isEmpty();
-        assertThat(card.getEffects(EffectSlot.SPELL)).isEmpty();
+        assertThat(card.getSpellEffects()).isEmpty();
         assertThat(card.getEffects(EffectSlot.STATIC)).isEmpty();
+    }
+
+    @Test
+    void castingCostsAreKeptApartFromTheSpellAbility() {
+        card.addCastingCost(SACRIFICE_A_CREATURE);
+        card.addSpellEffect(DRAW_ONE);
+        card.addCastingCost(DELVE);
+
+        assertThat(card.getAbilities()).containsExactly(new SpellAbility(List.of(new EffectRegistration(DRAW_ONE))));
+        assertThat(card.getCastingCosts()).containsExactly(SACRIFICE_A_CREATURE, DELVE);
+        assertThat(card.getSpellEffects()).containsExactly(DRAW_ONE);
+        assertThat(card.getCastingCostsAndSpellEffects()).containsExactly(SACRIFICE_A_CREATURE, DELVE, DRAW_ONE);
+    }
+
+    @Test
+    void aCastingCostIsNoSpellEffect() {
+        assertThatThrownBy(() -> card.addSpellEffect(SACRIFICE_A_CREATURE))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("addCastingCost");
+    }
+
+    @Test
+    void aCardWithOnlyCastingCostsHasNoSpellAbility() {
+        card.addCastingCost(SACRIFICE_A_CREATURE);
+
+        assertThat(card.getSpellAbility()).isEmpty();
+        assertThat(card.getAbilities()).isEmpty();
+        assertThat(card.getSpellEffects()).isEmpty();
+    }
+
+    @Test
+    void theSpellAbilityHoldsTheTargetGroupsItsEffectsAreBoundTo() {
+        card.target(TargetFilters.creature()).addSpellEffect(DRAW_ONE);
+        card.target(TargetFilters.creature(), 0, 2).addSpellEffect(DRAW_TWO);
+
+        SpellAbility spell = card.getSpellAbility().orElseThrow();
+        assertThat(spell.targets()).containsExactlyElementsOf(card.getTargetGroups());
+        assertThat(spell.targets()).extracting(TargetGroup::getIndex).containsExactly(0, 1);
+        assertThat(spell.targets().get(1).getMaxTargets()).isEqualTo(2);
+        assertThat(card.getSpellTargetGroups()).isEqualTo(spell.targets());
+    }
+
+    @Test
+    void groupsOfOtherAbilitiesAfterTheSpellsStayOnTheCardOnly() {
+        // Death Pulse: the spell's target, then its cycling trigger's.
+        card.target(TargetFilters.creature()).addSpellEffect(DRAW_ONE);
+        card.target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_CYCLED, DRAW_TWO);
+
+        assertThat(card.getTargetGroups()).hasSize(2);
+        assertThat(card.getSpellTargetGroups()).containsExactly(card.getTargetGroups().getFirst());
+    }
+
+    @Test
+    void aGroupNoEffectIsBoundToIsOneOfTheSpells() {
+        // A positional target a sibling effect reads by index (Blood Feud's first fight target).
+        card.target(TargetFilters.creature());
+        card.target(TargetFilters.creature()).addSpellEffect(DRAW_ONE);
+
+        assertThat(card.getSpellTargetGroups()).hasSize(2);
+    }
+
+    @Test
+    void aGroupDeclaredBeforeTheSpellEffectJoinsTheSpellWhenTheEffectArrives() {
+        SpellTarget group = card.target(TargetFilters.creature());
+
+        group.addSpellEffect(DRAW_ONE);
+        group.inDistinctScope(3);
+
+        assertThat(card.getSpellAbility().orElseThrow().targets())
+                .singleElement()
+                .extracting(TargetGroup::getDistinctScope)
+                .isEqualTo(3);
+    }
+
+    @Test
+    void aCardWithoutASpellAbilityOffersAllItsGroupsAsSpellTargets() {
+        // An Aura spell: its Enchant ability decides its target.
+        card.target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, GAIN_ONE);
+
+        assertThat(card.getSpellAbility()).isEmpty();
+        assertThat(card.getSpellTargetGroups()).isEqualTo(card.getTargetGroups()).hasSize(1);
+    }
+
+    @Test
+    void aRuntimeCopyKeepsTheCastingCostsAndTheSpellsTargets() {
+        card.addCastingCost(SACRIFICE_A_CREATURE);
+        card.target(TargetFilters.creature()).addSpellEffect(DRAW_ONE);
+
+        Card copy = card.createRuntimeCopy();
+        copy.addCastingCost(DELVE);
+
+        assertThat(copy.getCastingCosts()).containsExactly(SACRIFICE_A_CREATURE, DELVE);
+        assertThat(card.getCastingCosts()).containsExactly(SACRIFICE_A_CREATURE);
+        assertThat(copy.getSpellTargetGroups()).isEqualTo(card.getSpellTargetGroups()).hasSize(1);
+    }
+
+    @Test
+    void removingEffectsReachesCastingCostsToo() {
+        card.addCastingCost(SACRIFICE_A_CREATURE);
+        card.addSpellEffect(DRAW_ONE);
+
+        card.removeEffectsIf(SACRIFICE_A_CREATURE::equals);
+
+        assertThat(card.getCastingCosts()).isEmpty();
+        assertThat(card.getSpellEffects()).containsExactly(DRAW_ONE);
+    }
+
+    @Test
+    void anotherCardsCastingCostsAndSpellEffectsCanBeCopiedSelectively() {
+        Card source = new Card();
+        source.addCastingCost(SACRIFICE_A_CREATURE);
+        source.addSimultaneousSpellEffects(DRAW_ONE, GAIN_ONE);
+
+        card.addCastingCostsAndSpellEffectsFrom(source, effect -> effect != GAIN_ONE);
+
+        assertThat(card.getCastingCosts()).containsExactly(SACRIFICE_A_CREATURE);
+        assertThat(card.getSpellEffectRegistrations()).containsExactly(new EffectRegistration(DRAW_ONE));
     }
 
     private static TriggeredAbility legacy(EffectSlot slot, EffectRegistration... effects) {

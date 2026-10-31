@@ -20,7 +20,7 @@ public class ViciousOffering extends Card {
         ));
         // Target creature gets -2/-2 until end of turn.
         // If this spell was kicked, that creature gets -5/-5 until end of turn instead.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                 new BoostTargetCreatureEffect(-2, -2),
                 new BoostTargetCreatureEffect(-5, -5)
         ));

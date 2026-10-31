@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -18,7 +17,6 @@ public class DreamSalvage extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addEffect(EffectSlot.SPELL,
-                        new DrawCardEffect(new CardsDiscardedByTargetPlayerThisTurn()));
+                .addSpellEffect(new DrawCardEffect(new CardsDiscardedByTargetPlayerThisTurn()));
     }
 }

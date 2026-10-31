@@ -25,7 +25,7 @@ public class CrampedVentsAccessMaze extends Card {
     public CrampedVentsAccessMaze() {
         setRoomDoorManaCosts(List.of("{3}{B}", "{5}{B}{B}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Cramped Vents", List.of())
                         .withManaCost("{3}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Access Maze", List.of())

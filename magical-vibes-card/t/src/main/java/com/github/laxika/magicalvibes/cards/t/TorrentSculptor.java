@@ -26,10 +26,10 @@ public class TorrentSculptor extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileOwnGraveyardCardPutHalfManaValueCountersOnSourceEffect(instantOrSorcery()));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Torrent Sculptor", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Flamethrower Sonata",
-                        backFace.getEffects(EffectSlot.SPELL))
+                        backFace.getSpellEffects())
         )));
     }
 

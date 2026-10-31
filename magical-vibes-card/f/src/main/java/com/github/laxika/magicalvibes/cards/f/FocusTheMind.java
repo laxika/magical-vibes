@@ -19,7 +19,7 @@ public class FocusTheMind extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DrawCardEffect(3));
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
     }
 }

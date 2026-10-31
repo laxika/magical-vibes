@@ -16,8 +16,8 @@ public class CovetedPrize extends Card {
 
     public CovetedPrize() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new PartySize()));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new SearchLibraryEffect());
+        addSpellEffect(new ConditionalEffect(
                 new FullParty(),
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new CardMaxManaValuePredicate(4))));
     }

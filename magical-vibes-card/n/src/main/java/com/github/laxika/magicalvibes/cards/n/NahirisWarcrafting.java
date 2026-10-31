@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
@@ -26,7 +25,7 @@ public class NahirisWarcrafting extends Card {
                         new PermanentIsBattlePredicate()
                 )),
                 "Target must be a creature, planeswalker, or battle."
-        )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(5))
-                .addEffect(EffectSlot.SPELL, new LookAtTopCardsMayExileOneAndPlayThisTurnEffect(new EventValue()));
+        )).addSpellEffect(new DealDamageToAnyTargetEffect(5))
+                .addSpellEffect(new LookAtTopCardsMayExileOneAndPlayThisTurnEffect(new EventValue()));
     }
 }

@@ -13,7 +13,7 @@ public class BlessedBreath extends Card {
 
     public BlessedBreath() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new GrantProtectionChoiceUntilEndOfTurnEffect());
+                .addSpellEffect(new GrantProtectionChoiceUntilEndOfTurnEffect());
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{W}"));
     }
 }

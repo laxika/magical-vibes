@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -23,9 +22,9 @@ public class GlisteningDawn extends Card {
 
     public GlisteningDawn() {
         PermanentCount landsYouControl = new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SPELL, new CreateXTokenWithXCountersEffect(
+        addSpellEffect(new CreateXTokenWithXCountersEffect(
                 incubatorToken(), landsYouControl, CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.SPELL, new CreateXTokenWithXCountersEffect(
+        addSpellEffect(new CreateXTokenWithXCountersEffect(
                 incubatorToken(), landsYouControl, CounterType.PLUS_ONE_PLUS_ONE));
     }
 

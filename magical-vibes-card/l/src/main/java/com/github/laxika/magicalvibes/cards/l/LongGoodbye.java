@@ -32,6 +32,6 @@ public class LongGoodbye extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetPredicate,
                 "Target must be a creature or planeswalker with mana value 3 or less"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(targetPredicate));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(targetPredicate));
     }
 }

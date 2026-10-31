@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -52,7 +51,7 @@ public class EldraziConfluence extends Card {
     public EldraziConfluence() {
         setAllowSharedTargets(true);
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+        addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Target creature gets +3/-3 until end of turn",
                         () -> new BoostTargetCreatureEffect(3, -3),

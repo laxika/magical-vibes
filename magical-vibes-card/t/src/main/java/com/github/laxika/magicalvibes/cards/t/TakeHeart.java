@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -15,8 +14,8 @@ public class TakeHeart extends Card {
 
     public TakeHeart() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(new GainLifeEffect(
                         new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.CONTROLLER)));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -28,7 +27,6 @@ public class PracticedTactics extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addEffect(EffectSlot.SPELL,
-                new DealDamageToTargetCreatureEffect(new Scaled(new PartySize(), 2)));
+        )).addSpellEffect(new DealDamageToTargetCreatureEffect(new Scaled(new PartySize(), 2)));
     }
 }

@@ -15,7 +15,6 @@ public class SliceFromTheShadows extends Card {
 
     public SliceFromTheShadows() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new BoostTargetCreatureEffect(new Scaled(new XValue(), -1), new Scaled(new XValue(), -1)));
+        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(new Scaled(new XValue(), -1), new Scaled(new XValue(), -1)));
     }
 }

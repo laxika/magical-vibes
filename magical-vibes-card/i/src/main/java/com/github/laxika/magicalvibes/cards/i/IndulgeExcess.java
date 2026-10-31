@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedAttackTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +25,7 @@ public class IndulgeExcess extends Card {
     public IndulgeExcess() {
         setBackFaceCard(new Excess());
 
-        addEffect(EffectSlot.SPELL, new RegisterDelayedAttackTokenCreationEffect(
+        addSpellEffect(new RegisterDelayedAttackTokenCreationEffect(
                 1,
                 new CreateTokenEffect(
                         CardType.CREATURE, 1, "Citizen", 1, 1, CardColor.GREEN,

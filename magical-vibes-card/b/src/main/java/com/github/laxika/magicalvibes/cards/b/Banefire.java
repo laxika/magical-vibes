@@ -20,6 +20,6 @@ public class Banefire extends Card {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect(new SpellXAtLeast(5)));
 
         // Banefire deals X damage to any target; if X is 5 or more, that damage can't be prevented.
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue(), new SpellXAtLeast(5)));
+        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue(), new SpellXAtLeast(5)));
     }
 }

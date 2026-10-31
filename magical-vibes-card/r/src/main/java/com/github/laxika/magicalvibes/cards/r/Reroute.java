@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,7 +23,7 @@ public class Reroute extends Card {
                         new StackEntryIsSingleTargetPredicate()
                 )),
                 "Target must be a single-target activated ability."
-        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        )).addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect())
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

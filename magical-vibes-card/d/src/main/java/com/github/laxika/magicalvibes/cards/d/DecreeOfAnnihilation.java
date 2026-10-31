@@ -20,12 +20,12 @@ import java.util.List;
 public class DecreeOfAnnihilation extends Card {
 
     public DecreeOfAnnihilation() {
-        addEffect(EffectSlot.SPELL, new ExileAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+        addSpellEffect(new ExileAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsLandPredicate()))));
-        addEffect(EffectSlot.SPELL, new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));
-        addEffect(EffectSlot.SPELL, new ExileAllHandsEffect());
+        addSpellEffect(new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));
+        addSpellEffect(new ExileAllHandsEffect());
         addEffect(EffectSlot.ON_SELF_CYCLED, new DestroyAllPermanentsEffect(new PermanentIsLandPredicate()));
         addCycling("{5}{R}{R}");
     }

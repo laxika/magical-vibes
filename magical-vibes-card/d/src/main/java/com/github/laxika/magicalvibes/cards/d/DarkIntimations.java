@@ -30,7 +30,7 @@ import java.util.List;
 public class DarkIntimations extends Card {
 
     public DarkIntimations() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new SacrificePermanentsEffect(
                 1,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -38,8 +38,8 @@ public class DarkIntimations extends Card {
                 )),
                 SacrificeRecipient.EACH_OPPONENT
         ));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
@@ -47,7 +47,7 @@ public class DarkIntimations extends Card {
                 )))
                 .mandatory(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new DrawCardEffect());
 
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(

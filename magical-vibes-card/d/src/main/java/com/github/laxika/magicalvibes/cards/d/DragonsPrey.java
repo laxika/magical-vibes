@@ -15,6 +15,6 @@ public class DragonsPrey extends Card {
     public DragonsPrey() {
         addEffect(EffectSlot.STATIC, new IncreaseOwnCastCostIfTargetingPermanentEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON), 2));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

@@ -19,7 +19,7 @@ public class WhispersOfTheMuse extends Card {
         // card into your hand as it resolves.)
         // Draw a card.
         addEffect(EffectSlot.STATIC, new BuybackEffect("{5}"));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new DrawCardEffect(1));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

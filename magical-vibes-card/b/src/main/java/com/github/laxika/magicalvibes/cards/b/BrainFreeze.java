@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class BrainFreeze extends Card {
 
     public BrainFreeze() {
-        addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(3, MillRecipient.TARGET_PLAYER));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

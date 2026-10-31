@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -64,7 +63,7 @@ public class FleshBlood extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target");
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Flesh — Exile target creature card from a graveyard, then put that many +1/+1 counters on target creature",
                         List.<CardEffect>of(new ExileTargetCreatureCardFromGraveyardPutPowerCountersEffect(0, 1)),

@@ -25,10 +25,10 @@ public class AugmenterPugilist extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanentCount(8, new PermanentIsLandPredicate()),
                 new StaticBoostEffect(5, 5, GrantScope.SELF)));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Augmenter Pugilist", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Echoing Equation", backFace.getEffects(EffectSlot.SPELL),
+                        "Echoing Equation", backFace.getSpellEffects(),
                         TargetFilters.creatureYouControl())
         )));
     }

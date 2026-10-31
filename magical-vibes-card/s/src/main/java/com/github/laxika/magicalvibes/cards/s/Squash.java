@@ -18,6 +18,6 @@ public class Squash extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),
                 new ReduceOwnCastCostEffect(new Fixed(3))));
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(6));
+        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(6));
     }
 }

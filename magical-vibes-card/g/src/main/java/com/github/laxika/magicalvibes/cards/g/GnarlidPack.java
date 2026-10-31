@@ -15,7 +15,7 @@ import java.util.List;
 public class GnarlidPack extends Card {
 
     public GnarlidPack() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{G}")));
     }

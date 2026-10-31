@@ -19,7 +19,7 @@ import java.util.List;
 public class OratorOfOjutai extends Card {
 
     public OratorOfOjutai() {
-        addEffect(EffectSlot.SPELL, RevealCardFromHandCost.optional(
+        addCastingCost(RevealCardFromHandCost.optional(
                 new CardSubtypePredicate(CardSubtype.DRAGON), "Dragon"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new AnyOf(List.of(new RevealCardFromHandCostPaid(), new ControlledDragonAsCast())),

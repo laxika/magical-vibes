@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.JumpStartCast;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -14,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class DihadasPloy extends Card {
 
     public DihadasPloy() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new CardsDiscardedOrCycledThisTurn()));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new GainLifeEffect(new CardsDiscardedOrCycledThisTurn()));
         addCastingOption(new JumpStartCast());
     }
 }

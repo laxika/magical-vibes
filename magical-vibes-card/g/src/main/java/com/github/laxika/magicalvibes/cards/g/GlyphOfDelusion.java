@@ -26,13 +26,10 @@ public class GlyphOfDelusion extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.WALL),
                 "First target must be a Wall"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.GLYPH, new TargetPower()))
-                .addEffect(EffectSlot.SPELL,
-                        new GrantEffectToTargetEffect(EffectSlot.STATIC,
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.GLYPH, new TargetPower()))
+                .addSpellEffect(new GrantEffectToTargetEffect(EffectSlot.STATIC,
                                 new DoesntUntapWithCounterEffect(CounterType.GLYPH)))
-                .addEffect(EffectSlot.SPELL,
-                        new GrantEffectToTargetEffect(EffectSlot.UPKEEP_TRIGGERED,
+                .addSpellEffect(new GrantEffectToTargetEffect(EffectSlot.UPKEEP_TRIGGERED,
                                 new RemoveCounterFromSourceEffect(CounterType.GLYPH, 1),
                                 EffectDuration.PERMANENT, false));
     }

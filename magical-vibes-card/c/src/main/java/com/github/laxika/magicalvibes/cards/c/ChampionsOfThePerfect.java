@@ -17,7 +17,7 @@ import java.util.List;
 public class ChampionsOfThePerfect extends Card {
 
     public ChampionsOfThePerfect() {
-        addEffect(EffectSlot.SPELL, new BeholdAndExileCost(CardSubtype.ELF));
+        addCastingCost(new BeholdAndExileCost(CardSubtype.ELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardTypePredicate(CardType.CREATURE), List.of(new DrawCardEffect())));
     }

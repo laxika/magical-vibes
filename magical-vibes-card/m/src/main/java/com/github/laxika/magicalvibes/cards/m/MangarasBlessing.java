@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFrom
 public class MangarasBlessing extends Card {
 
     public MangarasBlessing() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(5));
+        addSpellEffect(new GainLifeEffect(5));
 
         // "When a spell or ability an opponent controls causes you to discard this card, you gain
         // 2 life, and you return this card from your graveyard to your hand at the beginning of

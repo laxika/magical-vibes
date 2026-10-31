@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.DistinctManaValuesAmongStudyCounterCardsInExile;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -38,10 +37,10 @@ public class Kianne extends Card {
                         + "for each different mana value among nonland cards you own in exile with study "
                         + "counters on them."));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Kianne, Dean of Substance", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Imbraham, Dean of Theory", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Imbraham, Dean of Theory", backFace.getSpellEffects()))));
     }
 
     @Override

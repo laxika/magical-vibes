@@ -20,12 +20,12 @@ public class RiseOfTheEldrazi extends Card {
     public RiseOfTheEldrazi() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(4, false, true));
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+                .addSpellEffect(new DrawCardForTargetPlayerEffect(4, false, true));
+        addSpellEffect(new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ExileSpellEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -31,9 +30,9 @@ import java.util.List;
 public class ShamanicRevelation extends Card {
 
     public ShamanicRevelation() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(
+        addSpellEffect(new DrawCardEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new Scaled(new PermanentCount(
+        addSpellEffect(new GainLifeEffect(new Scaled(new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4))),

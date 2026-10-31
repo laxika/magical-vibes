@@ -14,7 +14,7 @@ public class WarriorsLesson extends Card {
         // Up to two target creatures you control gain a combat-damage-to-player draw trigger until
         // end of turn.
         target(TargetFilters.creatureYouControl(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1)));
     }
 }

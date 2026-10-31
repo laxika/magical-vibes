@@ -18,7 +18,7 @@ import java.util.Set;
 public class SatyrsCunning extends Card {
 
     public SatyrsCunning() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Satyr", 1, 1, CardColor.RED, List.of(CardSubtype.SATYR),
                 Set.of(), Set.of(), Map.of(EffectSlot.STATIC, new CantBlockEffect())));
 

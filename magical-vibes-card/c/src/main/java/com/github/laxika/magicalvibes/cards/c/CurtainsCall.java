@@ -22,6 +22,6 @@ public class CurtainsCall extends Card {
                 new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
 
         target(TargetFilters.creature(), 2, 2)
-                .addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+                .addSpellEffect(new DestroyEachTargetPermanentEffect());
     }
 }

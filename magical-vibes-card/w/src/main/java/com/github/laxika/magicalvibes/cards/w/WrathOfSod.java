@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfSourceCardColorsEffect;
@@ -25,10 +24,10 @@ import java.util.Set;
 public class WrathOfSod extends Card {
 
     public WrathOfSod() {
-        addEffect(EffectSlot.SPELL, new PutCounterOnEachMatchingPermanentEffect(
+        addSpellEffect(new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.MANABOND, 1, new PermanentIsCreaturePredicate(),
                 EachPermanentScope.ALL_PLAYERS));
-        addEffect(EffectSlot.SPELL, new GrantEffectsToCounterBearersEffect(CounterType.MANABOND, List.of(
+        addSpellEffect(new GrantEffectsToCounterBearersEffect(CounterType.MANABOND, List.of(
                 new SetCardTypesEffect(Set.of(CardType.LAND), GrantScope.ALL_LANDS),
                 new LoseAllCreatureTypesEffect(GrantScope.ALL_LANDS),
                 new LoseAllLandTypesEffect(GrantScope.ALL_LANDS, null),

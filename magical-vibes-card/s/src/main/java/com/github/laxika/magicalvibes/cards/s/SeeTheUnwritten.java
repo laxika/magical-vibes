@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
@@ -21,7 +20,7 @@ import java.util.List;
 public class SeeTheUnwritten extends Card {
 
     public SeeTheUnwritten() {
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsEffect(
+        addSpellEffect(new LookAtTopCardsEffect(
                 new Fixed(8),
                 new FixedIfCondition(new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

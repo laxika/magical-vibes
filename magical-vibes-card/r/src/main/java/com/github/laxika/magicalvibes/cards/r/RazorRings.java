@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -29,7 +28,7 @@ public class RazorRings extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new EventValue()));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(4))
+                .addSpellEffect(new GainLifeEffect(new EventValue()));
     }
 }

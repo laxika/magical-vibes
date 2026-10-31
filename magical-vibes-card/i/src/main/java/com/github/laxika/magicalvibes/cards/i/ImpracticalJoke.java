@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -17,7 +16,7 @@ public class ImpracticalJoke extends Card {
 
     public ImpracticalJoke() {
         // Damage can't be prevented this turn.
-        addEffect(EffectSlot.SPELL, new DamageCantBePreventedThisTurnEffect());
+        addSpellEffect(new DamageCantBePreventedThisTurnEffect());
 
         // Impractical Joke deals 3 damage to up to one target creature or planeswalker.
         target(new PermanentPredicateTargetFilter(
@@ -26,6 +25,6 @@ public class ImpracticalJoke extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        ), 0, 1).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(3));
+        ), 0, 1).addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(3));
     }
 }

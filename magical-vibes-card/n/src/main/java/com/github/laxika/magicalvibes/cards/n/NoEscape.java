@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
@@ -21,7 +20,7 @@ public class NoEscape extends Card {
                         StackEntryType.CREATURE_SPELL,
                         StackEntryType.PLANESWALKER_SPELL)),
                 "Target must be a creature or planeswalker spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect(CounteredSpellDestination.EXILE))
-          .addEffect(EffectSlot.SPELL, new ScryEffect(1));
+        )).addSpellEffect(new CounterSpellEffect(CounteredSpellDestination.EXILE))
+          .addSpellEffect(new ScryEffect(1));
     }
 }

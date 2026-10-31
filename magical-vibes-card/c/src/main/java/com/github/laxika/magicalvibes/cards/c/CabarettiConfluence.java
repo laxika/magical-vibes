@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -40,7 +39,7 @@ public class CabarettiConfluence extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player.");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+        addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Create a token that's a copy of target creature you control. It gains haste. "
                                 + "Sacrifice it at the beginning of the next end step.",

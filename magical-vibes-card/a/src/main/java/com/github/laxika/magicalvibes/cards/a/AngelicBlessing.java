@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -19,7 +18,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AngelicBlessing extends Card {
 
     public AngelicBlessing() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+        addSpellEffect(new BoostTargetCreatureEffect(3, 3));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
     }
 }

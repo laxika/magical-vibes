@@ -37,11 +37,10 @@ public class ClosingStatement extends Card {
                                 new PermanentIsPlaneswalkerPredicate())),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a creature or planeswalker you don't control"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
 
         // Put a +1/+1 counter on up to one target creature you control.
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

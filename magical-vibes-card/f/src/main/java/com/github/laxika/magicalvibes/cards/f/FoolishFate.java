@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -18,7 +17,7 @@ public class FoolishFate extends Card {
         // Destroy target creature. Infusion — if you gained life this turn, that creature's
         // controller also loses 3 life. The upgraded branch destroys and drains in one effect
         // so both paths share the single creature target.
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new GainedLifeThisTurn(),
                 new DestroyTargetPermanentEffect(),
                 new DestroyTargetPermanentThenEffect(new LoseLifeEffect(3), ThenEffectRecipient.TARGET_CONTROLLER)));

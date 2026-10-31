@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.StartingLifeTotal;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -14,10 +13,9 @@ public class LongRest extends Card {
 
     public LongRest() {
         setMultiTargetConstraint(MultiTargetConstraint.DIFFERENT_MANA_VALUES);
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(null, 0, true)
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(null, 0, true)
                 .withReturnedCount());
-        addEffect(EffectSlot.SPELL,
-                new SetLifeTotalIfEventValueAtLeastEffect(8, new StartingLifeTotal()));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new SetLifeTotalIfEventValueAtLeastEffect(8, new StartingLifeTotal()));
+        addSpellEffect(new ExileSpellEffect());
     }
 }

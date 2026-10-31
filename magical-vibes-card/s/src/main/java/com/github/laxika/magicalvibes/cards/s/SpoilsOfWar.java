@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -21,7 +20,7 @@ public class SpoilsOfWar extends Card {
         // this spell. Distribute X +1/+1 counters among any number of target creatures.
         // The total is evaluated at cast time and the division is announced then, riding on the
         // stack entry's assignment map (the counter analogue of Jaws of Stone).
-        addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
+        addSpellEffect(DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CardsInGraveyard(
                         new CardAnyOfPredicate(List.of(

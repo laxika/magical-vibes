@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
@@ -21,6 +20,6 @@ public class Rebound extends Card {
                         new StackEntryTargetsAnyPlayerPredicate()
                 )),
                 "Target spell must have a single player target."
-        )).addEffect(EffectSlot.SPELL, ChangeTargetOfTargetSpellWithSingleTargetEffect.playersOnly());
+        )).addSpellEffect(ChangeTargetOfTargetSpellWithSingleTargetEffect.playersOnly());
     }
 }

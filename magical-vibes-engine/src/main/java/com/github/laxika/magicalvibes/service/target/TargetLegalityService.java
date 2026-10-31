@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
@@ -328,10 +328,10 @@ public class TargetLegalityService {
                                                                List<UUID> permanentTargetIds,
                                                                UUID controllerId, int xValue,
                                                                boolean kicked, boolean giftPromised) {
-        if (card.getSpellTargets().size() != 2) {
+        if (card.getTargetGroups().size() != 2) {
             throw new IllegalArgumentException("Expected exactly two target groups");
         }
-        SpellTarget stackGroup = card.getSpellTargets().getFirst();
+        TargetGroup stackGroup = card.getTargetGroups().getFirst();
         int stackMinTargets = giftPromised
                 ? stackGroup.getGiftPromisedMinTargets()
                 : kicked ? stackGroup.getKickedMinTargets() : stackGroup.getMinTargets();
@@ -339,7 +339,7 @@ public class TargetLegalityService {
             stackMinTargets = Math.min(xValue, stackMinTargets);
         }
         int stackMaxTargets = effectiveGroupMaxTargets(
-                gameData, controllerId, null, stackGroup, xValue, kicked, giftPromised);
+                gameData, card, controllerId, null, stackGroup, xValue, kicked, giftPromised);
         validateMultiTargetCount(stackTargetIds, stackMinTargets, stackMaxTargets);
         for (UUID targetId : stackTargetIds) {
             validateSpellTargetOnStack(gameData, targetId, stackGroup.getFilter(), controllerId,
@@ -1078,7 +1078,7 @@ public class TargetLegalityService {
 
     /** Whether the spell declares several target groups and each is an optional group of battlefield permanents. */
     public boolean hasAllOptionalPermanentTargetGroups(Card card) {
-        List<SpellTarget> groups = card.getSpellTargets();
+        List<TargetGroup> groups = card.getTargetGroups();
         return groups.size() > 1 && groups.stream().allMatch(group -> group.getMinTargets() == 0
                 && group.getMaxTargets() >= 1
                 && TargetGroupAssignmentService.isPermanentGroupFilter(group.getFilter()));
@@ -1377,7 +1377,7 @@ public class TargetLegalityService {
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                        UUID controllerId, boolean needsTarget, int xValue, boolean kicked,
                                        boolean giftPromised) {
-        checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+        checkSpellTargeting(gameData, card, card.getCastingCostsAndSpellEffects(), targetId, targetZone,
                 controllerId, needsTarget, xValue, kicked, false, giftPromised, false)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
@@ -1385,7 +1385,7 @@ public class TargetLegalityService {
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                        UUID controllerId, boolean needsTarget, int xValue, boolean kicked,
                                        boolean giftPromised, boolean teamworkCostPaid) {
-        checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+        checkSpellTargeting(gameData, card, card.getCastingCostsAndSpellEffects(), targetId, targetZone,
                 controllerId, needsTarget, xValue, kicked, false, giftPromised, teamworkCostPaid)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
@@ -1393,7 +1393,7 @@ public class TargetLegalityService {
     public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                                 UUID controllerId, boolean needsTarget, int xValue,
                                                 boolean kicked, boolean castForMadnessCost) {
-        return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+        return checkSpellTargeting(gameData, card, card.getCastingCostsAndSpellEffects(), targetId, targetZone,
                 controllerId, needsTarget, xValue, kicked, castForMadnessCost);
     }
 
@@ -1406,7 +1406,7 @@ public class TargetLegalityService {
     }
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId, boolean needsTarget, int xValue) {
-        return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+        return checkSpellTargeting(gameData, card, card.getCastingCostsAndSpellEffects(), targetId, targetZone,
                 controllerId, needsTarget, xValue);
     }
 
@@ -1419,7 +1419,7 @@ public class TargetLegalityService {
 
     private Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                                  UUID controllerId, boolean needsTarget, int xValue, boolean kicked) {
-        return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+        return checkSpellTargeting(gameData, card, card.getCastingCostsAndSpellEffects(), targetId, targetZone,
                 controllerId, needsTarget, xValue, kicked, false);
     }
 
@@ -1529,7 +1529,7 @@ public class TargetLegalityService {
 
         boolean declaresPermanentTarget = needsTarget
                 || effectiveTargetFilter != null
-                || !card.getSpellTargets().isEmpty();
+                || !card.getTargetGroups().isEmpty();
         if (target != null && declaresPermanentTarget) {
             Optional<String> structuralReason = checkSpellPermanentTargetableReason(
                     gameData, target, card, controllerId, spellEffects, effectiveTargetFilter);
@@ -1624,10 +1624,10 @@ public class TargetLegalityService {
             return;
         }
 
-        int firstGroupIndex = targetId == null || card.getSpellTargets().isEmpty() ? 0 : 1;
+        int firstGroupIndex = targetId == null || card.getTargetGroups().isEmpty() ? 0 : 1;
         if (targetId != null) {
-            TargetFilter targetFilter = card.getSpellTargets().isEmpty()
-                    ? card.getTargetFilter(kicked) : card.getSpellTargets().getFirst().getFilter(kicked);
+            TargetFilter targetFilter = card.getTargetGroups().isEmpty()
+                    ? card.getTargetFilter(kicked) : card.getTargetGroups().getFirst().getFilter(kicked);
             if (hasLegalFlagbearerSpellTarget(gameData, card, spellEffects, controllerId, xValue,
                     targetFilterForKickedCast(targetFilter, kicked))) {
                 throw new IllegalStateException("Must target a Flagbearer if able");
@@ -1770,7 +1770,7 @@ public class TargetLegalityService {
                 .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
             return;
         }
-        List<TargetFilter> selectedPositionFilters = card.getSpellTargets().stream()
+        List<TargetFilter> selectedPositionFilters = card.getTargetGroups().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .flatMap(group -> java.util.stream.IntStream.range(0, group.getMaxTargets())
                         .mapToObj(ignored -> group.getFilter(kicked)))
@@ -2055,24 +2055,24 @@ public class TargetLegalityService {
     }
 
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone) {
-        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+        targetValidationService.validateEffectTargets(card.getCastingCostsAndSpellEffects(),
                 new TargetValidationContext(gameData, targetId, targetZone, card));
     }
 
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                            UUID sourceControllerId) {
-        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+        targetValidationService.validateEffectTargets(card.getCastingCostsAndSpellEffects(),
                 new TargetValidationContext(gameData, targetId, targetZone, card, 0, sourceControllerId, null));
     }
 
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone, int xValue) {
-        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+        targetValidationService.validateEffectTargets(card.getCastingCostsAndSpellEffects(),
                 new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
     }
 
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                            int xValue, UUID sourceControllerId) {
-        targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
+        targetValidationService.validateEffectTargets(card.getCastingCostsAndSpellEffects(),
                 new TargetValidationContext(gameData, targetId, targetZone, card, xValue,
                         sourceControllerId, null));
     }
@@ -2108,7 +2108,7 @@ public class TargetLegalityService {
      * where each target type is validated separately.
      */
     public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, UUID targetId) {
-        validateGraveyardEffectTargetOnly(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, 0);
+        validateGraveyardEffectTargetOnly(gameData, card, card.getCastingCostsAndSpellEffects(), targetId, 0);
     }
 
     /**
@@ -2144,7 +2144,7 @@ public class TargetLegalityService {
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                           UUID controllerId, int xValue, boolean kicked) {
         validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0,
-                card.getEffects(EffectSlot.SPELL));
+                card.getCastingCostsAndSpellEffects());
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
@@ -2188,22 +2188,22 @@ public class TargetLegalityService {
     public void validateSpellTargetGroup(GameData gameData, Card card, int groupIndex,
                                          List<UUID> targetIds, UUID controllerId,
                                          int xValue, boolean kicked) {
-        SpellTarget group = card.getSpellTargets().stream()
+        TargetGroup group = card.getTargetGroups().stream()
                 .filter(candidate -> candidate.getIndex() == groupIndex)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown spell target group"));
         int minTargets = kicked ? group.getKickedMinTargets() : group.getMinTargets();
         minTargets = xScaledMinTargets(group, minTargets, xValue);
-        int maxTargets = effectiveGroupMaxTargets(gameData, controllerId, null, group, xValue, kicked);
+        int maxTargets = effectiveGroupMaxTargets(gameData, card, controllerId, null, group, xValue, kicked);
         validateMultiTargetCount(targetIds, minTargets, maxTargets);
 
-        int positionOffset = card.getSpellTargets().stream()
+        int positionOffset = card.getTargetGroups().stream()
                 .filter(candidate -> candidate.getIndex() < groupIndex)
                 .mapToInt(candidate -> effectiveGroupMaxTargets(
-                        gameData, controllerId, null, candidate, xValue, kicked))
+                        gameData, card, controllerId, null, candidate, xValue, kicked))
                 .sum();
         PermanentPredicate declaredRestriction = EffectResolution
-                .declaredPermanentRestriction(card.getEffects(EffectSlot.SPELL)).orElse(null);
+                .declaredPermanentRestriction(card.getCastingCostsAndSpellEffects()).orElse(null);
         // Read-only per-target layered queries: one query scope for the group.
         gameQueryService.withQueryScope(gameData, () -> {
             for (int i = 0; i < targetIds.size(); i++) {
@@ -2218,7 +2218,7 @@ public class TargetLegalityService {
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
                                                        UUID controllerId, int xValue) {
         validateMixedSpellAndPermanentTargets(
-                gameData, card, targetIds, controllerId, xValue, card.getEffects(EffectSlot.SPELL));
+                gameData, card, targetIds, controllerId, xValue, card.getCastingCostsAndSpellEffects());
     }
 
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
@@ -2248,7 +2248,7 @@ public class TargetLegalityService {
     private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                            UUID controllerId, int xValue, boolean kicked, int firstGroupIndex) {
         validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked,
-                firstGroupIndex, card.getEffects(EffectSlot.SPELL));
+                firstGroupIndex, card.getCastingCostsAndSpellEffects());
     }
 
     private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
@@ -2294,7 +2294,7 @@ public class TargetLegalityService {
                                                   int firstGroupIndex, List<CardEffect> selectedEffects,
                                                   List<Integer> targetGroupSizes, boolean giftPromised,
                                                   boolean skipStackTargetGroups) {
-        List<SpellTarget> targetGroups = card.getSpellTargets().stream()
+        List<TargetGroup> targetGroups = card.getTargetGroups().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .filter(group -> !skipStackTargetGroups || selectedEffects.stream()
                         .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
@@ -2311,19 +2311,19 @@ public class TargetLegalityService {
                 .sum();
         int maxTargets = (int) Math.min(Integer.MAX_VALUE, targetGroups.stream()
                 .mapToLong(group -> effectiveGroupMaxTargets(
-                        gameData, controllerId, null, group, xValue, kicked, giftPromised))
+                        gameData, card, controllerId, null, group, xValue, kicked, giftPromised))
                 .sum());
         maxTargets = applyGiftTargetLimit(card, maxTargets, giftPromised);
         if (targetGroupSizes != null && !targetGroupSizes.isEmpty()) {
             int expectedTargetCount = 0;
-            for (SpellTarget group : targetGroups) {
+            for (TargetGroup group : targetGroups) {
                 int groupTargetCount = targetCountForGroup(group, targetGroupSizes);
                 int groupMinTargets = giftPromised
                         ? group.getGiftPromisedMinTargets()
                         : kicked ? group.getKickedMinTargets() : group.getMinTargets();
                 groupMinTargets = xScaledMinTargets(group, groupMinTargets, xValue);
                 int groupMaxTargets = effectiveGroupMaxTargets(
-                        gameData, controllerId, null, group, xValue, kicked, giftPromised);
+                        gameData, card, controllerId, null, group, xValue, kicked, giftPromised);
                 if (groupTargetCount < groupMinTargets || groupTargetCount > groupMaxTargets) {
                     throw new IllegalStateException("Must target between " + groupMinTargets
                             + " and " + groupMaxTargets + " targets in each target group");
@@ -2360,21 +2360,21 @@ public class TargetLegalityService {
                         .mapToObj(ignored -> group.getFilter(kicked)))
                 .limit(targetIds.size())
                 .toList();
-        List<SpellTarget> perPositionGroups = targetGroups.stream()
+        List<TargetGroup> perPositionGroups = targetGroups.stream()
                 .flatMap(group -> java.util.stream.IntStream.range(0,
                                 targetPositionCount(group, targetGroupSizes))
                         .mapToObj(ignored -> group))
                 .limit(targetIds.size())
                 .toList();
-        int positionOffset = card.getSpellTargets().stream()
+        int positionOffset = card.getTargetGroups().stream()
                 .filter(group -> group.getIndex() < firstGroupIndex)
-                .mapToInt(SpellTarget::getMaxTargets)
+                .mapToInt(TargetGroup::getMaxTargets)
                 .sum();
         // The restriction an unfiltered position inherits from the spell's own effects, read the
         // same way target enumeration reads it (ValidTargetService.isValidPermanentTarget).
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
-            SpellTarget targetGroup = perPositionGroups.get(i);
+            TargetGroup targetGroup = perPositionGroups.get(i);
             List<CardEffect> groupEffects = selectedEffects.stream()
                     .filter(effect -> card.getEffectTargetIndex(effect) == targetGroup.getIndex())
                     .toList();
@@ -2458,7 +2458,7 @@ public class TargetLegalityService {
             if (EffectResolution.needsTarget(selectedEffects, List.of(),
                     card.isAuraThatRequiresAttachment(), card.isEnchantPlayer())) {
                 checkSpellPermanentTargetableReason(gameData, target, card, controllerId,
-                        card.getEffects(EffectSlot.SPELL), positionFilter)
+                        card.getCastingCostsAndSpellEffects(), positionFilter)
                         .ifPresent(reason -> { throw new IllegalStateException(reason); });
             }
         }
@@ -2493,7 +2493,7 @@ public class TargetLegalityService {
 
     private void validateGraveyardChoicePowerLimit(GameData gameData, Card card, List<UUID> targetIds,
                                                    List<CardEffect> selectedEffects,
-                                                   List<SpellTarget> targetGroups) {
+                                                   List<TargetGroup> targetGroups) {
         if (targetGroups.size() != 1
                 || !(targetGroups.getFirst().getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
             return;
@@ -2503,7 +2503,7 @@ public class TargetLegalityService {
 
     public void validateGraveyardChoicePowerLimit(GameData gameData, Card card, List<UUID> targetIds,
                                                   List<CardEffect> selectedEffects) {
-        List<CardEffect> effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> effects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         if (selectedEffects != null) {
             selectedEffects.stream()
                     .filter(effect -> !effects.contains(effect))
@@ -2588,13 +2588,13 @@ public class TargetLegalityService {
 
         if (EffectResolution.needsTarget(card)) {
             checkSpellPermanentTargetableReason(gameData, target, card, controllerId,
-                    card.getEffects(EffectSlot.SPELL), positionFilter)
+                    card.getCastingCostsAndSpellEffects(), positionFilter)
                     .ifPresent(reason -> { throw new IllegalStateException(reason); });
         }
     }
 
     private boolean targetGroupAllowsPlaneswalkers(Card card, int groupIndex) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCostsAndSpellEffects().stream()
                 .filter(effect -> card.getEffectTargetIndex(effect) == groupIndex)
                 .anyMatch(effect -> effect.targetSpec().declares(TargetPredicates.anyTarget())
                         || effect.targetSpec().declares(TargetPredicates.creatureOrPlaneswalker())
@@ -2627,29 +2627,29 @@ public class TargetLegalityService {
     }
 
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
-                                              Permanent sourcePermanent, SpellTarget group) {
+                                              Permanent sourcePermanent, TargetGroup group) {
         return getEffectiveMaxTargetsForGroup(
                 gameData, card, controllerId, sourcePermanent, group, false);
     }
 
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
-                                              Permanent sourcePermanent, SpellTarget group,
+                                              Permanent sourcePermanent, TargetGroup group,
                                               boolean giftPromised) {
         return getEffectiveMaxTargetsForGroup(
                 gameData, card, controllerId, sourcePermanent, group, false, giftPromised);
     }
 
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
-                                              Permanent sourcePermanent, SpellTarget group,
+                                              Permanent sourcePermanent, TargetGroup group,
                                               boolean kicked, boolean giftPromised) {
         return effectiveGroupMaxTargets(
-                gameData, controllerId, sourcePermanent, group, 0, kicked, giftPromised);
+                gameData, card, controllerId, sourcePermanent, group, 0, kicked, giftPromised);
     }
 
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
-                                              Permanent sourcePermanent, SpellTarget group,
+                                              Permanent sourcePermanent, TargetGroup group,
                                               int xValue) {
-        return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, xValue);
+        return effectiveGroupMaxTargets(gameData, card, controllerId, sourcePermanent, group, xValue);
     }
 
     private int getEffectiveMaxTargets(GameData gameData, Card card, UUID controllerId,
@@ -2660,16 +2660,16 @@ public class TargetLegalityService {
     private int getEffectiveMaxTargets(GameData gameData, Card card, UUID controllerId,
                                        Permanent sourcePermanent, int xValue, boolean kicked,
                                        boolean giftPromised) {
-        int maxTargets = card.getSpellTargets().stream()
+        int maxTargets = card.getTargetGroups().stream()
                 .mapToInt(group -> effectiveGroupMaxTargets(
-                        gameData, controllerId, sourcePermanent, group, xValue, kicked, giftPromised))
+                        gameData, card, controllerId, sourcePermanent, group, xValue, kicked, giftPromised))
                 .sum();
         return applyGiftTargetLimit(card, maxTargets, giftPromised);
     }
 
-    private int effectiveGroupMaxTargets(GameData gameData, UUID controllerId, Permanent sourcePermanent,
-                                         SpellTarget group, int xValue) {
-        return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, xValue, false);
+    private int effectiveGroupMaxTargets(GameData gameData, Card card, UUID controllerId, Permanent sourcePermanent,
+                                         TargetGroup group, int xValue) {
+        return effectiveGroupMaxTargets(gameData, card, controllerId, sourcePermanent, group, xValue, false);
     }
 
     /**
@@ -2677,26 +2677,26 @@ public class TargetLegalityService {
      * ({@code targetExactlyX}, minimum equal to maximum) needs exactly X targets even when X exceeds its
      * sanity ceiling; an up-to-X group needs at most its declared minimum.
      */
-    private int xScaledMinTargets(SpellTarget group, int declaredMin, int xValue) {
+    private int xScaledMinTargets(TargetGroup group, int declaredMin, int xValue) {
         if (!group.isXScaled()) {
             return declaredMin;
         }
         return group.isExactlyXScaled() ? xValue : Math.min(xValue, declaredMin);
     }
 
-    private int effectiveGroupMaxTargets(GameData gameData, UUID controllerId, Permanent sourcePermanent,
-                                         SpellTarget group, int xValue, boolean kicked) {
+    private int effectiveGroupMaxTargets(GameData gameData, Card card, UUID controllerId, Permanent sourcePermanent,
+                                         TargetGroup group, int xValue, boolean kicked) {
         return effectiveGroupMaxTargets(
-                gameData, controllerId, sourcePermanent, group, xValue, kicked, false);
+                gameData, card, controllerId, sourcePermanent, group, xValue, kicked, false);
     }
 
-    private int effectiveGroupMaxTargets(GameData gameData, UUID controllerId, Permanent sourcePermanent,
-                                         SpellTarget group, int xValue, boolean kicked,
+    private int effectiveGroupMaxTargets(GameData gameData, Card card, UUID controllerId, Permanent sourcePermanent,
+                                         TargetGroup group, int xValue, boolean kicked,
                                          boolean giftPromised) {
         int declaredMax = kicked ? group.getKickedMaxTargets() : group.getMaxTargets();
         int max = group.isXScaled() ? Math.min(xValue, declaredMax) : declaredMax;
         if (!giftPromised) {
-            int giftMax = group.getCard().getEffects(EffectSlot.STATIC).stream()
+            int giftMax = card.getEffects(EffectSlot.STATIC).stream()
                     .filter(GiftEffect.class::isInstance)
                     .map(GiftEffect.class::cast)
                     .mapToInt(GiftEffect::maxTargetsWithoutGift)
@@ -2985,10 +2985,10 @@ public class TargetLegalityService {
 
     private void validateAggregateManaValueTargetGroups(GameData gameData, Card card,
                                                         List<UUID> targetIds,
-                                                        List<SpellTarget> perPositionGroups,
+                                                        List<TargetGroup> perPositionGroups,
                                                         UUID controllerId, int xValue) {
-        for (int groupIndex = 0; groupIndex < card.getSpellTargets().size(); groupIndex++) {
-            SpellTarget group = card.getSpellTargets().get(groupIndex);
+        for (int groupIndex = 0; groupIndex < card.getTargetGroups().size(); groupIndex++) {
+            TargetGroup group = card.getTargetGroups().get(groupIndex);
             List<AggregateManaValueTargetEffect> aggregateEffects = card
                     .getEffectsBoundToTargetGroup(group.getIndex()).stream()
                     .filter(AggregateManaValueTargetEffect.class::isInstance)
@@ -4072,7 +4072,7 @@ public class TargetLegalityService {
     private List<CardEffect> exiledCardTargetEffectsForDeclaredPosition(GameData gameData, StackEntry entry,
                                                                          int targetPosition) {
         Card targetingCard = entry.getTargetingCard();
-        if (targetingCard != null && !targetingCard.getSpellTargets().isEmpty()) {
+        if (targetingCard != null && !targetingCard.getTargetGroups().isEmpty()) {
             int groupIndex = targetGroupForDeclaredPosition(gameData, entry, targetPosition);
             if (groupIndex >= 0) {
                 List<CardEffect> groupEffects = entry.getEffectsToResolve().stream()
@@ -4098,13 +4098,13 @@ public class TargetLegalityService {
         int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;
         int remaining = entry.getDeclaredTargetIds().size();
         int consumed = 0;
-        for (SpellTarget group : card.getSpellTargets()) {
+        for (TargetGroup group : card.getTargetGroups()) {
             if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
                 continue;
             }
             int declaredSize = group.getIndex() < entry.getTargetGroupSizes().size()
                     ? entry.getTargetGroupSizes().get(group.getIndex())
-                    : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
+                    : effectiveGroupMaxTargets(gameData, entry.getCard(), entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
             int size = Math.min(Math.max(declaredSize, 0), remaining);
             if (targetPosition < consumed + size) {
@@ -4542,14 +4542,14 @@ public class TargetLegalityService {
         if (targetingCard == null) {
             return null;
         }
-        if (entry.isPrimaryTargetStoredSeparately() && !targetingCard.getSpellTargets().isEmpty()) {
-            return targetingCard.getSpellTargets().getFirst().getFilter(entry.isKicked());
+        if (entry.isPrimaryTargetStoredSeparately() && !targetingCard.getTargetGroups().isEmpty()) {
+            return targetingCard.getTargetGroups().getFirst().getFilter(entry.isKicked());
         }
         if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             for (CardEffect effect : entry.getEffectsToResolve()) {
                 int groupIndex = targetingCard.getEffectTargetIndex(effect);
-                if (groupIndex >= 0 && groupIndex < targetingCard.getSpellTargets().size()) {
-                    return targetingCard.getSpellTargets().get(groupIndex).getFilter(entry.isKicked());
+                if (groupIndex >= 0 && groupIndex < targetingCard.getTargetGroups().size()) {
+                    return targetingCard.getTargetGroups().get(groupIndex).getFilter(entry.isKicked());
                 }
             }
             return null;
@@ -4606,13 +4606,13 @@ public class TargetLegalityService {
         if (card != null) {
             int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;
             int remaining = targetCount;
-            for (SpellTarget group : card.getSpellTargets()) {
+            for (TargetGroup group : card.getTargetGroups()) {
                 if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
                     continue;
                 }
                 int declaredSize = group.getIndex() < entry.getTargetGroupSizes().size()
                         ? entry.getTargetGroupSizes().get(group.getIndex())
-                        : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
+                        : effectiveGroupMaxTargets(gameData, entry.getCard(), entry.getControllerId(),
                                 entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
                 int size = Math.min(Math.max(declaredSize, 0), remaining);
                 for (int i = 0; i < size; i++) {
@@ -4640,13 +4640,13 @@ public class TargetLegalityService {
         }
         int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;
         int consumed = 0;
-        for (SpellTarget group : card.getSpellTargets()) {
+        for (TargetGroup group : card.getTargetGroups()) {
             if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
                 continue;
             }
             int declaredSize = group.getIndex() < entry.getTargetGroupSizes().size()
                     ? entry.getTargetGroupSizes().get(group.getIndex())
-                    : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
+                    : effectiveGroupMaxTargets(gameData, entry.getCard(), entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
             if (targetPosition < consumed + Math.max(declaredSize, 0)) {
                 if (group.getFilter(entry.isKicked()) instanceof StackEntryPredicateTargetFilter) {
@@ -5017,7 +5017,7 @@ public class TargetLegalityService {
      */
     public Optional<String> checkSpellPermanentTargetableReason(GameData gameData, Permanent target, Card card, UUID controllerId) {
         return checkSpellPermanentTargetableReason(gameData, target, card, controllerId,
-                card.getEffects(EffectSlot.SPELL), card.getTargetFilter());
+                card.getCastingCostsAndSpellEffects(), card.getTargetFilter());
     }
 
     public Optional<String> checkSpellPermanentTargetableReason(GameData gameData, Permanent target, Card card,
@@ -5055,7 +5055,7 @@ public class TargetLegalityService {
                 .map(ChooseOneEffect.class::cast)
                 .findFirst().orElse(null);
         if (modal == null && sourceCard != null) {
-            modal = sourceCard.getEffects(EffectSlot.SPELL).stream()
+            modal = sourceCard.getSpellEffects().stream()
                     .filter(ChooseOneEffect.class::isInstance)
                     .map(ChooseOneEffect.class::cast)
                     .findFirst().orElse(null);
@@ -5222,19 +5222,19 @@ public class TargetLegalityService {
      * permanent across different target groups (within-group uniqueness is still enforced).
      */
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max,
-                                          List<SpellTarget> spellTargets, boolean allowSharedTargets) {
+                                          List<TargetGroup> spellTargets, boolean allowSharedTargets) {
         validateMultiTargetCount(targetIds, min, max, spellTargets, allowSharedTargets, false);
     }
 
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max,
-                                          List<SpellTarget> spellTargets, boolean allowSharedTargets,
+                                          List<TargetGroup> spellTargets, boolean allowSharedTargets,
                                           boolean allowSharedTargetsWithinGroup) {
         validateMultiTargetCount(targetIds, min, max, spellTargets, allowSharedTargets,
                 allowSharedTargetsWithinGroup, null);
     }
 
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max,
-                                          List<SpellTarget> spellTargets, boolean allowSharedTargets,
+                                          List<TargetGroup> spellTargets, boolean allowSharedTargets,
                                           boolean allowSharedTargetsWithinGroup,
                                           List<Integer> targetGroupSizes) {
         if (targetIds == null || targetIds.size() < min || targetIds.size() > max) {
@@ -5254,7 +5254,7 @@ public class TargetLegalityService {
             // Shared targets are legal across groups; enforce uniqueness within each target group.
             int consumed = 0;
             java.util.Map<Integer, Set<UUID>> targetsByScope = new java.util.HashMap<>();
-            for (SpellTarget group : spellTargets) {
+            for (TargetGroup group : spellTargets) {
                 int groupSize = targetGroupSizes != null && group.getIndex() < targetGroupSizes.size()
                         ? targetGroupSizes.get(group.getIndex())
                         : Math.min(group.getMaxTargets(), targetIds.size() - consumed);
@@ -5284,7 +5284,7 @@ public class TargetLegalityService {
         }
     }
 
-    private int targetCountForGroup(SpellTarget group, List<Integer> targetGroupSizes) {
+    private int targetCountForGroup(TargetGroup group, List<Integer> targetGroupSizes) {
         if (group.getIndex() >= targetGroupSizes.size()) {
             throw new IllegalStateException("Target group sizes do not match the card's target groups");
         }
@@ -5295,13 +5295,13 @@ public class TargetLegalityService {
         return groupTargetCount;
     }
 
-    private int targetPositionCount(SpellTarget group, List<Integer> targetGroupSizes) {
+    private int targetPositionCount(TargetGroup group, List<Integer> targetGroupSizes) {
         return targetGroupSizes == null || targetGroupSizes.isEmpty()
                 ? Math.max(group.getMaxTargets(), group.getKickedMaxTargets())
                 : targetCountForGroup(group, targetGroupSizes);
     }
 
-    private boolean targetGroupAllowsPlayerTargets(SpellTarget group, List<CardEffect> groupEffects,
+    private boolean targetGroupAllowsPlayerTargets(TargetGroup group, List<CardEffect> groupEffects,
                                                    boolean kicked) {
         TargetFilter filter = group.getFilter(kicked);
         if (filter != null) {
@@ -5349,8 +5349,8 @@ public class TargetLegalityService {
      * True when the card-level target filter is merely the first target group's declared filter and
      * {@code group} is a later, unfiltered group, which that filter does not describe.
      */
-    private static boolean inheritsFirstGroupFilter(Card card, SpellTarget group, boolean kicked) {
-        return !card.getSpellTargets().isEmpty() && card.getSpellTargets().getFirst() != group
+    private static boolean inheritsFirstGroupFilter(Card card, TargetGroup group, boolean kicked) {
+        return !card.getTargetGroups().isEmpty() && card.getTargetGroups().getFirst() != group
                 && card.getTargetFilter(kicked) == card.getDeclaredTargetFilter(kicked);
     }
 
@@ -5429,7 +5429,7 @@ public class TargetLegalityService {
         if (gameQueryService.findCardInGraveyardById(gameData, candidateTargetId) == null) {
             return Optional.of("Target card is not in any graveyard");
         }
-        ReturnCardFromGraveyardEffect graveyardEffect = spellCard.getEffects(EffectSlot.SPELL)
+        ReturnCardFromGraveyardEffect graveyardEffect = spellCard.getSpellEffects()
                 .stream()
                 .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
                 .findFirst()
@@ -5444,7 +5444,7 @@ public class TargetLegalityService {
                 return Optional.of("Target card is not in controller's graveyard");
             }
         }
-        Optional<String> effectReason = targetValidationService.checkEffectTargets(spellCard.getEffects(EffectSlot.SPELL),
+        Optional<String> effectReason = targetValidationService.checkEffectTargets(spellCard.getCastingCostsAndSpellEffects(),
                 new TargetValidationContext(gameData, candidateTargetId, Zone.GRAVEYARD, spellCard));
         if (effectReason.isPresent()) return effectReason;
 

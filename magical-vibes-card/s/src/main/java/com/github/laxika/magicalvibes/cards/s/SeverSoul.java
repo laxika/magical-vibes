@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -35,7 +34,7 @@ public class SeverSoul extends Card {
                 )),
                 "Target must be a nonblack creature"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetToughness()));
+                .addSpellEffect(new DestroyTargetPermanentEffect(true))
+                .addSpellEffect(new GainLifeEffect(new TargetToughness()));
     }
 }

@@ -19,7 +19,7 @@ import java.util.List;
 public class ZethiArcaneBlademaster extends Card {
 
     public ZethiArcaneBlademaster() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{W/U}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{W/U}")));
 
         CardTypePredicate instant = new CardTypePredicate(CardType.INSTANT);
         targetUpTo(new RepeatedAdditionalCostCount("{W/U}"),

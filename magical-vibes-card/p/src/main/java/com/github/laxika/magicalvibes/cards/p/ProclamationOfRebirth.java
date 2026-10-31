@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -22,7 +21,7 @@ public class ProclamationOfRebirth extends Card {
                 new CardMaxManaValuePredicate(1)
         ));
 
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 creatureWithManaValueOneOrLess, 3, false, false));
 
         addHandActivatedAbility(new ActivatedAbility(

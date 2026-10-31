@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class DeathOfAThousandStings extends Card {
 
     public DeathOfAThousandStings() {
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(1));
+        addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new GainLifeEffect(1));
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
                 new ConditionalEffect(
                         new ControllerHasMoreCardsInHandThanEachOpponent(),

@@ -16,7 +16,7 @@ import java.util.List;
 public class LightkeeperOfEmeria extends Card {
 
     public LightkeeperOfEmeria() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{W}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{W}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(
                 new Scaled(new RepeatedAdditionalCostCount("{W}"), 2)));
     }

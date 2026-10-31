@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
@@ -26,9 +25,9 @@ public class AngelicIntervention extends Card {
                 )),
                 "Target must be a creature or planeswalker you control"
         ))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)))
-                .addEffect(EffectSlot.SPELL, GrantProtectionChoiceUntilEndOfTurnEffect.colorOrColorless());
+                .addSpellEffect(GrantProtectionChoiceUntilEndOfTurnEffect.colorOrColorless());
     }
 }

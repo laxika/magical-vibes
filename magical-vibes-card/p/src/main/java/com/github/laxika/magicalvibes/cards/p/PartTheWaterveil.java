@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -34,14 +33,14 @@ public class PartTheWaterveil extends Card {
     public PartTheWaterveil() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{6}{U}{U}{U}"))));
 
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ExileSpellEffect());
 
         target(TargetFilters.landYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 6)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(
                                 0, 0,

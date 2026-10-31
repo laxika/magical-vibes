@@ -24,8 +24,8 @@ public class ChillOfTheGrave extends Card {
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

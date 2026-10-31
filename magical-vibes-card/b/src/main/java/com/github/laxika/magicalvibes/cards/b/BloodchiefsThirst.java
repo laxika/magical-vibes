@@ -35,7 +35,7 @@ public class BloodchiefsThirst extends Card {
                 baseTarget,
                 "Target must be a creature or planeswalker with mana value 2 or less",
                 creatureOrPlaneswalker
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DestroyTargetPermanentEffect(false),
                 new DestroyTargetPermanentEffect(false)

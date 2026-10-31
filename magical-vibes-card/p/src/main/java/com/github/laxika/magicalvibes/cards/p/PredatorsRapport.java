@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
@@ -26,7 +25,7 @@ public class PredatorsRapport extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new GainLifeEqualToTargetCreatureStatEffect(
+        )).addSpellEffect(new GainLifeEqualToTargetCreatureStatEffect(
                 new Sum(new TargetPower(true), new TargetToughness())
         ));
     }

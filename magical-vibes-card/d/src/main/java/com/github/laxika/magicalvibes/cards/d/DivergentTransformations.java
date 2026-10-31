@@ -23,7 +23,6 @@ public class DivergentTransformations extends Card {
                 new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
 
         target(TargetFilters.creature(), 2, 2)
-                .addEffect(EffectSlot.SPELL,
-                        new ExileTargetThenRevealUntilTypeToBattlefieldEffect(Set.of(CardType.CREATURE)));
+                .addSpellEffect(new ExileTargetThenRevealUntilTypeToBattlefieldEffect(Set.of(CardType.CREATURE)));
     }
 }

@@ -20,7 +20,7 @@ public class WearDown extends Card {
 
     public WearDown() {
         addEffect(EffectSlot.STATIC, new GiftEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
 
         PermanentPredicateTargetFilter artifactOrEnchantment = new PermanentPredicateTargetFilter(
@@ -30,6 +30,6 @@ public class WearDown extends Card {
                 )),
                 "Target must be an artifact or enchantment");
         targetWhenGiftPromised(artifactOrEnchantment, 1, 2, 2)
-                .addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+                .addSpellEffect(new DestroyEachTargetPermanentEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -20,7 +19,7 @@ import java.util.List;
 public class FranticFirebolt extends Card {
 
     public FranticFirebolt() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(
+        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(
                 new Sum(
                         new Fixed(2),
                         new CardsInGraveyard(

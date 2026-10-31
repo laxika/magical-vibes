@@ -20,7 +20,7 @@ public class Chatterstorm extends Card {
 
     public Chatterstorm() {
         // Create a 1/1 green Squirrel creature token.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Squirrel",
                 1,
                 1,

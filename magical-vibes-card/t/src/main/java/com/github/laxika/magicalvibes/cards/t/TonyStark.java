@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -33,7 +32,7 @@ public class TonyStark extends Card {
                 List.of(new TransformSelfEffect()),
                 "{4}{U}{R}: Transform Tony Stark. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Tony Stark", List.of())
                         .withManaCost("{1}{U}"),
                 new ChooseOneEffect.ChooseOneOption("The Invincible Iron Man", List.of())

@@ -13,7 +13,7 @@ public class FeignDeath extends Card {
 
     public FeignDeath() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH,
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(true,
                                 CounterType.PLUS_ONE_PLUS_ONE)));

@@ -11,6 +11,6 @@ public class DashHopes extends Card {
 
     public DashHopes() {
         addEffect(EffectSlot.ON_SELF_CAST, new AnyPlayerMayPayLifeToCounterSpellEffect(5));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 public class KodamasMight extends Card {
 
     public KodamasMight() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
+        addSpellEffect(new BoostTargetCreatureEffect(2, 2));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{G}"));
     }
 }

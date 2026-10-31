@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -26,7 +25,7 @@ import java.util.List;
 public class PriceOfProgress extends Card {
 
     public PriceOfProgress() {
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
+        addSpellEffect(new DealDamageToPlayersEffect(
                 new Scaled(new PermanentCount(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsLandPredicate(),

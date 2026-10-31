@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Darkblast extends Card {
 
     public Darkblast() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, -1));
+        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(-1, -1));
         addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(3));
     }
 }

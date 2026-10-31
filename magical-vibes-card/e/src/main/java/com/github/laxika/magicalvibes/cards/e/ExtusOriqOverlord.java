@@ -41,10 +41,10 @@ public class ExtusOriqOverlord extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_COPIES_SPELL,
                 new SpellCopyTriggerEffect(instantOrSorcery, List.of(returnCreature)));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Extus, Oriq Overlord", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Awaken the Blood Avatar", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Awaken the Blood Avatar", backFace.getSpellEffects()))));
     }
 
     @Override

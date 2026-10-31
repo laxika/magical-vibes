@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -13,7 +12,7 @@ public class Deconstruct extends Card {
 
     public Deconstruct() {
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.GREEN, 3));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new AwardManaEffect(ManaColor.GREEN, 3));
     }
 }

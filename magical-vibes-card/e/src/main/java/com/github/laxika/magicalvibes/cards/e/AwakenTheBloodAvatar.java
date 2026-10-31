@@ -22,9 +22,9 @@ public class AwakenTheBloodAvatar extends Card {
 
     public AwakenTheBloodAvatar() {
         addEffect(EffectSlot.STATIC, new SacrificeCreaturesForCostReductionEffect(2));
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Avatar", 3, 6,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.RED),
                 List.of(CardSubtype.AVATAR), Set.of(Keyword.HASTE), Set.of(),

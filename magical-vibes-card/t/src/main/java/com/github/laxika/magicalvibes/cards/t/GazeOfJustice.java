@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -19,10 +18,10 @@ import java.util.Set;
 public class GazeOfJustice extends Card {
 
     public GazeOfJustice() {
-        addEffect(EffectSlot.SPELL, new TapMultiplePermanentsCost(3, new PermanentAllOfPredicate(List.of(
+        addCastingCost(new TapMultiplePermanentsCost(3, new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))))));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        target(TargetFilters.creature()).addSpellEffect(new ExileTargetPermanentEffect());
         addCastingOption(new FlashbackCast("{5}{W}"));
     }
 }

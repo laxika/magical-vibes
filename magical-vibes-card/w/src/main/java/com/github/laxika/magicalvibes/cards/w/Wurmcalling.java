@@ -20,7 +20,7 @@ public class Wurmcalling extends Card {
 
     public Wurmcalling() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{2}{G}"));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Wurm",
                 new XValue(),
                 new XValue(),
@@ -28,6 +28,6 @@ public class Wurmcalling extends Card {
                 List.of(CardSubtype.WURM),
                 Set.of(),
                 Set.of()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

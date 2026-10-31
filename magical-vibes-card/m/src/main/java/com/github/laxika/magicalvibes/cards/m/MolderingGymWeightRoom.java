@@ -21,7 +21,7 @@ public class MolderingGymWeightRoom extends Card {
     public MolderingGymWeightRoom() {
         setRoomDoorManaCosts(List.of("{2}{G}", "{5}{G}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Moldering Gym", List.of())
                         .withManaCost("{2}{G}"),
                 new ChooseOneEffect.ChooseOneOption("Weight Room", List.of())

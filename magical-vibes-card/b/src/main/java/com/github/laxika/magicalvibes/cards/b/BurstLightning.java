@@ -16,7 +16,7 @@ public class BurstLightning extends Card {
 
     public BurstLightning() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new DealDamageToAnyTargetEffect(2),
                 new DealDamageToAnyTargetEffect(4)));
     }

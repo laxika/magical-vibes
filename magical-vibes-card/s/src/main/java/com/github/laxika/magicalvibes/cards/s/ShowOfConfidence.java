@@ -17,9 +17,7 @@ public class ShowOfConfidence extends Card {
     public ShowOfConfidence() {
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect(false, true));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addEffect(EffectSlot.SPELL,
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
     }
 }

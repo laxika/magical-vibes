@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class SoulsOfTheLost extends Card {
 
     public SoulsOfTheLost() {
-        addEffect(EffectSlot.SPELL,
-                new DiscardCardOrSacrificePermanentCost(new PermanentTruePredicate(), "a permanent"));
+        addCastingCost(new DiscardCardOrSacrificePermanentCost(new PermanentTruePredicate(), "a permanent"));
         CardsInGraveyard permanentCards =
                 new CardsInGraveyard(new CardIsPermanentPredicate(), CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(

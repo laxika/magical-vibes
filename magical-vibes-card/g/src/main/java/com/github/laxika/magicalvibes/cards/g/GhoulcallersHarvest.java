@@ -27,7 +27,7 @@ public class GhoulcallersHarvest extends Card {
     public GhoulcallersHarvest() {
         CardsInGraveyard creatureCards = new CardsInGraveyard(
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 new HalvedRoundedUp(creatureCards),
                 "Zombie", 2, 2,

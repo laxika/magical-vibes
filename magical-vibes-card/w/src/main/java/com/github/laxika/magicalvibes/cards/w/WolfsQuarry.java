@@ -30,7 +30,7 @@ public class WolfsQuarry extends Card {
             )));
 
     public WolfsQuarry() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 3,
                 "Boar",

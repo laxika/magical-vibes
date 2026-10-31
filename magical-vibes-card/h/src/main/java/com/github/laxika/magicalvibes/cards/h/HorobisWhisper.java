@@ -33,7 +33,7 @@ public class HorobisWhisper extends Card {
                 )),
                 "Target must be a nonblack creature"
         ))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
                         new DestroyTargetPermanentEffect()));
 

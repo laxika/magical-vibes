@@ -15,8 +15,8 @@ public class WarhostsFrenzy extends Card {
 
     public WarhostsFrenzy() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 0));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                         EffectSlot.ON_ALLY_CREATURE_DIES,
                         new DrawCardEffect(1))));

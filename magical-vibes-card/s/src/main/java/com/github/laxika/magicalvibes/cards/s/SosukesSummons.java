@@ -23,7 +23,7 @@ import java.util.Set;
 public class SosukesSummons extends Card {
 
     public SosukesSummons() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Snake", 1, 1, CardColor.GREEN,
+        addSpellEffect(new CreateTokenEffect(2, "Snake", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SNAKE), Set.of(), Set.of()));
 
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

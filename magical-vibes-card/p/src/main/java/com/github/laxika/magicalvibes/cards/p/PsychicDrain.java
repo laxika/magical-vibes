@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -19,7 +18,7 @@ public class PsychicDrain extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new MillEffect(new XValue(), MillRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
+                .addSpellEffect(new MillEffect(new XValue(), MillRecipient.TARGET_PLAYER))
+                .addSpellEffect(new GainLifeEffect(new XValue()));
     }
 }

@@ -15,9 +15,9 @@ import java.util.List;
 public class Gigadrowse extends Card {
 
     public Gigadrowse() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{U}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}")));
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{U}"));
     }
 }

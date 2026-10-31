@@ -17,11 +17,11 @@ public class DawnsTruce extends Card {
 
     public DawnsTruce() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
-        addEffect(EffectSlot.SPELL, new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.HEXPROOF));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.HEXPROOF));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS)));
     }
 }

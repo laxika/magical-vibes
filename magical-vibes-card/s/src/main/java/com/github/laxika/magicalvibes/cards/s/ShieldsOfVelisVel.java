@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
@@ -20,7 +19,7 @@ public class ShieldsOfVelisVel extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(0, 1, EachPermanentScope.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET_PLAYERS_CREATURES));
+        )).addSpellEffect(new BoostAllCreaturesEffect(0, 1, EachPermanentScope.TARGET_PLAYER))
+                .addSpellEffect(new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET_PLAYERS_CREATURES));
     }
 }

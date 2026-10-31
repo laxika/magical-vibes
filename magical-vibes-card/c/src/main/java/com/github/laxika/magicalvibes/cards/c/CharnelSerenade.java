@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class CharnelSerenade extends Card {
 
     public CharnelSerenade() {
-        addEffect(EffectSlot.SPELL, SurveilThenEffect.direct(
+        addSpellEffect(SurveilThenEffect.direct(
                 3,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -28,7 +27,7 @@ public class CharnelSerenade extends Card {
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
                         .build()));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect(3));
+        addSpellEffect(new ExileSpellEffect(3));
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

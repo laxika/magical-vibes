@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
@@ -33,7 +32,7 @@ public class ChokingSands extends Card {
                 )),
                 "Target must be a non-Swamp land"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
                         new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,

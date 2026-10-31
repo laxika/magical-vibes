@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class RotLikeTheScumYouAre extends Card {
 
     public RotLikeTheScumYouAre() {
-        addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        addSpellEffect(SequenceEffect.of(
                 new CreateTokenEffect("Ooze", 2, 2, CardColor.GREEN, List.of(CardSubtype.OOZE),
                         Set.of(), Set.of()),
                 new PutCountersOnCreatedPermanentsEffect(

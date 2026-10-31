@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -23,9 +22,8 @@ public class PetalsOfInsight extends Card {
         // The peek comes first so the choice is informed (no target = own library). Accepting
         // returns the spell off the stack to hand and bottoms the three cards in a chosen order;
         // declining draws the same three cards.
-        addEffect(EffectSlot.SPELL,
-                new LookAtTopCardsOfTargetLibraryEffect(3, TargetLibraryAction.LOOK_ONLY));
-        addEffect(EffectSlot.SPELL, new MayEffect(
+        addSpellEffect(new LookAtTopCardsOfTargetLibraryEffect(3, TargetLibraryAction.LOOK_ONLY));
+        addSpellEffect(new MayEffect(
                 SequenceEffect.of(
                         ReturnToHandEffect.selfSpell(),
                         new PutTopCardsOfLibraryOnBottomEffect(3)),

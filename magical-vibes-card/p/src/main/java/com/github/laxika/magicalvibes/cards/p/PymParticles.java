@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -15,8 +14,8 @@ public class PymParticles extends Card {
 
     public PymParticles() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new MakeCreatureUnblockableEffect())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET))
+                .addSpellEffect(new MakeCreatureUnblockableEffect())
+                .addSpellEffect(new DrawCardEffect());
     }
 }

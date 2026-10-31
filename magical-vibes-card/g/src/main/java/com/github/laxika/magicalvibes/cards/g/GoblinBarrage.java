@@ -35,14 +35,14 @@ public class GoblinBarrage extends Card {
 
         // Goblin Barrage deals 4 damage to target creature.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
 
         // If this spell was kicked, it also deals 4 damage to target player or planeswalker.
         targetWhenKicked(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"), 0, 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         DealDamageToAnyTargetEffect.forTargetGroup(4, 1)));
     }
 }

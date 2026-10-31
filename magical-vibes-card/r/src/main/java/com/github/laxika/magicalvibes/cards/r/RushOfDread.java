@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
@@ -28,7 +27,7 @@ import java.util.List;
 public class RushOfDread extends Card {
 
     public RushOfDread() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{1}", "{2}", "{2}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{1}", "{2}", "{2}")));
         // Each mode says "target opponent", a separate instance of the word "target" (CR 115.3), so
         // one opponent may be chosen for several modes.
         setAllowSharedTargets(true);
@@ -38,7 +37,7 @@ public class RushOfDread extends Card {
                 "Target must be an opponent.");
         var creatureFilter = new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate()));
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices half the creatures they control, rounded up",
                         new SacrificePermanentsEffect(

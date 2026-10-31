@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -31,7 +30,7 @@ public class RegentsAuthority extends Card {
                 enchantmentCreature,
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(upgradedTarget),
                 new BoostTargetCreatureEffect(2, 2),
                 SequenceEffect.of(

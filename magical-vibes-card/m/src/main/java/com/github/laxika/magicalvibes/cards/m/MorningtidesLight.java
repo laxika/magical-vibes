@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -18,8 +17,8 @@ public class MorningtidesLight extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 0, Integer.MAX_VALUE)
-                .addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStep(true))
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControllerUntilNextTurn())
-                .addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+                .addSpellEffect(FlickerEffect.exileTargetReturnAtEndStep(true))
+                .addSpellEffect(PreventDamageEffect.allToControllerUntilNextTurn())
+                .addSpellEffect(new ExileSpellEffect());
     }
 }

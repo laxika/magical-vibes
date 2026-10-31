@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class LoseHope extends Card {
 
     public LoseHope() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, -1));
-        addEffect(EffectSlot.SPELL, new ScryEffect(2));
+        addSpellEffect(new BoostTargetCreatureEffect(-1, -1));
+        addSpellEffect(new ScryEffect(2));
     }
 }

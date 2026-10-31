@@ -26,7 +26,7 @@ public class GlacialRay extends Card {
                         new PermanentIsPlaneswalkerPredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+                .addSpellEffect(new DealDamageToAnyTargetEffect(2));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{R}"));
     }
 }

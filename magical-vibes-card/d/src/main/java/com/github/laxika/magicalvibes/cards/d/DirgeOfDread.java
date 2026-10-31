@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DirgeOfDread extends Card {
 
     public DirgeOfDread() {
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FEAR, GrantScope.ALL_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.ALL_CREATURES));
 
         addCycling("{1}{B}");
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(

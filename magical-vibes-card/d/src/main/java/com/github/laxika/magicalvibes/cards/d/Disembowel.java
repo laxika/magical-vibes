@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,6 +28,6 @@ public class Disembowel extends Card {
         target(new PermanentPredicateTargetFilter(
                 CREATURE_WITH_MANA_VALUE_X,
                 "Target must be a creature with mana value X."
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(CREATURE_WITH_MANA_VALUE_X));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(CREATURE_WITH_MANA_VALUE_X));
     }
 }

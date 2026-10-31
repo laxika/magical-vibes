@@ -17,8 +17,8 @@ import java.util.List;
 public class StirThePride extends Card {
 
     public StirThePride() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{1}{W}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{1}{W}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +2/+2 until end of turn",
                         new BoostAllOwnCreaturesEffect(2, 2)),

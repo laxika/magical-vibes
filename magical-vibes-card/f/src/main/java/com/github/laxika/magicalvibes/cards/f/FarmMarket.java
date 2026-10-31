@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.Market;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -32,7 +31,7 @@ public class FarmMarket extends Card {
                         new PermanentIsBlockingPredicate()
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 
     @Override

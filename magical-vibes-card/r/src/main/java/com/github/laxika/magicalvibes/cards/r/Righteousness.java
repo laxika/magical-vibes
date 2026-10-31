@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -32,6 +31,6 @@ public class Righteousness extends Card {
                         new PermanentIsBlockingPredicate()
                 )),
                 "Target must be a blocking creature"
-        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(7, 7));
+        )).addSpellEffect(new BoostTargetCreatureEffect(7, 7));
     }
 }

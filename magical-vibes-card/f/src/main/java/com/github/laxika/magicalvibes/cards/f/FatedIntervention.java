@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -19,8 +18,8 @@ import java.util.Set;
 public class FatedIntervention extends Card {
 
     public FatedIntervention() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Centaur", 3, 3, CardColor.GREEN,
+        addSpellEffect(new CreateTokenEffect(2, "Centaur", 3, 3, CardColor.GREEN,
                 List.of(CardSubtype.CENTAUR), Set.of(), Set.of(CardType.ENCHANTMENT)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerTurn(), new ScryEffect(2)));
+        addSpellEffect(new ConditionalEffect(new ControllerTurn(), new ScryEffect(2)));
     }
 }

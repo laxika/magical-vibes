@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -18,9 +17,9 @@ public class StormTheSeedcore extends Card {
 
     public StormTheSeedcore() {
         target(TargetFilters.creatureYouControl(), 0, 4)
-                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
+                .addSpellEffect(DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4), null));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+        addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), GrantScope.OWN_CREATURES));
     }
 }

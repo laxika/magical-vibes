@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopOrBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -22,8 +21,7 @@ public class LostInSpace extends Card {
 
         target(new PermanentPredicateTargetFilter(artifactOrCreature,
                 "Target must be an artifact or creature."))
-                .addEffect(EffectSlot.SPELL,
-                        new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0, artifactOrCreature))
-                .addEffect(EffectSlot.SPELL, new SurveilEffect(1));
+                .addSpellEffect(new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0, artifactOrCreature))
+                .addSpellEffect(new SurveilEffect(1));
     }
 }

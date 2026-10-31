@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -22,6 +21,6 @@ public class Snapback extends Card {
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.BLUE), "blue"))));
 
         // Return target creature to its owner's hand.
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
     }
 }

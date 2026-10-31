@@ -58,7 +58,7 @@ public class HalvarGodOfBattle extends Card {
                 new AttachTargetAuraOrEquipmentToTargetCreatureEffect(),
                 "Attach target Aura or Equipment to target creature you control?"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Halvar, God of Battle", List.of())
                         .withManaCost("{2}{W}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Sword of the Realms", List.of())

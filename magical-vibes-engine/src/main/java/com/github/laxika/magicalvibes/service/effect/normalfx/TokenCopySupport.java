@@ -1091,6 +1091,8 @@ public class TokenCopySupport {
             tokenCard.setKeywords(keywords);
         }
 
+        tokenCard.addCastingCostsAndSpellEffectsFrom(sourceCard,
+                copied -> !hasPTOverride || !copied.isPowerToughnessDefining());
         for (EffectSlot slot : EffectSlot.values()) {
             for (EffectRegistration registration : sourceCard.getEffectRegistrations(slot)) {
                 if (hasPTOverride && registration.effect().isPowerToughnessDefining()) {

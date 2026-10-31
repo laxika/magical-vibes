@@ -22,6 +22,6 @@ public class BituminousBlast extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
 
         // Bituminous Blast deals 4 damage to target creature.
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
     }
 }

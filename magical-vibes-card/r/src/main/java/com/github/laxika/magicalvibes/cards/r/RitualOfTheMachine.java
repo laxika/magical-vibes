@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -23,7 +22,7 @@ public class RitualOfTheMachine extends Card {
 
     public RitualOfTheMachine() {
         // As an additional cost to cast this spell, sacrifice a creature.
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        addCastingCost(new SacrificeCreatureCost());
         // Gain control of target nonartifact, nonblack creature.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -33,6 +32,6 @@ public class RitualOfTheMachine extends Card {
                 )),
                 "Target must be a nonartifact, nonblack creature"
         ))
-                .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT));
     }
 }

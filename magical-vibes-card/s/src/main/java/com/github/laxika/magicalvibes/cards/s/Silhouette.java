@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Silhouette extends Card {
 
     public Silhouette() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect());
+        target(TargetFilters.creature()).addSpellEffect(new PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect());
     }
 }

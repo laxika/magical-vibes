@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -32,7 +31,7 @@ public class RiveteersConfluence extends Card {
                         new PermanentIsPlaneswalkerPredicate())),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+        addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "You draw a card and you lose 1 life",
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))),

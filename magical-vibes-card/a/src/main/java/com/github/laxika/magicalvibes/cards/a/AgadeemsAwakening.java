@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
@@ -24,7 +23,7 @@ public class AgadeemsAwakening extends Card {
         setModalDoubleFaced(true);
         setMultiTargetConstraint(MultiTargetConstraint.DIFFERENT_MANA_VALUES);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Agadeem's Awakening", List.of(
                         new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                 new CardAllOfPredicate(List.of(

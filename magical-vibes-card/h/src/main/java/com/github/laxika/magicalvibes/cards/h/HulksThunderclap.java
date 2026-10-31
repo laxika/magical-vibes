@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,12 +25,12 @@ import java.util.List;
 public class HulksThunderclap extends Card {
 
     public HulksThunderclap() {
-        addEffect(EffectSlot.SPELL, BeholdCost.optional(CardSubtype.GAMMA));
+        addCastingCost(BeholdCost.optional(CardSubtype.GAMMA));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
+        )).addSpellEffect(new TargetDealsPowerDamageToTargetEffect());
 
         target(TargetFilters.creature());
 
@@ -45,7 +44,6 @@ public class HulksThunderclap extends Card {
         target(new PermanentPredicateTargetFilter(
                 noncreatureArtifactOrEnchantment,
                 "Target must be a noncreature artifact or noncreature enchantment"
-        ), 0, 1).addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new BeholdCostPaid(), new DestroyTargetPermanentEffect()));
+        ), 0, 1).addSpellEffect(new ConditionalEffect(new BeholdCostPaid(), new DestroyTargetPermanentEffect()));
     }
 }

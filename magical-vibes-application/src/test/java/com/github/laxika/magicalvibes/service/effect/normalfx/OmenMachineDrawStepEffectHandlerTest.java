@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -222,7 +221,7 @@ class OmenMachineDrawStepEffectHandlerTest {
             void targetedSpellNoTargetsStaysInExile() {
                 Card sourceCard = createCard("Omen Machine");
                 Card targetedCard = createSorceryCard("Doom Blade");
-                targetedCard.addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                targetedCard.addSpellEffect(new ExileTargetPermanentEffect());
                 gd.playerDecks.get(player1Id).add(targetedCard);
 
                 StackEntry entry = new StackEntry(

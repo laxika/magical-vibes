@@ -24,10 +24,10 @@ public class FlashConscription extends Card {
 
     public FlashConscription() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.WHITE),
                         new GrantEffectToTargetEffect(
                                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,

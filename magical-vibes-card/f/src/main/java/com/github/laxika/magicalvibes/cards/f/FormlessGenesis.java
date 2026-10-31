@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
@@ -23,7 +22,7 @@ public class FormlessGenesis extends Card {
     public FormlessGenesis() {
         CardsInGraveyard landCardsInGraveyard = new CardsInGraveyard(
                 new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Shapeshifter",
                 landCardsInGraveyard,
                 landCardsInGraveyard,

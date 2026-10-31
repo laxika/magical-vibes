@@ -40,6 +40,6 @@ public class AnimistsMight extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature or planeswalker you don't control"))
-                .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect(0, 1, 2));
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(0, 1, 2));
     }
 }

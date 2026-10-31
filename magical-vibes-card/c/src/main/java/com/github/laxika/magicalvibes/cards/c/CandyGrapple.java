@@ -27,7 +27,7 @@ public class CandyGrapple extends Card {
                 )),
                 "an artifact, enchantment, or token"
         ));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new BoostTargetCreatureEffect(-3, -3),
                 new BoostTargetCreatureEffect(-5, -5)

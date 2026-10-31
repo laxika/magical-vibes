@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -29,7 +28,7 @@ public class IncendiaryCommand extends Card {
         // Choose two — each targeting mode declares its own per-mode target filter, so the choose-two
         // unwrap gives each chosen mode its own target slot (mode 0 = player/planeswalker, mode 2 =
         // nonbasic land). Modes 1 and 3 are non-targeting.
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Incendiary Command deals 4 damage to target player or planeswalker",
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(4),

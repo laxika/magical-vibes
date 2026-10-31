@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -26,6 +25,6 @@ public class SpectralInterference extends Card {
                                 Set.of(StackEntryType.TRIGGERED_ABILITY, StackEntryType.ACTIVATED_ABILITY)))
                 )),
                 "Target must be an artifact or creature spell."
-        )).addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(4));
+        )).addSpellEffect(new CounterUnlessPaysEffect(4));
     }
 }

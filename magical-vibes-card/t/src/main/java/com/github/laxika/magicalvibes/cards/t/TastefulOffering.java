@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterSacrificeBoonEffect;
@@ -20,10 +19,10 @@ import java.util.List;
 public class TastefulOffering extends Card {
 
     public TastefulOffering() {
-        addEffect(EffectSlot.SPELL, new RegisterSacrificeBoonEffect(2,
+        addSpellEffect(new RegisterSacrificeBoonEffect(2,
                 new SeekLibraryEffect(1,
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
-        addEffect(EffectSlot.SPELL, foodToken());
+        addSpellEffect(foodToken());
     }
 
     private static CreateTokenEffect foodToken() {

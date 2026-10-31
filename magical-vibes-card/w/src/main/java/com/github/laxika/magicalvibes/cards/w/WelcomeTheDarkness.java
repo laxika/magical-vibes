@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,11 +19,11 @@ public class WelcomeTheDarkness extends Card {
 
     public WelcomeTheDarkness() {
         setMinimumXValue(1);
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new DrawCardEffect(new XValue()));
+        addSpellEffect(new CreateTokenEffect(
                 "Demon", new XValue(), new XValue(), CardColor.BLACK,
                 List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), Set.of()));
-        addEffect(EffectSlot.SPELL, new SetLifeTotalEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new PlayersCantGainLifeRestOfGameEffect());
+        addSpellEffect(new SetLifeTotalEffect(new XValue()));
+        addSpellEffect(new PlayersCantGainLifeRestOfGameEffect());
     }
 }

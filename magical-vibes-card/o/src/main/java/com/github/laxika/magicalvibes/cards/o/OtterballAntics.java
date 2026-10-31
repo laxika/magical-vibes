@@ -27,8 +27,8 @@ import java.util.Set;
 public class OtterballAntics extends Card {
 
     public OtterballAntics() {
-        addEffect(EffectSlot.SPELL, otterToken());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastNotFromHand(),
+        addSpellEffect(otterToken());
+        addSpellEffect(new ConditionalEffect(new CastNotFromHand(),
                 new PutCountersOnCreatedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addCastingOption(new FlashbackCast("{3}{U}"));
     }

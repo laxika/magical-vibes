@@ -23,8 +23,8 @@ public class Despair extends Card {
     public Despair() {
         // Until end of turn, creatures you control gain menace and
         // "Whenever this creature deals combat damage to a player, that player discards a card."
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)));
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.

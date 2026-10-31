@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopOrBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -16,7 +15,7 @@ import java.util.List;
 public class IceMagic extends Card {
 
     public IceMagic() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Blizzard - Return target creature to its owner's hand",
                         ReturnToHandEffect.target(), TargetFilters.creature()),
@@ -27,6 +26,6 @@ public class IceMagic extends Card {
                         "Blizzaga - Its owner shuffles target creature into their library",
                         new ShuffleTargetPermanentIntoLibraryEffect(), TargetFilters.creature())
         )));
-        addEffect(EffectSlot.SPELL, new TieredManaCost(List.of("", "{2}", "{5}{U}")));
+        addCastingCost(new TieredManaCost(List.of("", "{2}", "{5}{U}")));
     }
 }

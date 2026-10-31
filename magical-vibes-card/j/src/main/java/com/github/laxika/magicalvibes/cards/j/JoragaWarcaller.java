@@ -21,7 +21,7 @@ import java.util.Set;
 public class JoragaWarcaller extends Card {
 
     public JoragaWarcaller() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{G}")));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(

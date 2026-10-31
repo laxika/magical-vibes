@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TemporalSpring extends Card {
 
     public TemporalSpring() {
-        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
+        target(TargetFilters.permanent()).addSpellEffect(new PutTargetOnTopOfLibraryEffect());
     }
 }

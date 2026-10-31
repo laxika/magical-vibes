@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -23,14 +22,14 @@ import java.util.List;
 public class ShadowsVerdict extends Card {
 
     public ShadowsVerdict() {
-        addEffect(EffectSlot.SPELL, new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+        addSpellEffect(new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 new PermanentMaxManaValuePredicate(3)
         ))));
-        addEffect(EffectSlot.SPELL, new ExileGraveyardCardsEffect(
+        addSpellEffect(new ExileGraveyardCardsEffect(
                 0,
                 GraveyardExileScope.ALL_PLAYERS,
                 new CardAllOfPredicate(List.of(

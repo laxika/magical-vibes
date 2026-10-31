@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerScope;
@@ -41,8 +40,8 @@ public class LaezelsAcrobatics extends Card {
                 false,
                 false);
 
-        addEffect(EffectSlot.SPELL, new ExileAllPermanentsEffect(nontokenCreaturesYouControl, true));
-        addEffect(EffectSlot.SPELL, new RollD20Effect(
+        addSpellEffect(new ExileAllPermanentsEffect(nontokenCreaturesYouControl, true));
+        addSpellEffect(new RollD20Effect(
                 new ReturnAllCardsExiledWithSourceAtNextStepEffect(TurnStep.END_STEP),
                 SequenceEffect.of(
                         new ReturnAllCardsExiledWithSourceEffect(false),

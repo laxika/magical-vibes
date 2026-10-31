@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
@@ -18,10 +17,8 @@ public class TahngarthsGlare extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addEffect(EffectSlot.SPELL,
-                        new ReorderTopCardsOfLibraryEffect(3, LibraryOwner.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL,
-                        new ReorderTopCardsOfLibraryEffect(3, LibraryOwner.CONTROLLER,
+                .addSpellEffect(new ReorderTopCardsOfLibraryEffect(3, LibraryOwner.TARGET_PLAYER))
+                .addSpellEffect(new ReorderTopCardsOfLibraryEffect(3, LibraryOwner.CONTROLLER,
                                 LibraryDecisionMaker.TARGET_PLAYER));
     }
 }

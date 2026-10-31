@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -23,9 +22,9 @@ public class ShredsOfSanity extends Card {
                 new CardTypePredicate(CardType.INSTANT), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1);
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.SORCERY), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1);
-        addEffect(EffectSlot.SPELL, new ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffect());
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffect());
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new ExileSpellEffect());
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_INSTANT_AND_ONE_SORCERY);
     }
 }

@@ -24,6 +24,6 @@ public class HawkeyesShot extends Card {
                 )), 2));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

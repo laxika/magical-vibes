@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -21,8 +20,8 @@ public class WhenWeWereYoung extends Card {
 
     public WhenWeWereYoung() {
         target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(new ConditionalEffect(
                         new AllOf(List.of(
                                 new ControlsPermanent(new PermanentIsArtifactPredicate()),
                                 new ControlsPermanent(new PermanentIsEnchantmentPredicate()))),

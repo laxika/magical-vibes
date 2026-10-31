@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "221")
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 public class NoMoreLies extends Card {
 
     public NoMoreLies() {
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(3, false, true));
+        addSpellEffect(new CounterUnlessPaysEffect(3, false, true));
     }
 }

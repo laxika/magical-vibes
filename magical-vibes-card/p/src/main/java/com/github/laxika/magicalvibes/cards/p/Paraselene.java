@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -13,7 +12,7 @@ public class Paraselene extends Card {
 
     public Paraselene() {
         // Destroy all enchantments. You gain 1 life for each enchantment destroyed this way.
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentIsEnchantmentPredicate(),
                 new GainLifeEffect(new EventValue())));
     }

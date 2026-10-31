@@ -17,8 +17,8 @@ public class JoinTheMaestros extends Card {
 
     public JoinTheMaestros() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(2));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addCastingCost(new CasualtyCost(2));
+        addSpellEffect(new CreateTokenEffect(
                 "Ogre Warrior", 4, 3, CardColor.BLACK,
                 List.of(CardSubtype.OGRE, CardSubtype.WARRIOR), Set.of(), Set.of()));
     }

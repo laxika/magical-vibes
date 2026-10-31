@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -22,6 +21,6 @@ public class GideonsReproach extends Card {
                         new PermanentIsBlockingPredicate()
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        )).addSpellEffect(new DealDamageToTargetCreatureEffect(4));
     }
 }

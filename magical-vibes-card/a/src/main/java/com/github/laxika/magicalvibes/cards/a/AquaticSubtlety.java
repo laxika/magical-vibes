@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantEvokeToMatchingHandCardsEffect;
@@ -18,10 +17,9 @@ import java.util.List;
 public class AquaticSubtlety extends Card {
 
     public AquaticSubtlety() {
-        addEffect(EffectSlot.SPELL,
-                new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(
+        addSpellEffect(new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(
                         2, 2, HandToLibraryPlacement.BOTTOM));
-        addEffect(EffectSlot.SPELL, new PerpetuallyGrantEvokeToMatchingHandCardsEffect(
+        addSpellEffect(new PerpetuallyGrantEvokeToMatchingHandCardsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardColorPredicate(CardColor.BLUE),
                         new CardTypePredicate(CardType.CREATURE))),

@@ -15,7 +15,7 @@ public class SoullessRevival extends Card {
 
     public SoullessRevival() {
         // Return target creature card from your graveyard to your hand.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

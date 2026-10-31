@@ -22,9 +22,8 @@ public class CroakingCurse extends Card {
 
     public CroakingCurse() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(cursedRoleToken(), PlayerRelation.ANY));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(cursedRoleToken(), PlayerRelation.ANY));
     }
 
     private static CreateTokenEffect cursedRoleToken() {

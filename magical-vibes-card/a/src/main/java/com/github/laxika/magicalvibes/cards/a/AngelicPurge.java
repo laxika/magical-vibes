@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -22,7 +21,7 @@ public class AngelicPurge extends Card {
 
     public AngelicPurge() {
         // As an additional cost to cast this spell, sacrifice a permanent.
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentTruePredicate(), "Sacrifice a permanent"));
 
         // Exile target artifact, creature, or enchantment.
@@ -34,6 +33,6 @@ public class AngelicPurge extends Card {
                 )),
                 "Target must be an artifact, creature, or enchantment"
         ))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

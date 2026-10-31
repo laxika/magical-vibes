@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LearnEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LearnEffect;
 public class IgneousInspiration extends Card {
 
     public IgneousInspiration() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
-        addEffect(EffectSlot.SPELL, new LearnEffect());
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new LearnEffect());
     }
 }

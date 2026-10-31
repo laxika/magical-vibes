@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -20,7 +19,7 @@ public class CombustionTechnique extends Card {
         var damage = new Sum(new Fixed(2), new CardsInGraveyard(
                 new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(damage));
+                .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(damage));
     }
 }

@@ -19,7 +19,7 @@ import java.util.Set;
 public class MageSiege extends Card {
 
     public MageSiege() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Wizard", 0, 1, CardColor.BLACK, null,
                 List.of(CardSubtype.WIZARD), Set.of(), Set.of(), false, false,
                 Map.of(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

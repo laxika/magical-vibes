@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -17,9 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class SettleTheWilds extends Card {
 
     public SettleTheWilds() {
-        addEffect(EffectSlot.SPELL,
-                new SeekCardToBattlefieldEffect(CardPredicateUtils.basicLand(), true));
-        addEffect(EffectSlot.SPELL, new SeekCardsToHandEffect(
+        addSpellEffect(new SeekCardToBattlefieldEffect(CardPredicateUtils.basicLand(), true));
+        addSpellEffect(new SeekCardsToHandEffect(
                 new Fixed(1),
                 new CardIsPermanentPredicate(),
                 new ManaValueBound(

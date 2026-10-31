@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -30,7 +29,7 @@ public class Martyrdom extends Card {
                 "{0}: The next 1 damage that would be dealt to target creature, planeswalker, or player this turn is dealt to this creature instead."
         ).withActivatableOnlyByGrantingPlayer();
 
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.SPELL, new GrantActivatedAbilityEffect(
+        target(TargetFilters.creatureYouControl()).addSpellEffect(new GrantActivatedAbilityEffect(
                 grantedAbility,
                 GrantScope.TARGET,
                 null,

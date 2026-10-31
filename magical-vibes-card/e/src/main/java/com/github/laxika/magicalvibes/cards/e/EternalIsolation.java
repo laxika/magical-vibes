@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +20,6 @@ public class EternalIsolation extends Card {
                         new PermanentPowerAtLeastPredicate(4)
                 )),
                 "Target must be a creature with power 4 or greater"
-        )).addEffect(EffectSlot.SPELL, new PutTargetOnBottomOfLibraryEffect());
+        )).addSpellEffect(new PutTargetOnBottomOfLibraryEffect());
     }
 }

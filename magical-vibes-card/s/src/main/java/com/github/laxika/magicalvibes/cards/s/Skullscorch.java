@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -20,7 +19,7 @@ public class Skullscorch extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new MayEffect(
+        )).addSpellEffect(new MayEffect(
                 new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER),
                 "Have Skullscorch deal 4 damage to you?",
                 new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER, true),

@@ -25,7 +25,7 @@ public class Flusterstorm extends Card {
                         StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell."
         ));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(1));
+        addSpellEffect(new CounterUnlessPaysEffect(1));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

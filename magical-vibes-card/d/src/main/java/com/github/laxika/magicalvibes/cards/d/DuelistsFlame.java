@@ -31,10 +31,10 @@ public class DuelistsFlame extends Card {
                 )),
                 "Target must be a blocked creature you control"
         ))
-                .addEffect(EffectSlot.SPELL, BoostTargetCreatureEffect.withCastTimeXValue(
+                .addSpellEffect(BoostTargetCreatureEffect.withCastTimeXValue(
                         new XValue(), new XValue(), new Fixed(0)))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantStaticEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantStaticEffectToTargetUntilEndOfTurnEffect(
                         new GrantTriggeredAbilityEffect(
                                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                                 new LookAtTopCardsMayCastExiledNonlandCardEffect(new EventValue()),

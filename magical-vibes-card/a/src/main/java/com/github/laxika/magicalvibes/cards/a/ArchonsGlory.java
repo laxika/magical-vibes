@@ -32,8 +32,8 @@ public class ArchonsGlory extends Card {
                 "an artifact, enchantment, or token"
         ));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.TARGET)));
     }
 }

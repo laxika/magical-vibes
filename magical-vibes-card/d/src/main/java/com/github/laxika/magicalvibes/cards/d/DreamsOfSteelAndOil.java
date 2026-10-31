@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileChosenCardFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMatchingCardFromTargetGraveyardEffect;
@@ -25,9 +24,9 @@ public class DreamsOfSteelAndOil extends Card {
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent."))
-                .addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
+                .addSpellEffect(new ChooseCardsFromTargetHandEffect(
                         1, List.of(), artifactOrCreature, HandChoiceDestination.KEEP_IN_HAND));
-        addEffect(EffectSlot.SPELL, new ExileMatchingCardFromTargetGraveyardEffect(artifactOrCreature));
-        addEffect(EffectSlot.SPELL, new ExileChosenCardFromTargetHandEffect());
+        addSpellEffect(new ExileMatchingCardFromTargetGraveyardEffect(artifactOrCreature));
+        addSpellEffect(new ExileChosenCardFromTargetHandEffect());
     }
 }

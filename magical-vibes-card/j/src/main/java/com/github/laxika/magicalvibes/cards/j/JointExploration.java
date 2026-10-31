@@ -18,9 +18,9 @@ public class JointExploration extends Card {
 
     public JointExploration() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
-        addEffect(EffectSlot.SPELL, new ScryEffect(2));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ScryEffect(2));
+        addSpellEffect(new DrawCardEffect(1));
+        addSpellEffect(new ConditionalEffect(
                 new Kicked(),
                 new MayEffect(
                         new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), "land"),

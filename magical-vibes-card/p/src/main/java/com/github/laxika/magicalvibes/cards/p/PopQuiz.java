@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LearnEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LearnEffect;
 public class PopQuiz extends Card {
 
     public PopQuiz() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
-        addEffect(EffectSlot.SPELL, new LearnEffect());
+        addSpellEffect(new DrawCardEffect(1));
+        addSpellEffect(new LearnEffect());
     }
 }

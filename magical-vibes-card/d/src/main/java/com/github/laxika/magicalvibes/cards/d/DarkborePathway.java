@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SlitherborePathway;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -19,7 +18,7 @@ public class DarkborePathway extends Card {
         setModalDoubleFaced(true);
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Darkbore Pathway", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Slitherbore Pathway", List.of())
         )));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -21,12 +20,12 @@ import java.util.List;
 public class ChanneledForce extends Card {
 
     public ChanneledForce() {
-        addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
+        addCastingCost(new DiscardXCardsCost());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(new XValue(), false, true));
+        )).addSpellEffect(new DrawCardForTargetPlayerEffect(new XValue(), false, true));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -34,7 +33,6 @@ public class ChanneledForce extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        ), 0, 1).addEffect(EffectSlot.SPELL,
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
+        ), 0, 1).addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
     }
 }

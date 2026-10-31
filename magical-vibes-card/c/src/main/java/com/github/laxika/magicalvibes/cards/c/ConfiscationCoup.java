@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -28,8 +27,8 @@ public class ConfiscationCoup extends Card {
                 )),
                 "Target must be an artifact or creature"
         ))
-                .addEffect(EffectSlot.SPELL, new EnergyCountersEffect(4))
-                .addEffect(EffectSlot.SPELL, new MayEffect(
+                .addSpellEffect(new EnergyCountersEffect(4))
+                .addSpellEffect(new MayEffect(
                         new PayEnergyToGainControlOfTargetEffect(new TargetManaValue()),
                         "Pay energy equal to that permanent's mana value to gain control of it?"));
     }

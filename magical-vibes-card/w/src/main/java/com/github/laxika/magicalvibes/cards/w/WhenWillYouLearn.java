@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 public class WhenWillYouLearn extends Card {
 
     public WhenWillYouLearn() {
-        addEffect(EffectSlot.SPELL, new ExileTopCardsAndMayCastSpellsEffect(
+        addSpellEffect(new ExileTopCardsAndMayCastSpellsEffect(
                 1, null, LibraryScope.EACH_OPPONENT, false, false, null, null,
                 Integer.MAX_VALUE, false, false, false, null, null));
     }

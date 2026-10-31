@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -37,8 +36,8 @@ public class MutantChainReaction extends Card {
         target(new PermanentPredicateTargetFilter(
                 destroyable,
                 "Target must be an artifact, enchantment, or creature with flying"), 0, 1)
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(destroyable));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofArtifactToken(
+                .addSpellEffect(new DestroyTargetPermanentEffect(destroyable));
+        addSpellEffect(CreateTokenEffect.ofArtifactToken(
                 1,
                 "Mutagen",
                 List.of(),

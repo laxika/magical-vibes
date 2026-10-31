@@ -282,7 +282,7 @@ public class CombatTriggerService {
                             boolean needsTarget = effectsForStack.stream()
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
-                                if (perm.getCard().isAura() && perm.getCard().getSpellTargets().size() > 1
+                                if (perm.getCard().isAura() && perm.getCard().getTargetGroups().size() > 1
                                         && effectsForStack.stream().noneMatch(effect ->
                                         perm.getCard().getEffectTargetIndex(effect) >= 0)) {
                                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -394,12 +394,12 @@ public class CombatTriggerService {
                 .filter(index -> index >= 0)
                 .collect(java.util.stream.Collectors.toSet());
         if (boundGroups.isEmpty()) {
-            return card.getSpellTargets().size() > 1
-                    || card.getSpellTargets().stream().anyMatch(group -> group.getMaxTargets() > 1
+            return card.getTargetGroups().size() > 1
+                    || card.getTargetGroups().stream().anyMatch(group -> group.getMaxTargets() > 1
                             || group.getMinTargets() == 0 || group.getDynamicMinTargets() != null)
                     || etbTokenTargetService.needsSlotBySlotTargetSelection(card);
         }
-        return boundGroups.size() > 1 || card.getSpellTargets().stream()
+        return boundGroups.size() > 1 || card.getTargetGroups().stream()
                 .filter(group -> boundGroups.contains(group.getIndex()))
                 .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
                         || group.getDynamicMinTargets() != null);

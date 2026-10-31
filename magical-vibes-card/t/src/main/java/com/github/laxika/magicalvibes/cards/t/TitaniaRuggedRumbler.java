@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost;
 public class TitaniaRuggedRumbler extends Card {
 
     public TitaniaRuggedRumbler() {
-        addEffect(EffectSlot.SPELL, new DiscardCardOrPayManaCost("{2}"));
+        addCastingCost(new DiscardCardOrPayManaCost("{2}"));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessDiscardsOrPaysEffect(2));
     }

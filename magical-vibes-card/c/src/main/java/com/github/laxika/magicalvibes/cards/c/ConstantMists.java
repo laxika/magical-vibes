@@ -16,7 +16,7 @@ public class ConstantMists extends Card {
 
     public ConstantMists() {
         addEffect(EffectSlot.STATIC, new BuybackEffect(new PermanentIsLandPredicate(), "a land"));
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombat());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(PreventDamageEffect.allCombat());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

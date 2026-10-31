@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,6 +25,6 @@ public class WhiskAway extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature."
-        )).addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
+        )).addSpellEffect(new PutTargetOnTopOfLibraryEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -18,8 +17,8 @@ import java.util.List;
 public class InspirationFromBeyond extends Card {
 
     public InspirationFromBeyond() {
-        addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(new MillEffect(3, MillRecipient.CONTROLLER));
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .mandatory(true)
                 .filter(new CardAnyOfPredicate(List.of(

@@ -28,7 +28,7 @@ public class TerminalVelocity extends Card {
     public TerminalVelocity() {
         MassDamageEffect leavesDamage = new MassDamageEffect(
                 new Sum(new SourceManaValueMinusOne(), new Fixed(1)), false, false, null);
-        addEffect(EffectSlot.SPELL, new MayEffect(
+        addSpellEffect(new MayEffect(
                 new PutCardToBattlefieldThenEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),

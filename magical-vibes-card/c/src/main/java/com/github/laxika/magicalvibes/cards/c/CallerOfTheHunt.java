@@ -17,7 +17,7 @@ import java.util.List;
 public class CallerOfTheHunt extends Card {
 
     public CallerOfTheHunt() {
-        addEffect(EffectSlot.SPELL, new ChooseCreatureTypeCost());
+        addCastingCost(new ChooseCreatureTypeCost());
         PermanentAllOfPredicate creaturesOfChosenType = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSourceChosenSubtypePredicate()));

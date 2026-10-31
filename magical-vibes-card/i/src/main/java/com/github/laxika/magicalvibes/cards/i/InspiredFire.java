@@ -14,6 +14,6 @@ public class InspiredFire extends Card {
     public InspiredFire() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new CardsDrawnThisTurn()));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
     }
 }

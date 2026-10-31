@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
@@ -23,7 +22,7 @@ public class ConcertedDefense extends Card {
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
                 ),
                 "Target must be a noncreature spell."
-        )).addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(
+        )).addSpellEffect(new CounterUnlessPaysEffect(
                 new Sum(new Fixed(1), new PartySize())));
     }
 }

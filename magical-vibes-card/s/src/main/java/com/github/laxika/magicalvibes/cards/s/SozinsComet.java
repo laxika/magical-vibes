@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class SozinsComet extends Card {
 
     public SozinsComet() {
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 5)));
         addCastingOption(new ForetellCast("{2}{R}"));
     }

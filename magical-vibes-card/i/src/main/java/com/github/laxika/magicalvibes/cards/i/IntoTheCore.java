@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class IntoTheCore extends Card {
 
     public IntoTheCore() {
-        target(TargetFilters.artifact(), 2, 2).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        target(TargetFilters.artifact(), 2, 2).addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

@@ -42,10 +42,10 @@ public class Jadzi extends Card {
                 "Discard a card: Return Jadzi, Oracle of Arcavios to its owner's hand."
         ));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Jadzi, Oracle of Arcavios", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Journey to the Oracle", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Journey to the Oracle", backFace.getSpellEffects()))));
     }
 
     @Override

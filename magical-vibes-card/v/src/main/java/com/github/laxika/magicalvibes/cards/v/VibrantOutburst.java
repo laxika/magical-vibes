@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -34,12 +33,12 @@ public class VibrantOutburst extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "First target must be a creature, player, planeswalker, or battle"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        )).addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
         // Tap up to one target creature.
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Second target must be a creature"
-        ), 0, 1).addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+        ), 0, 1).addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

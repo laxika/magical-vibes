@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureOfEachManaValueToBattlefieldEffect;
 
@@ -11,7 +10,6 @@ public class OrnateImitations extends Card {
 
     public OrnateImitations() {
         setMinimumXValue(1);
-        addEffect(EffectSlot.SPELL,
-                new ConjureRandomCreatureOfEachManaValueToBattlefieldEffect(new XValue()));
+        addSpellEffect(new ConjureRandomCreatureOfEachManaValueToBattlefieldEffect(new XValue()));
     }
 }

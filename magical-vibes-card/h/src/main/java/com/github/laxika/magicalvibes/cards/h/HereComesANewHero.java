@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -33,9 +32,7 @@ public class HereComesANewHero extends Card {
                 "Target must be a creature with mana value X or less"
         ), 0, 1);
 
-        playerTarget.addEffect(EffectSlot.SPELL,
-                new DrawCardForTargetPlayerEffect(new XValue(), false, true));
-        creatureTarget.addEffect(EffectSlot.SPELL,
-                new CreateTokenCopyOfTargetPermanentEffect());
+        playerTarget.addSpellEffect(new DrawCardForTargetPlayerEffect(new XValue(), false, true));
+        creatureTarget.addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

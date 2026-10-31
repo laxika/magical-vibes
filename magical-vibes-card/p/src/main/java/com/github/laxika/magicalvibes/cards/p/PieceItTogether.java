@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -25,17 +24,15 @@ public class PieceItTogether extends Card {
 
     public PieceItTogether() {
         // Starting intensity 1.
-        addEffect(EffectSlot.SPELL, new InitializeSourceIntensityEffect(1));
+        addSpellEffect(new InitializeSourceIntensityEffect(1));
 
         // Draw a card unless Piece It Together's intensity is exactly 4.
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new NotCondition(INTENSITY_FOUR), new DrawCardEffect()));
+        addSpellEffect(new ConditionalEffect(new NotCondition(INTENSITY_FOUR), new DrawCardEffect()));
 
         // If Piece It Together's intensity is exactly 4, take an extra turn instead.
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(INTENSITY_FOUR, new ControllerExtraTurnEffect(1)));
+        addSpellEffect(new ConditionalEffect(INTENSITY_FOUR, new ControllerExtraTurnEffect(1)));
 
         // Cards you own named Piece It Together intensify by 1.
-        addEffect(EffectSlot.SPELL, new IntensifyNamedCardsEffect(CARD_NAME));
+        addSpellEffect(new IntensifyNamedCardsEffect(CARD_NAME));
     }
 }

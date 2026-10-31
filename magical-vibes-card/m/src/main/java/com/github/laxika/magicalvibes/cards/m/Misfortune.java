@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "113")
 public class Misfortune extends Card {
 
     public Misfortune() {
-        addEffect(EffectSlot.SPELL, new MisfortuneEffect());
+        addSpellEffect(new MisfortuneEffect());
     }
 }

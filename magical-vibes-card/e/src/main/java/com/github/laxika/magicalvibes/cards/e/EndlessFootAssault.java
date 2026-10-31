@@ -16,7 +16,7 @@ import java.util.List;
 public class EndlessFootAssault extends Card {
 
     public EndlessFootAssault() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{W}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{W}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}{W}")));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,

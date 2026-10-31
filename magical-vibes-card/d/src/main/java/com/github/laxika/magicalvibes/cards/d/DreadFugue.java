@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -21,12 +20,12 @@ public class DreadFugue extends Card {
     public DreadFugue() {
         addCastingOption(AlternateHandCast.cleave("{2}{B}", null));
 
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()),
                 new ChooseCardsFromTargetHandEffect(
                         1, List.of(CardType.LAND), new CardMaxManaValuePredicate(2),
                         HandChoiceDestination.DISCARD)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND),
                         HandChoiceDestination.DISCARD)));

@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 public class NoxiousAssault extends Card {
 
     public NoxiousAssault() {
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 2));
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_ANY_CREATURE_BLOCKS,
                 new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PERMANENT_CONTROLLER)));
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -23,11 +22,11 @@ public class Teleportal extends Card {
 
     public Teleportal() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new BoostTargetCreatureEffect(1, 0),
                 new BoostAllOwnCreaturesEffect(1, 0)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new MakeCreatureUnblockableEffect(),
                 new GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(

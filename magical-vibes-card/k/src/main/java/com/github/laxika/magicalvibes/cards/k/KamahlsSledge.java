@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -21,6 +20,6 @@ public class KamahlsSledge extends Card {
         target(TargetFilters.creature())
                 .bindEffect(creatureDamage)
                 .bindEffect(thresholdControllerDamage);
-        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, thresholdControllerDamage);
+        addSimultaneousSpellEffects(creatureDamage, thresholdControllerDamage);
     }
 }

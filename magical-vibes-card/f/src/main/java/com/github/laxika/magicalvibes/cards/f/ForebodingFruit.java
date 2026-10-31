@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -27,9 +26,9 @@ public class ForebodingFruit extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        )).addSpellEffect(new DrawCardForTargetPlayerEffect(2))
+                .addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK, 3), foodToken()));
     }
 

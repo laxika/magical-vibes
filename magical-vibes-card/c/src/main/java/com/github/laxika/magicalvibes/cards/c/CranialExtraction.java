@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 
 import java.util.List;
@@ -12,6 +11,6 @@ import java.util.List;
 public class CranialExtraction extends Card {
 
     public CranialExtraction() {
-        addEffect(EffectSlot.SPELL, ChooseCardNameAndExileFromZonesEffect.allCards(List.of(CardType.LAND)));
+        addSpellEffect(ChooseCardNameAndExileFromZonesEffect.allCards(List.of(CardType.LAND)));
     }
 }

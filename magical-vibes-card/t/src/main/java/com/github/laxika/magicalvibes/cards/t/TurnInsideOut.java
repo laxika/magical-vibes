@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
@@ -13,8 +12,8 @@ public class TurnInsideOut extends Card {
 
     public TurnInsideOut() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 0))
-                .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(3, 0))
+                .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
                         ManifestDreadEffect.forController()));
     }
 }

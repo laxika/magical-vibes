@@ -16,6 +16,6 @@ public class LumaretsFavor extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfConditionEffect(new GainedLifeThisTurn()));
 
         // Target creature gets +2/+4 until end of turn. (Targeting auto-derived.)
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 4));
+        addSpellEffect(new BoostTargetCreatureEffect(2, 4));
     }
 }

@@ -25,7 +25,7 @@ public class DuskRoseReliquary extends Card {
                 new PermanentIsCreaturePredicate()
         ));
 
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(artifactOrCreature, "an artifact or creature"));
+        addCastingCost(new SacrificePermanentCost(artifactOrCreature, "an artifact or creature"));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
 
         target(new PermanentPredicateTargetFilter(

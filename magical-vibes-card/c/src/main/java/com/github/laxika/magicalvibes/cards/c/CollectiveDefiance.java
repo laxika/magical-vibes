@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -27,7 +26,7 @@ public class CollectiveDefiance extends Card {
     public CollectiveDefiance() {
         setAllowSharedTargets(true);
         // Escalate {1} (Pay this cost for each mode chosen beyond the first.)
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{1}"));
+        addCastingCost(new EscalateManaCost("{1}"));
 
         var playerFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
@@ -41,7 +40,7 @@ public class CollectiveDefiance extends Card {
                 "Target must be an opponent or planeswalker.");
 
         // Choose one or more —
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player discards all the cards in their hand, then draws that many cards",
                         new TargetPlayerDiscardsHandThenDrawsThatManyEffect(),

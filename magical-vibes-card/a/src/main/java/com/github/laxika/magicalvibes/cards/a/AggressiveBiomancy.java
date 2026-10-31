@@ -43,7 +43,7 @@ public class AggressiveBiomancy extends Card {
                 false
         );
 
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.SPELL, copyEffect);
+        target(TargetFilters.creatureYouControl()).addSpellEffect(copyEffect);
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, fightEffect);
     }

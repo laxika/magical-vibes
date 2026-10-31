@@ -24,7 +24,7 @@ import java.util.List;
 public class ThrillKillDisciple extends Card {
 
     public ThrillKillDisciple() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.withDiscard(List.of("{1}")));
+        addCastingCost(RepeatableAdditionalManaCost.withDiscard(List.of("{1}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new RepeatedAdditionalCostPaid("{1}"),
                         new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}"))));

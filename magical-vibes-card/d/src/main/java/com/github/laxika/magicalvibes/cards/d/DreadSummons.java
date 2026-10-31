@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachPlayerAndCreateTokensForMilledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -22,7 +21,6 @@ public class DreadSummons extends Card {
     public DreadSummons() {
         CreateTokenEffect tappedZombie = new CreateTokenEffect(
                 1, "Zombie", 2, 2, CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of(), true);
-        addEffect(EffectSlot.SPELL,
-                new MillEachPlayerAndCreateTokensForMilledCreaturesEffect(new XValue(), tappedZombie));
+        addSpellEffect(new MillEachPlayerAndCreateTokensForMilledCreaturesEffect(new XValue(), tappedZombie));
     }
 }

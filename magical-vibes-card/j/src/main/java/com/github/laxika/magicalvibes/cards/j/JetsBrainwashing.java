@@ -23,13 +23,13 @@ public class JetsBrainwashing extends Card {
     public JetsBrainwashing() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new UntapPermanentsEffect(TapUntapScope.TARGET)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
+        addSpellEffect(CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

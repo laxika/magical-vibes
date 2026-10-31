@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,6 +18,6 @@ public class PraetorsGrasp extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
         ))
-                .addEffect(EffectSlot.SPELL, new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE_PLAYABLE, false));
+                .addSpellEffect(new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE_PLAYABLE, false));
     }
 }

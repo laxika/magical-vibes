@@ -14,7 +14,7 @@ public class MysticSpeculation extends Card {
 
     public MysticSpeculation() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{2}"));
-        addEffect(EffectSlot.SPELL, new ScryEffect(3));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ScryEffect(3));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

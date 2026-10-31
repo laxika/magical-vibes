@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
@@ -12,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class Redirect extends Card {
 
     public Redirect() {
-        addEffect(EffectSlot.SPELL, new MayEffect(new ChooseNewTargetsForTargetSpellEffect(), "Choose new targets?"));
+        addSpellEffect(new MayEffect(new ChooseNewTargetsForTargetSpellEffect(), "Choose new targets?"));
     }
 }

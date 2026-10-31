@@ -25,13 +25,11 @@ import java.util.Set;
 public class WitchsMark extends Card {
 
     public WitchsMark() {
-        addEffect(EffectSlot.SPELL,
-                new MayEffect(
+        addSpellEffect(new MayEffect(
                         new DiscardAndDrawCardEffect(1, 2),
                         "Discard a card to draw two cards?"));
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
     }
 
     private static CreateTokenEffect wickedRoleToken() {

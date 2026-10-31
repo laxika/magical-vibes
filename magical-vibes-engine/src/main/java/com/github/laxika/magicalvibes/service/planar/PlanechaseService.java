@@ -357,8 +357,8 @@ public class PlanechaseService {
                         || conditionEvaluationService.isMet(game, conditional.condition(),
                         ConditionContext.forCard(card, controller)))
                 .toList();
-        boolean needsSlotBySlotTargetSelection = card.getSpellTargets().size() > 1
-                || card.getSpellTargets().stream().anyMatch(target -> target.getMaxTargets() > 1
+        boolean needsSlotBySlotTargetSelection = card.getTargetGroups().size() > 1
+                || card.getTargetGroups().stream().anyMatch(target -> target.getMaxTargets() > 1
                 || target.getMinTargets() == 0 || target.getDynamicMinTargets() != null);
         boolean batchesWholeAbility = needsSlotBySlotTargetSelection
                 && effects.stream().anyMatch(effect -> card.getEffectTargetIndex(effect) >= 0);
@@ -372,7 +372,7 @@ public class PlanechaseService {
             if (needsSlotBySlotTargetSelection && card.getEffectTargetIndex(effect) >= 0) {
                 if (isStandaloneSingleTargetEffect(card, effect, effects)) {
                     int targetGroupIndex = card.getEffectTargetIndex(effect);
-                    TargetFilter targetFilter = card.getSpellTargets().get(targetGroupIndex).getFilter();
+                    TargetFilter targetFilter = card.getTargetGroups().get(targetGroupIndex).getFilter();
                     boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
                     game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -404,8 +404,8 @@ public class PlanechaseService {
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
                 int targetGroupIndex = card.getEffectTargetIndex(effect);
                 TargetFilter targetFilter = targetGroupIndex >= 0
-                        ? card.getSpellTargets().get(targetGroupIndex).getFilter()
-                        : card.getSpellTargets().stream()
+                        ? card.getTargetGroups().get(targetGroupIndex).getFilter()
+                        : card.getTargetGroups().stream()
                                 .noneMatch(target -> card.bindsEffectToTargetGroup(target.getIndex()))
                                 ? card.getTargetFilter() : null;
                 game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -430,7 +430,7 @@ public class PlanechaseService {
             return false;
         }
         int targetGroupIndex = card.getEffectTargetIndex(effect);
-        if (targetGroupIndex < 0 || targetGroupIndex >= card.getSpellTargets().size()) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= card.getTargetGroups().size()) {
             return false;
         }
         // A bare positional group directly before this effect's bound group belongs to the
@@ -439,7 +439,7 @@ public class PlanechaseService {
         if (targetGroupIndex > 0 && !card.bindsEffectToTargetGroup(targetGroupIndex - 1)) {
             return false;
         }
-        SpellTarget targetGroup = card.getSpellTargets().get(targetGroupIndex);
+        TargetGroup targetGroup = card.getTargetGroups().get(targetGroupIndex);
         return targetGroup.getMinTargets() == 1 && targetGroup.getMaxTargets() == 1;
     }
 

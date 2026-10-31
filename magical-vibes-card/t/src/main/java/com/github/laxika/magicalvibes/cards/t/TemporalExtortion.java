@@ -14,6 +14,6 @@ public class TemporalExtortion extends Card {
     public TemporalExtortion() {
         addEffect(EffectSlot.ON_SELF_CAST,
                 new AnyPlayerMayPayLifeToCounterSpellEffect(new HalfControllerLifeRoundedUp()));
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ControllerExtraTurnEffect(1));
     }
 }

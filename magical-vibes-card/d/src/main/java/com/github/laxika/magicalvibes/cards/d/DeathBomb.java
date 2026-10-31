@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -21,6 +20,7 @@ import java.util.Set;
 public class DeathBomb extends Card {
 
     public DeathBomb() {
+        addCastingCost(new SacrificeCreatureCost());
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -28,8 +28,7 @@ public class DeathBomb extends Card {
                 )),
                 "Target must be a nonblack creature"
         ))
-                .addEffect(EffectSlot.SPELL, new SacrificeCreatureCost())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
+                .addSpellEffect(new DestroyTargetPermanentEffect(true))
+                .addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

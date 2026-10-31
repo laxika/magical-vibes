@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftTwiceFromSpellbookEffect;
 
@@ -24,6 +23,6 @@ public class RelicsOfTheRubblebelt extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("DIS", "166"));
 
     public RelicsOfTheRubblebelt() {
-        addEffect(EffectSlot.SPELL, new DraftTwiceFromSpellbookEffect(SPELLBOOK));
+        addSpellEffect(new DraftTwiceFromSpellbookEffect(SPELLBOOK));
     }
 }

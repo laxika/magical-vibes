@@ -18,6 +18,6 @@ public class WizardsLightning extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
     }
 }

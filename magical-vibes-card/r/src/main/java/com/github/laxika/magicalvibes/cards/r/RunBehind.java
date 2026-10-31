@@ -15,6 +15,6 @@ public class RunBehind extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentIsAttackingPredicate(), 1));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
+                .addSpellEffect(new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
     }
 }

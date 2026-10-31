@@ -24,13 +24,13 @@ public class SpellchainScatter extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new RegisterDelayedControllerSpellCastTriggerEffect(
                         instantOrSorcery,
                         List.of(new ConjureDuplicateOfTriggeringSpellIntoHandEffect(false)),
                         true,
                         false)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotKicked(),
+        addSpellEffect(new ConditionalEffect(new NotKicked(),
                 new RegisterDelayedControllerSpellCastTriggerEffect(
                         instantOrSorcery,
                         List.of(new ConjureDuplicateOfTriggeringSpellIntoHandEffect(true)),

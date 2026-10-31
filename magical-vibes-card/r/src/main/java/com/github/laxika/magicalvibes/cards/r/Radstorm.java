@@ -14,7 +14,7 @@ public class Radstorm extends Card {
 
     public Radstorm() {
         // Proliferate.
-        addEffect(EffectSlot.SPELL, new ProliferateEffect());
+        addSpellEffect(new ProliferateEffect());
 
         // Storm (When you cast this spell, copy it for each spell cast before it this turn.)
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());

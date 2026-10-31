@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -23,9 +22,9 @@ public class MonasteryRaid extends Card {
 
         // This card's only alternate cost is freerunning, so CastForAlternateCost identifies
         // whether its freerunning cost was paid at resolution.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new ExileTopCardsMayPlayUntilNextTurnEffect(new XValue())));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()), new ExileTopCardsMayPlayUntilNextTurnEffect(2)));
     }
 }

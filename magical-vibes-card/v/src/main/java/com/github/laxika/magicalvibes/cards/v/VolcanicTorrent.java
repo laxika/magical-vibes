@@ -23,7 +23,7 @@ public class VolcanicTorrent extends Card {
 
         // Volcanic Torrent deals damage to each creature and planeswalker opponents control equal
         // to the number of spells its controller has cast this turn.
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(
+        addSpellEffect(new MassDamageEffect(
                 new SpellsCastThisTurn(CountScope.CONTROLLER), false, true,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))
                 .withFilterAppliedToPlaneswalkers());

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -20,11 +19,11 @@ public class CodeOfConstraint extends Card {
 
     public CodeOfConstraint() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-4, 0))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
+                .addSpellEffect(new BoostTargetCreatureEffect(-4, 0))
+                .addSpellEffect(new DrawCardEffect(1))
+                .addSpellEffect(new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
                         new TapPermanentsEffect(TapUntapScope.TARGET)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
+                .addSpellEffect(new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
                         new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }
 }

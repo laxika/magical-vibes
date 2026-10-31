@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -15,8 +14,8 @@ public class Formation extends Card {
     public Formation() {
         // "Target creature gains banding until end of turn."
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.BANDING, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.BANDING, GrantScope.TARGET));
         // "Draw a card at the beginning of the next turn's upkeep."
-        addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
+        addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -15,7 +14,7 @@ import java.util.Set;
 public class ForbiddenFriendship extends Card {
 
     public ForbiddenFriendship() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Dinosaur", 1, 1, CardColor.RED, List.of(CardSubtype.DINOSAUR),
                 Set.of(Keyword.HASTE), Set.of()).withSimultaneousTokens(List.of(
                 new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,

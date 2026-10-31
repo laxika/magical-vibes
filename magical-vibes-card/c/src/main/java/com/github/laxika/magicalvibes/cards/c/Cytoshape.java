@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -24,8 +23,7 @@ public class Cytoshape extends Card {
 
     public Cytoshape() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect(
+                .addSpellEffect(new MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect(
                                 NONLEGENDARY_CREATURE));
     }
 }

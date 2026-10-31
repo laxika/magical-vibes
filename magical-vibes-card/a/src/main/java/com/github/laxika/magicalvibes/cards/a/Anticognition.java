@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -25,7 +24,7 @@ public class Anticognition extends Card {
                         StackEntryType.PLANESWALKER_SPELL
                 )),
                 "Target must be a creature or planeswalker spell."
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new OpponentGraveyardAtLeast(8),
                 new CounterUnlessPaysEffect(2),
                 SequenceEffect.of(new CounterSpellEffect(), new ScryEffect(2))

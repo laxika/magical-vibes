@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -68,7 +67,7 @@ final class AiTestPlayabilityStub {
                     GameData gameData = inv.getArgument(0);
                     UUID playerId = inv.getArgument(1);
                     Card card = inv.getArgument(2);
-                    boolean hasDiscardCost = card.getEffects(EffectSlot.SPELL).stream()
+                    boolean hasDiscardCost = card.getCastingCosts().stream()
                             .anyMatch(e -> e instanceof DiscardCardTypeCost
                                     || e instanceof DiscardCardOrPayManaCost);
                     if (!hasDiscardCost) {
@@ -138,7 +137,7 @@ final class AiTestPlayabilityStub {
     private static boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             switch (effect) {
                 case SacrificeCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> p.getCard().hasType(CardType.CREATURE))) return false;

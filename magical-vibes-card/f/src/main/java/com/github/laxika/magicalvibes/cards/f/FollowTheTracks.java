@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 
@@ -19,6 +18,6 @@ public class FollowTheTracks extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("HBG", "78"));
 
     public FollowTheTracks() {
-        addEffect(EffectSlot.SPELL, DraftCardFromSpellbookEffect.conjureToBattlefield(SPELLBOOK));
+        addSpellEffect(DraftCardFromSpellbookEffect.conjureToBattlefield(SPELLBOOK));
     }
 }

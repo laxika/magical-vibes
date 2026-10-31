@@ -2056,7 +2056,7 @@ public class SpellCastTriggerCollectorService {
                         && !kicker.countsAsKicker());
         int count = spellEntry.isKicked() && !nonKickerAdditionalCost
                 && !spellEntry.getCard().getKeywords().contains(Keyword.BARGAIN) ? 1 : 0;
-        int repeatedMultikickerCount = spellEntry.getCard().getEffects(EffectSlot.SPELL).stream()
+        int repeatedMultikickerCount = spellEntry.getCard().getCastingCosts().stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
                 .mapToInt(cost -> cost.multikickerPaymentCount(spellEntry.getRepeatedAdditionalCosts()))
@@ -3365,8 +3365,8 @@ public class SpellCastTriggerCollectorService {
                         : SequenceEffect.of(queued.toArray(CardEffect[]::new));
                 queued = List.of(new MayEffect(optionalEffect, prompt));
             }
-            boolean multiTarget = sourceCard.getSpellTargets().size() > 1
-                    || sourceCard.getSpellTargets().stream()
+            boolean multiTarget = sourceCard.getTargetGroups().size() > 1
+                    || sourceCard.getTargetGroups().stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0);
             if (multiTarget) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -3533,10 +3533,10 @@ public class SpellCastTriggerCollectorService {
     }
 
     private boolean hasOptionalSingleTarget(Card card, CardEffect effect) {
-        if (card.getSpellTargets().size() != 1) {
+        if (card.getTargetGroups().size() != 1) {
             return false;
         }
-        var target = card.getSpellTargets().getFirst();
+        var target = card.getTargetGroups().getFirst();
         return target.getMinTargets() == 0
                 && target.getMaxTargets() == 1
                 && card.getEffectTargetIndex(effect) == target.getIndex();

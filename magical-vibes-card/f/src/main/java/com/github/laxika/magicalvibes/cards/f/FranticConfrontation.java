@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -18,8 +17,8 @@ public class FranticConfrontation extends Card {
 
     public FranticConfrontation() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(new XValue(), new Fixed(0)))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(new XValue(), new Fixed(0)))
+                .addSpellEffect(new GrantKeywordEffect(
                         Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), GrantScope.TARGET));
     }
 }

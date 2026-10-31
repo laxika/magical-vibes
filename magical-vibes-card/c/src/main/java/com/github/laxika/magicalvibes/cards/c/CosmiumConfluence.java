@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.AnimateChosenPermanentEffect;
@@ -26,7 +25,7 @@ public class CosmiumConfluence extends Card {
 
     public CosmiumConfluence() {
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+        addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Search your library for a Cave card, put it onto the battlefield tapped, then shuffle.",
                         new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.CAVE),

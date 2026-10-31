@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 public class RuinousWaterbending extends Card {
 
     public RuinousWaterbending() {
-        addEffect(EffectSlot.SPELL, WaterbendCost.optional(4));
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-2, -2));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new WaterbendCostPaid(),
+        addCastingCost(WaterbendCost.optional(4));
+        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(new ConditionalEffect(new WaterbendCostPaid(),
                 new RegisterDelayedCreatureDeathTriggerEffect(new GainLifeEffect(1))));
     }
 }

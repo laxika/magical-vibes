@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 
 /**
@@ -18,7 +17,7 @@ public class RagsRiches extends Card {
         setBackFaceCard(new Riches());
 
         // All creatures get -2/-2 until end of turn.
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
     }
 
     @Override

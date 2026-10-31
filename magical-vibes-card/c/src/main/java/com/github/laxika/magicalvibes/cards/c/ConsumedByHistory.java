@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 public class ConsumedByHistory extends Card {
 
     public ConsumedByHistory() {
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
                 new PerpetuallyGrantGraveyardAbilityToTargetCardEffect(Card.unearthAbility("{5}"))));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(3));
+        addSpellEffect(new MassDamageEffect(3));
     }
 }

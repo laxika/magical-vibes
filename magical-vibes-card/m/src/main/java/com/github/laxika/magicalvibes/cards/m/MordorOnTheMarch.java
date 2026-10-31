@@ -15,7 +15,7 @@ import java.util.List;
 public class MordorOnTheMarch extends Card {
 
     public MordorOnTheMarch() {
-        addEffect(EffectSlot.SPELL, new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+        addSpellEffect(new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 true,
                 List.of(),

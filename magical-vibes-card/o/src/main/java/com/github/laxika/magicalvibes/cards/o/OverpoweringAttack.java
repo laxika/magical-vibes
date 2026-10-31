@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.Freerunning;
@@ -23,12 +22,12 @@ public class OverpoweringAttack extends Card {
     public OverpoweringAttack() {
         addCastingOption(new AlternateHandCast(
                 List.of(new ManaCastingCost("{2}{R}")), new Freerunning(), false));
-        addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(
+        addSpellEffect(new UntapPermanentsEffect(
                 TapUntapScope.CONTROLLED,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentAttackedThisTurnPredicate()))));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerMainPhase(),
+        addSpellEffect(new ConditionalEffect(new ControllerMainPhase(),
                 new AdditionalCombatMainPhaseEffect(1)));
     }
 }

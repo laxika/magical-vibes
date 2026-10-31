@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -24,10 +23,10 @@ public class ReapIntellect extends Card {
         // exiled card, the caster searches that player's graveyard, hand, and library for any number of
         // cards with the same name and exiles them. The shuffle is its own final step: it happens even
         // when no card is chosen.
-        addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
+        addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 new XValue(), List.of(), List.of(), HandChoiceDestination.EXILE, false,
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true, true));
-        addEffect(EffectSlot.SPELL, new ShuffleLibraryEffect(true));
+        addSpellEffect(new ShuffleLibraryEffect(true));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"));
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -15,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class Exhume extends Card {
 
     public Exhume() {
-        addEffect(EffectSlot.SPELL,
-                EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.mandatory(
+        addSpellEffect(EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.mandatory(
                         1,
                         new CardTypePredicate(CardType.CREATURE)));
     }

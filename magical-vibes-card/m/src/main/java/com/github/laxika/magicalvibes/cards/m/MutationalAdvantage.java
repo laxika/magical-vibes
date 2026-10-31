@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,9 +21,9 @@ public class MutationalAdvantage extends Card {
 
     public MutationalAdvantage() {
         PermanentHasCountersPredicate hasCounters = new PermanentHasCountersPredicate(CounterType.ANY);
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+        addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_PERMANENTS, hasCounters));
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControlledMatchingPermanentsAtResolution(hasCounters));
-        addEffect(EffectSlot.SPELL, new ProliferateEffect());
+        addSpellEffect(PreventDamageEffect.allToControlledMatchingPermanentsAtResolution(hasCounters));
+        addSpellEffect(new ProliferateEffect());
     }
 }

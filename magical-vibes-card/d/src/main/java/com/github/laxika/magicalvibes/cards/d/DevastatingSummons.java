@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,8 +19,8 @@ import java.util.Set;
 public class DevastatingSummons extends Card {
 
     public DevastatingSummons() {
-        addEffect(EffectSlot.SPELL, new SacrificeAnyNumberOfPermanentsCost(new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addCastingCost(new SacrificeAnyNumberOfPermanentsCost(new PermanentIsLandPredicate()));
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 new Fixed(2),
                 "Elemental",

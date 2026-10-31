@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToOwnPermanentsUntilEndOfTurnEffect;
@@ -24,14 +23,14 @@ public class PushTheLimit extends Card {
         CardAnyOfPredicate mountOrVehicle = new CardAnyOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.MOUNT),
                 new CardSubtypePredicate(CardSubtype.VEHICLE)));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(mountOrVehicle)
                 .returnAll(true)
                 .sacrificeAtEndStep(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new AddCardTypeToOwnPermanentsUntilEndOfTurnEffect(
+        addSpellEffect(new AddCardTypeToOwnPermanentsUntilEndOfTurnEffect(
                 CardType.CREATURE, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
     }
 }

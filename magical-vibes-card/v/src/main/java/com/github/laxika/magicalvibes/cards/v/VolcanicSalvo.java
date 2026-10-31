@@ -28,7 +28,7 @@ public class VolcanicSalvo extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
                 "Targets must be creatures or planeswalkers"), 0, 2)
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(
+                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                         new Fixed(6)));
     }
 }

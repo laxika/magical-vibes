@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -23,10 +22,10 @@ import java.util.List;
 public class GrabTheReins extends Card {
 
     public GrabTheReins() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{2}{R}"));
+        addCastingCost(new EscalateManaCost("{2}{R}"));
         setAllowSharedTargets(true);
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, you gain control of target creature and it gains haste",
                         List.of(

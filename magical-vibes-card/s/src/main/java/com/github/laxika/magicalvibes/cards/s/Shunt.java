@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -23,6 +22,6 @@ public class Shunt extends Card {
                         new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
                                 StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))))),
                 "Target spell must have a single target."
-        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
+        )).addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect());
     }
 }

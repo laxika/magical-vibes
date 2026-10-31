@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -21,9 +20,9 @@ public class FeloniousRage extends Card {
 
     public FeloniousRage() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
                         new CreateTokenEffect(1, "Detective", 2, 2, CardColor.WHITE,
                                 Set.of(CardColor.WHITE, CardColor.BLUE), List.of(CardSubtype.DETECTIVE))));
     }

@@ -25,7 +25,7 @@ public class HeroicReturn extends Card {
 
         // Return target creature card from your graveyard to the battlefield. If a Hero enters
         // this way, it enters with two additional +1/+1 counters on it.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

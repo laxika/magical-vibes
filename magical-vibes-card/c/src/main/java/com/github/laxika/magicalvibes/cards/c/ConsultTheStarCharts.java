@@ -19,7 +19,7 @@ public class ConsultTheStarCharts extends Card {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(landsYouControl, 1),
                 LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(landsYouControl, 2)));
     }

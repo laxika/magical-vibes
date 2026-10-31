@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -17,9 +16,9 @@ import java.util.List;
 public class FatedRetribution extends Card {
 
     public FatedRetribution() {
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsPlaneswalkerPredicate()))));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerTurn(), new ScryEffect(2)));
+        addSpellEffect(new ConditionalEffect(new ControllerTurn(), new ScryEffect(2)));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -14,8 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class PathOfTheAnimist extends Card {
 
     public PathOfTheAnimist() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
+        addSpellEffect(new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
                 LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.SPELL, new WillOfThePlaneswalkersEffect());
+        addSpellEffect(new WillOfThePlaneswalkersEffect());
     }
 }

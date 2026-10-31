@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -27,15 +26,12 @@ public class ThoughtRattle extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL,
-                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND),
+                .addSpellEffect(new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND),
                                 HandChoiceDestination.EXILE).withRevealMatchingOnly())
-                .addEffect(EffectSlot.SPELL,
-                        new ConditionalEffect(new GraveyardCardThreshold(7, null),
+                .addSpellEffect(new ConditionalEffect(new GraveyardCardThreshold(7, null),
                                 new SeekLibraryAndPerpetuallyReduceSoughtCardEffect(
                                         new CardSubtypePredicate(CardSubtype.RAT))))
-                .addEffect(EffectSlot.SPELL,
-                        new GainLifeEffect(new MatchingCardsInHand(
+                .addSpellEffect(new GainLifeEffect(new MatchingCardsInHand(
                                 CountScope.CONTROLLER, new CardSubtypePredicate(CardSubtype.RAT))));
     }
 }

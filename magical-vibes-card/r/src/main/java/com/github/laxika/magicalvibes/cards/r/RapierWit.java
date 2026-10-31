@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -18,10 +17,10 @@ public class RapierWit extends Card {
     public RapierWit() {
         // Tap target creature. If it's your turn, put a stun counter on it.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerTurn(),
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new ConditionalEffect(new ControllerTurn(),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN)));
         // Draw a card.
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new DrawCardEffect());
     }
 }

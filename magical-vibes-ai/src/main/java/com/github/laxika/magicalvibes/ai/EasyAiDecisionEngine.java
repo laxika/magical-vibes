@@ -598,7 +598,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Mass damage spells are only beneficial if they kill more opponent creatures than our own
-        for (var effect : card.getEffects(EffectSlot.SPELL)) {
+        for (var effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof MassDamageEffect aoe) {
                 // Easy AI only reasons about fixed damage; dynamic amounts (X, event value)
                 // estimate as 0, matching the former int-field behavior for X spells.

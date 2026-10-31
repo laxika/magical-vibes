@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
@@ -28,7 +27,7 @@ public class DomineeringWill extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new TargetGroupMarkerEffect());
+        )).addSpellEffect(new TargetGroupMarkerEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -37,11 +36,9 @@ public class DomineeringWill extends Card {
                 )),
                 "Target must be a nonattacking creature"
         ), 0, 3)
-                .addEffect(EffectSlot.SPELL,
-                        new TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1))
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
-                .addEffect(EffectSlot.SPELL,
-                        new SetCombatRequirementThisTurnEffect(
+                .addSpellEffect(new TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1))
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
+                .addSpellEffect(new SetCombatRequirementThisTurnEffect(
                                 CombatRequirement.MUST_BLOCK, GrantScope.TARGETS));
     }
 }

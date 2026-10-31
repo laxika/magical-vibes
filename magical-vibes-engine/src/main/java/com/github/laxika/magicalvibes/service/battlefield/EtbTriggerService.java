@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -542,7 +542,7 @@ public class EtbTriggerService {
                     } else if (independentGroup >= 0) {
                         int offset = 0;
                         independentTargets = List.of();
-                        for (SpellTarget group : card.getSpellTargets()) {
+                        for (TargetGroup group : card.getTargetGroups()) {
                             int maximum = kicked ? group.getKickedMaxTargets() : group.getMaxTargets();
                             if (group.getDynamicMaxTargets() != null) {
                                 maximum = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
@@ -721,7 +721,7 @@ public class EtbTriggerService {
     }
 
     private int countMultikickerPayments(Card card, List<String> repeatedAdditionalCosts) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCosts().stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
                 .mapToInt(cost -> cost.multikickerPaymentCount(repeatedAdditionalCosts))
@@ -1054,7 +1054,7 @@ public class EtbTriggerService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 
-                if (card.getSpellTargets().size() > 1 || etbTokenTargetService.needsSlotBySlotTargetSelection(card)) {
+                if (card.getTargetGroups().size() > 1 || etbTokenTargetService.needsSlotBySlotTargetSelection(card)) {
                     // Multi-target ETB (e.g. Burning Sun's Avatar, or a single group with
                     // "up to N" targets): choose slot-by-slot at trigger time,
                     // accumulating into targetIds.
@@ -1106,7 +1106,7 @@ public class EtbTriggerService {
                 UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
-                        new ArrayList<>(activeTargetIds), card.getSpellTargets().size(), 0,
+                        new ArrayList<>(activeTargetIds), card.getTargetGroups().size(), 0,
                         List.of(activeTargetIds.size()), xValue,
                         repeatedAdditionalCosts == null ? List.of() : List.copyOf(repeatedAdditionalCosts)));
                 gameLogService.append(gameData,
@@ -1181,7 +1181,7 @@ public class EtbTriggerService {
                 // Naban: extra triggers for Wizard ETB. A copy of a single-target ETB chooses its own
                 // target as it goes on the stack (CR 603.3d), so it does not reuse the cast-time target.
                 boolean extraCopiesChooseTargets = extraTriggerCopies > 0 && etbNeedsTarget && targetId != null
-                        && !card.isAura() && !hasDynamicTargetCount && card.getSpellTargets().size() <= 1;
+                        && !card.isAura() && !hasDynamicTargetCount && card.getTargetGroups().size() <= 1;
                 if (extraCopiesChooseTargets) {
                     TargetFilter copyTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
                     for (int i = 0; i < extraTriggerCopies; i++) {
@@ -1443,10 +1443,10 @@ public class EtbTriggerService {
                                                   List<String> repeatedAdditionalCosts) {
         int maximumTargets = effect.count();
         int targetIndex = card.getEffectTargetIndex(effect);
-        if (targetIndex < 0 || targetIndex >= card.getSpellTargets().size()) {
+        if (targetIndex < 0 || targetIndex >= card.getTargetGroups().size()) {
             return maximumTargets;
         }
-        SpellTarget target = card.getSpellTargets().get(targetIndex);
+        TargetGroup target = card.getTargetGroups().get(targetIndex);
         if (target.getDynamicMaxTargets() == null) {
             return maximumTargets;
         }
@@ -1457,8 +1457,8 @@ public class EtbTriggerService {
 
     private int minimumGraveyardTargets(Card card, CardEffect effect) {
         int targetIndex = card.getEffectTargetIndex(effect);
-        if (targetIndex >= 0 && targetIndex < card.getSpellTargets().size()) {
-            SpellTarget target = card.getSpellTargets().get(targetIndex);
+        if (targetIndex >= 0 && targetIndex < card.getTargetGroups().size()) {
+            TargetGroup target = card.getTargetGroups().get(targetIndex);
             return target.getMinTargets();
         }
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
@@ -1499,12 +1499,12 @@ public class EtbTriggerService {
     }
 
     private List<UUID> targetsForActiveEtbGroups(Card card, List<CardEffect> effects, List<UUID> targetIds) {
-        if (targetIds == null || targetIds.isEmpty() || card.getSpellTargets().isEmpty()) {
+        if (targetIds == null || targetIds.isEmpty() || card.getTargetGroups().isEmpty()) {
             return targetIds == null ? List.of() : targetIds;
         }
         List<UUID> activeTargets = new ArrayList<>();
         int consumed = 0;
-        for (SpellTarget group : card.getSpellTargets()) {
+        for (TargetGroup group : card.getTargetGroups()) {
             if (card.isAura() && group.getIndex() == 0) {
                 continue;
             }
@@ -1527,7 +1527,7 @@ public class EtbTriggerService {
         if (targetId == null || targetIds == null || !targetIds.isEmpty()) {
             return false;
         }
-        for (SpellTarget group : card.getSpellTargets()) {
+        for (TargetGroup group : card.getTargetGroups()) {
             if (group.getDynamicMaxTargets() == null) {
                 continue;
             }

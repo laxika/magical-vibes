@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.MistgatePathway;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -19,7 +18,7 @@ public class HengegatePathway extends Card {
         setModalDoubleFaced(true);
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Hengegate Pathway", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Mistgate Pathway", List.of())
         )));

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -16,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HurkylsRecall extends Card {
 
     public HurkylsRecall() {
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate()));
+        addSpellEffect(ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate()));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -19,10 +18,10 @@ import java.util.Set;
 public class ForthEorlingas extends Card {
 
     public ForthEorlingas() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new XValue(), "Human Knight", 2, 2, CardColor.RED,
                 List.of(CardSubtype.HUMAN, CardSubtype.KNIGHT),
                 Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()));
-        addEffect(EffectSlot.SPELL, new RegisterDelayedCombatDamageBecomeMonarchEffect());
+        addSpellEffect(new RegisterDelayedCombatDamageBecomeMonarchEffect());
     }
 }

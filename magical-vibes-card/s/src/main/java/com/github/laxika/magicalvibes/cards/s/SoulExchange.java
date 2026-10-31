@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -17,8 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class SoulExchange extends Card {
 
     public SoulExchange() {
-        addEffect(EffectSlot.SPELL, new ExileCreatureCost());
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addCastingCost(new ExileCreatureCost());
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

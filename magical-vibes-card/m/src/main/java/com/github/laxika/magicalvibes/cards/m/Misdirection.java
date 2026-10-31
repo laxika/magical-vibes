@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -32,6 +31,6 @@ public class Misdirection extends Card {
                                         StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))),
                                 new StackEntryIsSingleTargetPredicate())),
                 "Target spell must have a single target."
-        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
+        )).addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect());
     }
 }

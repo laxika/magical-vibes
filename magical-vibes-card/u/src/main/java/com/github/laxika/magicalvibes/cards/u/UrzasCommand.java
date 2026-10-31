@@ -34,7 +34,7 @@ public class UrzasCommand extends Card {
                 Map.of(EffectSlot.STATIC, new BoostSelfEffect(artifactsYouControl, artifactsYouControl)), List.of(),
                 false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you don't control get -2/-0 until end of turn",
                         new BoostAllCreaturesEffect(-2, 0,

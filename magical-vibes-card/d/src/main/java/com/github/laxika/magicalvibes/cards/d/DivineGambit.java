@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -33,8 +32,7 @@ public class DivineGambit extends Card {
                 )),
                 "Target must be an artifact, creature, or enchantment an opponent controls"
         ))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL,
-                        new OpponentMayPlayCreatureEffect(new CardIsPermanentPredicate(), "permanent"));
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new OpponentMayPlayCreatureEffect(new CardIsPermanentPredicate(), "permanent"));
     }
 }

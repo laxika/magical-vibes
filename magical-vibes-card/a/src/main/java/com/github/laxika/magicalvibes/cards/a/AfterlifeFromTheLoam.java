@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
@@ -19,10 +18,10 @@ public class AfterlifeFromTheLoam extends Card {
     public AfterlifeFromTheLoam() {
         CardTypePredicate creatureCards = new CardTypePredicate(CardType.CREATURE);
 
-        addEffect(EffectSlot.SPELL, new DelveCost());
+        addCastingCost(new DelveCost());
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(new GraveyardCardPredicateTargetFilter(creatureCards, GraveyardSearchScope.ALL_GRAVEYARDS), 0, 99)
-                .addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                .addSpellEffect(new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         creatureCards, 99, false, false, null, 0, null, CardSubtype.ZOMBIE, null,
                         0, GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false));
     }

@@ -1163,7 +1163,7 @@ public class AiManaManager {
         // For requiresManaValueEqualsX spells (e.g. Postmortem Lunge), X must match the
         // graveyard target's mana value — pick X = target's mana value if affordable.
         if (targetId != null) {
-            for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
                 if (effect instanceof ReturnCardFromGraveyardEffect rge && rge.requiresManaValueEqualsX()) {
                     Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
                     if (graveyardCard != null) {

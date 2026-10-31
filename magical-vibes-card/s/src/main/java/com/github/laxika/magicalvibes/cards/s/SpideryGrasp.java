@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SpideryGrasp extends Card {
 
     public SpideryGrasp() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 4))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.REACH, GrantScope.TARGET));
+        target(TargetFilters.creature()).addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 4))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.TARGET));
     }
 }

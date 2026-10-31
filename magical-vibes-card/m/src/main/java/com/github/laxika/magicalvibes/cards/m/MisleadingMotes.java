@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,6 +10,6 @@ public class MisleadingMotes extends Card {
 
     public MisleadingMotes() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
+                .addSpellEffect(new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
     }
 }

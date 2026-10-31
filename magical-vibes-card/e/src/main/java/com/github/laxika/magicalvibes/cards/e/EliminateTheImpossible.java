@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectAllCreaturesEffect;
@@ -16,8 +15,8 @@ public class EliminateTheImpossible extends Card {
     public EliminateTheImpossible() {
         PermanentPredicate opponentPermanent =
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate());
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-2, 0, opponentPermanent));
-        addEffect(EffectSlot.SPELL, new UnsuspectAllCreaturesEffect(opponentPermanent));
+        addSpellEffect(CreateTokenEffect.ofClueToken(1));
+        addSpellEffect(new BoostAllCreaturesEffect(-2, 0, opponentPermanent));
+        addSpellEffect(new UnsuspectAllCreaturesEffect(opponentPermanent));
     }
 }

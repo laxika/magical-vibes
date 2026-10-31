@@ -24,7 +24,7 @@ public class TicketBoothTunnelOfHate extends Card {
     public TicketBoothTunnelOfHate() {
         setRoomDoorManaCosts(List.of("{2}{R}", "{4}{R}{R}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Ticket Booth", List.of())
                         .withManaCost("{2}{R}"),
                 new ChooseOneEffect.ChooseOneOption("Tunnel of Hate", List.of())

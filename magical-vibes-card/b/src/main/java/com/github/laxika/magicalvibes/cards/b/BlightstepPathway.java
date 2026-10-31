@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SearstepPathway;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -20,7 +19,7 @@ public class BlightstepPathway extends Card {
         setModalDoubleFaced(true);
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Blightstep Pathway", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Searstep Pathway", List.of())
         )));

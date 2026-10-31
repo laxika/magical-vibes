@@ -14,9 +14,9 @@ public class MagmaBurst extends Card {
 
     public MagmaBurst() {
         addEffect(EffectSlot.STATIC, new KickerEffect(2, new PermanentIsLandPredicate(), "two lands"));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
         targetWhenKicked(null, 0, 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         DealDamageToAnyTargetEffect.forTargetGroup(3, 0)));
     }
 }

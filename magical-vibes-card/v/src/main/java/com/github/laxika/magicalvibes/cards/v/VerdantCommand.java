@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -44,7 +43,7 @@ public class VerdantCommand extends Card {
                 2, "Squirrel", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SQUIRREL), Set.of(), Set.of()).withTapped(true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player creates two tapped 1/1 green Squirrel creature tokens",
                         new CreateTokenForTargetPlayerEffect(squirrels), anyPlayer),

@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class StormOfMemories extends Card {
 
     public StormOfMemories() {
-        addEffect(EffectSlot.SPELL,
-                new ExileRandomInstantOrSorceryFromGraveyardAndMayCastFreeEffect(3));
+        addSpellEffect(new ExileRandomInstantOrSorceryFromGraveyardAndMayCastFreeEffect(3));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

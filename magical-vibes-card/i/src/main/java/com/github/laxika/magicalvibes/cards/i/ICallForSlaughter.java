@@ -23,10 +23,10 @@ public class ICallForSlaughter extends Card {
         Map<EffectSlot, CardEffect> tokenEffects =
                 Map.of(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1));
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 3, "Devil", 1, 1, CardColor.RED, null,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), false, false,
                 tokenEffects, List.of(), false, false, false, 0, Set.of(Keyword.HASTE)));
-        addEffect(EffectSlot.SPELL, new BoostControllerDamageThisTurnEffect(1));
+        addSpellEffect(new BoostControllerDamageThisTurnEffect(1));
     }
 }

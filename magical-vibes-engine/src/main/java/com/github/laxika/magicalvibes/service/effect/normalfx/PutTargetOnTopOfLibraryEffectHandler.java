@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -116,7 +115,7 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
         if (targeting == null) {
             return List.of();
         }
-        return targeting.getEffects(EffectSlot.SPELL).stream()
+        return targeting.getSpellEffects().stream()
                 .filter(PutTargetOnTopOfLibraryEffect.class::isInstance)
                 .map(PutTargetOnTopOfLibraryEffect.class::cast)
                 .filter(sibling -> sibling.scope() == PutOnTopOfLibraryScope.TARGET)

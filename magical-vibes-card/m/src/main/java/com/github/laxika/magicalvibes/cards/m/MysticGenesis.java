@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,8 +19,8 @@ public class MysticGenesis extends Card {
         // Counter target spell. Create an X/X green Ooze creature token, where X is that spell's
         // mana value. Countering records the spell's mana value on the resolving entry, so the token
         // is still created at that size after the spell has left the stack (even if it was uncounterable).
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new CreateTokenEffect(
                 "Ooze",
                 new TargetSpellManaValue(),
                 new TargetSpellManaValue(),

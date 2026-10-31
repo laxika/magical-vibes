@@ -30,8 +30,8 @@ class StackEntryTargetGroupsTest {
         Card card = new Card();
         CardEffect first = new BoostTargetCreatureEffect(1, 1);
         CardEffect second = new BoostTargetCreatureEffect(-1, -1);
-        card.target(1, 1).addEffect(EffectSlot.SPELL, first);
-        card.target(1, 1).addEffect(EffectSlot.SPELL, second);
+        card.target(1, 1).addSpellEffect(first);
+        card.target(1, 1).addSpellEffect(second);
 
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
@@ -117,7 +117,7 @@ class StackEntryTargetGroupsTest {
     void separateGraveyardTargetDoesNotShiftFlatTargetGroups() {
         Card card = new Card();
         CardEffect effect = new BoostTargetCreatureEffect(1, 1);
-        card.target(1, 1).addEffect(EffectSlot.SPELL, effect);
+        card.target(1, 1).addSpellEffect(effect);
 
         UUID graveyardTarget = UUID.randomUUID();
         UUID battlefieldTarget = UUID.randomUUID();
@@ -139,7 +139,7 @@ class StackEntryTargetGroupsTest {
     void singleUpToNGroup() {
         Card card = new Card();
         CardEffect effect = new BoostTargetCreatureEffect(2, 2);
-        card.target(1, 2).addEffect(EffectSlot.SPELL, effect);
+        card.target(1, 2).addSpellEffect(effect);
 
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
@@ -154,8 +154,8 @@ class StackEntryTargetGroupsTest {
         Card card = new Card();
         CardEffect first = new BoostTargetCreatureEffect(1, 1);
         CardEffect rest = new BoostTargetCreatureEffect(0, 0);
-        card.target(1, 1).addEffect(EffectSlot.SPELL, first);
-        card.target(0, 2).addEffect(EffectSlot.SPELL, rest);
+        card.target(1, 1).addSpellEffect(first);
+        card.target(0, 2).addSpellEffect(rest);
 
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
@@ -175,7 +175,7 @@ class StackEntryTargetGroupsTest {
     void unboundEffectKeepsFlatList() {
         Card card = new Card();
         CardEffect unbound = new BoostTargetCreatureEffect(1, 1);
-        card.addEffect(EffectSlot.SPELL, unbound);
+        card.addSpellEffect(unbound);
 
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
@@ -202,7 +202,7 @@ class StackEntryTargetGroupsTest {
     void boundEffectFallsBackToSingleTargetId() {
         Card card = new Card();
         CardEffect effect = new BoostTargetCreatureEffect(1, 1);
-        card.target(1, 1).addEffect(EffectSlot.SPELL, effect);
+        card.target(1, 1).addSpellEffect(effect);
 
         UUID a = UUID.randomUUID();
         StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, CONTROLLER, "test",
@@ -254,7 +254,7 @@ class StackEntryTargetGroupsTest {
         CardEffect inner = new BoostTargetCreatureEffect(1, 0);
         CardEffect wrapper = new ConditionalEffect(new Kicked(), inner);
         card.target(1, 1);
-        card.target(1, 1).addEffect(EffectSlot.SPELL, wrapper);
+        card.target(1, 1).addSpellEffect(wrapper);
 
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();
@@ -270,11 +270,11 @@ class StackEntryTargetGroupsTest {
         Card back = new Card();
         CardEffect backEffect = new BoostTargetCreatureEffect(0, 0);
         back.target(1, 1);
-        back.target(1, 1).addEffect(EffectSlot.SPELL, backEffect);
+        back.target(1, 1).addSpellEffect(backEffect);
         back.addCastingOption(new FlashbackCast("{1}"));
 
         Card front = new Card();
-        front.target(1, 1).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
+        front.target(1, 1).addSpellEffect(new BoostTargetCreatureEffect(2, 2));
         front.setBackFaceCard(back);
 
         UUID a = UUID.randomUUID();

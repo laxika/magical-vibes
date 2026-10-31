@@ -34,7 +34,7 @@ public class EsikaGodOfTheTree extends Card {
                 new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(), GrantScope.OWN_CREATURES, legendaryCreature));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Esika, God of the Tree", List.of())
                         .withManaCost("{1}{G}{G}"),
                 new ChooseOneEffect.ChooseOneOption("The Prismatic Bridge", List.of())

@@ -25,11 +25,11 @@ public class PoolResources extends Card {
 
     public PoolResources() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(new GiftPromised()),
+        addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                 new DrawCardEffect(2)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new SeekLibraryEffect(2, new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
     }
 

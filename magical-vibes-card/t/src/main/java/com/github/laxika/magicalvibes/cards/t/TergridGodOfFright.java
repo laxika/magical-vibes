@@ -33,7 +33,7 @@ public class TergridGodOfFright extends Card {
                         new CardNotPredicate(new CardIsTokenPredicate()))),
                 returnSacrificedPermanent));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Tergrid, God of Fright", List.of())
                         .withManaCost("{3}{B}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Tergrid's Lantern", List.of())

@@ -56,7 +56,7 @@ public class DiceRollTriggerCollectorService {
                 || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
             int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
             TargetFilter targetFilter = targetGroupIndex >= 0
-                    ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
+                    ? sourceCard.getTargetGroups().get(targetGroupIndex).getFilter()
                     : sourceCard.getTargetFilter();
             boolean optionalTarget = effect.hasOptionalTarget()
                     || isOptionalSingleTarget(sourceCard, targetGroupIndex);
@@ -103,10 +103,10 @@ public class DiceRollTriggerCollectorService {
     }
 
     private boolean isOptionalSingleTarget(Card sourceCard, int targetGroupIndex) {
-        if (targetGroupIndex < 0 || targetGroupIndex >= sourceCard.getSpellTargets().size()) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= sourceCard.getTargetGroups().size()) {
             return false;
         }
-        var target = sourceCard.getSpellTargets().get(targetGroupIndex);
+        var target = sourceCard.getTargetGroups().get(targetGroupIndex);
         return target.getMinTargets() == 0 && target.getMaxTargets() == 1;
     }
 }

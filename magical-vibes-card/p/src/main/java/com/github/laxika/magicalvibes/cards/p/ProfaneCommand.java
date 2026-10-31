@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -40,7 +39,7 @@ public class ProfaneCommand extends Card {
         // single target slot; mode 1 uses intrinsic graveyard targeting (targetId); mode 3 is
         // an X-scaled "up to X" creature group (must stay last in card-text order so flat
         // targetIds slicing stays unambiguous).
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player loses X life",
                         new LoseLifeEffect(new XValue(), LoseLifeRecipient.TARGET_PLAYER),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -26,8 +25,8 @@ public class LaunchMishap extends Card {
                 )),
                 "Target must be a creature or planeswalker spell."
         ))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+                .addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new CreateTokenEffect(
                         "Thopter", 1, 1, null,
                         List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));
     }

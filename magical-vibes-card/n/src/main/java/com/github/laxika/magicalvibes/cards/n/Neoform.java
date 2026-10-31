@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -17,8 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class Neoform extends Card {
 
     public Neoform() {
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost(true));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addCastingCost(new SacrificeCreatureCost(true));
+        addSpellEffect(new SearchLibraryEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 LibrarySearchDestination.BATTLEFIELD,
                 new ManaValueBound(true, 1),

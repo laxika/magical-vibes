@@ -17,7 +17,7 @@ public class RendingVolley extends Card {
 
     public RendingVolley() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(
+        addSpellEffect(new DealDamageToTargetCreatureEffect(
                 4, new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE))));
     }
 }

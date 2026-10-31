@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
@@ -12,8 +11,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Omen extends Card {
 
     public Omen() {
-        addEffect(EffectSlot.SPELL, new ReorderTopCardsOfLibraryEffect(3));
-        addEffect(EffectSlot.SPELL, new MayEffect(new ShuffleLibraryEffect(false), "You may shuffle your library."));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new ReorderTopCardsOfLibraryEffect(3));
+        addSpellEffect(new MayEffect(new ShuffleLibraryEffect(false), "You may shuffle your library."));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

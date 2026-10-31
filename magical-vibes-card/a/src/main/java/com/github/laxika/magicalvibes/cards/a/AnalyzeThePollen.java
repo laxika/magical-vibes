@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
@@ -20,8 +19,8 @@ import java.util.List;
 public class AnalyzeThePollen extends Card {
 
     public AnalyzeThePollen() {
-        addEffect(EffectSlot.SPELL, new CollectEvidenceCost(8, true));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addCastingCost(new CollectEvidenceCost(8, true));
+        addSpellEffect(new ConditionalReplacementEffect(
                 new CollectEvidenceCostPaid(),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND),
                 new SearchLibraryEffect(new CardAnyOfPredicate(List.of(

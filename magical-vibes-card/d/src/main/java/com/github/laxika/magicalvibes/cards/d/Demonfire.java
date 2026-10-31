@@ -17,7 +17,6 @@ public class Demonfire extends Card {
 
     public Demonfire() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect(new ControllerHandEmpty()));
-        addEffect(EffectSlot.SPELL,
-                new DealDamageToAnyTargetEffect(new XValue(), false, true, -1, new ControllerHandEmpty()));
+        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue(), false, true, -1, new ControllerHandEmpty()));
     }
 }

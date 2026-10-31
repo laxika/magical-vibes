@@ -16,10 +16,10 @@ public class RooftopNuisance extends Card {
 
     public RooftopNuisance() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(1));
+        addCastingCost(new CasualtyCost(1));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

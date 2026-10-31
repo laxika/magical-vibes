@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -15,6 +14,6 @@ public class TemporalManipulation extends Card {
 
     public TemporalManipulation() {
         // "Take an extra turn after this one."
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ControllerExtraTurnEffect(1));
     }
 }

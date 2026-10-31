@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
@@ -27,7 +26,7 @@ public class ImposeHierarchy extends Card {
                         new PermanentMaxManaValuePredicate(4)
                 )),
                 "Target must be a creature with mana value 4 or less"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 new GainLifeEffect(new MatchingCardsInHand(
                         CountScope.TARGET_PLAYER, new CardTypePredicate(CardType.CREATURE))),
                 ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));

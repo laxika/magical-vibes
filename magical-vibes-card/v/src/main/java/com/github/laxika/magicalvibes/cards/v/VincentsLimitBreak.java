@@ -16,7 +16,7 @@ import java.util.List;
 public class VincentsLimitBreak extends Card {
 
     public VincentsLimitBreak() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Galian Beast — {0} — 3/2",
                         List.of(
@@ -42,6 +42,6 @@ public class VincentsLimitBreak extends Card {
                                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(true))),
                         TargetFilters.creatureYouControl())
         )));
-        addEffect(EffectSlot.SPELL, new TieredManaCost(List.of("", "{1}", "{3}")));
+        addCastingCost(new TieredManaCost(List.of("", "{1}", "{3}")));
     }
 }

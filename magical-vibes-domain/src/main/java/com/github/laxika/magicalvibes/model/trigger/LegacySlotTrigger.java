@@ -8,9 +8,9 @@ import java.util.Objects;
 /**
  * A trigger that is still an {@link EffectSlot}. The slot's collectors in the engine decide when
  * it triggers, how its registrations group into stack objects, and which wrapper effects filter or
- * limit it. Any slot is accepted except {@code SPELL}, {@code STATIC} and
- * {@code COMMAND_ZONE_STATIC}, which hold spell and static abilities; that includes the slots that
- * still hold mana abilities, replacement effects and special actions.
+ * limit it. Any slot is accepted except {@code STATIC} and {@code COMMAND_ZONE_STATIC}, which hold
+ * static abilities; that includes the slots that still hold mana abilities, replacement effects and
+ * special actions.
  *
  * @param slot the slot whose collectors decide when this trigger is met
  */
@@ -19,7 +19,6 @@ public record LegacySlotTrigger(EffectSlot slot) implements Trigger {
     public LegacySlotTrigger {
         Objects.requireNonNull(slot, "slot");
         switch (slot) {
-            case SPELL -> throw new IllegalArgumentException("SPELL holds spell abilities, not a trigger");
             case STATIC, COMMAND_ZONE_STATIC ->
                     throw new IllegalArgumentException(slot + " holds static abilities, not a trigger");
             default -> {

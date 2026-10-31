@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class FracturedSanity extends Card {
 
     public FracturedSanity() {
-        addEffect(EffectSlot.SPELL, new MillEffect(14, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new MillEffect(14, MillRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_SELF_CYCLED, new MillEffect(4, MillRecipient.EACH_OPPONENT));
         addCycling("{1}{U}");
     }

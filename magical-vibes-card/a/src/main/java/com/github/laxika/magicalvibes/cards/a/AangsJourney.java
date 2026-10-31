@@ -20,7 +20,7 @@ public class AangsJourney extends Card {
     public AangsJourney() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
 
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND),
                 SequenceEffect.of(
@@ -30,6 +30,6 @@ public class AangsJourney extends Card {
                                 .asContinuationOfPreviousSearch()
                 )
         ));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        addSpellEffect(new GainLifeEffect(2));
     }
 }

@@ -24,8 +24,8 @@ public class DrivenDespair extends Card {
 
         // Until end of turn, creatures you control gain trample and
         // "Whenever this creature deals combat damage to a player, draw a card."
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1)));
     }
 

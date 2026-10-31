@@ -21,7 +21,7 @@ import java.util.List;
 public class UrborgLhurgoyf extends Card {
 
     public UrborgLhurgoyf() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(
+        addCastingCost(new RepeatableAdditionalManaCost(
                 List.of("{U}", "{B}"), true, 1));
 
         Sum kicks = new Sum(

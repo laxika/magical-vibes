@@ -4188,8 +4188,8 @@ public class CombatDamageService {
     private TargetFilter dealtDamageTargetFilter(Card card, CardEffect effect) {
         int targetIndex = card.getEffectTargetIndex(effect);
         if (targetIndex < 0) return null;
-        if (targetIndex < card.getSpellTargets().size()) {
-            return card.getSpellTargets().get(targetIndex).getFilter();
+        if (targetIndex < card.getTargetGroups().size()) {
+            return card.getTargetGroups().get(targetIndex).getFilter();
         }
         return card.getTargetFilter();
     }

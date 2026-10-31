@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +23,7 @@ import java.util.List;
 public class YunasWhistle extends Card {
 
     public YunasWhistle() {
-        addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        addSpellEffect(SequenceEffect.of(
                 RevealUntilCardPredicateRestOnBottomRandomEffect.toHandRecordingManaValue(
                         new CardTypePredicate(CardType.CREATURE)),
                 new ConditionalEffect(new EventValueAtLeast(1), new QueueReflexiveAbilityEffect(

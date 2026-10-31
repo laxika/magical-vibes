@@ -16,6 +16,6 @@ public class TravelTheOverworld extends Card {
     public TravelTheOverworld() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.TOWN), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(4));
+        addSpellEffect(new DrawCardEffect(4));
     }
 }

@@ -22,13 +22,13 @@ public class Illuminate extends Card {
 
     public Illuminate() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}"));
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{3}{U}"), true, 1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}{U}"), true, 1));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(new XValue()))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new DealDamageToPlayersEffect(new XValue(), DamageRecipient.TARGET_PERMANENT_CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new RepeatedAdditionalCostPaid("{3}{U}"),
+        addSpellEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{3}{U}"),
                 new DrawCardEffect(new XValue())));
     }
 }

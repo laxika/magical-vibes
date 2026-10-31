@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
@@ -23,6 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 public class SeethingSong extends Card {
 
     public SeethingSong() {
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED, 5));
+        addSpellEffect(new AwardManaEffect(ManaColor.RED, 5));
     }
 }

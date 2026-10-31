@@ -16,10 +16,10 @@ public class StarfallInvocation extends Card {
 
     public StarfallInvocation() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new ReturnOneCreatureCardPutIntoGraveyardThisWayEffect()));
     }
 }

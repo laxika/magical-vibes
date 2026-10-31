@@ -328,8 +328,10 @@ public class CreatureControlService {
                 .flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                         .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss());
-        retainsFaceDownExileAccess |= java.util.Arrays.stream(EffectSlot.values())
-                .flatMap(slot -> permanent.getCard().getEffects(slot).stream())
+        retainsFaceDownExileAccess |= java.util.stream.Stream.concat(
+                        permanent.getCard().getCastingCostsAndSpellEffects().stream(),
+                        java.util.Arrays.stream(EffectSlot.values())
+                                .flatMap(slot -> permanent.getCard().getEffects(slot).stream()))
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                         .ExileTopCardsToSourceEffect exile && exile.faceDown()
                         && exile.mayLookAtFaceDownCards() && !exile.toGraveyardOnControlLoss());

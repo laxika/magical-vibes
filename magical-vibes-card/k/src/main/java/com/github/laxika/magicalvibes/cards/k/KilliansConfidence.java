@@ -16,8 +16,8 @@ public class KilliansConfidence extends Card {
     public KilliansConfidence() {
         // Target creature gets +1/+1 until end of turn. Draw a card.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 1))
+                .addSpellEffect(new DrawCardEffect(1));
 
         // Whenever one or more creatures you control deal combat damage to a player, you may pay
         // {W/B}. If you do, return this card from your graveyard to your hand.

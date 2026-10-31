@@ -23,7 +23,7 @@ public class NoOneLeftBehind extends Card {
                         new CardMaxManaValuePredicate(3)
                 )), 3));
 
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

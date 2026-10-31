@@ -36,7 +36,7 @@ public class AgonizingDemise extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )),
                 "Target must be a nonblack creature"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DestroyTargetPermanentEffect(true),
                 new DestroyTargetPermanentThenEffect(

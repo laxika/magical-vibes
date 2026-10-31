@@ -21,7 +21,7 @@ public class HuntersInsight extends Card {
         // Delayed trigger watching the chosen creature (controlled by the spell's controller even if the
         // creature changes controller); EventValue reads the damage dealt so that many cards are drawn.
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                         new DrawCardEffect(new EventValue()), true));
     }

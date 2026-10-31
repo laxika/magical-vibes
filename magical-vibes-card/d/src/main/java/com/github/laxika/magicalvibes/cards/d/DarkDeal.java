@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDrawsThatManyEffect;
 
 @CardRegistration(set = "FRF", collectorNumber = "66")
@@ -12,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDra
 public class DarkDeal extends Card {
 
     public DarkDeal() {
-        addEffect(EffectSlot.SPELL, new EachPlayerDiscardsHandThenDrawsThatManyEffect(1));
+        addSpellEffect(new EachPlayerDiscardsHandThenDrawsThatManyEffect(1));
     }
 }

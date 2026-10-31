@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffect;
@@ -18,7 +17,7 @@ public class DiscoveryDispersal extends Card {
         CardEffect discovery = SurveilThenEffect.direct(2, new DrawCardEffect(1));
         CardEffect dispersal = new EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffect();
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Discovery — Surveil 2, then draw a card", discovery).withManaCost("{1}{U/B}"),
                 new ChooseOneEffect.ChooseOneOption(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -28,7 +27,7 @@ import java.util.Set;
 public class DoomsdayConfluence extends Card {
 
     public DoomsdayConfluence() {
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModesForX(List.of(
+        addSpellEffect(ChooseOneEffect.withRepeatedModesForX(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player sacrifices a nonartifact creature of their choice",
                         new SacrificePermanentsEffect(

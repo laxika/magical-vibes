@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
@@ -17,8 +16,8 @@ import java.util.List;
 public class SecondSight extends Card {
 
     public SecondSight() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{U}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{U}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top five cards of target opponent's library, then put them back in any order",
                         new ReorderTopCardsOfLibraryEffect(5, LibraryOwner.TARGET_PLAYER),

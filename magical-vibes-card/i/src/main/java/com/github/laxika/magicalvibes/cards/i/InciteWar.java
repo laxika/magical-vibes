@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
@@ -19,13 +18,13 @@ import java.util.List;
 public class InciteWar extends Card {
 
     public InciteWar() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{2}"));
+        addCastingCost(new EscalateManaCost("{2}"));
 
         var playerFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures target player controls attack this turn if able",
                         new TargetPlayersCreaturesMustAttackThisTurnEffect(), playerFilter),

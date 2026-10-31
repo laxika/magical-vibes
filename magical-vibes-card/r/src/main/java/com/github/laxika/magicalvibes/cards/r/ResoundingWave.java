@@ -11,7 +11,7 @@ public class ResoundingWave extends Card {
     public ResoundingWave() {
         // Return target permanent to its owner's hand. (ReturnToHandEffect.target()'s TargetSpec
         // narrows the legal target to a battlefield permanent — no explicit target filter needed.)
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        addSpellEffect(ReturnToHandEffect.target());
 
         // Cycling {5}{W}{U}{B}. "When you cycle this card, return two target permanents to their owners'
         // hands." Both targets are chosen as the trigger is put on the stack; with fewer than two legal

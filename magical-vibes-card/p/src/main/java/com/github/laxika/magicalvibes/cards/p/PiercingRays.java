@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -27,7 +26,7 @@ public class PiercingRays extends Card {
                 )),
                 "Target must be a tapped creature"
         );
-        target(tappedCreature).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        target(tappedCreature).addSpellEffect(new ExileTargetPermanentEffect());
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

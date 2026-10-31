@@ -19,7 +19,7 @@ public class MaddeningCacophony extends Card {
 
     public MaddeningCacophony() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}{U}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new MillEffect(8, MillRecipient.EACH_OPPONENT),
                 new MillEffect(

@@ -19,7 +19,7 @@ public class WildOnslaught extends Card {
 
         // Put a +1/+1 counter on each creature you control.
         // If this spell was kicked, put two +1/+1 counters on each creature you control instead.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate())
         ));

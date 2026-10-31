@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantFlyingToTargetCreatureOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,6 +17,6 @@ public class SarahsWings extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a creature or player"
-        )).addEffect(EffectSlot.SPELL, new GrantFlyingToTargetCreatureOrPlayerEffect());
+        )).addSpellEffect(new GrantFlyingToTargetCreatureOrPlayerEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -18,12 +17,11 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class EnterTheGodEternals extends Card {
 
     public EnterTheGodEternals() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new DealDamageToTargetCreatureThenGainLifeEffect(4));
+        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureThenGainLifeEffect(4));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new MillEffect(4, MillRecipient.TARGET_PLAYER));
+                .addSpellEffect(new MillEffect(4, MillRecipient.TARGET_PLAYER));
 
-        addEffect(EffectSlot.SPELL, new AmassGoblinsEffect(4, CardSubtype.ZOMBIE));
+        addSpellEffect(new AmassGoblinsEffect(4, CardSubtype.ZOMBIE));
     }
 }

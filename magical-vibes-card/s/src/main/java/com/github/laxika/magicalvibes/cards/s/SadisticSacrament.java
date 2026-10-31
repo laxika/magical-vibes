@@ -20,7 +20,7 @@ public class SadisticSacrament extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new SearchTargetLibraryEffect(3, null, LibrarySearchDestination.EXILE, true),
                 new SearchTargetLibraryEffect(15, null, LibrarySearchDestination.EXILE, true)

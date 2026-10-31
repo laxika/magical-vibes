@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 public class BringTheEnding extends Card {
 
     public BringTheEnding() {
-        addEffect(EffectSlot.SPELL, new CounterSpellIfControllerPoisonedEffect(3));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(2));
+        addSpellEffect(new CounterSpellIfControllerPoisonedEffect(3));
+        addSpellEffect(new CounterUnlessPaysEffect(2));
     }
 }

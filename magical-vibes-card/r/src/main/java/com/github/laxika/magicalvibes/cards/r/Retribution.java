@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOneOfTwoTargetCreaturesThenCounterOnOtherEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,7 +15,7 @@ public class Retribution extends Card {
         // This engine is strictly 2-player, so "an opponent controls" on both target groups already
         // means the same opponent controls both.
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new SacrificeOneOfTwoTargetCreaturesThenCounterOnOtherEffect());
+                .addSpellEffect(new SacrificeOneOfTwoTargetCreaturesThenCounterOnOtherEffect());
         target(TargetFilters.creatureAnOpponentControls());
     }
 }

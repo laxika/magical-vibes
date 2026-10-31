@@ -16,8 +16,8 @@ import java.util.List;
 public class ShatteringSpree extends Card {
 
     public ShatteringSpree() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{R}")));
-        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{R}")));
+        target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentEffect());
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{R}"));
     }
 }

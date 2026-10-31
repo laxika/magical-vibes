@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanentsAndSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,7 +15,7 @@ public class FirstFamily extends Card {
         // You draw X cards and gain X life, where X is the number of colors among permanents you
         // control and spells you've cast this turn.
         var colors = new DeterminedOnce(new ColorsAmongControlledPermanentsAndSpellsCastThisTurn());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(colors));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(colors));
+        addSpellEffect(new DrawCardEffect(colors));
+        addSpellEffect(new GainLifeEffect(colors));
     }
 }

@@ -284,7 +284,7 @@ public class StackEntry {
         if (repeatedAdditionalCosts.isEmpty()) {
             return false;
         }
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCosts().stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)
                 .anyMatch(cost -> cost.multikickerPaymentCount(repeatedAdditionalCosts) > 0);
@@ -1370,7 +1370,7 @@ public class StackEntry {
         this.bombardmentOriginalEntryType = null;
         this.bombardmentOriginalEffectsToResolve = null;
         this.description = replacement.getName();
-        this.effectsToResolve = List.copyOf(replacement.getEffects(EffectSlot.SPELL));
+        this.effectsToResolve = List.copyOf(replacement.getCastingCostsAndSpellEffects());
         this.targetId = null;
         this.targetZone = null;
         this.targetIds = List.of();
@@ -1661,9 +1661,9 @@ public class StackEntry {
         int group = targeting == null ? -1 : targeting.getEffectTargetIndex(effect);
         if (group >= 0 && targeting != null) {
             List<UUID> declaredTargetCardIds = targetCardIds == null ? List.of() : targetCardIds;
-            List<SpellTarget> groups = targeting.getSpellTargets();
+            List<TargetGroup> groups = targeting.getTargetGroups();
             int graveyardTargetOffset = 0;
-            for (SpellTarget targetGroup : groups) {
+            for (TargetGroup targetGroup : groups) {
                 if (!(targetGroup.getFilter() instanceof GraveyardCardPredicateTargetFilter)) {
                     continue;
                 }
@@ -1840,7 +1840,7 @@ public class StackEntry {
      * Returns the targets chosen for the given target group, resolved against this entry's
      * flat {@link #targetIds} list.
      *
-     * <p>For spells, the flat list is sliced by the card's {@link SpellTarget} declarations in
+     * <p>For spells, the flat list is sliced by the card's {@link TargetGroup} declarations in
      * order: the first group's chosen targets come first, then the next group's, and so on —
      * matching how targets are selected position-by-position against
      * {@link Card#getMultiTargetFilters()} and validated by the target legality service. Each
@@ -1867,7 +1867,7 @@ public class StackEntry {
             return primaryTarget != null ? List.of(primaryTarget) : List.of();
         }
         Card targeting = getTargetingCard();
-        List<SpellTarget> groups = targeting == null ? List.of() : targeting.getSpellTargets();
+        List<TargetGroup> groups = targeting == null ? List.of() : targeting.getTargetGroups();
         if (groups.isEmpty()) {
             return group >= 0 && group < targetIds.size() && !illegalTargetIndices.contains(group)
                     ? List.of(targetIds.get(group)) : List.of();
@@ -1880,7 +1880,7 @@ public class StackEntry {
             firstFlatGroup = 1;
         }
         int consumed = 0;
-        for (SpellTarget g : groups) {
+        for (TargetGroup g : groups) {
             if (g.getIndex() < firstFlatGroup) {
                 continue;
             }
@@ -2044,7 +2044,7 @@ public class StackEntry {
             // A spell's lone target belongs to its first group; later groups were omitted.
             if (group != 0 && (entryType != StackEntryType.TRIGGERED_ABILITY
                     && entryType != StackEntryType.ACTIVATED_ABILITY
-                    && targeting.getSpellTargets().size() > 1
+                    && targeting.getTargetGroups().size() > 1
                     || entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura())) {
                 return List.of();
             }
@@ -2078,7 +2078,7 @@ public class StackEntry {
         if (targetIds.isEmpty()) {
             if (group != 0 && (entryType != StackEntryType.TRIGGERED_ABILITY
                     && entryType != StackEntryType.ACTIVATED_ABILITY
-                    && targeting.getSpellTargets().size() > 1
+                    && targeting.getTargetGroups().size() > 1
                     || entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura())) {
                 return List.of();
             }

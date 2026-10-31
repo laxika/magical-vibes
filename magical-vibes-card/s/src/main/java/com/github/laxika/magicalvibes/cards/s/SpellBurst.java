@@ -20,7 +20,7 @@ public class SpellBurst extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryManaValueEqualsXPredicate(),
                 "Target spell's mana value must equal X."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        )).addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

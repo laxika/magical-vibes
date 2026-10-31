@@ -30,11 +30,11 @@ public class KingTChalla extends Card {
                 List.of(new TransformSelfEffect()),
                 "{4}{W}{U}: Transform King T'Challa. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("King T'Challa", List.of())
                         .withManaCost("{1}{W}{U}"),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Black Panther, Hope Enduring", backFace.getEffects(EffectSlot.SPELL))
+                        "Black Panther, Hope Enduring", backFace.getSpellEffects())
                         .withManaCost("{4}{W}{U}")
         )));
     }

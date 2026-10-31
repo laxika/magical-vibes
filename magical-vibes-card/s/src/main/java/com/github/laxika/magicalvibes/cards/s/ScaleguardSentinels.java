@@ -20,7 +20,7 @@ import java.util.List;
 public class ScaleguardSentinels extends Card {
 
     public ScaleguardSentinels() {
-        addEffect(EffectSlot.SPELL, RevealCardFromHandCost.optional(
+        addCastingCost(RevealCardFromHandCost.optional(
                 new CardSubtypePredicate(CardSubtype.DRAGON), "Dragon"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new AnyOf(List.of(new RevealCardFromHandCostPaid(), new ControlledDragonAsCast())),

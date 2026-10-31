@@ -13,7 +13,7 @@ public class OrimsTouch extends Card {
 
     public OrimsTouch() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 PreventDamageEffect.nextToTarget(2),
                 PreventDamageEffect.nextToTarget(4)));

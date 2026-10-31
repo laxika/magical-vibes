@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class RekindledFlame extends Card {
 
     public RekindledFlame() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(4));
+        addSpellEffect(new DealDamageToAnyTargetEffect(4));
 
         // At the beginning of your upkeep, if an opponent has no cards in hand, you may return
         // this card from your graveyard to your hand. The intervening-"if" is checked at trigger

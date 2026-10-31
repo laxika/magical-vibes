@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -29,7 +28,7 @@ public class AzoriusCharm extends Card {
         // • Creatures you control gain lifelink until end of turn.
         // • Draw a card.
         // • Put target attacking or blocking creature on top of its owner's library.
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain lifelink until end of turn",
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES)),

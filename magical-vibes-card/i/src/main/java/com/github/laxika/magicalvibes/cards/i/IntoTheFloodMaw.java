@@ -24,9 +24,9 @@ public class IntoTheFloodMaw extends Card {
         target(TargetFilters.withGift(
                 TargetFilters.creatureAnOpponentControls(),
                 TargetFilters.nonlandPermanentAnOpponentControls()))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         TargetOpponentCreatesTokenEffect.gift(fishToken())))
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
     }
 
     private static CreateTokenEffect fishToken() {

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -25,11 +24,11 @@ public class AshesToAshes extends Card {
         // Two distinct target groups (shared targets not allowed) so the two
         // nonartifact creatures must differ, each exiled by its own effect.
         target(nonartifactCreatureFilter("First target must be a nonartifact creature"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
         target(nonartifactCreatureFilter("Second target must be a nonartifact creature"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
 
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(5, DamageRecipient.CONTROLLER));
+        addSpellEffect(new DealDamageToPlayersEffect(5, DamageRecipient.CONTROLLER));
     }
 
     private static PermanentPredicateTargetFilter nonartifactCreatureFilter(String description) {

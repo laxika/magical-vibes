@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class FloodOfTears extends Card {
 
     public FloodOfTears() {
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.allPermanentsMatchingThen(
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatchingThen(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 4,
                 new MayEffect(

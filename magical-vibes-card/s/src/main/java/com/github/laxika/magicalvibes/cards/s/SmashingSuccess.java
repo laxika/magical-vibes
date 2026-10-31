@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
@@ -24,7 +23,7 @@ public class SmashingSuccess extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.NONE,
                 CreateTokenEffect.ofTreasureToken(1),
                 ThenEffectRecipient.CONTROLLER,

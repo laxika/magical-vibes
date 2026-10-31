@@ -64,7 +64,7 @@ per-effect loops these collectors run.)
 
 ## Spell / activated-ability target validation (a DIFFERENT mechanism)
 
-The pipelines above are for TRIGGERED abilities. A **spell** (SPELL slot) or **activated ability**
+The pipelines above are for TRIGGERED abilities. A **spell** (its spell ability) or **activated ability**
 that carries a single `targetId` is validated on a separate path, and it narrows the legal target type
 from the effect's **`targetSpec()`** — the category (`CREATURE` / `LAND` / `PERMANENT` / …) plus its
 optional `PermanentPredicate` — interpreted by `TargetValidationService`. Declare the spec and the

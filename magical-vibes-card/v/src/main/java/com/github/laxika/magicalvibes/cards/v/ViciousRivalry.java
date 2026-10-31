@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -17,11 +16,11 @@ import java.util.List;
 public class ViciousRivalry extends Card {
 
     public ViciousRivalry() {
-        addEffect(EffectSlot.SPELL, new PayXLifeCost());
+        addCastingCost(new PayXLifeCost());
         PermanentAnyOfPredicate artifactOrCreature = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                 new PermanentMaxManaValueXPredicate(), artifactOrCreature))));
     }
 }

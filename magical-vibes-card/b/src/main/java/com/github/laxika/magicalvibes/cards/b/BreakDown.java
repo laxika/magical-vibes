@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -32,9 +31,9 @@ public class BreakDown extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrEnchantment,
                 "Target must be an artifact or enchantment"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(artifactOrEnchantment));
+                .addSpellEffect(new DestroyTargetPermanentEffect(artifactOrEnchantment));
 
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofArtifactToken(
+        addSpellEffect(CreateTokenEffect.ofArtifactToken(
                 1,
                 "Junk",
                 List.of(CardSubtype.JUNK),

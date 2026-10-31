@@ -20,8 +20,8 @@ public class LabRats extends Card {
 
     public LabRats() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{4}"));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Rat", 1, 1, CardColor.BLACK,
+        addSpellEffect(new CreateTokenEffect("Rat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.RAT), Set.of(), Set.of()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

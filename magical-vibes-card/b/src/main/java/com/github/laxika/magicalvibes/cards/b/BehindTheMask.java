@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -23,15 +22,15 @@ import java.util.Set;
 public class BehindTheMask extends Card {
 
     public BehindTheMask() {
-        addEffect(EffectSlot.SPELL, new CollectEvidenceCost(6, true));
+        addCastingCost(new CollectEvidenceCost(6, true));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CollectEvidenceCostPaid(), animate(1, 1)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new NotCondition(new CollectEvidenceCostPaid()), animate(4, 3)));
     }
 

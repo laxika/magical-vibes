@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -19,7 +18,7 @@ import java.util.List;
 public class CampusRenovation extends Card {
 
     public CampusRenovation() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
@@ -28,6 +27,6 @@ public class CampusRenovation extends Card {
                 .upTo(true)
                 .chooseAuraAttachment(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new ExileTopCardsMayPlayUntilNextTurnEffect(2));
+        addSpellEffect(new ExileTopCardsMayPlayUntilNextTurnEffect(2));
     }
 }

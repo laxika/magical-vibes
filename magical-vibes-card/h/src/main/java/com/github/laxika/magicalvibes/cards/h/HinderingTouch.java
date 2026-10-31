@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class HinderingTouch extends Card {
 
     public HinderingTouch() {
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(2));
+        addSpellEffect(new CounterUnlessPaysEffect(2));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

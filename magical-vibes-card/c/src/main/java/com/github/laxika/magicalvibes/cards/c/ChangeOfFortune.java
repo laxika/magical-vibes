@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedOrCycledThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class ChangeOfFortune extends Card {
 
     public ChangeOfFortune() {
-        addEffect(EffectSlot.SPELL, new DiscardHandEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new CardsDiscardedOrCycledThisTurn()));
+        addSpellEffect(new DiscardHandEffect());
+        addSpellEffect(new DrawCardEffect(new CardsDiscardedOrCycledThisTurn()));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PrimalBoost extends Card {
 
     public PrimalBoost() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(4, 4));
+        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(4, 4));
 
         addCycling("{2}{G}");
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(

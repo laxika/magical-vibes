@@ -107,7 +107,6 @@ import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -2083,7 +2082,7 @@ class RandomAiDecisionEngineTest {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate())),
                 "Target must be a tapped creature"))
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
 
         harness.addMana(aiPlayer, ManaColor.COLORLESS, 3);
         harness.setHand(aiPlayer, List.of(spell));

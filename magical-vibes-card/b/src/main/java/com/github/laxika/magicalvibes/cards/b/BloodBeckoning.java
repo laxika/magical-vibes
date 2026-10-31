@@ -21,8 +21,7 @@ public class BloodBeckoning extends Card {
         targetWhenKicked(
                 new GraveyardCardPredicateTargetFilter(creature, GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
                 1, 1, 2, 2)
-                .addEffect(EffectSlot.SPELL,
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
+                .addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                                 creature, 2, null, false, false, 1, false, Set.of(), false));
     }
 }

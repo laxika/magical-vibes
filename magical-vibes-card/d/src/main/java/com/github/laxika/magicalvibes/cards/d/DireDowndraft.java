@@ -22,6 +22,6 @@ public class DireDowndraft extends Card {
                         new PermanentIsTappedPredicate()
                 )), 1));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
+                .addSpellEffect(new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -19,7 +18,7 @@ public class SuspendAggression extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentMayPlayUntilNextTurnEffect());
-        addEffect(EffectSlot.SPELL, new ExileTopCardsMayPlayUntilNextTurnEffect(1));
+        )).addSpellEffect(new ExileTargetPermanentMayPlayUntilNextTurnEffect());
+        addSpellEffect(new ExileTopCardsMayPlayUntilNextTurnEffect(1));
     }
 }

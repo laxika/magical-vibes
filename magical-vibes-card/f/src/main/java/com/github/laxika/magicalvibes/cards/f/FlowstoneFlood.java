@@ -16,7 +16,7 @@ public class FlowstoneFlood extends Card {
 
     public FlowstoneFlood() {
         addEffect(EffectSlot.STATIC, new BuybackEffect(new PayLifeCost(3), 1, true));
-        target(TargetFilters.land()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        target(TargetFilters.land()).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class AllHallowsEve extends Card {
 
     public AllHallowsEve() {
-        addEffect(EffectSlot.SPELL, ExileSpellEffect.withScreamCounters(2));
+        addSpellEffect(ExileSpellEffect.withScreamCounters(2));
         addEffect(EffectSlot.EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED,
                 new RemoveScreamCounterFromExiledCardEffect(
                         getId(),

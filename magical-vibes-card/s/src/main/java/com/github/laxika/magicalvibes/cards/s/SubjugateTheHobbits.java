@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
@@ -23,6 +22,6 @@ public class SubjugateTheHobbits extends Card {
                 new PermanentMaxManaValuePredicate(3),
                 new PermanentNotPredicate(new PermanentIsCommanderPredicate())
         ));
-        addEffect(EffectSlot.SPELL, new GainControlOfAllPermanentsMatchingEffect(eligibleCreature));
+        addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(eligibleCreature));
     }
 }

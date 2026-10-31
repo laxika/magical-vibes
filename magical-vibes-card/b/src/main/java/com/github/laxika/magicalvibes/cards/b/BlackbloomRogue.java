@@ -22,7 +22,7 @@ public class BlackbloomRogue extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
                 new StaticBoostEffect(3, 0, GrantScope.SELF)));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Blackbloom Rogue", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Blackbloom Bog", List.of())
         )));

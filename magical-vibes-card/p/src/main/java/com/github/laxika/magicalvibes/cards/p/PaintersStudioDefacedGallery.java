@@ -19,7 +19,7 @@ public class PaintersStudioDefacedGallery extends Card {
     public PaintersStudioDefacedGallery() {
         setRoomDoorManaCosts(List.of("{2}{R}", "{1}{R}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Painter's Studio", List.of())
                         .withManaCost("{2}{R}"),
                 new ChooseOneEffect.ChooseOneOption("Defaced Gallery", List.of())

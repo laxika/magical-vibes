@@ -27,9 +27,8 @@ public class MonstrousRage extends Card {
 
     public MonstrousRage() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(monsterRoleToken(), PlayerRelation.ANY));
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(monsterRoleToken(), PlayerRelation.ANY));
     }
 
     private static CreateTokenEffect monsterRoleToken() {

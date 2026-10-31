@@ -28,8 +28,8 @@ public class VesuvanMist extends Card {
         target(new PermanentPredicateTargetFilter(
                 nontokenNonland,
                 "Target must be a nontoken, nonland permanent"
-        )).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+        )).addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new ConjureDuplicateOfReturnedPermanentIntoHandEffect()));
     }
 }

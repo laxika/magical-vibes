@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -16,7 +15,7 @@ import java.util.List;
 public class RoilsRetribution extends Card {
 
     public RoilsRetribution() {
-        addEffect(EffectSlot.SPELL, new DealDividedDamageEffect(
+        addSpellEffect(new DealDividedDamageEffect(
                 new Fixed(5),
                 null,
                 DivisionMode.CHOSEN,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 import java.util.List;
@@ -13,7 +12,7 @@ import java.util.List;
 public class HeroesRemembered extends Card {
 
     public HeroesRemembered() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(20));
+        addSpellEffect(new GainLifeEffect(20));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",

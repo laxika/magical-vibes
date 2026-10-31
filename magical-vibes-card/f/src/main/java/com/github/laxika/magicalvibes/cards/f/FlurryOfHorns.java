@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -15,7 +14,7 @@ import java.util.Set;
 public class FlurryOfHorns extends Card {
 
     public FlurryOfHorns() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 2, "Minotaur", 2, 3, CardColor.RED,
                 List.of(CardSubtype.MINOTAUR), Set.of(Keyword.HASTE), Set.of()));
     }

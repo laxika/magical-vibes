@@ -109,8 +109,8 @@ public class PermanentChoiceTriggerHandlerService {
             case PermanentChoiceContext.ETBTokenTargetTrigger etb -> etb.targetFilter();
             case PermanentChoiceContext.EntersTriggerTarget enters -> enters.targetFilter();
             case PermanentChoiceContext.ETBTokenMultiTargetTrigger multi ->
-                    multi.currentGroupIndex() < multi.sourceCard().getSpellTargets().size()
-                            ? multi.sourceCard().getSpellTargets().get(multi.currentGroupIndex()).getFilter()
+                    multi.currentGroupIndex() < multi.sourceCard().getTargetGroups().size()
+                            ? multi.sourceCard().getTargetGroups().get(multi.currentGroupIndex()).getFilter()
                             : null;
             default -> null;
         };
@@ -402,7 +402,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (effects.stream().anyMatch(OptionalTargetEffect.class::isInstance)) {
             return true;
         }
-        return card.getSpellTargets().stream()
+        return card.getTargetGroups().stream()
                 .filter(target -> effects.stream().anyMatch(effect -> isBoundToTargetGroup(card, effect, target.getIndex())))
                 .anyMatch(target -> target.getMinTargets() == 0 && target.getMaxTargets() == 1);
     }

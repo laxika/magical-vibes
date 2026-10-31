@@ -17,7 +17,7 @@ public class RenewedFaith extends Card {
 
     public RenewedFaith() {
         // You gain 6 life.
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(6));
+        addSpellEffect(new GainLifeEffect(6));
 
         // When you cycle this card, you may gain 2 life. The trigger is separate from the cycling
         // draw, so it sits above the draw on the stack and the draw is never blocked by it.

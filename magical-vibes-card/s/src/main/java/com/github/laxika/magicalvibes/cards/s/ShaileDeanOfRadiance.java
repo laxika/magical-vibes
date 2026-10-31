@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.e.EmbroseDeanOfShadow;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -36,10 +35,10 @@ public class ShaileDeanOfRadiance extends Card {
                 "{T}: Put a +1/+1 counter on each creature that entered the battlefield under your control this turn."
         ));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Shaile, Dean of Radiance", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Embrose, Dean of Shadow", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Embrose, Dean of Shadow", backFace.getSpellEffects()))));
     }
 
     @Override

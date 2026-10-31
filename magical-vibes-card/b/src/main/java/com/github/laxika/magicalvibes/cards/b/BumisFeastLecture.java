@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -21,13 +20,12 @@ import java.util.List;
 public class BumisFeastLecture extends Card {
 
     public BumisFeastLecture() {
-        addEffect(EffectSlot.SPELL, foodToken());
+        addSpellEffect(foodToken());
 
         PermanentCount foodsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD), CountScope.CONTROLLER);
         target(TargetFilters.landYouControl())
-                .addEffect(EffectSlot.SPELL,
-                        new EarthbendTargetLandEffect(new Scaled(foodsYouControl, 2)));
+                .addSpellEffect(new EarthbendTargetLandEffect(new Scaled(foodsYouControl, 2)));
     }
 
     private static CreateTokenEffect foodToken() {

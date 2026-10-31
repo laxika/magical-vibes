@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,10 +19,10 @@ public class PathOfPeril extends Card {
 
     public PathOfPeril() {
         addCastingOption(AlternateHandCast.cleave("{4}{W}{B}", null));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate())));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastForAlternateCost()),
                 new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

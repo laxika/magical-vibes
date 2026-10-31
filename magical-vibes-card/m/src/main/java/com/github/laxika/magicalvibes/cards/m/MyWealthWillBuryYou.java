@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
@@ -22,7 +21,7 @@ public class MyWealthWillBuryYou extends Card {
         PermanentPredicate artifactOrEnchantment = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsEnchantmentPredicate()));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTreasureToken(new Max(
+        addSpellEffect(CreateTokenEffect.ofTreasureToken(new Max(
                 new Fixed(4),
                 new PermanentCount(artifactOrEnchantment, CountScope.OPPONENTS))));
     }

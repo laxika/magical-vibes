@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -32,7 +31,7 @@ public class DireStrainRampage extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, enchantment, or land"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.BASIC_LAND_SEARCH_COUNT,
                 new MayEffect(new SearchLibraryEffect(
                         new EventValue(),

@@ -40,11 +40,11 @@ public class TorchTheTower extends Card {
         ));
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker, "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+                .addSpellEffect(new ConditionalReplacementEffect(
                         new Kicked(),
                         DealDamageToTargetCreatureOrPlaneswalkerEffect.exilingIfDealtDamage(new Fixed(2)),
                         DealDamageToTargetCreatureOrPlaneswalkerEffect.exilingIfDealtDamage(new Fixed(3))
                 ));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new ScryEffect(1)));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new ScryEffect(1)));
     }
 }

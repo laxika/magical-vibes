@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -24,9 +23,9 @@ public class HazardousBlast extends Card {
     ));
 
     public HazardousBlast() {
-        addEffect(EffectSlot.SPELL, new DealDamageToEachMatchingPermanentEffect(
+        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
                 1, OPPONENT_CREATURE, EachPermanentScope.ALL_PLAYERS));
-        addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES,
+        addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES,
                 OPPONENT_CREATURE));
     }
 }

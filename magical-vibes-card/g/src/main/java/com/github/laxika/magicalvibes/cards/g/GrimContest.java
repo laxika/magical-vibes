@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetCreaturesDealToughnessDamageToEachOtherEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,6 +27,6 @@ public class GrimContest extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new TargetCreaturesDealToughnessDamageToEachOtherEffect());
+        )).addSpellEffect(new TargetCreaturesDealToughnessDamageToEachOtherEffect());
     }
 }

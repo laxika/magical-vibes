@@ -23,6 +23,6 @@ public class WreakHavoc extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

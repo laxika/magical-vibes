@@ -16,7 +16,7 @@ public class ChokingTethers extends Card {
 
     public ChokingTethers() {
         target(TargetFilters.creature(), 0, 4)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
 
         addCycling("{1}{U}");
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(

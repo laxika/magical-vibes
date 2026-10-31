@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseNameAndNumberRevealLibraryDamageEffect;
 
 import java.util.List;
@@ -12,6 +11,6 @@ import java.util.List;
 public class Mindblaze extends Card {
 
     public Mindblaze() {
-        addEffect(EffectSlot.SPELL, new ChooseNameAndNumberRevealLibraryDamageEffect(List.of(CardType.LAND), 8));
+        addSpellEffect(new ChooseNameAndNumberRevealLibraryDamageEffect(List.of(CardType.LAND), 8));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
@@ -27,13 +26,11 @@ public class NotoriousThrong extends Card {
 
         // Create X 1/1 black Faerie Rogue creature tokens with flying, where X is the damage dealt to
         // your opponents this turn.
-        addEffect(EffectSlot.SPELL,
-                new CreateTokenEffect(new DamageDealtToOpponentsThisTurn(), "Faerie Rogue", 1, 1,
+        addSpellEffect(new CreateTokenEffect(new DamageDealtToOpponentsThisTurn(), "Faerie Rogue", 1, 1,
                         CardColor.BLACK, List.of(CardSubtype.FAERIE, CardSubtype.ROGUE),
                         Set.of(Keyword.FLYING), Set.of()));
 
         // If this spell's prowl cost was paid, take an extra turn after this one.
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new CastForProwlCost(), new ControllerExtraTurnEffect(1)));
+        addSpellEffect(new ConditionalEffect(new CastForProwlCost(), new ControllerExtraTurnEffect(1)));
     }
 }

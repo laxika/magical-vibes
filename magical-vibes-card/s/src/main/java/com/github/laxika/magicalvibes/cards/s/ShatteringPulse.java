@@ -15,7 +15,7 @@ public class ShatteringPulse extends Card {
 
     public ShatteringPulse() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

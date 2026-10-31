@@ -26,7 +26,7 @@ public class VodalianMindsinger extends Card {
 
     public VodalianMindsinger() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{G}"), true, 1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{G}"), true, 1));
 
         PermanentPredicateTargetFilter targetFilter = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

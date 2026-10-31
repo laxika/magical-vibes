@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TradeSecretsRepeatEffect;
@@ -19,8 +18,8 @@ public class TradeSecrets extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(2, false, true));
-        addEffect(EffectSlot.SPELL, new DrawUpToNCardsEffect(4));
-        addEffect(EffectSlot.SPELL, new TradeSecretsRepeatEffect());
+        addSpellEffect(new DrawCardForTargetPlayerEffect(2, false, true));
+        addSpellEffect(new DrawUpToNCardsEffect(4));
+        addSpellEffect(new TradeSecretsRepeatEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
@@ -37,7 +36,7 @@ public class RiveteersCharm extends Card {
                         new PermanentIsPlaneswalkerPredicate())),
                 new PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate()));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent sacrifices a creature or planeswalker they control with the greatest mana value among creatures and planeswalkers they control",
                         new SacrificePermanentsEffect(1, greatestCreatureOrPlaneswalker,

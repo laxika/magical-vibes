@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +24,6 @@ public class Asphyxiate extends Card {
         target(new PermanentPredicateTargetFilter(
                 UNTAPPED_CREATURE,
                 "Target must be an untapped creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(UNTAPPED_CREATURE));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(UNTAPPED_CREATURE));
     }
 }

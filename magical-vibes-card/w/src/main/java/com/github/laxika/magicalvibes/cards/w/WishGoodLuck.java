@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -20,9 +19,9 @@ import java.util.Set;
 public class WishGoodLuck extends Card {
 
     public WishGoodLuck() {
-        addEffect(EffectSlot.SPELL, foodToken());
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTappedTreasureToken(1));
-        addEffect(EffectSlot.SPELL, vehicleToken());
+        addSpellEffect(foodToken());
+        addSpellEffect(CreateTokenEffect.ofTappedTreasureToken(1));
+        addSpellEffect(vehicleToken());
     }
 
     private static CreateTokenEffect foodToken() {

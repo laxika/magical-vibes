@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "42")
@@ -13,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class ReverseEngineer extends Card {
 
     public ReverseEngineer() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
+        addSpellEffect(new DrawCardEffect(3));
     }
 }

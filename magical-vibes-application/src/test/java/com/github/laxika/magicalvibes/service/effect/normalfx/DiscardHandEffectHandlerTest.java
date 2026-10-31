@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
@@ -94,7 +93,7 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
     void discardsEveryTargetPlayer() {
         Card card = createCard("Wheel and Deal");
         DiscardHandEffect effect = new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER);
-        card.target(0, 2).addEffect(EffectSlot.SPELL, effect);
+        card.target(0, 2).addSpellEffect(effect);
         Card player1Card = createCard("Mountain");
         Card player2Card = createCard("Forest");
         gd.playerHands.get(player1Id).add(player1Card);

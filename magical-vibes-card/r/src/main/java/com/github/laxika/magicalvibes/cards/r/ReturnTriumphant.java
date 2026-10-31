@@ -36,12 +36,12 @@ public class ReturnTriumphant extends Card {
                 new CardMaxManaValuePredicate(3)));
         target(new GraveyardCardPredicateTargetFilter(
                 creatureCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(creatureCard)
                         .targetGraveyard(true)
                         .build())
-                .addEffect(EffectSlot.SPELL, new CreateTokenAttachedToReturnedPermanentEffect(youngHeroRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToReturnedPermanentEffect(youngHeroRoleToken()));
     }
 
     private static CreateTokenEffect youngHeroRoleToken() {

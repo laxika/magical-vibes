@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class TendrilsOfAgony extends Card {
 
     public TendrilsOfAgony() {
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new GainLifeEffect(2));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

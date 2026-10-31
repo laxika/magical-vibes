@@ -39,7 +39,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
-        } else if (targetIds.isEmpty() && entry.getCard().getSpellTargets().size() == 1) {
+        } else if (targetIds.isEmpty() && entry.getCard().getTargetGroups().size() == 1) {
             targetIds = entry.getTargetIds();
         }
 

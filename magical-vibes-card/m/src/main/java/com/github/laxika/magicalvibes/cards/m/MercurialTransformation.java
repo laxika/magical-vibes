@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -27,9 +26,8 @@ public class MercurialTransformation extends Card {
 
     public MercurialTransformation() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL,
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new ChooseOneForTargetPermanentEffect(List.of(
+                .addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
+                .addSpellEffect(new ChooseOneForTargetPermanentEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(FROG_MODE, List.of(
                                 animate(1, 1, CardSubtype.FROG),
                                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.FROG))),

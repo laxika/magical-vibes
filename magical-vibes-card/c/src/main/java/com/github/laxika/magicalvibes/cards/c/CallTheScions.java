@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -45,6 +44,6 @@ public class CallTheScions extends Card {
             Set.of());
 
     public CallTheScions() {
-        addEffect(EffectSlot.SPELL, ELDRAZI_SCION);
+        addSpellEffect(ELDRAZI_SCION);
     }
 }

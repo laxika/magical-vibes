@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -23,9 +22,9 @@ import java.util.List;
 public class GreenSunsZenith extends Card {
 
     public GreenSunsZenith() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 new CardAllOfPredicate(List.of(new CardColorPredicate(CardColor.GREEN), new CardTypePredicate(CardType.CREATURE))),
                 LibrarySearchDestination.BATTLEFIELD, new ManaValueBound(false, 0)));
-        addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect());
+        addSpellEffect(new ShuffleIntoLibraryEffect());
     }
 }

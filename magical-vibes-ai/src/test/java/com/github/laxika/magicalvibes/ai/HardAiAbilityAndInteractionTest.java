@@ -64,7 +64,6 @@ import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -1000,7 +999,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
 
         Shock shock = new Shock();
         gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, shock, player2.getId(),
-                shock.getName(), shock.getEffects(EffectSlot.SPELL), 0, bees.getId(), null));
+                shock.getName(), shock.getCastingCostsAndSpellEffects(), 0, bees.getId(), null));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
         ai.handleEvent(AiDecisionKind.GAME_STATE);
@@ -1023,7 +1022,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
 
         DoomBlade doomBlade = new DoomBlade();
         gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, doomBlade, player2.getId(),
-                doomBlade.getName(), doomBlade.getEffects(EffectSlot.SPELL), 0, bees.getId(), null));
+                doomBlade.getName(), doomBlade.getCastingCostsAndSpellEffects(), 0, bees.getId(), null));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
@@ -1353,7 +1352,7 @@ class HardAiAbilityAndInteractionTest extends HardAiDecisionEngineTestSupport {
 
         WrathOfGod wrath = new WrathOfGod();
         gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
-                wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0));
+                wrath.getName(), wrath.getCastingCostsAndSpellEffects(), 0));
 
         Permanent seer = new Permanent(new com.github.laxika.magicalvibes.cards.v.VisceraSeer());
         seer.setSummoningSick(false);

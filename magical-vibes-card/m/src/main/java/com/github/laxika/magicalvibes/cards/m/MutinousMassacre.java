@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -18,12 +17,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class MutinousMassacre extends Card {
 
     public MutinousMassacre() {
-        addEffect(EffectSlot.SPELL, new ChooseManaValueParityAtResolutionEffect());
-        addEffect(EffectSlot.SPELL, new DestroyAllCreaturesOfChosenParityEffect());
-        addEffect(EffectSlot.SPELL, new GainControlOfAllPermanentsMatchingEffect(
+        addSpellEffect(new ChooseManaValueParityAtResolutionEffect());
+        addSpellEffect(new DestroyAllCreaturesOfChosenParityEffect());
+        addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(
                 new PermanentIsCreaturePredicate(), ControlDuration.END_OF_TURN));
-        addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(
+        addSpellEffect(new UntapPermanentsEffect(
                 TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
     }
 }

@@ -21,8 +21,8 @@ public class UnconventionalTactics extends Card {
 
     public UnconventionalTactics() {
         // Target creature gets +3/+3 and gains flying until end of turn.
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+        addSpellEffect(new BoostTargetCreatureEffect(3, 3));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
 
         // Whenever a Zombie you control enters, you may pay {W}. If you do, return this card
         // from your graveyard to your hand.

@@ -22,6 +22,6 @@ public class PunishingPunch extends Card {
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect(0, 1, 2));
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(0, 1, 2));
     }
 }

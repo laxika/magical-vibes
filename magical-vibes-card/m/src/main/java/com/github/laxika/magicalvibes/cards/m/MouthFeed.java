@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.Feed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public class MouthFeed extends Card {
         setBackFaceCard(new Feed());
 
         // Create a 3/3 green Hippo creature token.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Hippo", 3, 3,
+        addSpellEffect(new CreateTokenEffect("Hippo", 3, 3,
                 CardColor.GREEN, List.of(CardSubtype.HIPPO), Set.of(), Set.of()));
     }
 

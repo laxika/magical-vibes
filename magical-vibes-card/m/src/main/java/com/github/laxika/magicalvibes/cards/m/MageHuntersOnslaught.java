@@ -24,8 +24,8 @@ public class MageHuntersOnslaught extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                         EffectSlot.ON_ANY_CREATURE_BLOCKS,
                         new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)));
     }

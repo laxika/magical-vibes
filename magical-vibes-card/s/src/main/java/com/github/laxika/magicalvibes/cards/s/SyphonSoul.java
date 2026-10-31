@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -22,8 +21,7 @@ public class SyphonSoul extends Card {
 
     public SyphonSoul() {
         // Deal 2 damage to each other player, then gain life equal to the damage dealt.
-        addEffect(EffectSlot.SPELL,
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT).recordingDamageDealt());
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new EventValue()));
+        addSpellEffect(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT).recordingDamageDealt());
+        addSpellEffect(new GainLifeEffect(new EventValue()));
     }
 }

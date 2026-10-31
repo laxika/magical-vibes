@@ -26,8 +26,8 @@ public class RoyalTreatment extends Card {
 
     public RoyalTreatment() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new CreateTokenAttachedToTargetEffect(royalRoleToken()));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(royalRoleToken()));
     }
 
     private static CreateTokenEffect royalRoleToken() {

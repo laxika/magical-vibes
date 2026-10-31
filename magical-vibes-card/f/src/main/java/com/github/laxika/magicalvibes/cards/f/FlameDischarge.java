@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -25,7 +24,7 @@ public class FlameDischarge extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
                 "Targets must be creatures or planeswalkers"))
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+                .addSpellEffect(new ConditionalReplacementEffect(
                 new ControlledModifiedCreatureAsCast(),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new Sum(new XValue(), new Fixed(2)))

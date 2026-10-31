@@ -26,7 +26,7 @@ public class DanceOfTheDead extends Card {
         // "Enchant creature card in a graveyard." Reanimation Aura: targets a creature card in a
         // graveyard at cast. StackResolutionService reanimates it (tapped) under this Aura's
         // controller and attaches this Aura to it.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardTypePredicate(CardType.CREATURE))

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,13 +20,13 @@ import java.util.Set;
 public class AntiquitiesOnTheLoose extends Card {
 
     public AntiquitiesOnTheLoose() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 2, "Spirit", 2, 2,
                 CardColor.WHITE,
                 Set.of(CardColor.RED, CardColor.WHITE),
                 List.of(CardSubtype.SPIRIT)
         ));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastNotFromHand(), 
+        addSpellEffect(new ConditionalEffect(new CastNotFromHand(), 
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)

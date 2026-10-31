@@ -19,7 +19,7 @@ public class Reweave extends Card {
         // sacrificed permanent, put that card onto the battlefield, then shuffle.
         // The empty type set selects the effect's dynamic "shares a card type" mode.
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL, new SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set.of()));
+                .addSpellEffect(new SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set.of()));
 
         // Splice onto Arcane {2}{U}{U}
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{2}{U}{U}"));

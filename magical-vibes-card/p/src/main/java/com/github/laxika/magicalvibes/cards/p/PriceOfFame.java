@@ -18,7 +18,7 @@ public class PriceOfFame extends Card {
     public PriceOfFame() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY), 2));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new SurveilEffect(2));
+        target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new SurveilEffect(2));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesDownToCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -21,14 +20,14 @@ import java.util.Set;
 public class SingleCombat extends Card {
 
     public SingleCombat() {
-        addEffect(EffectSlot.SPELL, new EachPlayerSacrificesDownToCountEffect(
+        addSpellEffect(new EachPlayerSacrificesDownToCountEffect(
                 1,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate()
                 ))
         ));
-        addEffect(EffectSlot.SPELL, new PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect(
+        addSpellEffect(new PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect(
                 Set.of(CardType.CREATURE, CardType.PLANESWALKER)
         ));
     }

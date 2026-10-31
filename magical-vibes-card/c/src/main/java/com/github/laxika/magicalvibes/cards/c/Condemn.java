@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
@@ -25,7 +24,7 @@ public class Condemn extends Card {
 
     public Condemn() {
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.SPELL, new PutTargetOnBottomOfLibraryEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new EventValue(), GainLifeRecipient.TARGET_CONTROLLER));
+                .addSpellEffect(new PutTargetOnBottomOfLibraryEffect())
+                .addSpellEffect(new GainLifeEffect(new EventValue(), GainLifeRecipient.TARGET_CONTROLLER));
     }
 }

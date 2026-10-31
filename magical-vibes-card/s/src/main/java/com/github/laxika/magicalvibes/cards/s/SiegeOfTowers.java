@@ -20,10 +20,10 @@ import java.util.Set;
 public class SiegeOfTowers extends Card {
 
     public SiegeOfTowers() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{R}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{R}")));
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), "Target must be a Mountain"))
-                .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+                .addSpellEffect(new AnimatePermanentsEffect(
                         3, 1, List.of(), Set.of(), null, Set.of(),
                         GrantScope.TARGET, EffectDuration.PERMANENT));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{1}{R}"));

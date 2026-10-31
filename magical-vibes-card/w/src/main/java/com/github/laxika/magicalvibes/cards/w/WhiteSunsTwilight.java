@@ -25,8 +25,8 @@ import java.util.Set;
 public class WhiteSunsTwilight extends Card {
 
     public WhiteSunsTwilight() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new GainLifeEffect(new XValue()));
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 new XValue(),
                 "Mite",
@@ -49,7 +49,7 @@ public class WhiteSunsTwilight extends Card {
                 0,
                 Set.of()
         ));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(5),
                 DestroyAllPermanentsEffect.sparingPermanentsCreatedThisResolution(new PermanentIsCreaturePredicate())));
     }

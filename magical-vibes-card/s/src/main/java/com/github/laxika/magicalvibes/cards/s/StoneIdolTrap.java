@@ -31,11 +31,11 @@ public class StoneIdolTrap extends Card {
                 CountScope.ANY_PLAYER)));
 
         // Create a 6/12 colorless Construct artifact creature token with trample.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Construct", 6, 12,
                 null, null, List.of(CardSubtype.CONSTRUCT), Set.of(Keyword.TRAMPLE),
                 Set.of(CardType.ARTIFACT), false, false, Map.of(), List.of(),
                 false, false, false, 0, Set.of()));
-        addEffect(EffectSlot.SPELL, new ExileCreatedPermanentsAtControllerEndStepEffect());
+        addSpellEffect(new ExileCreatedPermanentsAtControllerEndStepEffect());
     }
 }

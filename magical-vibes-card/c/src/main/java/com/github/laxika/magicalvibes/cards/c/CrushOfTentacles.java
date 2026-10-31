@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
@@ -28,9 +27,9 @@ public class CrushOfTentacles extends Card {
                 List.of(new ManaCastingCost("{3}{U}{U}")),
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()),
                 false));
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.allPermanentsMatching(
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatching(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new CreateTokenEffect("Octopus", 8, 8, CardColor.BLUE,
                         List.of(CardSubtype.OCTOPUS), Set.of(), Set.of())));

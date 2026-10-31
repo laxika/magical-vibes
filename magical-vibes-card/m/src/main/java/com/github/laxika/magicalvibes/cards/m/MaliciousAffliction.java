@@ -29,6 +29,6 @@ public class MaliciousAffliction extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )),
                 "Target must be a nonblack creature"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

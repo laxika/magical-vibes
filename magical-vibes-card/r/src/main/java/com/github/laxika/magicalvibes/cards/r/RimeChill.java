@@ -21,10 +21,10 @@ public class RimeChill extends Card {
 
         // Tap up to two target creatures. Put a stun counter on each of them.
         target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
         // Draw a card.
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

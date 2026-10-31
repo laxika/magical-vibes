@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -53,8 +52,8 @@ public class GraveBirthing extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new TargetPlayerExilesCardFromGraveyardEffect(0));
-        addEffect(EffectSlot.SPELL, ELDRAZI_SCION);
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        )).addSpellEffect(new TargetPlayerExilesCardFromGraveyardEffect(0));
+        addSpellEffect(ELDRAZI_SCION);
+        addSpellEffect(new DrawCardEffect());
     }
 }

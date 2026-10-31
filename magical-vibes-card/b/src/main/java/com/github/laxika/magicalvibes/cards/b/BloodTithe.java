@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class BloodTithe extends Card {
 
     public BloodTithe() {
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT, true));
+        addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT, true));
     }
 }

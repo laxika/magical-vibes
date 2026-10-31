@@ -24,7 +24,7 @@ public class GrislySigil extends Card {
 
     public GrislySigil() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(1));
+        addCastingCost(new CasualtyCost(1));
 
         PermanentPredicate creatureOrPlaneswalker = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -34,7 +34,7 @@ public class GrislySigil extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentDealtNoncombatDamageThisTurnPredicate()),
                 SequenceEffect.of(
                         new DealDamageToTargetCreatureOrPlaneswalkerEffect(1),

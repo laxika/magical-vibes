@@ -24,7 +24,7 @@ public class Depower extends Card {
                 )), 2));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-4, 0))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new BoostTargetCreatureEffect(-4, 0))
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

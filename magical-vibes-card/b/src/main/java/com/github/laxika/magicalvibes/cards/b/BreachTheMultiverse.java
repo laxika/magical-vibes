@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -21,13 +20,13 @@ import java.util.List;
 public class BreachTheMultiverse extends Card {
 
     public BreachTheMultiverse() {
-        addEffect(EffectSlot.SPELL, new MillEffect(10, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new MillEffect(10, MillRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new EachPlayerChoosesCardFromGraveyardToBattlefieldEffect(
+        addSpellEffect(new MillEffect(10, MillRecipient.CONTROLLER));
+        addSpellEffect(new MillEffect(10, MillRecipient.EACH_OPPONENT));
+        addSpellEffect(new EachPlayerChoosesCardFromGraveyardToBattlefieldEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardTypePredicate(CardType.PLANESWALKER)
                 ))));
-        addEffect(EffectSlot.SPELL, new GrantSubtypeToOwnCreaturesEffect(CardSubtype.PHYREXIAN));
+        addSpellEffect(new GrantSubtypeToOwnCreaturesEffect(CardSubtype.PHYREXIAN));
     }
 }

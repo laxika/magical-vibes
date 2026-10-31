@@ -317,8 +317,9 @@ public class GameViewProjectionFactory {
                     boolean grantsImplicitLookPermission = !exiledFaceDownFromHandOnEnter
                             && !data.exiledCardsWithIntelCounters.contains(entry.card().getId())
                             && java.util.stream.Stream.concat(
-                                    java.util.Arrays.stream(EffectSlot.values())
-                                            .flatMap(slot -> p.getCard().getEffects(slot).stream()),
+                                    java.util.stream.Stream.concat(p.getCard().getCastingCostsAndSpellEffects().stream(),
+                                            java.util.Arrays.stream(EffectSlot.values())
+                                                    .flatMap(slot -> p.getCard().getEffects(slot).stream())),
                                     p.getCard().getActivatedAbilities().stream()
                                             .flatMap(ability -> ability.getEffects().stream()))
                             .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)

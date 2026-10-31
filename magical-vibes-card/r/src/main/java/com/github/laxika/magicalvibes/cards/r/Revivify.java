@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsInGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -28,7 +27,7 @@ public class Revivify extends Card {
                 .thisTurnOnly(true)
                 .build();
 
-        addEffect(EffectSlot.SPELL, RollD20Effect.withAddedAmount(
+        addSpellEffect(RollD20Effect.withAddedAmount(
                 new CreatureCardsInGraveyardFromBattlefieldThisTurn(), returnToHand, returnToBattlefield));
     }
 }

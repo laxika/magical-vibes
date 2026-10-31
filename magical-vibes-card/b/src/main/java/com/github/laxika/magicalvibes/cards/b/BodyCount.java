@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
@@ -18,7 +17,6 @@ public class BodyCount extends Card {
         addCastingOption(AlternateHandCast.spectacle("{B}", new OpponentLostLifeThisTurn(1)));
 
         // Draw a card for each creature that died under your control this turn.
-        addEffect(EffectSlot.SPELL,
-                new DrawCardEffect(new CreatureDeathsThisTurn(CountScope.CONTROLLER)));
+        addSpellEffect(new DrawCardEffect(new CreatureDeathsThisTurn(CountScope.CONTROLLER)));
     }
 }

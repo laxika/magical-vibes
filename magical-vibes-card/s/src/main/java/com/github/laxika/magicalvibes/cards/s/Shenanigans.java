@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Shenanigans extends Card {
 
     public Shenanigans() {
-        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentEffect());
         addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(1));
     }
 }

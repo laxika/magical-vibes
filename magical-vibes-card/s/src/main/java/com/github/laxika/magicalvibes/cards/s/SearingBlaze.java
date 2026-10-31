@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
@@ -29,7 +28,7 @@ public class SearingBlaze extends Card {
         ));
         target(TargetFilters.creature());
 
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.LAND), 1),
                 new DealDamageToEachTargetEffect(new Fixed(1)),
                 new DealDamageToEachTargetEffect(new Fixed(3))

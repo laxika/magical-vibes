@@ -24,6 +24,6 @@ public class TorrentOfLava extends Card {
                         List.of(new PreventNextDamageToSourceFromCardEffect()),
                         "Tap: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn."),
                 GrantScope.ALL_CREATURES)));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(0, true, false, new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        addSpellEffect(new MassDamageEffect(0, true, false, new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

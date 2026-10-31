@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -15,7 +14,7 @@ public class HithlainKnots extends Card {
 
     public HithlainKnots() {
         // Tap target creature. Scry 1. Draw a card.
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        target(TargetFilters.creature()).addSpellEffect(SequenceEffect.of(
                 new TapPermanentsEffect(TapUntapScope.TARGET),
                 new ScryEffect(1),
                 new DrawCardEffect(1)

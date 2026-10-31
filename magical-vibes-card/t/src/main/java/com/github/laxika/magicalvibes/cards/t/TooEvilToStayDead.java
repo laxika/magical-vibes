@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -32,8 +31,8 @@ public class TooEvilToStayDead extends Card {
                 .targetGraveyard(true)
                 .build();
 
-        addEffect(EffectSlot.SPELL, new TeamworkCost(4));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addCastingCost(new TeamworkCost(4));
+        addSpellEffect(new ConditionalReplacementEffect(
                 new TeamworkCostPaid(), regularReturn, teamworkReturn));
     }
 }

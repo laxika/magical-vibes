@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,7 +21,7 @@ public class AppliedGeometry extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.AURA)),
                 "Target must be a non-Aura permanent you control"
-        )).addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(
+        )).addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(CardSubtype.FRACTAL),
                 Set.of(CardType.CREATURE),
                 0,

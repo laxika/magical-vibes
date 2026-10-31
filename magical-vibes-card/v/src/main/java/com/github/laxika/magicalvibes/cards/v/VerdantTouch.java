@@ -21,11 +21,11 @@ public class VerdantTouch extends Card {
 
     public VerdantTouch() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        target(TargetFilters.land()).addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+        target(TargetFilters.land()).addSpellEffect(new AnimatePermanentsEffect(
                 2, 2,
                 List.of(), Set.of(),
                 null, Set.of(),
                 GrantScope.TARGET, EffectDuration.PERMANENT));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

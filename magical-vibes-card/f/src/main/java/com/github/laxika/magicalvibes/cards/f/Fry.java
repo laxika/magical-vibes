@@ -15,7 +15,7 @@ public class Fry extends Card {
 
     public Fry() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(
+        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                 5, new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE))));
     }
 }

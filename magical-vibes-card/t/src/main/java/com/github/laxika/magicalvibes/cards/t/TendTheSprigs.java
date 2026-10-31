@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -23,9 +22,8 @@ import java.util.Set;
 public class TendTheSprigs extends Card {
 
     public TendTheSprigs() {
-        addEffect(EffectSlot.SPELL,
-                new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
+        addSpellEffect(new ConditionalEffect(
                 new ControlsPermanentCount(7, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.TREEFOLK)

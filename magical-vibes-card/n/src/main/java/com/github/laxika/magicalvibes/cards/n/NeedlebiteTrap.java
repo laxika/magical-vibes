@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentGainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -27,7 +26,7 @@ public class NeedlebiteTrap extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(5));
+        )).addSpellEffect(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new GainLifeEffect(5));
     }
 }

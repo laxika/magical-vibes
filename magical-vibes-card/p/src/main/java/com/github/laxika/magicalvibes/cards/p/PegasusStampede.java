@@ -23,8 +23,8 @@ public class PegasusStampede extends Card {
 
     public PegasusStampede() {
         addEffect(EffectSlot.STATIC, new BuybackEffect(new PermanentIsLandPredicate(), "a land"));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Pegasus", 1, 1, CardColor.WHITE,
+        addSpellEffect(new CreateTokenEffect("Pegasus", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.PEGASUS), Set.of(Keyword.FLYING), Set.of()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

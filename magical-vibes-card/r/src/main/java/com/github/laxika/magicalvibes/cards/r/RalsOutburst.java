@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class RalsOutburst extends Card {
 
     public RalsOutburst() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
     }
 }

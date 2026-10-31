@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 public class TheoreticalDuplication extends Card {
 
     public TheoreticalDuplication() {
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()),

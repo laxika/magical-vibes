@@ -32,6 +32,6 @@ public class NotOfThisWorld extends Card {
                         new StackEntryHasTargetPredicate(),
                         new StackEntryTargetsYourPermanentPredicate())),
                 "Target must be a spell or ability that targets a permanent you control."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addSpellEffect(new CounterSpellEffect());
     }
 }

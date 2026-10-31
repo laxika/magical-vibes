@@ -18,8 +18,7 @@ public class BitterOrdeal extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player."
         ))
-                .addEffect(EffectSlot.SPELL,
-                        new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE, false))
+                .addSpellEffect(new SearchTargetLibraryEffect(1, null, LibrarySearchDestination.EXILE, false))
                 .addEffect(EffectSlot.ON_SELF_CAST, new GravestormEffect());
     }
 }

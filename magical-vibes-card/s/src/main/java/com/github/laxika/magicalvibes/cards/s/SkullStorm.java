@@ -14,7 +14,7 @@ public class SkullStorm extends Card {
 
     public SkullStorm() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForEachCommanderCastEffect(false));
-        addEffect(EffectSlot.SPELL, EachPlayerSacrificesPermanentOrLosesLifeEffect.opponentsMustSacrifice(
+        addSpellEffect(EachPlayerSacrificesPermanentOrLosesLifeEffect.opponentsMustSacrifice(
                 new PermanentIsCreaturePredicate(),
                 new HalvedRoundedUp(new TargetPlayerLifeTotal()),
                 "a creature"));

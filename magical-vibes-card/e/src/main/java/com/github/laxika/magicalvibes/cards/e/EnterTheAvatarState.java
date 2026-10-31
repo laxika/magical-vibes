@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,9 +16,8 @@ public class EnterTheAvatarState extends Card {
 
     public EnterTheAvatarState() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL,
-                        new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.AVATAR, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+                .addSpellEffect(new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.AVATAR, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(
                         Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK, Keyword.HEXPROOF),
                         GrantScope.TARGET));
     }

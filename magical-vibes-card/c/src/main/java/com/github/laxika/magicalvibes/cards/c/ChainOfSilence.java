@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,8 +15,8 @@ public class ChainOfSilence extends Card {
 
     public ChainOfSilence() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allByTargetCreatures())
-                .addEffect(EffectSlot.SPELL, new MayEffect(
+                .addSpellEffect(PreventDamageEffect.allByTargetCreatures())
+                .addSpellEffect(new MayEffect(
                         new TargetPermanentControllerSacrificeThenEffect(
                                 new PermanentIsLandPredicate(),
                                 new MayEffect(

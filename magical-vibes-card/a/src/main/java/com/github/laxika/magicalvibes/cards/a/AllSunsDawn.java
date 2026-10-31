@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -24,8 +23,8 @@ public class AllSunsDawn extends Card {
         targetColor(CardColor.RED);
         targetColor(CardColor.GREEN);
 
-        addEffect(EffectSlot.SPELL, new ReturnUpToOneCardOfEachColorFromGraveyardToHandEffect());
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ReturnUpToOneCardOfEachColorFromGraveyardToHandEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 
     private void targetColor(CardColor color) {

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -45,7 +44,7 @@ public class CleaverBlow extends Card {
             "tapped");
 
     public CleaverBlow() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(buildModes()));
+        addSpellEffect(new ChooseOneEffect(buildModes()));
     }
 
     private static List<ChooseOneEffect.ChooseOneOption> buildModes() {

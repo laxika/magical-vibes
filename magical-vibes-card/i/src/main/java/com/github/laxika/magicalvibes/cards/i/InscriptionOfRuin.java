@@ -47,7 +47,7 @@ public class InscriptionOfRuin extends Card {
                         new PermanentMaxManaValuePredicate(3))),
                 "Target must be a creature with mana value 3 or less.");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.anyNumberWhen(List.of(
+        addSpellEffect(ChooseOneEffect.anyNumberWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent discards two cards",
                         new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER), opponent),

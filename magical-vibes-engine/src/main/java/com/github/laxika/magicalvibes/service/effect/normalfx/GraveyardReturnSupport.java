@@ -989,7 +989,7 @@ public class GraveyardReturnSupport {
                                                      ReturnCardFromGraveyardEffect effect, Card auraCard,
                                                      UUID auraOwnerId, UUID controllerId) {
         com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(
-                auraCard.getEffects(EffectSlot.SPELL));
+                auraCard.getCastingCostsAndSpellEffects());
         if (target == null) {
             return false;
         }

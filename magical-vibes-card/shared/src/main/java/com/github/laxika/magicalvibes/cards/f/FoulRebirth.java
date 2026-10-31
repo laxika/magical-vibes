@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -21,7 +20,7 @@ public class FoulRebirth extends Card {
         PermanentAllOfPredicate nonDemonCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON))));
-        addEffect(EffectSlot.SPELL, new SacrificePermanentThenEffect(
+        addSpellEffect(new SacrificePermanentThenEffect(
                 nonDemonCreature,
                 new CreateTokenEffect(
                         1,

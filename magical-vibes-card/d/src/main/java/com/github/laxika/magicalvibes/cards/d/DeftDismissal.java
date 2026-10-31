@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -29,7 +28,7 @@ public class DeftDismissal extends Card {
                 )),
                 "Target must be an attacking or blocking creature."
         );
-        target(filter, 1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageEffect(
+        target(filter, 1, 3).addSpellEffect(new DealDividedDamageEffect(
                 new Fixed(3), null, DivisionMode.CHOSEN, filter.predicate(), 0, false, false, false));
     }
 }

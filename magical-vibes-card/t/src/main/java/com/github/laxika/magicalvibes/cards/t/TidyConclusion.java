@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -15,8 +14,8 @@ public class TidyConclusion extends Card {
 
     public TidyConclusion() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(
                         new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
     }
 }

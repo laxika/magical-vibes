@@ -10,7 +10,7 @@ public class StirTheSands extends Card {
 
     public StirTheSands() {
         // Create three 2/2 black Zombie creature tokens.
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.blackZombie(3));
+        addSpellEffect(CreateTokenEffect.blackZombie(3));
 
         // Cycling {3}{B}; when you cycle this card, create a 2/2 black Zombie creature token. The
         // trigger is separate from the cycling draw and goes on the stack above it.

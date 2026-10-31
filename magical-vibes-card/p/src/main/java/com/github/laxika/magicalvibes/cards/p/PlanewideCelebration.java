@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -35,7 +34,7 @@ public class PlanewideCelebration extends Card {
         CardEffect proliferate = new ProliferateEffect();
         CardEffect gainLife = new GainLifeEffect(4);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(buildModeChoices(
+        addSpellEffect(new ChooseOneEffect(buildModeChoices(
                 createCitizen, proliferate, gainLife)));
     }
 

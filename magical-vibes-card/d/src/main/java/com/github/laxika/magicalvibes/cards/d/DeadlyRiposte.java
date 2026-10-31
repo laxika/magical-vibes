@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +23,7 @@ public class DeadlyRiposte extends Card {
                 )),
                 "Target must be a tapped creature"
         ))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(3))
+                .addSpellEffect(new GainLifeEffect(2));
     }
 }

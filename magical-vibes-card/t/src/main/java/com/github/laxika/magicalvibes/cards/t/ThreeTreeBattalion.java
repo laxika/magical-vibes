@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
@@ -37,7 +36,7 @@ public class ThreeTreeBattalion extends Card {
     };
 
     public ThreeTreeBattalion() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(
+        addSpellEffect(LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(
                 6,
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

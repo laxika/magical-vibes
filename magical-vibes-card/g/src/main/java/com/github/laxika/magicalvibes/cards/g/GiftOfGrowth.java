@@ -22,8 +22,8 @@ public class GiftOfGrowth extends Card {
         // Untap target creature.
         // It gets +2/+2 until end of turn.
         // If this spell was kicked, that creature gets +4/+4 until end of turn instead.
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+        target(TargetFilters.creature()).addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                         new BoostTargetCreatureEffect(2, 2),
                         new BoostTargetCreatureEffect(4, 4)
                 ));

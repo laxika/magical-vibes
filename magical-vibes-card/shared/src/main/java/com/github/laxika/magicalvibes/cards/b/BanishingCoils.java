@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,6 +19,6 @@ public class BanishingCoils extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrEnchantment,
                 "Target must be an artifact or enchantment"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect(artifactOrEnchantment));
+                .addSpellEffect(new ExileTargetPermanentEffect(artifactOrEnchantment));
     }
 }

@@ -15,7 +15,7 @@ import java.util.Set;
 public class SplicersSkill extends Card {
 
     public SplicersSkill() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Phyrexian Golem", 3, 3, null,
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT)));
         addEffect(EffectSlot.STATIC, SpliceEffect.ontoInstantOrSorcery("{3}{W}"));

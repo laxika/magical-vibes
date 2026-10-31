@@ -19,8 +19,8 @@ import java.util.Set;
 public class IntoTheFaeCourt extends Card {
 
     public IntoTheFaeCourt() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new DrawCardEffect(3));
+        addSpellEffect(new CreateTokenEffect(
                 1,
                 "Faerie",
                 1,

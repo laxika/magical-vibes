@@ -16,8 +16,8 @@ public class TolarianGeyser extends Card {
 
     public TolarianGeyser() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new GainLifeEffect(3)));
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new DrawCardEffect());
+        addSpellEffect(new ConditionalEffect(new Kicked(), new GainLifeEffect(3)));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,7 +23,7 @@ public class WaitingInTheWeeds extends Card {
         // Each player creates a 1/1 green Cat creature token for each untapped Forest they control.
         // EachPlayerCreatesTokenEffect re-evaluates the token count per creating player, so the
         // CONTROLLER-scoped count reads each player's own untapped Forests.
-        addEffect(EffectSlot.SPELL, new EachPlayerCreatesTokenEffect(
+        addSpellEffect(new EachPlayerCreatesTokenEffect(
                 new CreateTokenEffect(
                         new PermanentCount(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),

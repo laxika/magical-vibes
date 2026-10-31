@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -32,9 +31,9 @@ public class FinaleOfPromise extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_INSTANT_AND_ONE_SORCERY);
         setAllowSharedTargets(true);
         target(new GraveyardCardPredicateTargetFilter(instant, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1)
-                .addEffect(EffectSlot.SPELL, castWithCopies(CardType.INSTANT));
+                .addSpellEffect(castWithCopies(CardType.INSTANT));
         target(new GraveyardCardPredicateTargetFilter(sorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1)
-                .addEffect(EffectSlot.SPELL, castWithCopies(CardType.SORCERY));
+                .addSpellEffect(castWithCopies(CardType.SORCERY));
     }
 
     private ConditionalReplacementEffect castWithCopies(CardType type) {

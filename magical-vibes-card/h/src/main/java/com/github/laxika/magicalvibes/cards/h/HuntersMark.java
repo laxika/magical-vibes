@@ -35,7 +35,7 @@ public class HuntersMark extends Card {
                 opponentBluePermanent, 3, false, 1));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 1));
 
         PermanentPredicate opponentCreatureOrPlaneswalker = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(
@@ -47,6 +47,6 @@ public class HuntersMark extends Card {
         target(new PermanentPredicateTargetFilter(
                 opponentCreatureOrPlaneswalker,
                 "Target must be a creature or planeswalker you don't control"
-        )).addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToAnyTargetEffect());
+        )).addSpellEffect(new TargetCreatureDealsPowerDamageToAnyTargetEffect());
     }
 }

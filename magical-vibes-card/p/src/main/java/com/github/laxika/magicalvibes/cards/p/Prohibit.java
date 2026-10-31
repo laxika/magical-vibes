@@ -19,7 +19,7 @@ public class Prohibit extends Card {
     public Prohibit() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
         // Any spell may be targeted; the mana value is checked as the spell resolves.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new ConditionalEffect(new TargetSpellMatches(new StackEntryMaxManaValuePredicate(2)),
                         new CounterSpellEffect()),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -41,7 +41,7 @@ public class TargetGroupAssignmentService {
      */
     public Optional<Assignment> assignOptionalPermanentGroups(GameData gameData, Card card,
             UUID controllerId, List<UUID> targetIds) {
-        List<SpellTarget> groups = card.getSpellTargets();
+        List<TargetGroup> groups = card.getTargetGroups();
         List<List<Integer>> groupToTargets = new ArrayList<>();
         for (int i = 0; i < groups.size(); i++) {
             groupToTargets.add(new ArrayList<>());
@@ -72,7 +72,7 @@ public class TargetGroupAssignmentService {
      */
     public Optional<Assignment> assignOptionalGraveyardGroups(GameData gameData, Card card,
             UUID controllerId, List<UUID> targetIds, int xValue) {
-        List<SpellTarget> groups = card.getSpellTargets();
+        List<TargetGroup> groups = card.getTargetGroups();
         int[] groupToTarget = new int[groups.size()];
         Arrays.fill(groupToTarget, -1);
         if (!assignGraveyardTarget(gameData, card, controllerId, xValue, targetIds, groups, groupToTarget, 0)) {
@@ -88,7 +88,7 @@ public class TargetGroupAssignmentService {
     }
 
     private boolean assignGraveyardTarget(GameData gameData, Card card, UUID controllerId, int xValue,
-            List<UUID> targets, List<SpellTarget> groups, int[] groupToTarget, int targetIndex) {
+            List<UUID> targets, List<TargetGroup> groups, int[] groupToTarget, int targetIndex) {
         if (targetIndex == targets.size()) return true;
         Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targets.get(targetIndex));
         UUID ownerId = graveyardCard == null ? null : gameQueryService.findGraveyardOwnerById(gameData, graveyardCard.getId());
@@ -161,7 +161,7 @@ public class TargetGroupAssignmentService {
                 || filter instanceof ControlledPermanentPredicateTargetFilter;
     }
 
-    private boolean assignPermanentTarget(GameData gameData, List<UUID> targets, List<SpellTarget> groups,
+    private boolean assignPermanentTarget(GameData gameData, List<UUID> targets, List<TargetGroup> groups,
             List<Integer> groupOrder, FilterContext context, List<List<Integer>> groupToTargets,
             int targetIndex) {
         if (targetIndex == targets.size()) return true;

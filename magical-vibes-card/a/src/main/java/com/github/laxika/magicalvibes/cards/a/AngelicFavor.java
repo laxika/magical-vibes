@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
@@ -28,7 +27,7 @@ public class AngelicFavor extends Card {
                 List.of(new TapUntappedPermanentsCost(1, new PermanentIsCreaturePredicate())),
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
                 false));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
                 "Angel",

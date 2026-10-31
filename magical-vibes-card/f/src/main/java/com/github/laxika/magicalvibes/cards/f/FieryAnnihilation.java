@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -19,11 +18,11 @@ public class FieryAnnihilation extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.ATTACHED_TO_FIRST_TARGET);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+                .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(5));
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment"), 0, 1)
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

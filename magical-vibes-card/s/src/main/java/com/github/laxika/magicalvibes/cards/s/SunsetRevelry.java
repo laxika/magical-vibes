@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
@@ -22,13 +21,13 @@ import java.util.Set;
 public class SunsetRevelry extends Card {
 
     public SunsetRevelry() {
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new AnOpponentHasMoreLifeThanController(), new GainLifeEffect(4)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new OpponentControlsMoreCreatures(1),
                 new CreateTokenEffect(2, "Human", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.HUMAN), Set.of(), Set.of())));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new AnOpponentHasMoreCardsInHandThanController(), new DrawCardEffect(1)));
     }
 }

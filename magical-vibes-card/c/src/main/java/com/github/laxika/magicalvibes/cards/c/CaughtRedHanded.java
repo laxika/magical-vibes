@@ -20,9 +20,9 @@ public class CaughtRedHanded extends Card {
     public CaughtRedHanded() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SuspectEffect(GrantScope.TARGET));
+                .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new SuspectEffect(GrantScope.TARGET));
     }
 }

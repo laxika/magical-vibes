@@ -39,7 +39,7 @@ public class WasteManagement extends Card {
                         new PlayerRelationPredicate(PlayerRelation.ANY),
                         "Target must be a player"),
                 0, 2, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+                .addSpellEffect(new ConditionalReplacementEffect(
                         new Kicked(),
                         new ExileGraveyardCardsEffect(
                                 2, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
@@ -48,7 +48,7 @@ public class WasteManagement extends Card {
                                 0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
                                 null, null, false, false, false, creatureCard, false)));
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new EventValue(), "Rogue", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.ROGUE), Set.of(), Set.of()));
     }

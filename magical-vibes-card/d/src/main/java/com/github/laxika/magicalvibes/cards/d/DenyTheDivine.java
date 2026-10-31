@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
@@ -20,6 +19,6 @@ public class DenyTheDivine extends Card {
                         StackEntryType.CREATURE_SPELL,
                         StackEntryType.ENCHANTMENT_SPELL)),
                 "Target must be a creature or enchantment spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect(CounteredSpellDestination.EXILE));
+        )).addSpellEffect(new CounterSpellEffect(CounteredSpellDestination.EXILE));
     }
 }

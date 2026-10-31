@@ -18,7 +18,7 @@ public class ChocoboKick extends Card {
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+                .addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                         new TargetDealsPowerDamageToTargetEffect(),
                         new TargetDealsPowerDamageToTargetEffect(2)));
     }

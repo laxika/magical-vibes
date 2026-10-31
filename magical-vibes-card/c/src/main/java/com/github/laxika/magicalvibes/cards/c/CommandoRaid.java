@@ -14,7 +14,7 @@ public class CommandoRaid extends Card {
 
     public CommandoRaid() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new MayEffect(
                                 new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new SourcePower()),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -16,8 +15,8 @@ import java.util.List;
 public class Savor extends Card {
 
     public Savor() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-2, -2));
-        addEffect(EffectSlot.SPELL, foodToken());
+        addSpellEffect(new BoostTargetCreatureEffect(-2, -2));
+        addSpellEffect(foodToken());
     }
 
     private static CreateTokenEffect foodToken() {

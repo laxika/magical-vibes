@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -38,8 +37,8 @@ public class SpiderFood extends Card {
                 validTarget,
                 "Target must be an artifact, enchantment, or creature with flying"
         ), 0, 1)
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, foodToken());
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(foodToken());
     }
 
     private static CreateTokenEffect foodToken() {

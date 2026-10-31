@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class ForbiddenAlchemy extends Card {
 
     public ForbiddenAlchemy() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 1));
+        addSpellEffect(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(4, 1));
         addCastingOption(new FlashbackCast("{6}{B}"));
     }
 }

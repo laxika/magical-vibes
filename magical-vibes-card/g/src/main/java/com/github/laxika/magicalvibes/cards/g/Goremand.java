@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class Goremand extends Card {
 
     public Goremand() {
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
+        addCastingCost(new SacrificeCreatureCost());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
     }

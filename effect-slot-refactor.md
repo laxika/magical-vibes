@@ -18,7 +18,7 @@ re-check them with a grep before acting on them.
 | 2 | Ability model types | done |
 | 3 | `Card` stores abilities behind the slot adapter | done |
 | 4 | Granted, temporary and delayed triggers store abilities | done |
-| 5 | Spell abilities leave the enum | open |
+| 5 | Spell abilities leave the enum | done |
 | 6 | Static abilities leave the enum | open |
 | 7 | Activated and mana abilities in one list | open |
 | 8 | Replacement effects, special actions and markers leave the enum | open |
@@ -1308,6 +1308,154 @@ The card test classes of every card that uses a converted record, or an effect w
 changed grant API, plus the card tests that read granted state, were run: 1,026 classes and 8,561 tests.
 All pass except the 15 tests of the regression above, which pass after the fix. The full card suite was
 not run here.
+
+### Step 5
+
+`EffectSlot.SPELL` is gone. Two decisions went beyond the step text, both taken with the user: casting costs
+moved out of the spell ability now (step 2 said step 5 must), and the spell ability carries its own target
+groups.
+
+**Spell abilities.**
+
+- `SpellAbility(List<EffectRegistration> effects, List<TargetGroup> targets)`, with a one-argument constructor,
+  `withEffects` and `withTargets`. It rejects a `CostEffect` (CR 113.3a, checked: a spell ability is what the
+  spell follows as it resolves), and the group at position `i` must have index `i`.
+- Authoring: `addSpellEffect(e)`, `addSimultaneousSpellEffects(a, b, …)`, `target(f).addSpellEffect(e)`.
+- Readers: `getSpellAbility()` (an `Optional`), `getSpellEffects()`, `getSpellEffectRegistrations()`.
+- `Card.addAbility(SpellAbility)` still works and joins the card's spell ability.
+- `LegacySlots.slotOf(SpellAbility)` is `null`, so a spell ability is in no slot view. `LegacySlots.ability` and
+  `registrationAbilities` no longer build one, and `LegacySlotTrigger` no longer has a `SPELL` case.
+
+**Casting costs** (CR 601.2b, 601.2f, checked) are a new `Card` field, `List<CostEffect> castingCosts`.
+
+- `addCastingCost(c)` adds one; `getCastingCosts()` reads them.
+- `getCastingCostsAndSpellEffects()` is costs first, then the spell effects. It is what `getEffects(SPELL)`
+  returned, for the cast paths that pull costs out of one list (`AdditionalSpellCostService.extractAndRemove`)
+  and put the rest on the stack. Free and prepared casts keep the costs in the stack entry until they are paid.
+- The costs are copied with the card, copied from the text source by `createRuntimeTextBoxCopy` and from the
+  face by `createRuntimeCopyWithFace`, and cleared by `becomeMissile` and `clearRulesTextAndAbilities`.
+  `removeEffectsIf` and `removeSlotEffectsIf` reach them too; the slot argument is `null` for a cost or a spell
+  effect.
+- 485 card classes have casting costs, 109 of them only costs (permanents with multikicker, delve, sacrifice
+  costs and so on), so those have no spell ability now. `CardFreezeTest`: 79 → 80 fields.
+
+**Target groups.**
+
+- The group data moved out of `SpellTarget` into an immutable `TargetGroup`, with the same getters plus
+  `getDistinctScope()`. `SpellTarget` is now only the builder that `target(…)` returns: the card, the index,
+  `addSpellEffect`, `addEffect`, `bindEffect`, `inDistinctScope` and `group()`. It no longer points back to a
+  card from a group.
+- `Card.getSpellTargets()` became `getTargetGroups()`, read-only (it used to hand out the internal list). It
+  holds every group in declaration order.
+- `SpellAbility.targets()` holds the spell's groups: the card's leading groups that are bound to a spell
+  effect or to no effect (a positional group a sibling reads), up to the first group bound only to other
+  abilities. `Card.syncSpellTargets` keeps it in step after every declaration, binding, scope change, copy and
+  removal.
+- `getSpellTargetGroups()` is the spell ability's groups, or every group for a card without one: an Aura spell's
+  enchant ability defines its target (CR 303.4a, checked).
+- A scan of all 32,371 card classes before and after: the spell's groups equal the card's for every card but 17.
+  - Five have trailing trigger groups: Aggressive Biomancy, Cry of Contrition, Death Pulse, Mythos of Illuna,
+    Seize the Soul.
+  - Twelve have a spell ability whose groups all belong to triggers: the nine Rooms, Benediction of Moons,
+    Dirge of Dread, Runaway Growth and Secret Arcade.
+
+**Readers converted, by `scripts/step5-spell-ability.py`.** It takes each `getEffects(SPELL)` read and looks at
+what its statement asks for:
+
+- only cost types: `getCastingCosts()`; `.stream().filter(CostEffect.class::isInstance)` collapses into
+  `getCastingCosts().stream()`;
+- only other effect types, asked positively: `getSpellEffects()`;
+- anything else, including `allMatch`, negative filters, positions and sizes: `getCastingCostsAndSpellEffects()`.
+
+In main code this left 59 `getCastingCosts`, 41 `getSpellEffects` and 173 `getCastingCostsAndSpellEffects`
+reads. The combined view behaves exactly as the slot did. Each combined read that only wants one side can be
+narrowed by hand later.
+
+**Converted by hand in the engine.**
+
+- The copy loops over `EffectSlot.values()` now also copy the spell ability and costs, through the new
+  `Card.addCastingCostsAndSpellEffectsFrom(source, keep)`: `CopySupport`, `TokenCopySupport`,
+  `PermanentCopierService`, `MutationSupport`, `LayerSystemService.buildFullTextCopy` and
+  `EachOpponentChooses…TokenCopy…`. Each spell effect is added on its own, so a copy still loses the simultaneous
+  flag, as before (step 3 noted the same for slots).
+- These all-slot scans also read the spell effects and costs, as the `SPELL` slot did before:
+  `GameViewProjectionFactory`, `ChoiceHandlerService`, `CreatureControlService`, `TriggeredAbilityQueueService`,
+  `PerpetuallyBoostCardEffectHandler` and the three `EffectResolution` "spell or ETB" checks.
+- `SPELL` left the excluded-slot sets of the two `GainAbilities…` handlers and
+  `CreateTokenWithTriggeredAbilitiesOfExiledCards…`, and the three `slot != SPELL` filters in
+  `PredicateEvaluationService`. `TargetPolarityClassifier` reads the ETB slot, then the spell.
+- `TargetLegalityService.effectiveGroupMaxTargets` used to read the gift limit through the group's back
+  reference. It now takes the card.
+
+**Readers switched to the spell's own groups.** These ask which groups the spell's effects are bound to:
+`hasRequiredSpellOnStackTargetGroup`, the alternate-cost-only group check and `validateBeholdConditionalTargetGroups`
+in `SpellCastingService`. None of the 17 cards reaches them, so nothing changes. The other 241 `getTargetGroups()`
+reads were not switched:
+
+- they run for spells and abilities alike, card types not known ahead of time;
+- they mix the list with `Card`'s derived getters (`getMinTargets`, `getMaxTargets`, `getMultiTargetFilters`,
+  `getTargetFilter`, `getEffectiveMin/MaxTargets`, `doesPositionAllowPlayerTargets`), which sum over every group.
+
+Switching them needs spell-scoped versions of those getters. For all but the 17 cards it changes nothing. A
+later step should do it, together with the trigger families that take their groups into `TriggeredAbility`.
+
+**Cards and tests, by script.**
+
+- `scripts/step5-spell-ability.py`, run per letter module, changed 7,421 card classes and 49 card test classes.
+  It rewrote the engine, AI, networking and test-fixture sources with `--engine`, which also renames the
+  `SpellTarget` type to `TargetGroup` and `getSpellTargets()` to `getTargetGroups()`.
+- `scripts/step5-builder-costs.py` lifts a cost the first script left in a target chain
+  (`target(f).addCastingCost(c)`) into its own statement. It ran on 28 card classes and one service test.
+  Those costs were bound to the target group before. Nothing read a cost's binding.
+- `scripts/step5-cost-types.py` lists the `CostEffect` subtypes both scripts use.
+- `scripts/step5-docs.py` rewrote the agent-docs snippets. Each table doc has a note on what its `SPELL` label
+  means now.
+- One-line seds, verified by the scan:
+  - the 17 MDFC fronts that read `backFace.getEffects(SPELL)`, no back face having costs, read
+    `getSpellEffects()`;
+  - Shadrix Silverquill reads `getTargetGroups()`.
+- Builder variables in the engine (`SpellTarget x = card.target(…)` in `SpellCastingService` and
+  `TriggeredAbilityQueueService`) were renamed back by hand after the type rename.
+
+**For later steps.**
+
+- Step 6: step 4 asked steps 5 and 6 to give the slot-keyed "additional abilities" maps `List<Ability>`. No card
+  builds such a map with a `SPELL` key, so step 5 had nothing to convert there.
+- Schemes keep their "set in motion" effects in the spell ability, and a few permanents (Animate Dead, Dance of
+  the Dead, Grafted Identity, Spellweaver Volute, Runaway Growth, the Rooms) hold engine data there. CR 113.3a
+  gives spell abilities to instants and sorceries only, so these belong to the step that moves their family.
+- The combined `getCastingCostsAndSpellEffects()` has 173 readers. Narrow them as the cast code is touched; the
+  list-stripping cast paths should eventually take the costs from `getCastingCosts()` and the effects from the
+  spell ability.
+
+**Tests changed.**
+
+- `CardFreezeTest`: 79 → 80.
+- `CardAbilitiesTest`, `GrantedAbilitiesTest`, `LegacySlotTriggerTest` and `TargetPolarityGuardTest`: `SPELL`
+  became the spell ability (`LegacySlots` no longer builds one; the guard reads spell effects and costs).
+- `CastingCostServiceTest`'s `spellWith(CostEffect…)` helper adds casting costs.
+- `CardImmutabilityArchTest` keeps whitelisting the `SpellTarget` builder.
+- Every other application, AI and card test was converted by the script with no change of meaning.
+- New tests:
+  - `CardAbilitiesTest`: costs kept apart, a cost rejected as a spell effect, a card with only costs, the
+    spell's groups, trailing trigger groups, positional groups, scope changes, an Aura without a spell ability,
+    copies, removal and selective copying;
+  - `SpellAbilityTest`: costs rejected, group indices, no groups.
+
+**Test runs.**
+
+- Application, against HEAD (the same classes run in a HEAD worktree): 58 classes covering every changed
+  service and model type. The failures equal HEAD's, 338 cases, mostly mock wiring in service tests.
+  `CostEffectClassificationTest` (`RevealSourceChosenSubtypeCost`) and `CardEffectTargetingConsistencyTest`
+  (`TargetPlayerExilesCardFromHandEffect`) fail at HEAD too, on files this step didn't touch.
+- AI: 19 classes, 1,171 tests. The same 10 fail at HEAD.
+- Card: the classes of every card with casting costs, the 17 cards above, the cards using simultaneous spell
+  effects, back faces or the changed handlers' effects, and 400 random spell cards (2,878 classes, 24,124 tests). One test fails:
+  `KetriaTest#chaosAuraStaysExiledWhenThereIsNothingItCanEnchant`. It is flaky at HEAD as well (it failed
+  in 2 of 4 runs there and 1 of 4 with the change), so it is not a regression of this step. The full card
+  suite was not run here.
+- A scan that builds every card class confirmed that all 32,371 construct, and that each card's spell effects
+  and casting costs equal what its `SPELL` slot held, card for card.
 
 ## Prompt
 

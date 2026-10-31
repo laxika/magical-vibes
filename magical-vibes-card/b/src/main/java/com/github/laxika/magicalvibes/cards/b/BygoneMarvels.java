@@ -20,11 +20,11 @@ public class BygoneMarvels extends Card {
 
         addEffect(EffectSlot.ON_SELF_CAST, new ConditionalEffect(descendEight,
                 new CopyThisSpellIfConditionEffect(descendEight, false, false, false, 2)));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

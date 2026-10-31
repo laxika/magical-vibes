@@ -20,7 +20,7 @@ public class ResoundingScream extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true))
+                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, true))
                 .addEffect(EffectSlot.ON_SELF_CYCLED, new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER, true));
 
         // Cycling {5}{U}{B}{R} ({5}{U}{B}{R}, Discard this card: Draw a card.)

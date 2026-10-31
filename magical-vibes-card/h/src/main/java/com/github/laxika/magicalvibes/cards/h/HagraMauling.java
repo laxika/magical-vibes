@@ -31,7 +31,7 @@ public class HagraMauling extends Card {
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC)))),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature",
                         new DestroyTargetPermanentEffect(),

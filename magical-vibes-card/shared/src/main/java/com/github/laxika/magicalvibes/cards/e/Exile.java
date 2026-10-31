@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
@@ -33,7 +32,7 @@ public class Exile extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE))))),
                 "Target must be a nonwhite attacking creature"
         ))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+                .addSpellEffect(new ExileTargetPermanentThenEffect(
                         EventStat.TOUGHNESS,
                         new GainLifeEffect(new EventValue()),
                         ThenEffectRecipient.CONTROLLER));

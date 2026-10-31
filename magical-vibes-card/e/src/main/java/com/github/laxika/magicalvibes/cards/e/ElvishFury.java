@@ -19,7 +19,7 @@ public class ElvishFury extends Card {
         // card into your hand as it resolves.)
         // Target creature gets +2/+2 until end of turn.
         addEffect(EffectSlot.STATIC, new BuybackEffect("{4}"));
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new BoostTargetCreatureEffect(2, 2));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

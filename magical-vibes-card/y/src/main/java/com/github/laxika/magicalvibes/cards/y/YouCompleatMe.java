@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -29,10 +28,10 @@ public class YouCompleatMe extends Card {
                     + "you draw a card and you lose 1 life.";
 
     public YouCompleatMe() {
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new ControllerLifeAtLeast(11), new SetLifeTotalEffect(10)));
-        addEffect(EffectSlot.SPELL, new SetMaximumLifeTotalEffect(10));
-        addEffect(EffectSlot.SPELL, new CreateEmblemEffect(
+        addSpellEffect(new SetMaximumLifeTotalEffect(10));
+        addSpellEffect(new CreateEmblemEffect(
                 List.of(new EmblemStepTriggerEffect(
                         EmblemTriggerStep.UPKEEP,
                         List.of(SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))),

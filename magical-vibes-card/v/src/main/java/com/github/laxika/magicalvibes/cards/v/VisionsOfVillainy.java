@@ -19,7 +19,7 @@ public class VisionsOfVillainy extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.VILLAIN)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new LoseLifeEffect(2));
     }
 }

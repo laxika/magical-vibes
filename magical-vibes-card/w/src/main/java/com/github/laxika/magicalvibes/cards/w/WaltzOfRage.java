@@ -16,9 +16,9 @@ public class WaltzOfRage extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect());
+        )).addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect());
 
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_ALLY_CREATURE_DIES,
                 new ExileTopCardsMayPlayUntilNextTurnEffect(1)));
     }

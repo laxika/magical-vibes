@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -25,7 +24,6 @@ public class SemestersEnd extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsPlaneswalkerPredicate())))),
                 "Target must be a creature or planeswalker you control"), 0, 99)
-                .addEffect(EffectSlot.SPELL,
-                        FlickerEffect.exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(1));
+                .addSpellEffect(FlickerEffect.exileTargetReturnAtEndStepWithPlusOnePlusOneAndLoyaltyCounters(1));
     }
 }

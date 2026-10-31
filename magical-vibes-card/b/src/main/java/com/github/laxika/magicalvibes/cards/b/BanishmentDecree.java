@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -24,6 +23,6 @@ public class BanishmentDecree extends Card {
                 )),
                 "Target must be an artifact, creature, or enchantment"
         ))
-                .addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
+                .addSpellEffect(new PutTargetOnTopOfLibraryEffect());
     }
 }

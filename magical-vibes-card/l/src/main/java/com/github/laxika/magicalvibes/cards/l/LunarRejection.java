@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +28,7 @@ public class LunarRejection extends Card {
                 )),
                 "Target must be a Wolf or Werewolf creature"
         ))
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(ReturnToHandEffect.target())
+                .addSpellEffect(new DrawCardEffect());
     }
 }

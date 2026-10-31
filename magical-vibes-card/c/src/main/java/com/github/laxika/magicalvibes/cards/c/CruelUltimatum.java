@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -34,17 +33,17 @@ public class CruelUltimatum extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+                .addSpellEffect(new SacrificePermanentsEffect(
                         1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
+                .addSpellEffect(new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER))
+                .addSpellEffect(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
 
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .mandatory(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(5));
+        addSpellEffect(new DrawCardEffect(3));
+        addSpellEffect(new GainLifeEffect(5));
     }
 }

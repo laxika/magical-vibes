@@ -12,6 +12,6 @@ public class TrialAndError extends Card {
     public TrialAndError() {
         addEffect(EffectSlot.ON_SELF_SPELL_COUNTERED_OR_FIZZLED,
                 new CopyThisSpellWhenCounteredOrFizzlesEffect());
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
     }
 }

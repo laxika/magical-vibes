@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -23,7 +22,7 @@ public class BloodLust extends Card {
         // Both branches reduce toughness by min(4, toughness - 1): a 5+ toughness creature loses
         // exactly 4, anything smaller drops to a toughness of 1. So the power boost is a flat +4
         // and the toughness change is -min(4, toughness - 1).
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(
+        addSpellEffect(new BoostTargetCreatureEffect(
                 new Fixed(4),
                 new Scaled(new Min(new Fixed(4), new Sum(new TargetToughness(), new Fixed(-1))), -1)));
     }

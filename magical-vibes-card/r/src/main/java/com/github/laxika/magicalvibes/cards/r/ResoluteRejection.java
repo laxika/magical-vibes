@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -25,9 +24,9 @@ public class ResoluteRejection extends Card {
                 )),
                 "Target must be a tapped creature"
         ))
-                .addEffect(EffectSlot.SPELL, new PerpetuallyGrantStaticEffectToTargetCreatureEffect(
+                .addSpellEffect(new PerpetuallyGrantStaticEffectToTargetCreatureEffect(
                         new LosesAllAbilitiesEffect(GrantScope.SELF)))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
 
         addCycling("{2}");
     }

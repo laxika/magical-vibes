@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesTwoDistinctPermanentsEffect;
@@ -13,8 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class StructuralCollapse extends Card {
 
     public StructuralCollapse() {
-        addEffect(EffectSlot.SPELL, new TargetPlayerSacrificesTwoDistinctPermanentsEffect(
+        addSpellEffect(new TargetPlayerSacrificesTwoDistinctPermanentsEffect(
                 new PermanentIsArtifactPredicate(), new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
+        addSpellEffect(new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
     }
 }

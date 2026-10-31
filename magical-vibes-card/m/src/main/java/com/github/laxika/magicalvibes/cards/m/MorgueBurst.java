@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -27,7 +26,7 @@ public class MorgueBurst extends Card {
     public MorgueBurst() {
         // Return target creature card from your graveyard to your hand. The graveyard card is the
         // entry's targetId (targetZone GRAVEYARD); the any target below is group 0 (targetIds).
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
@@ -35,7 +34,7 @@ public class MorgueBurst extends Card {
 
         // Record the returned card's power as the event value. Unbound so the resolver keeps
         // targetId on the returned graveyard card.
-        addEffect(EffectSlot.SPELL, new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.POWER));
+        addSpellEffect(new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.POWER));
 
         // Morgue Burst deals damage to any target equal to the power of the card returned this way.
         // Bound to the any-target group (group 0) so the position accepts players and the AI reads
@@ -48,6 +47,6 @@ public class MorgueBurst extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new EventValue(), false, false, 0));
+        )).addSpellEffect(new DealDamageToAnyTargetEffect(new EventValue(), false, false, 0));
     }
 }

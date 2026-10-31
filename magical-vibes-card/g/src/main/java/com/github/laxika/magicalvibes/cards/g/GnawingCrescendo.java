@@ -18,8 +18,8 @@ import java.util.Set;
 public class GnawingCrescendo extends Card {
 
     public GnawingCrescendo() {
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 0));
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
                 ratToken()));
     }

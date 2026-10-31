@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,9 +21,9 @@ public class TurnIntoAPumpkin extends Card {
 
     public TurnIntoAPumpkin() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new DrawCardEffect(1));
+        addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLUE, 3), foodToken()));
     }
 

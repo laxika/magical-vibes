@@ -17,7 +17,7 @@ public class DeemWorthy extends Card {
     public DeemWorthy() {
         // Deem Worthy deals 7 damage to target creature. (DealDamageToTargetCreatureEffect's
         // TargetSpec narrows the legal target to a creature — no explicit filter needed.)
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(7));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(7));
 
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
                 new DealDamageToTargetCreatureEffect(2), "Have Deem Worthy deal 2 damage to target creature?"));

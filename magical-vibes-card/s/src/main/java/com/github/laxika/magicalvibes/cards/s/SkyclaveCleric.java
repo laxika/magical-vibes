@@ -16,7 +16,7 @@ public class SkyclaveCleric extends Card {
         setModalDoubleFaced(true);
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Skyclave Cleric", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Skyclave Basilica", List.of())
         )));

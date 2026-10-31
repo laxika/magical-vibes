@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class ReturnTheFavor extends Card {
 
     public ReturnTheFavor() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{1}", "{1}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{1}", "{1}")));
         setAllowSharedTargets(true);
 
         StackEntryPredicate copyTypes = new StackEntryTypeInPredicate(Set.of(
@@ -31,7 +30,7 @@ public class ReturnTheFavor extends Card {
                 StackEntryType.TRIGGERED_ABILITY));
         StackEntryPredicate singleTarget = new StackEntryIsSingleTargetPredicate();
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Copy target instant spell, sorcery spell, activated ability, or triggered ability",
                         new CopyTargetSpellOrAbilityEffect(copyTypes),

@@ -29,7 +29,7 @@ public class MindGames extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, creature, or land"
-        )).addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        )).addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

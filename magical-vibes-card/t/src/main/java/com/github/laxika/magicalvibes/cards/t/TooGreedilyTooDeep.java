@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -17,7 +16,7 @@ public class TooGreedilyTooDeep extends Card {
 
     public TooGreedilyTooDeep() {
         // Put target creature card from a graveyard onto the battlefield under your control.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
@@ -25,6 +24,6 @@ public class TooGreedilyTooDeep extends Card {
                 .build());
 
         // That creature deals damage equal to its power to each other creature.
-        addEffect(EffectSlot.SPELL, new ReturnedPermanentDealsPowerDamageToEachOtherCreatureEffect());
+        addSpellEffect(new ReturnedPermanentDealsPowerDamageToEachOtherCreatureEffect());
     }
 }

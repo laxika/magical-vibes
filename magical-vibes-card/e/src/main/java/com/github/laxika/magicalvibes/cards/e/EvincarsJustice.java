@@ -20,7 +20,7 @@ public class EvincarsJustice extends Card {
         // card into your hand as it resolves.)
         // Evincar's Justice deals 2 damage to each creature and each player.
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(2, true));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new MassDamageEffect(2, true));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

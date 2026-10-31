@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
@@ -19,6 +18,6 @@ public class LethargyTrap extends Card {
                 List.of(new ManaCastingCost("{U}")),
                 new AnyPlayerControlsPermanentCount(3, new PermanentIsAttackingPredicate()),
                 false));
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-3, 0, new PermanentIsAttackingPredicate()));
+        addSpellEffect(new BoostAllCreaturesEffect(-3, 0, new PermanentIsAttackingPredicate()));
     }
 }

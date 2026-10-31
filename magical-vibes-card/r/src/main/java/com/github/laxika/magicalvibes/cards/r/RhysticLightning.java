@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 public class RhysticLightning extends Card {
 
     public RhysticLightning() {
-        addEffect(EffectSlot.SPELL, new MayPayManaEffect(
+        addSpellEffect(new MayPayManaEffect(
                 "{2}",
                 new DealDamageToAnyTargetEffect(2),
                 "Pay {2} to reduce the damage to 2?",

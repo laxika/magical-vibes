@@ -16,10 +16,10 @@ public class AspirantsAscent extends Card {
 
     public AspirantsAscent() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 3))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TOXIC, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 3))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TOXIC, GrantScope.TARGET))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.STATIC, new ToxicEffect(1)));
     }
 }

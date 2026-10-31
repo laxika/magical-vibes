@@ -30,7 +30,7 @@ public class DollmakersShopPorcelainGallery extends Card {
     public DollmakersShopPorcelainGallery() {
         setRoomDoorManaCosts(List.of("{1}{W}", "{4}{W}{W}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Dollmaker's Shop", List.of())
                         .withManaCost("{1}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Porcelain Gallery", List.of())

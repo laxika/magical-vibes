@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 public class SunsBounty extends Card {
 
     public SunsBounty() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
+        addSpellEffect(new GainLifeEffect(4));
 
         addEffect(EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new MayPayManaEffect("{1}{W}",

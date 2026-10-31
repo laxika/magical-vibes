@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -15,6 +14,6 @@ public class ViolentUltimatum extends Card {
         // every chosen permanent is destroyed via DestroyEachTargetPermanentEffect.
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Targets must be permanents"), 3, 3)
-                .addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+                .addSpellEffect(new DestroyEachTargetPermanentEffect());
     }
 }

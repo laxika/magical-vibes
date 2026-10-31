@@ -49,7 +49,7 @@ public class RallyTheMonastery extends Card {
                 Set.of(), Set.of(), false, false, monkTokenEffects, List.of(),
                 false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create two 1/1 white Monk creature tokens with prowess",
                         monkToken),

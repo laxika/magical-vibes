@@ -19,7 +19,7 @@ public class AlliesAtLast extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER)));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new TargetCreaturesDealPowerDamageToTargetEffect(1, 0));
+                .addSpellEffect(new TargetCreaturesDealPowerDamageToTargetEffect(1, 0));
         target(TargetFilters.creatureYouControl(), 0, 2);
     }
 }

@@ -22,10 +22,10 @@ public class LegolassQuickReflexes extends Card {
 
     public LegolassQuickReflexes() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(
                         Set.of(Keyword.REACH, Keyword.HEXPROOF), GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentIsSourceCardPredicate(),

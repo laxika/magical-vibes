@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class DanceOfTheTumbleweeds extends Card {
 
     public DanceOfTheTumbleweeds() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{1}", "{3}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{1}", "{3}")));
 
         CardAnyOfPredicate basicLandOrDesert = new CardAnyOfPredicate(List.of(
                 CardPredicateUtils.basicLand(),
@@ -32,7 +31,7 @@ public class DanceOfTheTumbleweeds extends Card {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Search your library for a basic land card or a Desert card, put it onto the battlefield",
                         new SearchLibraryEffect(basicLandOrDesert, LibrarySearchDestination.BATTLEFIELD)),

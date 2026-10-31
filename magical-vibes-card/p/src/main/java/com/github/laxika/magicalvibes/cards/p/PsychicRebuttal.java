@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -39,7 +38,7 @@ public class PsychicRebuttal extends Card {
                         new StackEntryTargetsYouPredicate()
                 )),
                 "Target must be an instant or sorcery spell that targets you."))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new AllOf(List.of(
                                 new GraveyardCardThreshold(2, new CardAnyOfPredicate(List.of(
                                         new CardTypePredicate(CardType.INSTANT),
@@ -48,6 +47,6 @@ public class PsychicRebuttal extends Card {
                                 new TargetSpellCanBeCountered()
                         )),
                         new MayEffect(new CopySpellEffect(), "Copy the spell countered by Psychic Rebuttal?")))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                .addSpellEffect(new CounterSpellEffect());
     }
 }

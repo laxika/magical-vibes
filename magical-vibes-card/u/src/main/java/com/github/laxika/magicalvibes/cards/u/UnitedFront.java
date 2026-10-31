@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -18,9 +17,9 @@ import java.util.Set;
 public class UnitedFront extends Card {
 
     public UnitedFront() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(new XValue(), "Ally", 1, 1,
+        addSpellEffect(new CreateTokenEffect(new XValue(), "Ally", 1, 1,
                 CardColor.WHITE, List.of(CardSubtype.ALLY), Set.of(), Set.of()));
-        addEffect(EffectSlot.SPELL, new PutCounterOnEachControlledPermanentEffect(
+        addSpellEffect(new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
     }
 }

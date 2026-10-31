@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
@@ -29,9 +28,9 @@ public class SoulImmolation extends Card {
 
     public SoulImmolation() {
         setXValueCap(new GreatestToughnessAmongControlled());
-        addEffect(EffectSlot.SPELL, new BlightCost());
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(new XValue(), DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new DealDamageToEachMatchingPermanentEffect(
+        addCastingCost(new BlightCost());
+        addSpellEffect(new DealDamageToPlayersEffect(new XValue(), DamageRecipient.EACH_OPPONENT));
+        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
                 new XValue(), OPPONENT_CREATURE, EachPermanentScope.ALL_PLAYERS));
     }
 }

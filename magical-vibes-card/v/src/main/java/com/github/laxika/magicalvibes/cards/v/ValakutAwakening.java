@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAnyNumberCardsFromHandOnBottomOfLibraryThenDrawThatManyPlusOneEffect;
 
@@ -16,7 +15,7 @@ public class ValakutAwakening extends Card {
         setBackFaceCard(new ValakutStoneforge());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put any number of cards from your hand on the bottom of your library, then draw that many cards plus one",
                         new PutAnyNumberCardsFromHandOnBottomOfLibraryThenDrawThatManyPlusOneEffect()),

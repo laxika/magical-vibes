@@ -30,6 +30,6 @@ public class BoltBend extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryIsSingleTargetPredicate(),
                 "Target spell or ability must have a single target."
-        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
+        )).addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect());
     }
 }

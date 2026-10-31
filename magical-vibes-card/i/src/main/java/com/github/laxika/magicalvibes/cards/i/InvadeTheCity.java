@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -41,14 +40,12 @@ public class InvadeTheCity extends Card {
                 new CardTypePredicate(CardType.SORCERY)
         )), CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(controlsArmy,
+        addSpellEffect(ConditionalEffect.unless(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, instantSorceryCount, army, false, true),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(new NotCondition(controlsArmy),
+        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsArmy),
                         SequenceEffect.of(
                                 new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,

@@ -18,7 +18,7 @@ public class MalakirRebirth extends Card {
         setBackFaceCard(new MalakirMire());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose target creature. You lose 2 life. Until end of turn, that creature gains "
                                 + "\"When this creature dies, return it to the battlefield tapped under its owner's control.\"",

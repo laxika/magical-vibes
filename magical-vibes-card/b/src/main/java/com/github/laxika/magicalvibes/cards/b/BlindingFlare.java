@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,6 +15,6 @@ public class BlindingFlare extends Card {
 
         // Any number of target creatures can't block this turn.
         target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
-                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtMost;
@@ -31,11 +30,11 @@ public class CosmicRebirth extends Card {
                 .targetGraveyard(true)
                 .build();
 
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new TargetGraveyardCardManaValueAtMost(3),
                 new MayEffect(toBattlefield, "Put it onto the battlefield?", toHand)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new TargetGraveyardCardManaValueAtLeast(4), toHand));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        addSpellEffect(new GainLifeEffect(3));
     }
 }

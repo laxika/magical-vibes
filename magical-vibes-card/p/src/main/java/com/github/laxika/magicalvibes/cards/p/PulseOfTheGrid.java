@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -14,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 public class PulseOfTheGrid extends Card {
 
     public PulseOfTheGrid() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new ConditionalEffect(
                 new AnOpponentHasMoreCardsInHandThanController(), ReturnToHandEffect.selfSpell()));
     }
 }

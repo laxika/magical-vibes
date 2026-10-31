@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -22,7 +21,7 @@ public class FlamingGambit extends Card {
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(damage);
 
         addCastingOption(new FlashbackCast("{X}{R}{R}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPlayerControlsPermanent(new PermanentIsCreaturePredicate()),
                 playerDamage,
                 new MayEffect(

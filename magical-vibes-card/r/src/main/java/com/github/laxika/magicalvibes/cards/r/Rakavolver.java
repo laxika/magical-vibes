@@ -25,7 +25,7 @@ public class Rakavolver extends Card {
 
     public Rakavolver() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{U}"), true, 1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}"), true, 1));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));

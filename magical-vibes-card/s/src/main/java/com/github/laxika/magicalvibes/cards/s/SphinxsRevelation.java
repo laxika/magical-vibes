@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class SphinxsRevelation extends Card {
 
     public SphinxsRevelation() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new XValue()));
+        addSpellEffect(new GainLifeEffect(new XValue()));
+        addSpellEffect(new DrawCardEffect(new XValue()));
     }
 }

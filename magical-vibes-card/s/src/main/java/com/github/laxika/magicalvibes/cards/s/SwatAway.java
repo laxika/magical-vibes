@@ -16,6 +16,6 @@ public class SwatAway extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new CreatureAttackingController(),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
+        addSpellEffect(new PutTargetSpellOrCreatureOnTopOrBottomOfLibraryEffect());
     }
 }

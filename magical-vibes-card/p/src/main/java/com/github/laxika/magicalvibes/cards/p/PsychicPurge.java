@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class PsychicPurge extends Card {
 
     public PsychicPurge() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(new DealDamageToAnyTargetEffect(1));
         addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT,
                 new LoseLifeEffect(5, LoseLifeRecipient.EACH_OPPONENT));
     }

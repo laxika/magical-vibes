@@ -25,7 +25,7 @@ public class DefiledCryptCadaverLab extends Card {
     public DefiledCryptCadaverLab() {
         setRoomDoorManaCosts(List.of("{3}{B}", "{B}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Defiled Crypt", List.of())
                         .withManaCost("{3}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Cadaver Lab", List.of())

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -31,14 +30,14 @@ public class ForTheCommonGood extends Card {
                 )),
                 "Target must be a token you control."
         ));
-        addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+        addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(new XValue()));
+        addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.INDESTRUCTIBLE),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentIsTokenPredicate(),
                 GrantDuration.UNTIL_YOUR_NEXT_TURN,
                 null));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(
+        addSpellEffect(new GainLifeEffect(
                 new PermanentCount(new PermanentIsTokenPredicate(), CountScope.CONTROLLER)));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesOpponentPermanentToDestroyEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -11,8 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class SadisticShellGame extends Card {
 
     public SadisticShellGame() {
-        addEffect(EffectSlot.SPELL,
-                new EachPlayerChoosesOpponentPermanentToDestroyEffect(
+        addSpellEffect(new EachPlayerChoosesOpponentPermanentToDestroyEffect(
                         new PermanentIsCreaturePredicate(), true, true, true));
     }
 }

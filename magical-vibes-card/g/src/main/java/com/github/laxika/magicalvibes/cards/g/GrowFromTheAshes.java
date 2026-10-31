@@ -33,7 +33,7 @@ public class GrowFromTheAshes extends Card {
         // Search your library for a basic land card, put it onto the battlefield, then shuffle.
         // If this spell was kicked, instead search your library for two basic land cards,
         // put them onto the battlefield, then shuffle.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                 new SearchLibraryEffect(basicLandFilter, LibrarySearchDestination.BATTLEFIELD),
                 new SearchLibraryEffect(new Fixed(2), basicLandFilter, LibrarySearchDestination.BATTLEFIELD)
         ));

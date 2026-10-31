@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -16,7 +15,7 @@ public class Humble extends Card {
 
     public Humble() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new SetBasePowerToughnessEffect(0, 1));
+                .addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
+                .addSpellEffect(new SetBasePowerToughnessEffect(0, 1));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DelayedTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedBeginningOfCombatTriggerEffect;
@@ -18,10 +17,10 @@ import java.util.List;
 public class FeralEncounter extends Card {
 
     public FeralEncounter() {
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsMayExileOneAndPlayThisTurnEffect(
+        addSpellEffect(new LookAtTopCardsMayExileOneAndPlayThisTurnEffect(
                 5, new CardTypePredicate(CardType.CREATURE), false));
 
-        addEffect(EffectSlot.SPELL, new RegisterDelayedBeginningOfCombatTriggerEffect(
+        addSpellEffect(new RegisterDelayedBeginningOfCombatTriggerEffect(
                 List.of(
                         new DelayedTargetGroup(TargetFilters.creatureYouControl(), 1, 1),
                         new DelayedTargetGroup(TargetFilters.creatureAnOpponentControls(), 0, 1)),

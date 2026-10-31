@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
@@ -34,12 +33,9 @@ public class CheckForTraps extends Card {
         SpellTarget opponentTarget = target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
-        opponentTarget.addEffect(EffectSlot.SPELL,
-                new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE, true));
-        opponentTarget.addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(instantOrFlash,
+        opponentTarget.addSpellEffect(new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE, true));
+        opponentTarget.addSpellEffect(new ConditionalEffect(instantOrFlash,
                         new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)));
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new NotCondition(instantOrFlash), new LoseLifeEffect(1)));
+        addSpellEffect(new ConditionalEffect(new NotCondition(instantOrFlash), new LoseLifeEffect(1)));
     }
 }

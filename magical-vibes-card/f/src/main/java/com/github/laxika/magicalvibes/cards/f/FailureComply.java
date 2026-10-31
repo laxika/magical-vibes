@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.c.Comply;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 
 /**
@@ -20,7 +19,7 @@ public class FailureComply extends Card {
 
         // Return target spell to its owner's hand.
         // SPELL_ON_STACK targetSpec on the effect auto-derives "any spell on the stack".
-        addEffect(EffectSlot.SPELL, new ReturnTargetSpellToHandEffect());
+        addSpellEffect(new ReturnTargetSpellToHandEffect());
     }
 
     @Override

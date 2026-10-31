@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class SibsigMuckdraggers extends Card {
 
     public SibsigMuckdraggers() {
-        addEffect(EffectSlot.SPELL, new DelveCost());
+        addCastingCost(new DelveCost());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

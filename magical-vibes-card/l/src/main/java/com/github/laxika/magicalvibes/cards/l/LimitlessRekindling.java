@@ -12,8 +12,7 @@ import java.util.List;
 public class LimitlessRekindling extends Card {
 
     public LimitlessRekindling() {
-        addEffect(EffectSlot.SPELL,
-                new ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect(List.of(
+        addSpellEffect(new ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect(List.of(
                         new ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect.CardPrintingReference("YECL", "3"),
                         new ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect.CardPrintingReference("YECL", "4"),
                         new ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect.CardPrintingReference("YECL", "11"),

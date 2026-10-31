@@ -19,7 +19,7 @@ public class CharredFoyerWarpedSpace extends Card {
     public CharredFoyerWarpedSpace() {
         setRoomDoorManaCosts(List.of("{3}{R}", "{4}{R}{R}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Charred Foyer", List.of())
                         .withManaCost("{3}{R}"),
                 new ChooseOneEffect.ChooseOneOption("Warped Space", List.of())

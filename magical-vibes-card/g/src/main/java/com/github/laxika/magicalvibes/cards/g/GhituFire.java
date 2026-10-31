@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -18,6 +17,6 @@ public class GhituFire extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{X}{2}{R}")), null, true));
 
         // Ghitu Fire deals X damage to any target.
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
     }
 }

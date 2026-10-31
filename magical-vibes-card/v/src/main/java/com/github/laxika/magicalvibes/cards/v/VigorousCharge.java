@@ -20,8 +20,8 @@ public class VigorousCharge extends Card {
     public VigorousCharge() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                                 new GainLifeEffect(new EventValue()), true)));

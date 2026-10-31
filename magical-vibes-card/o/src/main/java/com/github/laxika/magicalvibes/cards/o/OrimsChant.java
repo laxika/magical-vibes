@@ -24,9 +24,9 @@ public class OrimsChant extends Card {
                 "Target must be a player"
         ));
         addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
-        addEffect(EffectSlot.SPELL, new TargetPlayerCantCastSpellTypesThisTurnEffect(
+        addSpellEffect(new TargetPlayerCantCastSpellTypesThisTurnEffect(
                 EnumSet.allOf(CardType.class)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new Kicked(), new CreaturesCantAttackThisTurnEffect()));
     }
 }

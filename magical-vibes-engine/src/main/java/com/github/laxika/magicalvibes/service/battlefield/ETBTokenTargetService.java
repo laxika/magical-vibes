@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -302,10 +302,10 @@ public class ETBTokenTargetService {
                 || effect.hasOptionalTarget())) {
             return true;
         }
-        if (pending.sourceCard().getSpellTargets().size() != 1) {
+        if (pending.sourceCard().getTargetGroups().size() != 1) {
             return false;
         }
-        var declaredTarget = pending.sourceCard().getSpellTargets().getFirst();
+        var declaredTarget = pending.sourceCard().getTargetGroups().getFirst();
         return declaredTarget.getMinTargets() == 0
                 && declaredTarget.getMaxTargets() == 1
                 && pending.effects().stream().anyMatch(effect ->
@@ -411,7 +411,7 @@ public class ETBTokenTargetService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             PermanentChoiceContext.ETBTokenMultiTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
             Card card = pending.sourceCard();
-            List<SpellTarget> groups = card.getSpellTargets();
+            List<TargetGroup> groups = card.getTargetGroups();
             int idx = pending.currentGroupIndex();
             int chosenInGroup = pending.chosenInCurrentGroup();
 
@@ -421,7 +421,7 @@ public class ETBTokenTargetService {
                 continue;
             }
 
-            SpellTarget group = groups.get(idx);
+            TargetGroup group = groups.get(idx);
             int effectiveMinTargets = effectiveMinTargets(gameData, pending, group);
             int effectiveMaxTargets = effectiveMaxTargets(gameData, pending, group);
 
@@ -677,17 +677,17 @@ public class ETBTokenTargetService {
      */
     public boolean controllerChoiceStopsGroup(GameData gameData,
                                               PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
-        List<SpellTarget> groups = pending.sourceCard().getSpellTargets();
+        List<TargetGroup> groups = pending.sourceCard().getTargetGroups();
         if (pending.currentGroupIndex() >= groups.size()) {
             return true;
         }
-        SpellTarget group = groups.get(pending.currentGroupIndex());
+        TargetGroup group = groups.get(pending.currentGroupIndex());
         List<CardEffect> groupEffects = effectsForTargetGroup(pending.sourceCard(), pending.effects(), group.getIndex());
         return !playerTargets(gameData, pending, group, groupEffects).contains(pending.controllerId());
     }
 
     private List<UUID> playerTargets(GameData gameData, PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
-                                     SpellTarget group, List<CardEffect> groupEffects) {
+                                     TargetGroup group, List<CardEffect> groupEffects) {
         TargetFilter groupFilter = group.getFilter();
         boolean canTargetPlayer = groupFilter instanceof PlayerPredicateTargetFilter
                 || (!filterRestrictsTargetKind(groupFilter) && groupEffects.stream()
@@ -783,9 +783,9 @@ public class ETBTokenTargetService {
         List<UUID> chosenTargets = pending.chosenTargetsSoFar();
         List<UUID> graveyardTargets = new ArrayList<>();
         int offset = 0;
-        List<SpellTarget> groups = card.getSpellTargets();
+        List<TargetGroup> groups = card.getTargetGroups();
         for (int i = 0; i < groups.size() && offset < chosenTargets.size(); i++) {
-            SpellTarget group = groups.get(i);
+            TargetGroup group = groups.get(i);
             int groupSize = i < pending.groupSizes().size()
                     ? pending.groupSizes().get(i)
                     : Math.min(group.getMaxTargets(), chosenTargets.size() - offset);
@@ -846,7 +846,7 @@ public class ETBTokenTargetService {
 
     private int effectiveMaxTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
-                                    SpellTarget group) {
+                                    TargetGroup group) {
         Permanent enteringSource = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int maxTargets = enteringSource != null && enteringSource.isKicked()
                 ? group.getKickedMaxTargets() : group.getMaxTargets();
@@ -865,13 +865,13 @@ public class ETBTokenTargetService {
 
     public int effectiveMinTargets(GameData gameData,
                                    PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
-        SpellTarget group = pending.sourceCard().getSpellTargets().get(pending.currentGroupIndex());
+        TargetGroup group = pending.sourceCard().getTargetGroups().get(pending.currentGroupIndex());
         return effectiveMinTargets(gameData, pending, group);
     }
 
     private int effectiveMinTargets(GameData gameData,
                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
-                                    SpellTarget group) {
+                                    TargetGroup group) {
         Permanent enteringSource = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int minTargets = enteringSource != null && enteringSource.isKicked()
                 ? group.getKickedMinTargets() : group.getMinTargets();
@@ -898,7 +898,7 @@ public class ETBTokenTargetService {
         List<UUID> chosen = pending.chosenTargetsSoFar();
         int group = pending.sourceCard().getEffectTargetIndex(distribution);
         List<Integer> sizes = pending.groupSizes();
-        if (group < 0 || group >= sizes.size() || sizes.size() != pending.sourceCard().getSpellTargets().size()) {
+        if (group < 0 || group >= sizes.size() || sizes.size() != pending.sourceCard().getTargetGroups().size()) {
             return chosen;
         }
         int start = 0;
@@ -1090,11 +1090,11 @@ public class ETBTokenTargetService {
      * @return whether slot-by-slot walking is required for multiple groups
      */
     public boolean hasMultipleTargetGroups(Card card) {
-        return card.getSpellTargets().size() > 1;
+        return card.getTargetGroups().size() > 1;
     }
 
     public boolean hasGroupWithMaxTargetsGreaterThanOne(Card card) {
-        return card.getSpellTargets().stream().anyMatch(g -> g.getMaxTargets() > 1);
+        return card.getTargetGroups().stream().anyMatch(g -> g.getMaxTargets() > 1);
     }
 
     /**
@@ -1103,7 +1103,7 @@ public class ETBTokenTargetService {
      * so the controller may decline via choosing themselves.
      */
     public boolean needsSlotBySlotTargetSelection(Card card) {
-        return card.getSpellTargets().stream()
+        return card.getTargetGroups().stream()
                 .anyMatch(g -> g.getMaxTargets() > 1 || g.getMinTargets() == 0
                         || g.getDynamicMinTargets() != null);
     }

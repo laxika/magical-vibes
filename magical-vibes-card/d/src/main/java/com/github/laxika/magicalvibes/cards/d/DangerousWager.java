@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
@@ -16,7 +15,7 @@ public class DangerousWager extends Card {
 
     public DangerousWager() {
         // Discard your hand, then draw two cards (order matters — the drawn cards are kept)
-        addEffect(EffectSlot.SPELL, new DiscardHandEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DiscardHandEffect());
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

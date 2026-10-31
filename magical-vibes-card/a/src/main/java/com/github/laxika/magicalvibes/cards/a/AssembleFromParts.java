@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
@@ -25,7 +24,7 @@ public class AssembleFromParts extends Card {
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.CREATURE),
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
-        addEffect(EffectSlot.SPELL, new PerpetuallyGrantGraveyardAbilityToTargetCardEffect(
+        addSpellEffect(new PerpetuallyGrantGraveyardAbilityToTargetCardEffect(
                 new ActivatedAbility(
                         false,
                         "{1}{B}{B}",

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -21,8 +20,8 @@ public class CaressOfPhyrexia extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(3, false))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new GivePoisonCountersEffect(3, PoisonRecipient.TARGET_PLAYER));
+                .addSpellEffect(new DrawCardForTargetPlayerEffect(3, false))
+                .addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER))
+                .addSpellEffect(new GivePoisonCountersEffect(3, PoisonRecipient.TARGET_PLAYER));
     }
 }

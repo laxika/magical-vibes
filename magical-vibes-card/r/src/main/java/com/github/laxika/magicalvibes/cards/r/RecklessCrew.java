@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
@@ -27,6 +26,6 @@ public class RecklessCrew extends Card {
         CreateTokenEffect token = new CreateTokenEffect(
                 new Sum(vehicles, equipment), "Dwarf Berserker", 2, 1, CardColor.RED,
                 List.of(CardSubtype.DWARF, CardSubtype.BERSERKER), Set.of(), Set.of());
-        addEffect(EffectSlot.SPELL, new CreateTokensAndAttachEquipmentEffect(token));
+        addSpellEffect(new CreateTokensAndAttachEquipmentEffect(token));
     }
 }

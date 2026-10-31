@@ -15,9 +15,8 @@ public class Jilt extends Card {
 
     public Jilt() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
         targetWhenKicked(TargetFilters.creature(), 0, 0, 1, 1)
-                .addEffect(EffectSlot.SPELL,
-                        new ConditionalEffect(new Kicked(), new DealDamageToTargetCreatureEffect(2)));
+                .addSpellEffect(new ConditionalEffect(new Kicked(), new DealDamageToTargetCreatureEffect(2)));
     }
 }

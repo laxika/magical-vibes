@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -27,8 +26,8 @@ public class FellThePheasant extends Card {
         ));
 
         target(new PermanentPredicateTargetFilter(flyingCreature, "Target must be a creature with flying"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5))
-                .addEffect(EffectSlot.SPELL, foodToken());
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(5))
+                .addSpellEffect(foodToken());
     }
 
     private static CreateTokenEffect foodToken() {

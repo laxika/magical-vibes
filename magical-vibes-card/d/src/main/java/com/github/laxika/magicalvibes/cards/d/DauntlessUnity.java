@@ -13,7 +13,7 @@ public class DauntlessUnity extends Card {
 
     public DauntlessUnity() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new BoostAllOwnCreaturesEffect(1, 1),
                 new BoostAllOwnCreaturesEffect(2, 1)));
     }

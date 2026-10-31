@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -27,8 +26,8 @@ public class ToothAndNail extends Card {
 
     public ToothAndNail() {
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{2}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{2}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Search your library for up to two creature cards, reveal them, and put them into your hand",
                         new SearchLibraryEffect(new Fixed(2), creature, LibrarySearchDestination.HAND)),

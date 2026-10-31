@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -31,7 +30,7 @@ public class SeasonOfTheBurrow extends Card {
 
     public SeasonOfTheBurrow() {
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(buildModes()));
+        addSpellEffect(new ChooseOneEffect(buildModes()));
     }
 
     private static List<ChooseOneEffect.ChooseOneOption> buildModes() {

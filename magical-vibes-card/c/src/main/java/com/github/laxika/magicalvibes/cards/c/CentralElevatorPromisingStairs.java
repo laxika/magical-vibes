@@ -25,7 +25,7 @@ public class CentralElevatorPromisingStairs extends Card {
     public CentralElevatorPromisingStairs() {
         setRoomDoorManaCosts(List.of("{3}{U}", "{2}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Central Elevator", List.of())
                         .withManaCost("{3}{U}"),
                 new ChooseOneEffect.ChooseOneOption("Promising Stairs", List.of())

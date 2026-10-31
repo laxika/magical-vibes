@@ -23,7 +23,7 @@ public class RiteOfReplication extends Card {
 
     public RiteOfReplication() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{5}"));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new CreateTokenCopyOfTargetPermanentEffect(),
                 new CreateTokenCopyOfTargetPermanentEffect(new Fixed(5))

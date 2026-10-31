@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "288")
@@ -19,6 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 public class DesertTwister extends Card {
 
     public DesertTwister() {
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

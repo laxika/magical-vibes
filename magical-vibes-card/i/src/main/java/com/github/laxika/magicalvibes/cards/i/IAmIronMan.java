@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -27,10 +26,10 @@ public class IAmIronMan extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature"
-        )).addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+        )).addSpellEffect(new AnimatePermanentsEffect(
                 4, 4, List.of(), Set.of(Keyword.FLYING), null,
                 Set.of(CardType.ARTIFACT, CardType.CREATURE), GrantScope.TARGET,
                 EffectDuration.UNTIL_END_OF_TURN));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new DrawCardEffect());
     }
 }

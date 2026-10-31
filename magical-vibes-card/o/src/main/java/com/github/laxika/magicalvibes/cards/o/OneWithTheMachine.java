@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -21,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class OneWithTheMachine extends Card {
 
     public OneWithTheMachine() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(
+        addSpellEffect(new DrawCardEffect(
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate())));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,7 +23,7 @@ import java.util.List;
 public class ManaGeyser extends Card {
 
     public ManaGeyser() {
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED,
+        addSpellEffect(new AwardManaEffect(ManaColor.RED,
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),

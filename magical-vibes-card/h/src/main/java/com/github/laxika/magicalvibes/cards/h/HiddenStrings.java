@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
@@ -22,11 +21,10 @@ public class HiddenStrings extends Card {
 
     public HiddenStrings() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL, tapOrUntapTarget("You may tap or untap the first target permanent?"));
+                .addSpellEffect(tapOrUntapTarget("You may tap or untap the first target permanent?"));
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL, tapOrUntapTarget("You may tap or untap the second target permanent?"));
-        addEffect(EffectSlot.SPELL,
-                new MayEffect(new CipherEncodeEffect(), "Encode this spell on a creature you control?"));
+                .addSpellEffect(tapOrUntapTarget("You may tap or untap the second target permanent?"));
+        addSpellEffect(new MayEffect(new CipherEncodeEffect(), "Encode this spell on a creature you control?"));
     }
 
     private static CardEffect tapOrUntapTarget(String prompt) {

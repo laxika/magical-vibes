@@ -29,10 +29,10 @@ import java.util.Set;
 public class Transpose extends Card {
 
     public Transpose() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastFromZone(Zone.HAND), new CreateTokenEffect(
+        addSpellEffect(new DrawCardEffect(1));
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new LoseLifeEffect(1));
+        addSpellEffect(new ConditionalEffect(new CastFromZone(Zone.HAND), new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD), Set.of(), Set.of(), Map.of(
                         EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                         new SpellCastTriggerEffect(

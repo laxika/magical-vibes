@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -105,7 +104,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
             gameData.removeFromExile(topCard.getId());
 
             StackEntryType spellType = exileSupport.mapCardTypeToSpellType(topCard);
-            List<CardEffect> spellEffects = new ArrayList<>(topCard.getEffects(EffectSlot.SPELL));
+            List<CardEffect> spellEffects = new ArrayList<>(topCard.getCastingCostsAndSpellEffects());
 
             if (EffectResolution.needsTarget(topCard)) {
                 // Targeted spell — need to choose a target

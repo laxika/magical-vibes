@@ -25,7 +25,7 @@ public class ExperimentalLabStaffRoom extends Card {
     public ExperimentalLabStaffRoom() {
         setRoomDoorManaCosts(List.of("{3}{G}", "{2}{G}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Experimental Lab", List.of())
                         .withManaCost("{3}{G}"),
                 new ChooseOneEffect.ChooseOneOption("Staff Room", List.of())

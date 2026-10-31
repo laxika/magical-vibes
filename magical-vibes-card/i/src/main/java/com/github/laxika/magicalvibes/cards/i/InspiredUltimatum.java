@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
@@ -27,7 +26,7 @@ public class InspiredUltimatum extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new TargetPlayerGainsLifeEffect(5));
+        )).addSpellEffect(new TargetPlayerGainsLifeEffect(5));
 
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -37,8 +36,8 @@ public class InspiredUltimatum extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(5));
+        )).addSpellEffect(new DealDamageToAnyTargetEffect(5));
 
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(5));
+        addSpellEffect(new DrawCardEffect(5));
     }
 }

@@ -14,7 +14,7 @@ public class DampenThought extends Card {
 
     public DampenThought() {
         // Target player mills four cards.
-        addEffect(EffectSlot.SPELL, new MillEffect(4, MillRecipient.TARGET_PLAYER));
+        addSpellEffect(new MillEffect(4, MillRecipient.TARGET_PLAYER));
 
         // Splice onto Arcane {1}{U}
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{U}"));

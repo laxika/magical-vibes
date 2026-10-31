@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
@@ -28,7 +27,7 @@ public class InvokeJustice extends Card {
     public InvokeJustice() {
         target(new GraveyardCardPredicateTargetFilter(
                 new CardIsPermanentPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
@@ -41,7 +40,7 @@ public class InvokeJustice extends Card {
         ));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new DistributeCountersAmongControlledCreaturesEffect(
+                .addSpellEffect(new DistributeCountersAmongControlledCreaturesEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 4, creatureOrVehicle).forTargetPlayer());
     }
 }

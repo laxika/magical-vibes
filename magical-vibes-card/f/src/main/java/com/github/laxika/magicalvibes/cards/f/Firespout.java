@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -21,8 +20,7 @@ public class Firespout extends Card {
         // 3 damage to each creature without flying if {R} was spent to cast this spell.
 
         // 3 damage to each creature with flying if {G} was spent to cast this spell.
-        addSimultaneousEffects(EffectSlot.SPELL,
-                new ConditionalEffect(
+        addSimultaneousSpellEffects(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED),
                         new MassDamageEffect(new Fixed(3), false, false,
                                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))),

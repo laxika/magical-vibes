@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -11,8 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 public class TrueAncestry extends Card {
 
     public TrueAncestry() {
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                 new CardIsPermanentPredicate(), 1));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
+        addSpellEffect(CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

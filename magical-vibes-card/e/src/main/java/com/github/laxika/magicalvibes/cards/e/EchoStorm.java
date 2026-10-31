@@ -14,6 +14,6 @@ public class EchoStorm extends Card {
     public EchoStorm() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForEachCommanderCastEffect(false));
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect());
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

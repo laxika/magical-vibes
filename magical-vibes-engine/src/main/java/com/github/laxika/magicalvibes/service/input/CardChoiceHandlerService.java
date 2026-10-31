@@ -191,8 +191,7 @@ public class CardChoiceHandlerService {
                     .filter(com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid.class::isInstance)
                     .map(com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid.class::cast)
                     .filter(paid -> paid.manaCost().equals(choice.offspringCost())).count();
-            modifiedCard.addEffect(EffectSlot.SPELL,
-                    com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost.singlePayment(
+            modifiedCard.addCastingCost(com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost.singlePayment(
                             List.of(choice.offspringCost())));
             offspringPaid = new com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid(
                     choice.offspringCost(), paymentOrdinal);
@@ -1741,7 +1740,7 @@ public class CardChoiceHandlerService {
             int thenEffectTargetGroup = thenEffect.targetGroup();
             if (followUp.thenEffectTargetId() == null
                     && thenEffectTargetGroup >= 0
-                    && thenEffectTargetGroup < sourceCard.getSpellTargets().size()) {
+                    && thenEffectTargetGroup < sourceCard.getTargetGroups().size()) {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         sourceCard, playerId, List.of(thenEffect), followUp.thenEffectSourcePermanentId(),
                         List.of(), 0, 0, List.of(), followUp.thenEffectEventValue(), List.of()));

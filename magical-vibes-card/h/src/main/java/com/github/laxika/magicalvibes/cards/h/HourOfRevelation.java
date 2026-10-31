@@ -22,7 +22,7 @@ public class HourOfRevelation extends Card {
                 new AnyPlayerControlsPermanentCount(10, new PermanentNotPredicate(new PermanentIsLandPredicate())),
                 new ReduceOwnCastCostEffect(new Fixed(3))));
         // Destroy all nonland permanents.
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
     }
 }

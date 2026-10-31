@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -17,7 +16,7 @@ import java.util.List;
 public class GruesomeSlaughter extends Card {
 
     public GruesomeSlaughter() {
-        addEffect(EffectSlot.SPELL, new GrantActivatedAbilityEffect(
+        addSpellEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

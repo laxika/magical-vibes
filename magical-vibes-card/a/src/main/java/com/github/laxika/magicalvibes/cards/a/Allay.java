@@ -15,7 +15,7 @@ public class Allay extends Card {
 
     public Allay() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        target(TargetFilters.enchantment()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        target(TargetFilters.enchantment()).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

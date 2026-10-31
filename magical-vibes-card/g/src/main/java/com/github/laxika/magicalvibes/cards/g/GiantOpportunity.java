@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class GiantOpportunity extends Card {
 
     public GiantOpportunity() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsOrElseEffect(
+        addSpellEffect(new SacrificePermanentsOrElseEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                 2,
                 giantToken(),

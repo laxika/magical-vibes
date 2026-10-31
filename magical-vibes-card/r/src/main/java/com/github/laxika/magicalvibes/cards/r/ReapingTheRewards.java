@@ -15,7 +15,7 @@ public class ReapingTheRewards extends Card {
 
     public ReapingTheRewards() {
         addEffect(EffectSlot.STATIC, new BuybackEffect(new PermanentIsLandPredicate(), "a land"));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new GainLifeEffect(2));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

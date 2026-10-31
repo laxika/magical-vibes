@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -14,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class ChainOfPlasma extends Card {
 
     public ChainOfPlasma() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
-        addEffect(EffectSlot.SPELL, new MayEffect(
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new MayEffect(
                 new DiscardCardThenEffect(
                         null,
                         new MayEffect(

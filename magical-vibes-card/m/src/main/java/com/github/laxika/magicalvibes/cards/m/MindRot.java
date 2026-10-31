@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -31,6 +30,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MindRot extends Card {
 
     public MindRot() {
-        addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
     }
 }

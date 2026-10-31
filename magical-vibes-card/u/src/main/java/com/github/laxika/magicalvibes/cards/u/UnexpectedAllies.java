@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -25,9 +24,9 @@ public class UnexpectedAllies extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                 "Target must be a nontoken creature you control"))
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.DOUBLE_TEAM, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, GrantKeywordEffect.toTargetIf(Keyword.FIRST_STRIKE,
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_TEAM, GrantScope.TARGET))
+                .addSpellEffect(GrantKeywordEffect.toTargetIf(Keyword.FIRST_STRIKE,
                         new PermanentSharesNameWithControlledCreatureOrGraveyardCreaturePredicate()));
     }
 }

@@ -15,7 +15,7 @@ public class FirebendingLesson extends Card {
     public FirebendingLesson() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+                .addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                         new DealDamageToTargetCreatureEffect(2),
                         new DealDamageToTargetCreatureEffect(5)));
     }

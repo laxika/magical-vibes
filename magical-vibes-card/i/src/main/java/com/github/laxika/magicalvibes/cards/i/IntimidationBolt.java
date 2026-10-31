@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -14,7 +13,7 @@ public class IntimidationBolt extends Card {
         // Deals 3 damage to target creature. Other creatures can't attack this turn (only the targeted
         // creature — if it survives — may attack; the rider reads this spell's target at resolution).
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3))
-                .addEffect(EffectSlot.SPELL, new OtherCreaturesCantAttackThisTurnEffect());
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(3))
+                .addSpellEffect(new OtherCreaturesCantAttackThisTurnEffect());
     }
 }

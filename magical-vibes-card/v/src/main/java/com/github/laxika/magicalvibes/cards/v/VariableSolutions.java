@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -22,21 +21,21 @@ import java.util.List;
 public class VariableSolutions extends Card {
 
     public VariableSolutions() {
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 spellXEquals(1), new SeekCardToBattlefieldEffect(CardPredicateUtils.basicLand(), true)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 spellXEquals(2), new SacrificePermanentsEffect(
                         1, new PermanentIsArtifactPredicate(), SacrificeRecipient.EACH_OPPONENT)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 spellXEquals(3), new ConjureRandomCreatureWithManaValueEffect(new XValue(), false)));
 
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new SpellXAtLeast(4), new GainLifeEffect(2)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(new SpellXAtLeast(4), new GainLifeEffect(2)));
+        addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4), new SeekCardToBattlefieldEffect(CardPredicateUtils.basicLand(), true)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4), new SacrificePermanentsEffect(
                         1, new PermanentIsArtifactPredicate(), SacrificeRecipient.EACH_OPPONENT)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new SpellXAtLeast(4), new ConjureRandomCreatureWithManaValueEffect(new XValue(), false)));
     }
 

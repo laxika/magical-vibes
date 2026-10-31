@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -43,7 +42,7 @@ public class CarnivalCarnage extends Card {
         CardEffect carnageDamage = new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER);
         CardEffect carnageDiscard = new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Carnival — Carnival deals 1 damage to target creature or planeswalker and 1 damage to that permanent's controller",
                         List.of(SequenceEffect.of(carnivalDamage, carnivalControllerDamage)),

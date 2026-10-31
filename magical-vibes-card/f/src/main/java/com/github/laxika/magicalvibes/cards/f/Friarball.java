@@ -16,7 +16,7 @@ import java.util.Set;
 public class Friarball extends Card {
 
     public Friarball() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Monk", 2, 2, CardColor.WHITE, List.of(CardSubtype.MONK), Set.of(), Set.of()));
         addEffect(EffectSlot.ON_SELF_CAST, new CoststormEffect());
     }

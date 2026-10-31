@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -28,10 +27,9 @@ public class BringToLife extends Card {
                         "Target must be a noncreature artifact you control"
                 );
         target(noncreatureArtifactYouControl)
-                .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+                .addSpellEffect(new AnimatePermanentsEffect(
                         0, 0, List.of(), Set.of(), null, Set.of(),
                         GrantScope.TARGET, EffectDuration.PERMANENT))
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4));
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4));
     }
 }

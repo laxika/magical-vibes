@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
@@ -45,8 +44,8 @@ public class BrazenBoarding extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
                 "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(4))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(4))
+                .addSpellEffect(new ConditionalEffect(
                         new EventValueAtLeast(1), SequenceEffect.of(
                                 new ConditionalEffect(new EventValueAtLeast(4),
                                         new ConjureCardToBattlefieldEffect("XLN", "217")),

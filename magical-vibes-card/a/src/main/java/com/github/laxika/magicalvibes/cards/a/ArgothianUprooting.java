@@ -25,15 +25,14 @@ public class ArgothianUprooting extends Card {
         // Put two +1/+1 counters on each of X target lands you control. They become 0/0 Elemental
         // creatures with reach, haste, and a leaves-the-battlefield Forest trigger. They remain lands.
         targetExactlyX(TargetFilters.landYouControl(), 100)
-                .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
-                .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+                .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
+                .addSpellEffect(new AnimatePermanentsEffect(
                         0, 0,
                         List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.REACH, Keyword.HASTE),
                         null, Set.of(),
                         GrantScope.TARGET, EffectDuration.PERMANENT))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetEffect(
+                .addSpellEffect(new GrantEffectToTargetEffect(
                         EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                         new ConjureCardNamedOntoBattlefieldEffect(
                                 "BRO", "276", Set.of(CardType.LAND)),

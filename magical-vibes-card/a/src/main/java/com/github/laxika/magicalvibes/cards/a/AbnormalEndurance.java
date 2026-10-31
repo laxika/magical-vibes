@@ -15,8 +15,8 @@ public class AbnormalEndurance extends Card {
         // Until end of turn, target creature gets +2/+0 and gains "When this creature dies, return
         // it to the battlefield tapped under its owner's control."
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH, new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -21,8 +20,8 @@ public class FlourishingStrike extends Card {
 
     public FlourishingStrike() {
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, new EntwineManaCost("{2}{G}"));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addCastingCost(new EntwineManaCost("{2}{G}"));
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Flourishing Strike deals 5 damage to target creature with flying",
                         new DealDamageToTargetCreatureEffect(5),

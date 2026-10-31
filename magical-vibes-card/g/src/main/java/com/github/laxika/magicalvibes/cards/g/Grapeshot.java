@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class Grapeshot extends Card {
 
     public Grapeshot() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(new DealDamageToAnyTargetEffect(1));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

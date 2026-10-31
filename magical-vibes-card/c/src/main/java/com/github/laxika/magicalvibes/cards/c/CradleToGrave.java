@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -26,6 +25,6 @@ public class CradleToGrave extends Card {
                         new PermanentEnteredBattlefieldThisTurnPredicate()
                 )),
                 "Target must be a nonblack creature that entered the battlefield this turn"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

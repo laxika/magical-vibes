@@ -12,7 +12,7 @@ public class ViolentOutburst extends Card {
 
     public ViolentOutburst() {
         // Creatures you control get +1/+0 until end of turn.
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(1, 0));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 0));
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser mana
         // value, may cast it for free, rest to the bottom in a random order (CascadeEffectHandler).

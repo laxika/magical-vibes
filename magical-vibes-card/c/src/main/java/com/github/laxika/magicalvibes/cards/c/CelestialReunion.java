@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
@@ -16,8 +15,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 public class CelestialReunion extends Card {
 
     public CelestialReunion() {
-        addEffect(EffectSlot.SPELL, BeholdCost.optionalChosenCreatureType(2));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addCastingCost(BeholdCost.optionalChosenCreatureType(2));
+        addSpellEffect(new SearchLibraryEffect(
                 new Fixed(1),
                 new CardTypePredicate(CardType.CREATURE),
                 LibrarySearchDestination.HAND,

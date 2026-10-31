@@ -19,7 +19,7 @@ public class FightWithFire extends Card {
         // Fight with Fire deals 5 damage to target creature.
         // If this spell was kicked, it deals 10 damage divided as you choose
         // among any number of targets instead.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                 new DealDamageToTargetCreatureEffect(5),
                 DealDividedDamageEffect.chosenAmongAnyTargets(10)));
     }

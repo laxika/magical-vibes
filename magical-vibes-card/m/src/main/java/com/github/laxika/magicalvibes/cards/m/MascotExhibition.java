@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -16,7 +15,7 @@ public class MascotExhibition extends Card {
 
     public MascotExhibition() {
         // The three tokens are created by one instruction, so they are one creation event.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Inkling", 2, 1, CardColor.WHITE,
                 Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),
                 Set.of(Keyword.FLYING), Set.of()).withSimultaneousTokens(List.of(

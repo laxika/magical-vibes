@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
@@ -28,8 +27,7 @@ public class TaintedTreats extends Card {
                 new PermanentIsCreaturePredicate()));
         target(new PermanentPredicateTargetFilter(
                 artifactOrCreature,
-                "Target must be an artifact or creature")).addEffect(EffectSlot.SPELL,
-                new DestroyTargetPermanentThenEffect(
+                "Target must be an artifact or creature")).addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.MANA_VALUE,
                         foodToken(),
                         ThenEffectRecipient.CONTROLLER,

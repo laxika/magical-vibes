@@ -226,7 +226,7 @@ class GameActionAvailabilityServiceTest {
             spell.addEffect(EffectSlot.STATIC,
                     new IncreaseOwnCastCostIfTargetingPermanentEffect(creaturePredicate, 3));
             spell.target(TargetFilters.nonlandPermanent())
-                    .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                    .addSpellEffect(new ExileTargetPermanentEffect());
 
             Card creatureCard = new Card();
             creatureCard.setName("Creature");
@@ -272,7 +272,7 @@ class GameActionAvailabilityServiceTest {
             card.setManaCost("{X}{U}{B}");
             card.targetExactlyX(new PermanentPredicateTargetFilter(
                     new PermanentTruePredicate(), "Target must be a permanent"), 100)
-                    .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+                    .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
 
             ManaPool pool = new ManaPool();
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLUE);
@@ -288,10 +288,10 @@ class GameActionAvailabilityServiceTest {
             card.setName("Discard X exact spell");
             card.setType(CardType.INSTANT);
             card.setManaCost("{W}{W}");
-            card.addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
+            card.addCastingCost(new DiscardXCardsCost());
             card.targetExactlyX(new PermanentPredicateTargetFilter(
                     new PermanentTruePredicate(), "Target must be a permanent"), 100)
-                    .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                    .addSpellEffect(new ExileTargetPermanentEffect());
 
             ManaPool pool = new ManaPool();
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2);

@@ -30,9 +30,9 @@ public class ThoughtDistortion extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new RevealTargetHandEffect())
-                .addEffect(EffectSlot.SPELL, new ExileMatchingCardsFromTargetPlayerHandEffect(noncreatureNonland))
-                .addEffect(EffectSlot.SPELL, new ExileGraveyardCardsEffect(
+        )).addSpellEffect(new RevealTargetHandEffect())
+                .addSpellEffect(new ExileMatchingCardsFromTargetPlayerHandEffect(noncreatureNonland))
+                .addSpellEffect(new ExileGraveyardCardsEffect(
                         0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, noncreatureNonland));
     }
 }

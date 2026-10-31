@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -13,7 +12,7 @@ public class DissentersDeliverance extends Card {
 
     public DissentersDeliverance() {
         // Destroy target artifact.
-        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentEffect());
 
         // Cycling {G} ({G}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{G}");

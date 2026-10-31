@@ -19,7 +19,7 @@ import java.util.Set;
 public class HuntingPack extends Card {
 
     public HuntingPack() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Beast", 4, 4, CardColor.GREEN, List.of(CardSubtype.BEAST), Set.of(), Set.of()));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,6 +22,6 @@ public class PerilousVoyage extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a nonland permanent you don't control"
-        )).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandWithManaValueConditionalEffect(2, new ScryEffect(2)));
+        )).addSpellEffect(new ReturnTargetPermanentToHandWithManaValueConditionalEffect(2, new ScryEffect(2)));
     }
 }

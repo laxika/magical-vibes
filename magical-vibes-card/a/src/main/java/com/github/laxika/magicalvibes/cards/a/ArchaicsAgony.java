@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -18,9 +17,9 @@ public class ArchaicsAgony extends Card {
         // to the excess damage dealt to that creature this way. You may play those cards until the
         // end of your next turn.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()))
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(new XValue()))
                 // Exile top cards equal to the excess damage dealt above (stored on the entry's
                 // event value by the damage handler) — playable until the end of your next turn.
-                .addEffect(EffectSlot.SPELL, new ExileTopCardsMayPlayUntilNextTurnEffect(new EventValue()));
+                .addSpellEffect(new ExileTopCardsMayPlayUntilNextTurnEffect(new EventValue()));
     }
 }

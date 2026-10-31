@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -27,8 +26,7 @@ public class MyFollowersAscend extends Card {
         PermanentPredicate creature = new PermanentIsCreaturePredicate();
         ControlsPermanent controlsCreature = new ControlsPermanent(creature);
 
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(controlsCreature,
+        addSpellEffect(ConditionalEffect.unless(controlsCreature,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, 5, creature),
@@ -36,8 +34,7 @@ public class MyFollowersAscend extends Card {
                                         Keyword.FLYING, null),
                                 new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(
                                         Keyword.VIGILANCE, null))));
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(new NotCondition(controlsCreature),
+        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsCreature),
                         new CreateTokenEffect(
                                 "Scarecrow", 4, 4, null,
                                 List.of(CardSubtype.SCARECROW), Set.of(Keyword.VIGILANCE),

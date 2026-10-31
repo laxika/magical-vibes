@@ -19,9 +19,9 @@ public class StallForTime extends Card {
     public StallForTime() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
         target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN)))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new DrawCardEffect());
     }
 }

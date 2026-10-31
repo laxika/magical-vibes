@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
@@ -20,7 +19,7 @@ public class DivineOffering extends Card {
 
     public DivineOffering() {
         // Destroy target artifact. You gain life equal to its mana value.
-        target(TargetFilters.artifact()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.MANA_VALUE, new GainLifeEffect(new EventValue()), ThenEffectRecipient.CONTROLLER));
     }
 }

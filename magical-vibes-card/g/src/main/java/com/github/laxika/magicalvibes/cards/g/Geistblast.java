@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class Geistblast extends Card {
 
     public Geistblast() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(new DealDamageToAnyTargetEffect(2));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

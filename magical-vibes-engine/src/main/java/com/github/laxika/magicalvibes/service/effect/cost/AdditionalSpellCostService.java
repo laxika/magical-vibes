@@ -718,12 +718,12 @@ public class AdditionalSpellCostService {
 
     /** Reads the card's additional cast costs without touching the card (for gating queries). */
     public ExtractedCosts peek(Card card) {
-        return extractAndRemove(new ArrayList<>(card.getEffects(EffectSlot.SPELL)));
+        return extractAndRemove(new ArrayList<>(card.getCastingCostsAndSpellEffects()));
     }
 
     /** Reads printed and battlefield-granted additional cast costs without touching the card. */
     public ExtractedCosts peek(GameData gameData, UUID playerId, Card card) {
-        return extractAndRemove(gameData, playerId, card, new ArrayList<>(card.getEffects(EffectSlot.SPELL)));
+        return extractAndRemove(gameData, playerId, card, new ArrayList<>(card.getCastingCostsAndSpellEffects()));
     }
 
     private <T extends CardEffect> T removeFirst(List<CardEffect> effects, Class<T> type) {
@@ -770,7 +770,7 @@ public class AdditionalSpellCostService {
         List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
         // Battlefield static effects may prohibit life payments or particular permanent sacrifices.
         boolean lifePaymentAllowed = gameQueryService.canPayLifeForCosts(gameData);
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             switch (effect) {
                 case LandDropCost ignored -> {
                     if (!canPayLandDropCost(gameData, playerId)) return false;
@@ -3421,7 +3421,7 @@ public class AdditionalSpellCostService {
      * card has no {@link ChooseOneEffect} (caller should not have an escalate cost in that case).
      */
     public int countChosenModes(Card card, int modeEncoding) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCostsAndSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()

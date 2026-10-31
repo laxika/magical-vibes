@@ -35,8 +35,8 @@ public class ObNixilisTheAdversary extends Card {
     public ObNixilisTheAdversary() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect(
                 Set.of(CardSupertype.LEGENDARY), true, true));
-        addEffect(EffectSlot.SPELL, CasualtyCost.matchingChosenX());
-        addEffect(EffectSlot.SPELL, new ChooseXValueCost(0, Integer.MAX_VALUE));
+        addCastingCost(CasualtyCost.matchingChosenX());
+        addCastingCost(new ChooseXValueCost(0, Integer.MAX_VALUE));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

@@ -25,9 +25,9 @@ public class FlamescrollCelebrant extends Card {
                 new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
         addActivatedAbility(new ActivatedAbility(false, "{1}{R}", List.of(new BoostSelfEffect(2, 0)),
                 "{1}{R}: This creature gets +2/+0 until end of turn."));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Flamescroll Celebrant", List.of()),
-                new ChooseOneEffect.ChooseOneOption("Revel in Silence", backFace.getEffects(EffectSlot.SPELL))
+                new ChooseOneEffect.ChooseOneOption("Revel in Silence", backFace.getSpellEffects())
                         .withManaCost("{W}{W}")
                         .withSpellType(CardType.INSTANT))));
     }

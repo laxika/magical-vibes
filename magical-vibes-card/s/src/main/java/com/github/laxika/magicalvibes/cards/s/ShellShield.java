@@ -19,8 +19,8 @@ public class ShellShield extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}"));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(0, 3))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(0, 3))
+                .addSpellEffect(new ConditionalEffect(
                         new Kicked(), new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)));
     }
 }

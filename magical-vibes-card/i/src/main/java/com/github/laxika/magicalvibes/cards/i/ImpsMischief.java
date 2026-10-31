@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -24,8 +23,7 @@ public class ImpsMischief extends Card {
                 new StackEntryIsSingleTargetPredicate(),
                 "Target spell must have a single target."
         ))
-                .addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect())
-                .addEffect(EffectSlot.SPELL,
-                        new LoseLifeEffect(new TargetSpellManaValue(), LoseLifeRecipient.CONTROLLER));
+                .addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect())
+                .addSpellEffect(new LoseLifeEffect(new TargetSpellManaValue(), LoseLifeRecipient.CONTROLLER));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfEnergyToGrantIndestructibleToOwnCreaturesWithEqualPowerEffect;
@@ -13,9 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class LocalizedDestruction extends Card {
 
     public LocalizedDestruction() {
-        addEffect(EffectSlot.SPELL, new EnergyCountersEffect(1));
-        addEffect(EffectSlot.SPELL,
-                new PayAnyAmountOfEnergyToGrantIndestructibleToOwnCreaturesWithEqualPowerEffect());
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new EnergyCountersEffect(1));
+        addSpellEffect(new PayAnyAmountOfEnergyToGrantIndestructibleToOwnCreaturesWithEqualPowerEffect());
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
     }
 }

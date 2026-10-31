@@ -16,10 +16,10 @@ public class BilbosGambit extends Card {
 
     public BilbosGambit() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(CreateTokenEffect.ofTreasureToken(1))));
-        addEffect(EffectSlot.SPELL, new ReturnTargetSpellToHandEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ReturnTargetSpellToHandEffect());
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new PlayersCantCastSpellsThisTurnEffect()));
     }
 }

@@ -16,8 +16,8 @@ public class MightOfMurasa extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(3, 3))
+                .addSpellEffect(new ConditionalEffect(
                         new Kicked(), new BoostTargetCreatureEffect(2, 2)));
     }
 }

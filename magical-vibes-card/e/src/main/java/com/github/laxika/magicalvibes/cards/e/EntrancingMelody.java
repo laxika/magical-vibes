@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,6 +22,6 @@ public class EntrancingMelody extends Card {
                         new PermanentManaValueEqualsXPredicate()
                 )),
                 "Target must be a creature with mana value equal to X"
-        )).addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+        )).addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
@@ -21,6 +20,12 @@ import java.util.Set;
 public class LouisoixsSacrifice extends Card {
 
     public LouisoixsSacrifice() {
+        addCastingCost(new SacrificePermanentOrPayManaCost(
+                "{2}",
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
+                "a legendary creature"));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAnyOfPredicate(List.of(
                         new StackEntryTypeInPredicate(Set.of(
@@ -34,12 +39,7 @@ public class LouisoixsSacrifice extends Card {
                                 StackEntryType.PLANESWALKER_SPELL,
                                 StackEntryType.BATTLE_SPELL)))),
                 "Target must be an activated ability, triggered ability, or noncreature spell."
-        )).addEffect(EffectSlot.SPELL, new SacrificePermanentOrPayManaCost(
-                "{2}",
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
-                "a legendary creature"))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        ))
+                .addSpellEffect(new CounterSpellEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -18,9 +17,9 @@ public class TemporalMastery extends Card {
         addCastingOption(new MiracleCast("{1}{U}"));
 
         // Take an extra turn after this one.
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ControllerExtraTurnEffect(1));
 
         // Exile Temporal Mastery.
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

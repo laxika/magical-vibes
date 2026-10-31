@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
@@ -27,7 +26,7 @@ public class MyCrushingMasterstroke extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        addEffect(EffectSlot.SPELL, new GainControlOfAllPermanentsMatchingEffect(
+        addSpellEffect(new GainControlOfAllPermanentsMatchingEffect(
                 opponentNonlandPermanent,
                 ControlDuration.END_OF_TURN,
                 new UntapPermanentsEffect(TapUntapScope.TARGET),

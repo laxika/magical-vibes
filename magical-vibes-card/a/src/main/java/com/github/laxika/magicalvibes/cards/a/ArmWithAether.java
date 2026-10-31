@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class ArmWithAether extends Card {
 
     public ArmWithAether() {
-        addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new MayEffect(new ReturnPermanentDamagedPlayerControlsToHandEffect(
                         new PermanentIsCreaturePredicate()), "Return target creature to its owner's hand?")));

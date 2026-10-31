@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
@@ -37,7 +36,7 @@ public class GloomwidowsFeast extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 "Target must be a creature with flying."
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
                         new CreateTokenEffect("Spider", 1, 2, CardColor.GREEN,
                                 List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.<CardType>of()),

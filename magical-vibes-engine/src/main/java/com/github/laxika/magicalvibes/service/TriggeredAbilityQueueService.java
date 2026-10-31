@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -325,7 +326,7 @@ public class TriggeredAbilityQueueService {
                     .filter(e -> e.mode() == DivisionMode.CHOSEN && e.removeAtNextEndStep())
                     .findFirst()
                     .orElse(null);
-            if (counterDistribution != null && pending.dyingCard().getSpellTargets().size() == 1) {
+            if (counterDistribution != null && pending.dyingCard().getTargetGroups().size() == 1) {
                 int total = counterDistribution.total() instanceof Fixed fixed ? fixed.value() : 0;
                 if (total > 0) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
@@ -381,10 +382,10 @@ public class TriggeredAbilityQueueService {
                 || effect.hasOptionalTarget())) {
             return true;
         }
-        if (card.getSpellTargets().size() != 1) {
+        if (card.getTargetGroups().size() != 1) {
             return false;
         }
-        var target = card.getSpellTargets().getFirst();
+        var target = card.getTargetGroups().getFirst();
         return target.getMinTargets() == 0
                 && target.getMaxTargets() == 1
                 && effects.stream().anyMatch(effect -> isBoundToTargetGroup(card, effect, target.getIndex()));
@@ -628,7 +629,7 @@ public class TriggeredAbilityQueueService {
             boolean optionalTarget = pending.optionalTarget()
                     || hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
 
-            SpellTarget dynamicTarget = dynamicTargetForTriggeredEffects(pending.sourceCard(), pending.effects());
+            TargetGroup dynamicTarget = dynamicTargetForTriggeredEffects(pending.sourceCard(), pending.effects());
             if (dynamicTarget != null) {
                 int mutationCount = Math.max(0, amountEvaluationService.evaluate(gameData,
                         dynamicTarget.getDynamicMaxTargets(),
@@ -773,21 +774,21 @@ public class TriggeredAbilityQueueService {
         return true;
     }
 
-    private SpellTarget dynamicTargetForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
-        SpellTarget target = targetGroupForTriggeredEffects(sourceCard, effects);
+    private TargetGroup dynamicTargetForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
+        TargetGroup target = targetGroupForTriggeredEffects(sourceCard, effects);
         if (target == null) {
             return null;
         }
         return target.getDynamicMaxTargets() == null ? null : target;
     }
 
-    private SpellTarget targetGroupForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
+    private TargetGroup targetGroupForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
         int targetGroupIndex = effects.stream()
                 .mapToInt(sourceCard::getEffectTargetIndex)
-                .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
+                .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
                 .findFirst()
                 .orElse(-1);
-        return targetGroupIndex < 0 ? null : sourceCard.getSpellTargets().get(targetGroupIndex);
+        return targetGroupIndex < 0 ? null : sourceCard.getTargetGroups().get(targetGroupIndex);
     }
 
     private void enqueueSelfTriggeredAbilityWithoutTargets(GameData gameData,
@@ -813,12 +814,13 @@ public class TriggeredAbilityQueueService {
     public TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
         int targetGroupIndex = effects.stream()
                 .mapToInt(sourceCard::getEffectTargetIndex)
-                .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
+                .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
                 .findFirst()
                 .orElse(-1);
         if (targetGroupIndex < 0) {
-            Set<Integer> compatibleTargetGroups = Arrays.stream(EffectSlot.values())
-                    .flatMap(slot -> sourceCard.getEffects(slot).stream())
+            Set<Integer> compatibleTargetGroups = java.util.stream.Stream.concat(
+                            sourceCard.getCastingCostsAndSpellEffects().stream(),
+                            Arrays.stream(EffectSlot.values()).flatMap(slot -> sourceCard.getEffects(slot).stream()))
                     .filter(authored -> effects.stream()
                             .anyMatch(queued -> authored.getClass().equals(queued.getClass())
                                     || authored instanceof AllyCombatDamageTriggerEffect ally
@@ -826,7 +828,7 @@ public class TriggeredAbilityQueueService {
                                     || authored instanceof NthCardDrawTriggerEffect nth
                                     && nth.resolvedEffect().equals(queued)))
                     .mapToInt(sourceCard::getEffectTargetIndex)
-                    .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
+                    .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
                     .boxed()
                     .collect(Collectors.toSet());
             if (compatibleTargetGroups.size() == 1) {
@@ -840,8 +842,8 @@ public class TriggeredAbilityQueueService {
             // whether it can target players or permanents.
             return null;
         }
-        if (targetGroupIndex < 0 && !sourceCard.getSpellTargets().isEmpty()
-                && sourceCard.getSpellTargets().stream().allMatch(group ->
+        if (targetGroupIndex < 0 && !sourceCard.getTargetGroups().isEmpty()
+                && sourceCard.getTargetGroups().stream().allMatch(group ->
                 sourceCard.bindsEffectToTargetGroup(group.getIndex())
                 && sourceCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
                 .allMatch(bound -> TargetSpec.NONE.equals(bound.targetSpec())
@@ -852,7 +854,7 @@ public class TriggeredAbilityQueueService {
             return null;
         }
         return targetGroupIndex >= 0
-                ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
+                ? sourceCard.getTargetGroups().get(targetGroupIndex).getFilter()
                 : sourceCard.getTargetFilter();
     }
 
@@ -1076,7 +1078,7 @@ public class TriggeredAbilityQueueService {
                             : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            SpellTarget targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
+            TargetGroup targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
             if (targetGroup != null && targetGroup.getMaxTargets() > 1) {
                 int minTargets = targetGroup.getMinTargets();
                 int maxTargets = Math.min(targetGroup.getMaxTargets(), candidateTargets.size());
@@ -1338,9 +1340,9 @@ public class TriggeredAbilityQueueService {
     private boolean hasMultiTargetDeathTrigger(Card card, List<CardEffect> effects) {
         // A single optional target uses DeathTriggerTarget, which carries the source's last-known
         // characteristics. Converting it to the ETB queue would lose that snapshot.
-        return card.getSpellTargets().stream()
+        return card.getTargetGroups().stream()
                 .anyMatch(group -> (group.getMaxTargets() > 1
-                        || (group.getMinTargets() == 0 && card.getSpellTargets().size() > 1))
+                        || (group.getMinTargets() == 0 && card.getTargetGroups().size() > 1))
                         && effects.stream().anyMatch(effect ->
                         card.isEffectBoundToTargetGroup(effect, group.getIndex())));
     }
@@ -1430,14 +1432,14 @@ public class TriggeredAbilityQueueService {
         }
         if (needsTarget) {
             Card targetingCard = prepareTriggeredModalTargeting(sourceCard, chosenModes);
-            if (targetingCard.getSpellTargets().size() > 1
+            if (targetingCard.getTargetGroups().size() > 1
                     || etbTokenTargetService.needsSlotBySlotTargetSelection(targetingCard)) {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         targetingCard, controllerId, effects, sourcePermanentId,
                         List.of(), 0, 0));
             } else {
-                TargetFilter targetFilter = targetingCard.getSpellTargets().isEmpty()
-                        ? null : targetingCard.getSpellTargets().getFirst().getFilter();
+                TargetFilter targetFilter = targetingCard.getTargetGroups().isEmpty()
+                        ? null : targetingCard.getTargetGroups().getFirst().getFilter();
                 if (attackedTargetId == null) {
                     gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
                             targetingCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
@@ -3097,7 +3099,7 @@ public class TriggeredAbilityQueueService {
                 }
             }
 
-            SpellTarget declaredGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
+            TargetGroup declaredGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
             int requestedMaxTargets = oneOfEachFilterEffect != null
                     ? oneOfEachFilterEffect.filters().size()
                     : pending.maxCount() > 0
@@ -3170,14 +3172,14 @@ public class TriggeredAbilityQueueService {
                 if (nestedMinimum >= 0) return nestedMinimum;
             }
             int targetIndex = card.getEffectTargetIndex(effect);
-            if (targetIndex >= 0 && targetIndex < card.getSpellTargets().size()) {
-                SpellTarget target = card.getSpellTargets().get(targetIndex);
+            if (targetIndex >= 0 && targetIndex < card.getTargetGroups().size()) {
+                TargetGroup target = card.getTargetGroups().get(targetIndex);
                 return target.getMinTargets();
             }
         }
-        if (card.getSpellTargets().size() == 1
-                && card.getSpellTargets().getFirst().getFilter() instanceof GraveyardCardPredicateTargetFilter) {
-            return card.getSpellTargets().getFirst().getMinTargets();
+        if (card.getTargetGroups().size() == 1
+                && card.getTargetGroups().getFirst().getFilter() instanceof GraveyardCardPredicateTargetFilter) {
+            return card.getTargetGroups().getFirst().getMinTargets();
         }
         return -1;
     }

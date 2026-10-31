@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.HarmonizeCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -19,10 +18,9 @@ public class SynchronizedCharge extends Card {
 
     public SynchronizedCharge() {
         target(TargetFilters.creatureYouControl(), 1, 2)
-                .addEffect(EffectSlot.SPELL,
-                        DistributeCountersAmongTargetsEffect.evenlyAmongTargets(
+                .addSpellEffect(DistributeCountersAmongTargetsEffect.evenlyAmongTargets(
                                 CounterType.PLUS_ONE_PLUS_ONE, 2));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+        addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.ANY)));

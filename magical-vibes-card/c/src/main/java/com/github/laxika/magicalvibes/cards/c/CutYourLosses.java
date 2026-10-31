@@ -12,7 +12,7 @@ public class CutYourLosses extends Card {
 
     public CutYourLosses() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(2));
-        addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
+        addCastingCost(new CasualtyCost(2));
+        addSpellEffect(new MillHalfLibraryEffect(false));
     }
 }

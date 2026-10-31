@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -24,6 +23,6 @@ public class DarkTriumph extends Card {
                 false));
 
         // Creatures you control get +2/+0 until end of turn.
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
     }
 }

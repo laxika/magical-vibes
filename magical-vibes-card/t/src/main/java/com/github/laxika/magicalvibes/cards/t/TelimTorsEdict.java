@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -23,8 +22,8 @@ public class TelimTorsEdict extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a permanent you own or control"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
+                .addSpellEffect(new ExileTargetPermanentEffect())
                 // "Draw a card at the beginning of the next turn's upkeep."
-                .addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
+                .addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

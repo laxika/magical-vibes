@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreaturesThenCreateTokensEffect;
@@ -23,8 +22,7 @@ public class Shellshock extends Card {
     public Shellshock() {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
-                .addEffect(EffectSlot.SPELL,
-                        new DealDamageToTargetCreaturesThenCreateTokensEffect(new XValue(), mutagenToken()));
+                .addSpellEffect(new DealDamageToTargetCreaturesThenCreateTokensEffect(new XValue(), mutagenToken()));
     }
 
     private static CreateTokenEffect mutagenToken() {

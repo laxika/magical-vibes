@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
@@ -22,8 +21,8 @@ import java.util.Set;
 public class Sunfall extends Card {
 
     public Sunfall() {
-        addEffect(EffectSlot.SPELL, new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new CreateXTokenWithXCountersEffect(
+        addSpellEffect(new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new CreateXTokenWithXCountersEffect(
                 incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 

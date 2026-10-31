@@ -24,7 +24,7 @@ public class JornGodOfWinter extends Card {
                 TapUntapScope.CONTROLLED,
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Jorn, God of Winter", List.of())
                         .withManaCost("{2}{G}"),
                 new ChooseOneEffect.ChooseOneOption("Kaldring, the Rimestaff", List.of())

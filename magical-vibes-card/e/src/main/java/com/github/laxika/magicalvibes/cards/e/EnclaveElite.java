@@ -14,7 +14,7 @@ import java.util.List;
 public class EnclaveElite extends Card {
 
     public EnclaveElite() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{1}{U}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{U}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{U}")));
     }

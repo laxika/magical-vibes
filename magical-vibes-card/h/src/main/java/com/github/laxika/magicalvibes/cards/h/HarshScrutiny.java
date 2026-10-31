@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -21,8 +20,8 @@ public class HarshScrutiny extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
+                .addSpellEffect(new ChooseCardsFromTargetHandEffect(
                         1, List.of(), List.of(CardType.CREATURE), HandChoiceDestination.DISCARD))
-                .addEffect(EffectSlot.SPELL, new ScryEffect(1));
+                .addSpellEffect(new ScryEffect(1));
     }
 }

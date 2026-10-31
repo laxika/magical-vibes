@@ -31,7 +31,7 @@ public class GlasspoolMimic extends Card {
                 Set.of(CardSubtype.SHAPESHIFTER, CardSubtype.ROGUE),
                 Map.of()
         ));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Glasspool Mimic", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Glasspool Shore", List.of())
         )));

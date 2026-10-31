@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 public class Jailbreak extends Card {
 
     public Jailbreak() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsPermanentPredicate())
                 .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)
@@ -24,6 +23,6 @@ public class Jailbreak extends Card {
                 .build());
         target(new GraveyardCardPredicateTargetFilter(
                 new CardIsPermanentPredicate(), GraveyardSearchScope.OPPONENT_GRAVEYARD));
-        addEffect(EffectSlot.SPELL, new ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffect());
+        addSpellEffect(new ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffect());
     }
 }

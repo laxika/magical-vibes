@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -35,8 +34,8 @@ public class EnergyTap extends Card {
                 )),
                 "Target must be an untapped creature you control"
         ))
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsTappedPredicate()),
                         new AwardManaEffect(ManaColor.COLORLESS, new TargetManaValue())));
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -19,8 +18,8 @@ public class Solfatara extends Card {
         ));
 
         // "Target player can't play lands this turn."
-        addEffect(EffectSlot.SPELL, new TargetPlayerCantPlayLandsThisTurnEffect());
+        addSpellEffect(new TargetPlayerCantPlayLandsThisTurnEffect());
         // "Draw a card at the beginning of the next turn's upkeep."
-        addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
+        addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

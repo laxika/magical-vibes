@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 public class SwiftManeuver extends Card {
 
     public SwiftManeuver() {
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.nextToTarget(2));
-        addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
+        addSpellEffect(PreventDamageEffect.nextToTarget(2));
+        addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

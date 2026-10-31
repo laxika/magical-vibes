@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -17,8 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Ruin extends Card {
 
     public Ruin() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new DealDamageToTargetCreatureEffect(
+        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(
                         new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
         addCastingOption(new FlashbackCast("{1}{R}{R}"));
     }

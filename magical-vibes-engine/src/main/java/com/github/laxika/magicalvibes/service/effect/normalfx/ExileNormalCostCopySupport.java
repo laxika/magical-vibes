@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -156,7 +155,7 @@ public class ExileNormalCostCopySupport {
                 return;
             }
 
-            List<CardEffect> spellEffects = new ArrayList<>(copy.getEffects(EffectSlot.SPELL));
+            List<CardEffect> spellEffects = new ArrayList<>(copy.getCastingCostsAndSpellEffects());
             StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(copy);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     copy, player.getId(), spellEffects, spellType, true, List.of(), 0, false, 0, false, true,

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class Scattershot extends Card {
 
     public Scattershot() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(1));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

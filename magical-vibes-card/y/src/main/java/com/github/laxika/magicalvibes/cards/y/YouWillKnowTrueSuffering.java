@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -18,7 +17,7 @@ import java.util.List;
 public class YouWillKnowTrueSuffering extends Card {
 
     public YouWillKnowTrueSuffering() {
-        addEffect(EffectSlot.SPELL, new DealDamageToEachMatchingPermanentEffect(
+        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
                 new GreatestManaValueAmongOwnedCommanders(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

@@ -15,8 +15,7 @@ public class PhyrexianEspionage extends Card {
 
     public PhyrexianEspionage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new Kicked(), new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)));
     }
 }

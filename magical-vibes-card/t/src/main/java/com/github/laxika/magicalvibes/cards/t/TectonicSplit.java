@@ -17,8 +17,7 @@ import java.util.List;
 public class TectonicSplit extends Card {
 
     public TectonicSplit() {
-        addEffect(EffectSlot.SPELL,
-                new SacrificeFractionRoundedUpCost(2, new PermanentIsLandPredicate()));
+        addCastingCost(new SacrificeFractionRoundedUpCost(2, new PermanentIsLandPredicate()));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new AwardAnyColorManaEffect(3)),

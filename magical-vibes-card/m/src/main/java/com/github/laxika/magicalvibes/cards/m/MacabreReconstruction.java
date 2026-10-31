@@ -19,7 +19,7 @@ public class MacabreReconstruction extends Card {
                 new CreatureCardPutIntoYourGraveyardThisTurn(),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
 
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                 new CardTypePredicate(CardType.CREATURE), 2));
     }
 }

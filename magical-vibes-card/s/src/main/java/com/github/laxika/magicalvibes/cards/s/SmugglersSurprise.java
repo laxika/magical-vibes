@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -22,8 +21,8 @@ import java.util.Set;
 public class SmugglersSurprise extends Card {
 
     public SmugglersSurprise() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{2}", "{4}{G}", "{1}")));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{2}", "{4}{G}", "{1}")));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Mill four cards. You may put up to two creature and/or land cards from among the milled cards into your hand",
                         new MillControllerAndMayReturnMilledPermanentToHandEffect(

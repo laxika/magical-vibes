@@ -1890,12 +1890,12 @@ class CastingCostServiceTest {
     @DisplayName("canPayAdditionalSpellCosts — non-mana additional cost satisfiability")
     class CanPayAdditionalSpellCostsTests {
 
-        private Card spellWith(com.github.laxika.magicalvibes.model.effect.CardEffect... costs) {
+        private Card spellWith(com.github.laxika.magicalvibes.model.effect.CostEffect... costs) {
             Card card = new Card();
             card.setName("Spell");
             card.setType(CardType.SORCERY);
-            for (com.github.laxika.magicalvibes.model.effect.CardEffect cost : costs) {
-                card.addEffect(EffectSlot.SPELL, cost);
+            for (com.github.laxika.magicalvibes.model.effect.CostEffect cost : costs) {
+                card.addCastingCost(cost);
             }
             return card;
         }

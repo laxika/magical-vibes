@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -23,8 +22,8 @@ public class OutlawsFury extends Card {
             CardSubtype.WARLOCK);
 
     public OutlawsFury() {
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 0));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
+        addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)),
                 new ExileTopCardsMayPlayUntilNextTurnEffect(1)));
     }

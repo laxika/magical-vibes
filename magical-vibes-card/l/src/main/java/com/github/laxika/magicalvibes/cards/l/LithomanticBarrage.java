@@ -28,7 +28,7 @@ public class LithomanticBarrage extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE))),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(1),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(5)

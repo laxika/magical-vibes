@@ -28,8 +28,8 @@ public class CallTheMountainChocobo extends Card {
                 CardColor.GREEN, null, List.of(CardSubtype.BIRD), Set.of(), Set.of(),
                 false, false, birdTokenEffects, List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN)));
-        addEffect(EffectSlot.SPELL, birdToken);
+        addSpellEffect(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN)));
+        addSpellEffect(birdToken);
         addCastingOption(new FlashbackCast("{5}{R}"));
     }
 }

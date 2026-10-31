@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TeachEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TeachEffect;
 public class Pyromancy101 extends Card {
 
     public Pyromancy101() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
-        addEffect(EffectSlot.SPELL, new TeachEffect());
+        addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(new TeachEffect());
     }
 }

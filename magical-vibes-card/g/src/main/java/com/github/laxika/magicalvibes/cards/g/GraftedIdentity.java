@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GraftedIdentity extends Card {
 
     public GraftedIdentity() {
+        addCastingCost(new SacrificeCreatureCost());
         target(TargetFilters.creature())
                 // As an additional cost to cast this spell, sacrifice a creature.
-                .addEffect(EffectSlot.SPELL, new SacrificeCreatureCost())
                 // You control enchanted creature.
                 .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
                 // Enchanted creature gets +1/+1.

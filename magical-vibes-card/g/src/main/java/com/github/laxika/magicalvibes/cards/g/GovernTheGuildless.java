@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -26,8 +25,7 @@ public class GovernTheGuildless extends Card {
         ));
 
         target(new PermanentPredicateTargetFilter(monocoloredCreature, "Target must be a monocolored creature"))
-                .addEffect(EffectSlot.SPELL,
-                        GainControlOfTargetEffect.withTargetPredicate(ControlDuration.PERMANENT, monocoloredCreature));
+                .addSpellEffect(GainControlOfTargetEffect.withTargetPredicate(ControlDuration.PERMANENT, monocoloredCreature));
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

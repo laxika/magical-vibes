@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopOrBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -22,6 +21,6 @@ public class UnluckyDrop extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrCreature,
                 "Target must be an artifact or creature"
-        )).addEffect(EffectSlot.SPELL, new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0, artifactOrCreature));
+        )).addSpellEffect(new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0, artifactOrCreature));
     }
 }

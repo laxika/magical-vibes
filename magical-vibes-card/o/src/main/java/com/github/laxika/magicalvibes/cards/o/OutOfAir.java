@@ -16,6 +16,6 @@ public class OutOfAir extends Card {
     public OutOfAir() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingStackEntryEffect(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)), 2));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

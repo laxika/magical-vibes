@@ -19,6 +19,6 @@ public class RushingRiver extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         "Target must be a nonland permanent"),
                 1, 1, 2, 2
-        ).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        ).addSpellEffect(ReturnToHandEffect.target());
     }
 }

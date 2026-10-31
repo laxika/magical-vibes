@@ -21,7 +21,7 @@ public class GuardChange extends Card {
 
     public GuardChange() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new CreateTokenAttachedToTargetEffect(monsterRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(monsterRoleToken()));
     }
 
     private static CreateTokenEffect monsterRoleToken() {

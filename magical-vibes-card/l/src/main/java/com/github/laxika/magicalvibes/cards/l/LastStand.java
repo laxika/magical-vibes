@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -36,23 +35,22 @@ public class LastStand extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new LoseLifeEffect(new Scaled(new PermanentCount(
+        )).addSpellEffect(new LoseLifeEffect(new Scaled(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER), 2),
                 LoseLifeRecipient.TARGET_PLAYER));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new DealDamageToTargetCreatureEffect(new PermanentCount(
+        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(new PermanentCount(
+        addSpellEffect(new CreateTokenEffect(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER),
                 "Saproling", 1, 1, CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new Scaled(new PermanentCount(
+        addSpellEffect(new GainLifeEffect(new Scaled(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.PLAINS), CountScope.CONTROLLER), 2)));
 
         DynamicAmount islands = new DeterminedOnce(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(islands));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(islands, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DrawCardEffect(islands));
+        addSpellEffect(new DiscardEffect(islands, DiscardRecipient.CONTROLLER));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -19,7 +18,7 @@ public class SearchWarrant extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new RevealTargetHandEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new CardsInHand(CountScope.TARGET_PLAYER)));
+        )).addSpellEffect(new RevealTargetHandEffect())
+                .addSpellEffect(new GainLifeEffect(new CardsInHand(CountScope.TARGET_PLAYER)));
     }
 }

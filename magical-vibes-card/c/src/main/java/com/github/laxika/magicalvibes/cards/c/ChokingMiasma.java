@@ -20,7 +20,7 @@ public class ChokingMiasma extends Card {
 
     public ChokingMiasma() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new Kicked(),
                 new PutCounterOnTargetPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
@@ -28,6 +28,6 @@ public class ChokingMiasma extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate())))));
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
     }
 }

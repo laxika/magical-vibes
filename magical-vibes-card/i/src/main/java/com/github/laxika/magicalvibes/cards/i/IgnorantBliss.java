@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileControllerHandFaceDownAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextEndStepEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextEndSte
 public class IgnorantBliss extends Card {
 
     public IgnorantBliss() {
-        addEffect(EffectSlot.SPELL, new ExileControllerHandFaceDownAndReturnAtNextEndStepEffect());
-        addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextEndStepEffect());
+        addSpellEffect(new ExileControllerHandFaceDownAndReturnAtNextEndStepEffect());
+        addSpellEffect(new RegisterDrawCardsAtNextEndStepEffect());
     }
 }

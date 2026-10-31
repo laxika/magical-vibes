@@ -24,7 +24,7 @@ public class FinalFlourish extends Card {
                 )),
                 "an artifact or creature"
         ));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new BoostTargetCreatureEffect(-2, -2),
                 new BoostTargetCreatureEffect(-6, -6)

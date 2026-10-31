@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
@@ -15,6 +14,6 @@ public class HeavyFog extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED);
 
         // Prevent all damage that would be dealt to you this turn by attacking creatures.
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControllerFromAttackers());
+        addSpellEffect(PreventDamageEffect.allToControllerFromAttackers());
     }
 }

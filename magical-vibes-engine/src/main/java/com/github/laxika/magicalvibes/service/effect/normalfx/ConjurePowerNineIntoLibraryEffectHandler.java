@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
@@ -120,22 +119,22 @@ public class ConjurePowerNineIntoLibraryEffectHandler implements NormalEffectHan
         card.target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(3, false, true));
+        )).addSpellEffect(new DrawCardForTargetPlayerEffect(3, false, true));
         return freeze(card);
     }
 
     private Card createTimeWalk(UUID ownerId) {
         Card card = tokenCard(ownerId, "Time Walk", CardType.SORCERY, "{1}{U}", CardColor.BLUE,
                 "Take an extra turn after this one.");
-        card.addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
+        card.addSpellEffect(new ControllerExtraTurnEffect(1));
         return freeze(card);
     }
 
     private Card createTimetwister(UUID ownerId) {
         Card card = tokenCard(ownerId, "Timetwister", CardType.SORCERY, "{2}{U}", CardColor.BLUE,
                 "Each player shuffles their hand and graveyard into their library, then draws seven cards.");
-        card.addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
-        card.addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(7));
+        card.addSpellEffect(new EachPlayerShufflesZonesIntoLibraryEffect());
+        card.addSpellEffect(new EachPlayerDrawsCardEffect(7));
         return freeze(card);
     }
 

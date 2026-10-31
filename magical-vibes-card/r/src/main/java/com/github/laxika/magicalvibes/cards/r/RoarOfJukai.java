@@ -18,7 +18,7 @@ import java.util.List;
 public class RoarOfJukai extends Card {
 
     public RoarOfJukai() {
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
                 new BoostAllCreaturesEffect(2, 2, new PermanentIsBlockedPredicate())));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE,

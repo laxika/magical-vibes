@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -16,7 +15,7 @@ public class FinalStrike extends Card {
 
     public FinalStrike() {
         // As an additional cost, sacrifice a creature; snapshots its power into the entry's xValue.
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost(false, true));
+        addCastingCost(new SacrificeCreatureCost(false, true));
 
         // Deals damage equal to the sacrificed creature's power to target opponent or planeswalker.
         // AnyTargetPredicateTargetFilter enforces opponent-only players at the card level (using the
@@ -25,6 +24,6 @@ public class FinalStrike extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue(), PlayerRelation.OPPONENT));
+        )).addSpellEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue(), PlayerRelation.OPPONENT));
     }
 }

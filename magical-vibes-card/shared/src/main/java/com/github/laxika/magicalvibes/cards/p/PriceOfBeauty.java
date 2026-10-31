@@ -20,7 +20,7 @@ public class PriceOfBeauty extends Card {
 
     public PriceOfBeauty() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
     }
 
     private static CreateTokenEffect wickedRoleToken() {

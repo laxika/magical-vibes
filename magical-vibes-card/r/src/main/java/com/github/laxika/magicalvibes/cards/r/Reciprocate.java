@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
@@ -22,6 +21,6 @@ public class Reciprocate extends Card {
                         new PermanentDealtDamageToSourceControllerThisTurnPredicate()
                 )),
                 "Target must be a creature that dealt damage to you this turn"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        )).addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

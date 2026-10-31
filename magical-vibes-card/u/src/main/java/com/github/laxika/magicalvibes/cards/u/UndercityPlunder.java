@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -19,9 +18,8 @@ public class UndercityPlunder extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL,
-                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new MayEffect(
+                .addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER))
+                .addSpellEffect(new MayEffect(
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
                         "Discard an additional card?",
                         new ConjureRandomCardFromTargetPlayerLibraryEffect(),

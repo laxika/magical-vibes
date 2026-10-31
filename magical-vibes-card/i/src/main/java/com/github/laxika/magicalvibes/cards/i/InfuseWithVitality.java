@@ -18,9 +18,9 @@ public class InfuseWithVitality extends Card {
         // Until end of turn, target creature gains deathtouch and "When this creature dies, return
         // it to the battlefield tapped under its owner's control." You gain 2 life.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH, new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+                .addSpellEffect(new GainLifeEffect(2));
     }
 }

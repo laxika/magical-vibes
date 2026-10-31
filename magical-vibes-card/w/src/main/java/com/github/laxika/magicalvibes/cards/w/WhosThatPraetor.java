@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.s.SheoldredTheApocalypse;
 import com.github.laxika.magicalvibes.cards.u.UrabraskHereticPraetor;
 import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfRandomCardEffect;
 
 import java.util.List;
@@ -27,6 +26,6 @@ public class WhosThatPraetor extends Card {
             EbonPraetor::new);
 
     public WhosThatPraetor() {
-        addEffect(EffectSlot.SPELL, new CreateTokenCopyOfRandomCardEffect(PRAETORS));
+        addSpellEffect(new CreateTokenCopyOfRandomCardEffect(PRAETORS));
     }
 }

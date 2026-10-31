@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 
 /**
@@ -14,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWith
 public class Meddle extends Card {
 
     public Meddle() {
-        addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellWithSingleTargetEffect(true));
+        addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect(true));
     }
 }

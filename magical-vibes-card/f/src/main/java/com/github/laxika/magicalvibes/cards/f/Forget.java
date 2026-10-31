@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Forget extends Card {
 
     public Forget() {
-        addEffect(EffectSlot.SPELL, new TargetPlayerDiscardsThenDrawsThatManyEffect(2));
+        addSpellEffect(new TargetPlayerDiscardsThenDrawsThatManyEffect(2));
     }
 }

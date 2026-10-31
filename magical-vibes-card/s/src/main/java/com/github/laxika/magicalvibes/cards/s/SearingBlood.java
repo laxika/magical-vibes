@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -17,8 +16,8 @@ public class SearingBlood extends Card {
 
     public SearingBlood() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(2))
-                .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(2))
+                .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
                         new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER)));
     }
 }

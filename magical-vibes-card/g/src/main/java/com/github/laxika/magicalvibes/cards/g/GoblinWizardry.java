@@ -32,6 +32,6 @@ public class GoblinWizardry extends Card {
                 Set.of(), Set.of(), false, false, tokenEffects, List.of(),
                 false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.SPELL, goblinWizardToken);
+        addSpellEffect(goblinWizardToken);
     }
 }

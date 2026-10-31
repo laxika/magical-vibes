@@ -22,7 +22,7 @@ public class WiltInTheHeat extends Card {
         // Wilt in the Heat deals 5 damage to target creature. If that creature would die this
         // turn, exile it instead.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+                .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(5));
     }
 }

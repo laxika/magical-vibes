@@ -25,7 +25,7 @@ public class StompedByTheFoot extends Card {
                 )),
                 "an artifact or creature"
         ));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new BoostTargetCreatureEffect(-2, -2),
                 new BoostTargetCreatureEffect(-5, -5)

@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -58,5 +60,29 @@ class SpellAbilityTest {
         assertThatThrownBy(() -> new SpellAbility(List.of(independent)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("INDEPENDENT");
+    }
+
+    @Test
+    void aCastingCostIsNotPartOfIt() {
+        EffectRegistration cost = new EffectRegistration(new SacrificeCreatureCost());
+
+        assertThatThrownBy(() -> new SpellAbility(List.of(cost)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("casting cost");
+    }
+
+    @Test
+    void eachTargetGroupSitsAtItsIndex() {
+        EffectRegistration draw = new EffectRegistration(new DrawCardEffect(1));
+        TargetGroup second = new TargetGroup(TargetFilters.creature(), TargetFilters.creature(), 1, 1, 1, 1, 1,
+                false, null, null, 1);
+
+        assertThatThrownBy(() -> new SpellAbility(List.of(draw), List.of(second)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void withoutTargetGroupsItTargetsNothing() {
+        assertThat(new SpellAbility(List.of(new EffectRegistration(new DrawCardEffect(1)))).targets()).isEmpty();
     }
 }

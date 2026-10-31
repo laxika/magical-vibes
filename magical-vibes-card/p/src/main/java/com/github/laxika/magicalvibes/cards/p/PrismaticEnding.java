@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentManaValueAtMostColorsSpent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetNonlandPermanentIfManaValueAtMostConvergeEffect;
@@ -18,6 +17,6 @@ public class PrismaticEnding extends Card {
 
     public PrismaticEnding() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, new ExileTargetNonlandPermanentIfManaValueAtMostConvergeEffect());
+                .addSpellEffect(new ExileTargetNonlandPermanentIfManaValueAtMostConvergeEffect());
     }
 }

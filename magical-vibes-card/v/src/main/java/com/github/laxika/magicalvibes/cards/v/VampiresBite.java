@@ -19,8 +19,8 @@ public class VampiresBite extends Card {
     public VampiresBite() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 0))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new BoostTargetCreatureEffect(3, 0))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)));
     }
 }

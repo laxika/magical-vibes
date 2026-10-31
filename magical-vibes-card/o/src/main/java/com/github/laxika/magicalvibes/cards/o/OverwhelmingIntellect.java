@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -23,8 +22,8 @@ public class OverwhelmingIntellect extends Card {
                 "Target must be a creature spell."
         ))
                 // Record the target's mana value before countering it, then draw that many cards.
-                .addEffect(EffectSlot.SPELL, new RecordTargetSpellManaValueAsXEffect())
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(new XValue()));
+                .addSpellEffect(new RecordTargetSpellManaValueAsXEffect())
+                .addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new DrawCardEffect(new XValue()));
     }
 }

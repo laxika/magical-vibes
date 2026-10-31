@@ -20,7 +20,7 @@ public class ThroughTheBreach extends Card {
     public ThroughTheBreach() {
         // You may put a creature card from your hand onto the battlefield.
         // That creature gains haste. Sacrifice that creature at the beginning of the next end step.
-        addEffect(EffectSlot.SPELL, new MayEffect(
+        addSpellEffect(new MayEffect(
                 new PutCardToBattlefieldEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         "creature", false, false, true, true),

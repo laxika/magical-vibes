@@ -28,8 +28,7 @@ public class TimeLordRegeneration extends Card {
     public TimeLordRegeneration() {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.TIME_LORD),
-                "Target must be a Time Lord you control")).addEffect(EffectSlot.SPELL,
-                new GrantEffectToTargetUntilEndOfTurnEffect(
+                "Target must be a Time Lord you control")).addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_DEATH,
                         new RevealUntilCardPredicateRestOnBottomRandomEffect(
                                 TIME_LORD_CREATURE_CARD, LibrarySearchDestination.BATTLEFIELD),

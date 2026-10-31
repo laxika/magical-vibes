@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -18,7 +17,7 @@ import java.util.List;
 public class UrzasRuinousBlast extends Card {
 
     public UrzasRuinousBlast() {
-        addEffect(EffectSlot.SPELL, new ExileAllPermanentsEffect(
+        addSpellEffect(new ExileAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))

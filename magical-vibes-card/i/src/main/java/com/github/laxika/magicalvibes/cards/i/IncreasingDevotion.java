@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
@@ -23,7 +22,7 @@ import java.util.Set;
 public class IncreasingDevotion extends Card {
 
     public IncreasingDevotion() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new FixedIfCondition(new CastFromZone(Zone.GRAVEYARD), 10, 5), "Human", 1, 1,
                 CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of()));
         addCastingOption(new FlashbackCast("{7}{W}{W}"));

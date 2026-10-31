@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
@@ -18,7 +17,7 @@ public class PryingQuestions extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect(1));
+                .addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER))
+                .addSpellEffect(new TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect(1));
     }
 }

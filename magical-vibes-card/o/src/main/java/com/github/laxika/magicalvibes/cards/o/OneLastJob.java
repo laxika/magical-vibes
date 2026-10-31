@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -31,9 +30,9 @@ public class OneLastJob extends Card {
                 new CardIsAuraPredicate(),
                 new CardSubtypePredicate(CardSubtype.EQUIPMENT)));
 
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{2}", "{1}", "{1}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{2}", "{1}", "{1}")));
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to the battlefield",
                         ReturnCardFromGraveyardEffect.builder()

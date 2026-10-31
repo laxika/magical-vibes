@@ -22,7 +22,7 @@ import java.util.Set;
 public class WakeTheDragon extends Card {
 
     public WakeTheDragon() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Dragon", 6, 6,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.RED),
                 List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING, Keyword.MENACE), Set.of(),

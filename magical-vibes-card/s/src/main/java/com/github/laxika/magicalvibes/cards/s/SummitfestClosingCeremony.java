@@ -36,8 +36,8 @@ public class SummitfestClosingCeremony extends Card {
         );
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, covercast);
         addEffect(EffectSlot.HAND_ON_CONTROLLER_CASTS_SPELL, covercast);
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.BLUE, new SourceIntensity()));
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED, new SourceIntensity()));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new AwardManaEffect(ManaColor.BLUE, new SourceIntensity()));
+        addSpellEffect(new AwardManaEffect(ManaColor.RED, new SourceIntensity()));
+        addSpellEffect(new DrawCardEffect());
     }
 }

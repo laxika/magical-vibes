@@ -16,6 +16,6 @@ public class AssertAuthority extends Card {
     public AssertAuthority() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect(CounteredSpellDestination.EXILE));
+        addSpellEffect(new CounterSpellEffect(CounteredSpellDestination.EXILE));
     }
 }

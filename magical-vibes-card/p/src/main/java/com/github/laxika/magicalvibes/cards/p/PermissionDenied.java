@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastNoncreatureSpellsThisTurnEffect;
@@ -23,7 +22,7 @@ public class PermissionDenied extends Card {
                 ),
                 "Target must be a noncreature spell."
         ))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new OpponentsCantCastNoncreatureSpellsThisTurnEffect());
+                .addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new OpponentsCantCastNoncreatureSpellsThisTurnEffect());
     }
 }

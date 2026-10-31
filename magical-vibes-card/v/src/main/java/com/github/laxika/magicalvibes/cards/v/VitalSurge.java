@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 public class VitalSurge extends Card {
 
     public VitalSurge() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        addSpellEffect(new GainLifeEffect(3));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{G}"));
     }
 }

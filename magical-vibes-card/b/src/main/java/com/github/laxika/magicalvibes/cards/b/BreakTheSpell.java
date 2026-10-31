@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
@@ -18,7 +17,7 @@ import java.util.List;
 public class BreakTheSpell extends Card {
 
     public BreakTheSpell() {
-        target(TargetFilters.enchantment()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        target(TargetFilters.enchantment()).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.NONE,
                 new DrawCardEffect(),
                 ThenEffectRecipient.CONTROLLER,

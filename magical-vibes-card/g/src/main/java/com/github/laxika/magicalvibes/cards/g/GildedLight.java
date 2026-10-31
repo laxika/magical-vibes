@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEndOfTurnEffect;
 
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEn
 public class GildedLight extends Card {
 
     public GildedLight() {
-        addEffect(EffectSlot.SPELL, new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.SHROUD));
+        addSpellEffect(new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.SHROUD));
         addCycling("{2}");
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromGraveyardAndGrantCastPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -21,8 +20,8 @@ public class MissionBriefing extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public MissionBriefing() {
-        addEffect(EffectSlot.SPELL, new SurveilEffect(2));
-        addEffect(EffectSlot.SPELL, new ChooseCardFromGraveyardAndGrantCastPermissionEffect(
+        addSpellEffect(new SurveilEffect(2));
+        addSpellEffect(new ChooseCardFromGraveyardAndGrantCastPermissionEffect(
                 INSTANT_OR_SORCERY, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, true));
     }
 }

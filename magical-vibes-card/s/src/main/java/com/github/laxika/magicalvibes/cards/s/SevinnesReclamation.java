@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -36,13 +35,13 @@ public class SevinnesReclamation extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(
                 permanentCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(permanentCard)
                         .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                         .targetGraveyard(true)
                         .build());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
                 new MayEffect(new CopyThisSpellForControllerEffect(),
                         "Copy Sevinne's Reclamation?")));

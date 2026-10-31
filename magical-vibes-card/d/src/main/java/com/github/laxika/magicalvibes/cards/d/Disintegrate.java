@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -23,7 +22,7 @@ public class Disintegrate extends Card {
 
     public Disintegrate() {
         // The creature-target riders apply even if all the damage is prevented.
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue(), true, true)
+        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue(), true, true)
                 .withUnconditionalRegenerationPrevention());
     }
 }

@@ -14,7 +14,7 @@ import java.util.Set;
 public class PestProblem extends Card {
 
     public PestProblem() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 2, "Rat", 1, 1, CardColor.BLACK, List.of(CardSubtype.RAT),
                 Set.of(), Set.of(), Map.of(EffectSlot.STATIC, new CantBlockEffect())));
     }

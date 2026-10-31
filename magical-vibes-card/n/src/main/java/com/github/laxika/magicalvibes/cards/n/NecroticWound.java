@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -20,7 +19,7 @@ public class NecroticWound extends Card {
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
         Scaled minusCreatureCards = new Scaled(creatureCards, -1);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(minusCreatureCards, minusCreatureCards));
+                .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
+                .addSpellEffect(new BoostTargetCreatureEffect(minusCreatureCards, minusCreatureCards));
     }
 }

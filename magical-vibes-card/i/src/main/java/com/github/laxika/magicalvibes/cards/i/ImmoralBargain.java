@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,12 +14,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class ImmoralBargain extends Card {
 
     public ImmoralBargain() {
-        addEffect(EffectSlot.SPELL, new SacrificeAnyNumberOfPermanentsCost(
+        addCastingCost(new SacrificeAnyNumberOfPermanentsCost(
                 new PermanentIsCreaturePredicate()));
 
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Targets must be nonland permanents"
-        ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), 100).addSpellEffect(new DestroyEachTargetPermanentEffect());
     }
 }

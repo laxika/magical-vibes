@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -14,10 +13,10 @@ public class NarsetsRebuke extends Card {
 
     public NarsetsRebuke() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5))
-                .addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.BLUE))
-                .addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED))
-                .addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.WHITE));
+                .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(5))
+                .addSpellEffect(new AwardManaEffect(ManaColor.BLUE))
+                .addSpellEffect(new AwardManaEffect(ManaColor.RED))
+                .addSpellEffect(new AwardManaEffect(ManaColor.WHITE));
     }
 }

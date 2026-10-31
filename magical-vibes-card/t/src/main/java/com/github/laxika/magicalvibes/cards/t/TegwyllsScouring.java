@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
@@ -29,8 +28,8 @@ public class TegwyllsScouring extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING))))), null, true));
 
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(3, "Faerie Rogue", 1, 1, CardColor.BLACK,
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new CreateTokenEffect(3, "Faerie Rogue", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.FAERIE, CardSubtype.ROGUE), Set.of(Keyword.FLYING), Set.of()));
     }
 }

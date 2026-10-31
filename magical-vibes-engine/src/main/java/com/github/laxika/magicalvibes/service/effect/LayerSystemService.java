@@ -632,6 +632,8 @@ public class LayerSystemService {
         if (original.getOwnerId() != null) {
             copy.setOwnerId(original.getOwnerId());
         }
+        copy.addCastingCostsAndSpellEffectsFrom(original,
+                effect -> !copy.getCastingCostsAndSpellEffects().contains(effect));
         for (EffectSlot slot : EffectSlot.values()) {
             for (var registration : original.getEffectRegistrations(slot)) {
                 boolean alreadyPresent = copy.getEffectRegistrations(slot).stream()

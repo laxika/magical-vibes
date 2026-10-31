@@ -28,7 +28,7 @@ public class AlrundGodOfTheCosmos extends Card {
         addEffect(EffectSlot.STATIC, new BoostSelfEffect(count, count));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new RevealTopCardsOfChosenTypeToHandRestEffect(2));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Alrund, God of the Cosmos", List.of())
                         .withManaCost("{3}{U}{U}"),
                 new ChooseOneEffect.ChooseOneOption("Hakka, Whispering Raven", List.of())

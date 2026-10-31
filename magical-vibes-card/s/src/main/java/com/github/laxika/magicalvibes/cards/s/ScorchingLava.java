@@ -14,7 +14,7 @@ public class ScorchingLava extends Card {
 
     public ScorchingLava() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DealDamageToAnyTargetEffect(new Fixed(2)),
                 new DealDamageToAnyTargetEffect(new Fixed(2), true, true)

@@ -31,7 +31,7 @@ public class MentorsGuidance extends Card {
                         ))
                 )))
         ));
-        addEffect(EffectSlot.SPELL, new ScryEffect(1));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new ScryEffect(1));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

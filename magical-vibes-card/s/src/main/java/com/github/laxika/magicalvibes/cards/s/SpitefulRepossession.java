@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToLandDifferenceEffect;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqual
 public class SpitefulRepossession extends Card {
 
     public SpitefulRepossession() {
-        addEffect(EffectSlot.SPELL, new DealDamageToEachOpponentEqualToLandDifferenceEffect());
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTreasureToken(new EventValue()));
+        addSpellEffect(new DealDamageToEachOpponentEqualToLandDifferenceEffect());
+        addSpellEffect(CreateTokenEffect.ofTreasureToken(new EventValue()));
     }
 }

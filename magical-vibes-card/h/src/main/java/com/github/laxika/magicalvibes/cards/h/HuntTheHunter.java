@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -28,7 +27,7 @@ public class HuntTheHunter extends Card {
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN))
                 )),
                 "First target must be a green creature you control"
-        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
+        )).addSpellEffect(new BoostTargetCreatureEffect(2, 2));
 
         // It fights target green creature an opponent controls.
         target(new PermanentPredicateTargetFilter(
@@ -38,6 +37,6 @@ public class HuntTheHunter extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a green creature an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+        )).addSpellEffect(new FightTargetsEffect());
     }
 }

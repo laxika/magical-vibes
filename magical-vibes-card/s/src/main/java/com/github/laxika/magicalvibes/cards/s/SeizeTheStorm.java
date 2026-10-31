@@ -39,7 +39,7 @@ public class SeizeTheStorm extends Card {
                 )), CountScope.CONTROLLER),
                 new CardsInExile(new CardHasFlashbackPredicate(), CountScope.CONTROLLER)
         );
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Elemental", 0, 0,
                 CardColor.RED, List.of(CardSubtype.ELEMENTAL),
                 Set.of(Keyword.TRAMPLE), Set.of(),

@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -985,7 +984,7 @@ class BoardEvaluatorTest {
 
             WrathOfGod wrath = new WrathOfGod();
             gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
-                    wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0));
+                    wrath.getName(), wrath.getCastingCostsAndSpellEffects(), 0));
 
             double doomedCost = evaluator.sacrificeCost(gd, bears, player1.getId(), player2.getId());
 
@@ -1002,7 +1001,7 @@ class BoardEvaluatorTest {
 
             WrathOfGod wrath = new WrathOfGod();
             gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
-                    wrath.getName(), wrath.getEffects(EffectSlot.SPELL), 0));
+                    wrath.getName(), wrath.getCastingCostsAndSpellEffects(), 0));
 
             assertThat(evaluator.isDoomedByStack(gd, myr, player1.getId())).isFalse();
             assertThat(evaluator.sacrificeCost(gd, myr, player1.getId(), player2.getId()))

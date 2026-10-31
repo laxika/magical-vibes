@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDamagedCreatureDeathTriggerEffect;
@@ -11,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDamagedCreatur
 public class GhiredsBelligerence extends Card {
 
     public GhiredsBelligerence() {
-        addEffect(EffectSlot.SPELL, DealDividedDamageEffect.xAmongTargetCreatures());
-        addEffect(EffectSlot.SPELL, new RegisterDelayedDamagedCreatureDeathTriggerEffect(
+        addSpellEffect(DealDividedDamageEffect.xAmongTargetCreatures());
+        addSpellEffect(new RegisterDelayedDamagedCreatureDeathTriggerEffect(
                 new PopulateEffect(), true));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,8 +22,7 @@ public class InevitableBetrayal extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
-        )).addEffect(EffectSlot.SPELL,
-                new SearchTargetLibraryEffect(1, new CardTypePredicate(CardType.CREATURE),
+        )).addSpellEffect(new SearchTargetLibraryEffect(1, new CardTypePredicate(CardType.CREATURE),
                         LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER, true));
 
         addHandActivatedAbility(new ActivatedAbility(

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawUpToNGainLifePerCardBelowEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
@@ -15,14 +14,14 @@ public class DiminishingReturns extends Card {
 
     public DiminishingReturns() {
         // Each player shuffles their hand and graveyard into their library.
-        addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
+        addSpellEffect(new EachPlayerShufflesZonesIntoLibraryEffect());
 
         // You exile the top ten cards of your library.
         for (int i = 0; i < 10; i++) {
-            addEffect(EffectSlot.SPELL, new ExileTopCardOfOwnLibraryEffect(false));
+            addSpellEffect(new ExileTopCardOfOwnLibraryEffect(false));
         }
 
         // Then each player draws up to seven cards: each chooses and draws before the next player chooses.
-        addEffect(EffectSlot.SPELL, EachPlayerMayDrawUpToNGainLifePerCardBelowEffect.drawUpToInTurnOrder(7));
+        addSpellEffect(EachPlayerMayDrawUpToNGainLifePerCardBelowEffect.drawUpToInTurnOrder(7));
     }
 }

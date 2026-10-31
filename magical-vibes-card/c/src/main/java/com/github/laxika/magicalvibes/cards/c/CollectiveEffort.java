@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateTapCost;
@@ -28,7 +27,7 @@ import java.util.List;
 public class CollectiveEffort extends Card {
 
     public CollectiveEffort() {
-        addEffect(EffectSlot.SPELL, new EscalateTapCost(new PermanentIsCreaturePredicate()));
+        addCastingCost(new EscalateTapCost(new PermanentIsCreaturePredicate()));
 
         var creatureFilter = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -42,7 +41,7 @@ public class CollectiveEffort extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player.");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature with power 4 or greater",
                         new DestroyTargetPermanentEffect(),

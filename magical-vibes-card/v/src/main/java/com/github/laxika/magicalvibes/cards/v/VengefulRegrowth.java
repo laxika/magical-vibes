@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -23,9 +22,9 @@ public class VengefulRegrowth extends Card {
 
     public VengefulRegrowth() {
         CardPredicate land = new CardTypePredicate(CardType.LAND);
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 land, 3, false, true));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new EventValue(), "Plant Warrior", 4, 2, CardColor.GREEN,
                 List.of(CardSubtype.PLANT, CardSubtype.WARRIOR),
                 Set.of(Keyword.REACH), Set.of()));

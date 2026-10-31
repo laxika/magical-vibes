@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -25,17 +24,17 @@ import java.util.List;
 public class SavageOrder extends Card {
 
     public SavageOrder() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4))),
                 "a creature with power 4 or greater"));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.DINOSAUR))),
                 LibrarySearchDestination.BATTLEFIELD));
-        addEffect(EffectSlot.SPELL, new GrantKeywordToChosenCreatureEffect(
+        addSpellEffect(new GrantKeywordToChosenCreatureEffect(
                 Keyword.INDESTRUCTIBLE, GrantDuration.UNTIL_YOUR_NEXT_TURN));
     }
 }

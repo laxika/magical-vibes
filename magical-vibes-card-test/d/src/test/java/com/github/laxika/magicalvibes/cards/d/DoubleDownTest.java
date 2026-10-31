@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -125,7 +124,7 @@ class DoubleDownTest extends BaseCardTest {
         card.setManaCost("{1}");
         card.setColor(CardColor.BLUE);
         card.setSubtypes(subtype == null ? List.of() : List.of(subtype));
-        card.addEffect(EffectSlot.SPELL, new GainLifeEffect(1));
+        card.addSpellEffect(new GainLifeEffect(1));
         return card;
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WallOfFrost;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -194,7 +193,7 @@ class RaceEvaluatorTest {
         @Test
         void targetedPlayerDamageCountsAsBurn() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isEqualTo(4);
         }
@@ -202,7 +201,7 @@ class RaceEvaluatorTest {
         @Test
         void controllerDamageDoesNotCountAsBurn() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(5, DamageRecipient.CONTROLLER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(5, DamageRecipient.CONTROLLER));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
         }
@@ -210,7 +209,7 @@ class RaceEvaluatorTest {
         @Test
         void creatureOnlyDamageDoesNotCountAsBurn() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(5));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
         }
@@ -218,7 +217,7 @@ class RaceEvaluatorTest {
         @Test
         void variableDamageDoesNotCountAsFixedBurn() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
 
             assertThat(raceEvaluator.getBurnToFaceDamage(spell)).isZero();
         }

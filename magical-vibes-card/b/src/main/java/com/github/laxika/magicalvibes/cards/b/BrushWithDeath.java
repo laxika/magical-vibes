@@ -23,9 +23,9 @@ public class BrushWithDeath extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        )).addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
 
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new GainLifeEffect(2));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

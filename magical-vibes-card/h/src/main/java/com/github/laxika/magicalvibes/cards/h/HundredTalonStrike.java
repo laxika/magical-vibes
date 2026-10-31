@@ -23,8 +23,8 @@ public class HundredTalonStrike extends Card {
 
     public HundredTalonStrike() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
         // Splice onto Arcane—Tap an untapped white creature you control. The splice cost has no mana
         // component, so only the tap filter is supplied.
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "", new PermanentAllOfPredicate(List.of(

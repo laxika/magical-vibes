@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class CreativeTechnique extends Card {
 
     public CreativeTechnique() {
-        addEffect(EffectSlot.SPELL, SequenceEffect.of(
+        addSpellEffect(SequenceEffect.of(
                 new ShuffleLibraryEffect(false),
                 new RevealUntilCardPredicateMayCastWithoutPayingManaEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),

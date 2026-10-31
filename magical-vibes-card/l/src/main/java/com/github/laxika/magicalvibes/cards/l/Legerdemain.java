@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -33,7 +32,7 @@ public class Legerdemain extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrCreature(),
                 "Second target must be an artifact or creature sharing a type with the first target"))
-                .addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
+                .addSpellEffect(new ExchangeControlOfTargetPermanentsEffect(
                         artifactOrCreature(), false, false, false, true));
     }
 

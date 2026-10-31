@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
@@ -14,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnCreatur
 public class FullSteamAhead extends Card {
 
     public FullSteamAhead() {
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 2));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL, new GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect(new CanBeBlockedByAtMostNCreaturesEffect(1)));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
+        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect(new CanBeBlockedByAtMostNCreaturesEffect(1)));
     }
 }

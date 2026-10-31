@@ -23,7 +23,7 @@ public class EmptyTheWarrens extends Card {
 
     public EmptyTheWarrens() {
         // Create two 1/1 red Goblin creature tokens.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Goblin", 1, 1, CardColor.RED,
+        addSpellEffect(new CreateTokenEffect(2, "Goblin", 1, 1, CardColor.RED,
                 List.of(CardSubtype.GOBLIN), Set.of(), Set.of()));
 
         // Storm (When you cast this spell, copy it for each spell cast before it this turn.)

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -25,6 +24,6 @@ public class DissonantWave extends Card {
                         new StackEntryNotPredicate(new StackEntryCardTypeInPredicate(
                                 Set.of(CardType.CREATURE))))),
                 "Target must be an activated or triggered ability from a noncreature source."))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                .addSpellEffect(new CounterSpellEffect());
     }
 }

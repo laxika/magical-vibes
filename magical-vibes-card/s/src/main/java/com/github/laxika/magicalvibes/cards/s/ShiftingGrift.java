@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
@@ -18,9 +17,9 @@ import java.util.List;
 public class ShiftingGrift extends Card {
 
     public ShiftingGrift() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{2}", "{1}", "{1}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{2}", "{1}", "{1}")));
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 exchangeMode("Exchange control of two target creatures",
                         new PermanentIsCreaturePredicate(), "Targets must be creatures."),
                 exchangeMode("Exchange control of two target artifacts",

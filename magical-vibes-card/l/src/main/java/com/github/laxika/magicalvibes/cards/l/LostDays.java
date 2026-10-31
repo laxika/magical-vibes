@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopOrBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -22,8 +21,7 @@ public class LostDays extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrEnchantment,
                 "Target must be a creature or enchantment"))
-                .addEffect(EffectSlot.SPELL,
-                        new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(1, creatureOrEnchantment))
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+                .addSpellEffect(new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(1, creatureOrEnchantment))
+                .addSpellEffect(CreateTokenEffect.ofClueToken(1));
     }
 }

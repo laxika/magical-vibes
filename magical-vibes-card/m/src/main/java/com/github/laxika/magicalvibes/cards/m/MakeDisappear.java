@@ -12,7 +12,7 @@ public class MakeDisappear extends Card {
 
     public MakeDisappear() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(1));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(2));
+        addCastingCost(new CasualtyCost(1));
+        addSpellEffect(new CounterUnlessPaysEffect(2));
     }
 }

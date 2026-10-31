@@ -16,7 +16,7 @@ public class MarshCasualties extends Card {
 
     public MarshCasualties() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new BoostAllCreaturesEffect(-1, -1, EachPermanentScope.TARGET_PLAYER),
                 new BoostAllCreaturesEffect(-2, -2, EachPermanentScope.TARGET_PLAYER)));
     }

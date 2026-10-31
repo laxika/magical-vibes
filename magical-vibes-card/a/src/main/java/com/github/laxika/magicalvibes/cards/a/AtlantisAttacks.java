@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -27,7 +26,7 @@ import java.util.Set;
 public class AtlantisAttacks extends Card {
 
     public AtlantisAttacks() {
-        addEffect(EffectSlot.SPELL, new TeamworkCost(4));
+        addCastingCost(new TeamworkCost(4));
 
         var anyPlayer = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
@@ -39,7 +38,7 @@ public class AtlantisAttacks extends Card {
                 "Leviathan", 6, 5, CardColor.BLUE, List.of(CardSubtype.LEVIATHAN),
                 Set.of(Keyword.HEXPROOF), Set.of()));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player creates a 6/5 blue Leviathan creature token with hexproof",
                         leviathan, anyPlayer),

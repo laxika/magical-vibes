@@ -14,7 +14,7 @@ public class RecruitTheWorthy extends Card {
 
     public RecruitTheWorthy() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.whiteSoldier(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(CreateTokenEffect.whiteSoldier(1));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

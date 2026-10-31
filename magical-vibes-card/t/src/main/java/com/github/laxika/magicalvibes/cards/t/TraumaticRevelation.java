@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -24,7 +23,7 @@ public class TraumaticRevelation extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
+        )).addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 1, List.of(CardType.CREATURE, CardType.BATTLE), HandChoiceDestination.DISCARD, incubate(3)));
     }
 

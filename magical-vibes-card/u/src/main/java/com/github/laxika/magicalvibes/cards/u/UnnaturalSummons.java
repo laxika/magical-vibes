@@ -18,6 +18,6 @@ public class UnnaturalSummons extends Card {
                 new ControllerIsNotStartingPlayer(), new ReduceOwnCastCostEffect(new Fixed(1))));
 
         // Manifest dread.
-        addEffect(EffectSlot.SPELL, ManifestDreadEffect.forController());
+        addSpellEffect(ManifestDreadEffect.forController());
     }
 }

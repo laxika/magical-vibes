@@ -14,7 +14,7 @@ import java.util.List;
 public class SunfireBalm extends Card {
 
     public SunfireBalm() {
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.nextToTarget(4));
+        addSpellEffect(PreventDamageEffect.nextToTarget(4));
 
         // "When you cycle this card, you may prevent the next 1 damage that would be dealt to any
         // target this turn." The target is announced with the cycling ability and rides on the

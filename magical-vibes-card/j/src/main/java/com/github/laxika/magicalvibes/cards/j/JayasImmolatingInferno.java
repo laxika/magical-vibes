@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 
@@ -12,6 +11,6 @@ public class JayasImmolatingInferno extends Card {
 
     public JayasImmolatingInferno() {
         target(0, 3)
-                .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new XValue()));
+                .addSpellEffect(new DealDamageToEachTargetEffect(new XValue()));
     }
 }

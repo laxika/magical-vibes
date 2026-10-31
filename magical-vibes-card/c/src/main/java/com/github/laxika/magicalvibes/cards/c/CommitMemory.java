@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.Memory;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 
 /**
@@ -22,7 +21,7 @@ public class CommitMemory extends Card {
         setBackFaceCard(new Memory());
 
         // Put target spell or nonland permanent into its owner's library second from the top.
-        addEffect(EffectSlot.SPELL, new PutTargetSpellOrPermanentIntoLibraryNFromTopEffect(1));
+        addSpellEffect(new PutTargetSpellOrPermanentIntoLibraryNFromTopEffect(1));
     }
 
     @Override

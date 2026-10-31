@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -24,7 +23,7 @@ public class ZukosExile extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactCreatureOrEnchantment,
                 "Target must be an artifact, creature, or enchantment"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect(
+                .addSpellEffect(new ExileTargetPermanentEffect(
                         CreateTokenEffect.ofClueToken(1), artifactCreatureOrEnchantment));
     }
 }

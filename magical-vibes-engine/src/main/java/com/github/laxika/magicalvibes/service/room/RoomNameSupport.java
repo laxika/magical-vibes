@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.room;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 
@@ -16,7 +15,7 @@ public final class RoomNameSupport {
     }
 
     public static Set<String> allDoorNames(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
@@ -29,7 +28,7 @@ public final class RoomNameSupport {
     }
 
     public static Set<String> unlockedDoorNames(Permanent permanent) {
-        List<String> doorNames = permanent.getCard().getEffects(EffectSlot.SPELL).stream()
+        List<String> doorNames = permanent.getCard().getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()

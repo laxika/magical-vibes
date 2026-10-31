@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMaySearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class WeirdHarvest extends Card {
 
     public WeirdHarvest() {
-        addEffect(EffectSlot.SPELL, new EachPlayerMaySearchLibraryForCardsToHandEffect());
+        addSpellEffect(new EachPlayerMaySearchLibraryForCardsToHandEffect());
     }
 }

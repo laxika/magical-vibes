@@ -24,7 +24,7 @@ public class TerrificTeamUp extends Card {
 
         var victimTarget = target(TargetFilters.creatureAnOpponentControls());
         target(TargetFilters.creatureYouControl(), 1, 2)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0));
-        victimTarget.addEffect(EffectSlot.SPELL, new TargetCreaturesDealPowerDamageToTargetEffect(1, 0));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0));
+        victimTarget.addSpellEffect(new TargetCreaturesDealPowerDamageToTargetEffect(1, 0));
     }
 }

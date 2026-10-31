@@ -21,6 +21,6 @@ public class MortalitySpear extends Card {
 
         // Destroy target nonland permanent.
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

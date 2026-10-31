@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -23,7 +22,7 @@ public class AerialVolley extends Card {
         target(new PermanentPredicateTargetFilter(
                 flyingCreature(),
                 "Target must be a creature with flying."
-        ), 1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageEffect(
+        ), 1, 3).addSpellEffect(new DealDividedDamageEffect(
                 new Fixed(3),
                 null,
                 DivisionMode.CHOSEN,

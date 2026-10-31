@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -39,7 +38,7 @@ public class ResponseResurgence extends Card {
                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.OWN_CREATURES);
         CardEffect additionalCombatAndMainPhase = new AdditionalCombatMainPhaseEffect(1, null, true);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Response — Response deals 5 damage to target attacking or blocking creature",
                         response,

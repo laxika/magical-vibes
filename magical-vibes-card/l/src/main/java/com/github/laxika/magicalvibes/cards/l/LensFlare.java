@@ -32,6 +32,6 @@ public class LensFlare extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature.")
-        ).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+        ).addSpellEffect(new DealDamageToTargetCreatureEffect(5));
     }
 }

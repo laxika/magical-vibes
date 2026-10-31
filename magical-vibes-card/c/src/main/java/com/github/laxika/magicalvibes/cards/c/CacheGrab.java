@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandThenCreateFoodIfSquirrelEffect;
@@ -16,8 +15,7 @@ import java.util.List;
 public class CacheGrab extends Card {
 
     public CacheGrab() {
-        addEffect(EffectSlot.SPELL,
-                new MillControllerAndMayReturnMilledPermanentToHandThenCreateFoodIfSquirrelEffect(
+        addSpellEffect(new MillControllerAndMayReturnMilledPermanentToHandThenCreateFoodIfSquirrelEffect(
                         4, foodToken()));
     }
 

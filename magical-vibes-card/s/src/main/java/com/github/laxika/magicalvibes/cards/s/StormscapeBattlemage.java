@@ -27,7 +27,7 @@ public class StormscapeBattlemage extends Card {
 
     public StormscapeBattlemage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{W}"), true, 1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{W}"), true, 1));
 
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

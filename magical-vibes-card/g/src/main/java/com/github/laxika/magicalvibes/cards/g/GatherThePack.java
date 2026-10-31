@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -23,7 +22,7 @@ public class GatherThePack extends Card {
         GraveyardCardThreshold spellMastery = new GraveyardCardThreshold(2, new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY))));
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.mayRevealUpToToHandRestToGraveyard(
+        addSpellEffect(LookAtTopCardsEffect.mayRevealUpToToHandRestToGraveyard(
                 5, new CardTypePredicate(CardType.CREATURE), new FixedIfCondition(spellMastery, 2, 1)));
     }
 }

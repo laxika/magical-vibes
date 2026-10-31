@@ -14,7 +14,7 @@ import java.util.List;
 public class SkitterOfLizards extends Card {
 
     public SkitterOfLizards() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{1}{R}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{R}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{R}")));
     }

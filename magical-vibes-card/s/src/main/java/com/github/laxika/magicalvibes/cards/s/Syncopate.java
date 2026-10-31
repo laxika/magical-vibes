@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -16,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Syncopate extends Card {
 
     public Syncopate() {
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, true));
+        addSpellEffect(new CounterUnlessPaysEffect(0, true, true));
     }
 }

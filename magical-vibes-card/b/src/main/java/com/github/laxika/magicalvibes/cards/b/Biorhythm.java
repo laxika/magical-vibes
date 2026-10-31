@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
@@ -16,7 +15,7 @@ public class Biorhythm extends Card {
     public Biorhythm() {
         // Each player's life total becomes the number of creatures they control. EACH_PLAYER
         // evaluates the amount once per player, so CountScope.CONTROLLER reads "they".
-        addEffect(EffectSlot.SPELL, new SetLifeTotalEffect(
+        addSpellEffect(new SetLifeTotalEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 SetLifeTotalRecipient.EACH_PLAYER));
     }

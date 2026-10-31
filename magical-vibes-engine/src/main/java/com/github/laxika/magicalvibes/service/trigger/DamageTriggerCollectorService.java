@@ -2579,11 +2579,11 @@ public class DamageTriggerCollectorService {
         Permanent equipment = match.permanent();
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            boolean optionalTarget = equipment.getCard().getSpellTargets().size() == 1
-                    && equipment.getCard().getSpellTargets().getFirst().getMinTargets() == 0
-                    && equipment.getCard().getSpellTargets().getFirst().getMaxTargets() == 1
+            boolean optionalTarget = equipment.getCard().getTargetGroups().size() == 1
+                    && equipment.getCard().getTargetGroups().getFirst().getMinTargets() == 0
+                    && equipment.getCard().getTargetGroups().getFirst().getMaxTargets() == 1
                     && equipment.getCard().getEffectTargetIndex(effect)
-                    == equipment.getCard().getSpellTargets().getFirst().getIndex();
+                    == equipment.getCard().getTargetGroups().getFirst().getIndex();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     equipment.getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
                     !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
@@ -2736,8 +2736,8 @@ public class DamageTriggerCollectorService {
 
     private TargetFilter targetFilterForTriggeredEffect(Card card, CardEffect effect) {
         int targetIndex = card.getEffectTargetIndex(effect);
-        if (targetIndex >= 0 && targetIndex < card.getSpellTargets().size()) {
-            return card.getSpellTargets().get(targetIndex).getFilter();
+        if (targetIndex >= 0 && targetIndex < card.getTargetGroups().size()) {
+            return card.getTargetGroups().get(targetIndex).getFilter();
         }
         if (effect instanceof DamageDealingEffect damageEffect
                 && damageEffect.triggeredTargetFilter() != null) {
@@ -2748,8 +2748,8 @@ public class DamageTriggerCollectorService {
 
     private boolean hasOptionalTarget(Card card, CardEffect effect) {
         int targetIndex = card.getEffectTargetIndex(effect);
-        return targetIndex >= 0 && targetIndex < card.getSpellTargets().size()
-                && card.getSpellTargets().get(targetIndex).getMinTargets() == 0;
+        return targetIndex >= 0 && targetIndex < card.getTargetGroups().size()
+                && card.getTargetGroups().get(targetIndex).getMinTargets() == 0;
     }
 
     /**
@@ -2803,10 +2803,10 @@ public class DamageTriggerCollectorService {
 
     private TargetFilter targetFilterFor(Permanent source, CardEffect effect) {
         int targetIndex = source.getCard().getEffectTargetIndex(effect);
-        if (targetIndex < 0 || targetIndex >= source.getCard().getSpellTargets().size()) {
+        if (targetIndex < 0 || targetIndex >= source.getCard().getTargetGroups().size()) {
             return null;
         }
-        return source.getCard().getSpellTargets().get(targetIndex).getFilter();
+        return source.getCard().getTargetGroups().get(targetIndex).getFilter();
     }
 
 

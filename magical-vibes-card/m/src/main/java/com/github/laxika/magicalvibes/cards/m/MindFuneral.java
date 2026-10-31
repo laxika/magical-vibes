@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -17,6 +16,6 @@ public class MindFuneral extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
         ))
-                .addEffect(EffectSlot.SPELL, new RevealUntilLandsMillTargetPlayerEffect(4));
+                .addSpellEffect(new RevealUntilLandsMillTargetPlayerEffect(4));
     }
 }

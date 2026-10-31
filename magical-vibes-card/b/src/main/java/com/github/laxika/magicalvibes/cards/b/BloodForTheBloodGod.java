@@ -18,9 +18,9 @@ public class BloodForTheBloodGod extends Card {
     public BloodForTheBloodGod() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
-        addEffect(EffectSlot.SPELL, new DiscardHandEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(8));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(8, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new DiscardHandEffect());
+        addSpellEffect(new DrawCardEffect(8));
+        addSpellEffect(new DealDamageToPlayersEffect(8, DamageRecipient.EACH_OPPONENT));
+        addSpellEffect(new ExileSpellEffect());
     }
 }

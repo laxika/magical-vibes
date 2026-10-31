@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class PredatorsHour extends Card {
 
     public PredatorsHour() {
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect()));
     }

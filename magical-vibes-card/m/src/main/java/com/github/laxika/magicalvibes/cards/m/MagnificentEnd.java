@@ -22,6 +22,6 @@ public class MagnificentEnd extends Card {
                         new PermanentIsTappedPredicate()
                 )), 3));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
+        target(TargetFilters.creature()).addSpellEffect(new DealDamageToTargetCreatureEffect(5));
     }
 }

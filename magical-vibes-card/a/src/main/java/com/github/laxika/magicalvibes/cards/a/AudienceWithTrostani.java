@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -21,9 +20,8 @@ import java.util.Set;
 public class AudienceWithTrostani extends Card {
 
     public AudienceWithTrostani() {
-        addEffect(EffectSlot.SPELL,
-                new CreateTokenEffect("Plant Token", 0, 1, CardColor.GREEN, List.of(CardSubtype.PLANT), Set.of(), Set.of()));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new DistinctPermanentNamesCount(
+        addSpellEffect(new CreateTokenEffect("Plant Token", 0, 1, CardColor.GREEN, List.of(CardSubtype.PLANT), Set.of(), Set.of()));
+        addSpellEffect(new DrawCardEffect(new DistinctPermanentNamesCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTokenPredicate()

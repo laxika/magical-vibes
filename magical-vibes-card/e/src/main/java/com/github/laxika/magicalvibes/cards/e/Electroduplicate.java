@@ -23,7 +23,7 @@ public class Electroduplicate extends Card {
 
     public Electroduplicate() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(),
                         false, false, false, false,
                         false, false, null, Set.of(Keyword.HASTE),

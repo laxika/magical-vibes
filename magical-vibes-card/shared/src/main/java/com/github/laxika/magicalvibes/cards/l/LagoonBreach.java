@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopOrBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -21,7 +20,6 @@ public class LagoonBreach extends Card {
 
         target(new PermanentPredicateTargetFilter(
                         targetPredicate, "Target must be an attacking creature you don't control"))
-                .addEffect(EffectSlot.SPELL,
-                        new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0, targetPredicate));
+                .addSpellEffect(new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0, targetPredicate));
     }
 }

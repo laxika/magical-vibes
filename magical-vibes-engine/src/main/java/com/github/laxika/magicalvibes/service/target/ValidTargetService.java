@@ -194,7 +194,7 @@ public class ValidTargetService {
         List<TargetFilter> modalTargetFilters = modalTargetFilters(modalEffect, xValue);
         boolean isMultiTarget = card.getMaxTargets() > 1 || modalTargetFilters.size() > 1;
 
-        List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
+        List<CardEffect> spellEffects = card.getCastingCostsAndSpellEffects();
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
         if (spellEffects.stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::isInstance)
@@ -285,7 +285,7 @@ public class ValidTargetService {
                     if (excludeIds.contains(perm.getId())) return;
                     List<UUID> trial = new ArrayList<>(selected);
                     trial.add(perm.getId());
-                    if (card.getSpellTargets().stream().anyMatch(group ->
+                    if (card.getTargetGroups().stream().anyMatch(group ->
                             isValidPermanentTarget(gameData, card, perm, controllerId, true,
                                     group.getFilter(), groupSpellEffects, xValue, kicked))
                             && targetLegalityService.fitsOptionalPermanentTargetGroups(
@@ -670,7 +670,7 @@ public class ValidTargetService {
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, Integer announcedXValue) {
         int announced = announcedXValue != null ? announcedXValue : 0;
-        int effectiveXValue = card.getEffects(EffectSlot.SPELL).stream()
+        int effectiveXValue = card.getSpellEffects().stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect.class::cast)
                 .map(com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect::castTimeXValue)
@@ -692,7 +692,7 @@ public class ValidTargetService {
 
     /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */
     private ChooseOneEffect findModalEffect(Card card) {
-        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
@@ -1346,7 +1346,7 @@ public class ValidTargetService {
     private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
                                             boolean isMultiTarget, TargetFilter positionFilter) {
         return isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
-                card.getEffects(EffectSlot.SPELL));
+                card.getCastingCostsAndSpellEffects());
     }
 
     private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
@@ -1756,8 +1756,8 @@ public class ValidTargetService {
     public boolean hasValidTargetsForSpell(GameData gameData, Card card, UUID controllerId,
                                            Integer maxXValue, Boolean kicked) {
         List<CardEffect> spellEffects = kicked == null
-                ? card.getEffects(EffectSlot.SPELL)
-                : EffectResolution.resolveEffects(card.getEffects(EffectSlot.SPELL), kicked, null);
+                ? card.getCastingCostsAndSpellEffects()
+                : EffectResolution.resolveEffects(card.getCastingCostsAndSpellEffects(), kicked, null);
         List<CardEffect> requiredTargetEffects = EffectResolution.expandConditionalTargetingEffects(spellEffects)
                 .stream()
                 .filter(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect
@@ -2444,7 +2444,7 @@ public class ValidTargetService {
     }
 
     private TeamworkCost teamworkCost(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCosts().stream()
                 .filter(TeamworkCost.class::isInstance)
                 .map(TeamworkCost.class::cast)
                 .findFirst()

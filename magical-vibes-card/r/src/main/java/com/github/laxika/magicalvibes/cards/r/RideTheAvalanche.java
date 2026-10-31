@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -16,8 +15,8 @@ import java.util.List;
 public class RideTheAvalanche extends Card {
 
     public RideTheAvalanche() {
-        addEffect(EffectSlot.SPELL, GrantFlashToNextSpellOfTypeThisTurnEffect.nextSpell());
-        addEffect(EffectSlot.SPELL, new RegisterDelayedControllerSpellCastTriggerEffect(
+        addSpellEffect(GrantFlashToNextSpellOfTypeThisTurnEffect.nextSpell());
+        addSpellEffect(new RegisterDelayedControllerSpellCastTriggerEffect(
                 null,
                 null,
                 List.of(PutCounterOnTargetPermanentEffect.upToOneTarget(

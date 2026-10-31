@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "97")
@@ -12,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 public class ArcLightning extends Card {
 
     public ArcLightning() {
-        addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(3));
+        addSpellEffect(DealDividedDamageEffect.chosenAmongAnyTargets(3));
     }
 }

@@ -27,6 +27,6 @@ public class ElephantResurgence extends Card {
                 1, "Elephant", 0, 0, CardColor.GREEN, List.of(CardSubtype.ELEPHANT),
                 Set.of(), Set.of(),
                 Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creatureCards, creatureCards)));
-        addEffect(EffectSlot.SPELL, new EachPlayerCreatesTokenEffect(elephant));
+        addSpellEffect(new EachPlayerCreatesTokenEffect(elephant));
     }
 }

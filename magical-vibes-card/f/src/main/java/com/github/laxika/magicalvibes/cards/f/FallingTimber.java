@@ -14,6 +14,6 @@ public class FallingTimber extends Card {
     public FallingTimber() {
         addEffect(EffectSlot.STATIC, new KickerEffect(new PermanentIsLandPredicate(), "a land"));
         targetWhenKicked(TargetFilters.creature(), 1, 1, 2, 2)
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures());
+                .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures());
     }
 }

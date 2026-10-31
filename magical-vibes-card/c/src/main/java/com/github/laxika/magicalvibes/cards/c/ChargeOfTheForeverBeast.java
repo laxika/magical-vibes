@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrRevealedCardPower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
@@ -19,8 +18,7 @@ import java.util.List;
 public class ChargeOfTheForeverBeast extends Card {
 
     public ChargeOfTheForeverBeast() {
-        addEffect(EffectSlot.SPELL,
-                new RevealCardFromHandCost(new CardTypePredicate(CardType.CREATURE), "creature", false, true));
+        addCastingCost(new RevealCardFromHandCost(new CardTypePredicate(CardType.CREATURE), "creature", false, true));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -28,6 +26,6 @@ public class ChargeOfTheForeverBeast extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(new ChosenCreatureOrRevealedCardPower()));
+        )).addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new ChosenCreatureOrRevealedCardPower()));
     }
 }

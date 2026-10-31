@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -48,9 +47,9 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
 
         if (accepted && (!additionalSpellCostService.satisfiableWithoutManaCost(
                 gameData, player.getId(), ability.sourceCard())
-                || (EffectResolution.needsSpellCastTarget(ability.sourceCard().getEffects(EffectSlot.SPELL),
+                || (EffectResolution.needsSpellCastTarget(ability.sourceCard().getCastingCostsAndSpellEffects(),
                 ability.sourceCard().isAuraThatRequiresAttachment(), ability.sourceCard().isEnchantPlayer())
-                || EffectResolution.needsSpellTarget(ability.sourceCard().getEffects(EffectSlot.SPELL)))
+                || EffectResolution.needsSpellTarget(ability.sourceCard().getCastingCostsAndSpellEffects()))
                 && ability.sourceCard().getMinTargets() > 0
                 && exileCastTargetSupport.firstSlotCandidates(gameData, ability.sourceCard(), player.getId()).isEmpty())) {
             accepted = false;

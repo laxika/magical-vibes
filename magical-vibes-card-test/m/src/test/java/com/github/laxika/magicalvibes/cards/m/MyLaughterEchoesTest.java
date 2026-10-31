@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.FearMyAuthority;
 import com.github.laxika.magicalvibes.cards.i.ICallForSlaughter;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -52,7 +51,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL));
+                scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
 
         harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
@@ -69,7 +68,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme,
                 player2.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL));
+                scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
 
         harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
@@ -116,7 +115,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL));
+                scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
         harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
     }
@@ -129,7 +128,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL));
+                scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
         harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
         return new PermanentSetup(echoes);

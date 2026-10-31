@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class SproutingVines extends Card {
 
     public SproutingVines() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }

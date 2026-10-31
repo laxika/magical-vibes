@@ -25,7 +25,7 @@ public class TaleOfMomo extends Card {
                 new CreatureLeftBattlefieldUnderYourControlThisTurn(),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
 
-        addEffect(EffectSlot.SPELL, new SearchLibraryAndOrGraveyardForCardToHandEffect(
+        addSpellEffect(new SearchLibraryAndOrGraveyardForCardToHandEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.ALLY)))));

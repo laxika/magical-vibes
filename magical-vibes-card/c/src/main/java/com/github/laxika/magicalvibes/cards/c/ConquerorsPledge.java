@@ -18,7 +18,7 @@ public class ConquerorsPledge extends Card {
 
     public ConquerorsPledge() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{6}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new CreateTokenEffect(6, "Kor Soldier", 1, 1,
                         CardColor.WHITE, List.of(CardSubtype.KOR, CardSubtype.SOLDIER),
                         Set.of(), Set.of()),

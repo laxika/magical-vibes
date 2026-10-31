@@ -19,7 +19,7 @@ import java.util.List;
 public class VileMutilator extends Card {
 
     public VileMutilator() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsEnchantmentPredicate())),

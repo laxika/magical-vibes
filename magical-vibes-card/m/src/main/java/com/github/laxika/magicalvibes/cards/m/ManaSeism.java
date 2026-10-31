@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsThenAddManaPerSacrificedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class ManaSeism extends Card {
 
     public ManaSeism() {
-        addEffect(EffectSlot.SPELL, new SacrificeAnyNumberOfPermanentsThenAddManaPerSacrificedEffect(
+        addSpellEffect(new SacrificeAnyNumberOfPermanentsThenAddManaPerSacrificedEffect(
                 new PermanentIsLandPredicate(), ManaColor.COLORLESS));
     }
 }

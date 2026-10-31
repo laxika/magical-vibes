@@ -26,8 +26,7 @@ public class OrimsThunder extends Card {
         // The two "target" instances are independent (CR 115.3), so the artifact may also be the creature.
         setAllowSharedTargets(true);
         addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
-        addEffect(EffectSlot.SPELL,
-                new DestroyTargetPermanentThenDealManaValueDamageToTargetCreatureEffect(1));
+        addSpellEffect(new DestroyTargetPermanentThenDealManaValueDamageToTargetCreatureEffect(1));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

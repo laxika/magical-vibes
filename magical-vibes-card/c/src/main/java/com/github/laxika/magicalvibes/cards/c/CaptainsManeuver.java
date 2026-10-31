@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageFromTargetToAnotherTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -29,7 +28,6 @@ public class CaptainsManeuver extends Card {
         );
 
         target(anyTarget);
-        target(anyTarget).addEffect(EffectSlot.SPELL,
-                new RedirectNextDamageFromTargetToAnotherTargetEffect(new XValue()));
+        target(anyTarget).addSpellEffect(new RedirectNextDamageFromTargetToAnotherTargetEffect(new XValue()));
     }
 }

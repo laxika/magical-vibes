@@ -17,8 +17,8 @@ import java.util.List;
 public class ShrivelingRot extends Card {
 
     public ShrivelingRot() {
-        addEffect(EffectSlot.SPELL, new EscalateManaCost("{2}{B}"));
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addCastingCost(new EscalateManaCost("{2}{B}"));
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, whenever a creature is dealt damage, destroy it",
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(

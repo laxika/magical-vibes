@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -17,8 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PartingThoughts extends Card {
 
     public PartingThoughts() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new DestroyTargetPermanentThenEffect(
+        target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.TOTAL_COUNTERS,
                         SequenceEffect.of(
                                 new DrawCardEffect(new EventValue()),

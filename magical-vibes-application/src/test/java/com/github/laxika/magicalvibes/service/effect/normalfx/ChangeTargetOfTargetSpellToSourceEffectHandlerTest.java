@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -98,7 +97,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
         private Card createDamageSpellCard(String name, int damage) {
             Card card = createCard(name);
             card.setType(CardType.INSTANT);
-            card.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(damage));
+            card.addSpellEffect(new DealDamageToAnyTargetEffect(damage));
             return card;
         }
 
@@ -111,7 +110,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
         /** Creates a stack entry representing a spell that targets a single permanent/player. */
         private StackEntry spellEntry(Card card, UUID controllerId, UUID targetId) {
             return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
-                    card.getName(), card.getEffects(EffectSlot.SPELL), 0, targetId, null);
+                    card.getName(), card.getCastingCostsAndSpellEffects(), 0, targetId, null);
         }
 
         /** Creates a stack entry for ChangeTargetOfTargetSpellToSourceEffect (e.g. Spellskite trigger). */
@@ -297,7 +296,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
                 Card redirectCard = createCard("Spellskite");
                 Card counterspellCard = createCard("Counterspell");
                 counterspellCard.setType(CardType.INSTANT);
-                counterspellCard.addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                counterspellCard.addSpellEffect(new CounterSpellEffect());
 
                 Card spellOnStack = createCard("Giant Growth");
                 StackEntry spellOnStackEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
@@ -306,7 +305,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
                 // Counterspell targets Giant Growth on the stack
                 StackEntry counterspellEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
-                        counterspellCard, player2Id, "Counterspell", counterspellCard.getEffects(EffectSlot.SPELL),
+                        counterspellCard, player2Id, "Counterspell", counterspellCard.getCastingCostsAndSpellEffects(),
                         spellOnStack.getId(), Zone.STACK);
                 addToStack(counterspellEntry);
 
@@ -338,14 +337,14 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .targetGraveyard(true)
                         .build();
-                graveyardSpellCard.addEffect(EffectSlot.SPELL, graveyardEffect);
+                graveyardSpellCard.addSpellEffect(graveyardEffect);
 
                 Card graveyardTarget = createCard("Grizzly Bears");
                 graveyardTarget.setType(CardType.CREATURE);
                 gd.playerGraveyards.get(player2Id).add(graveyardTarget);
 
                 StackEntry graveyardSpell = new StackEntry(StackEntryType.SORCERY_SPELL,
-                        graveyardSpellCard, player2Id, "Raise Dead", graveyardSpellCard.getEffects(EffectSlot.SPELL),
+                        graveyardSpellCard, player2Id, "Raise Dead", graveyardSpellCard.getCastingCostsAndSpellEffects(),
                         graveyardTarget.getId(), Zone.GRAVEYARD);
                 addToStack(graveyardSpell);
 

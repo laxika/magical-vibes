@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -20,9 +19,9 @@ import java.util.List;
 public class Dragonrage extends Card {
 
     public Dragonrage() {
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED,
+        addSpellEffect(new AwardManaEffect(ManaColor.RED,
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new GrantActivatedAbilityEffect(
+        addSpellEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{R}",

@@ -26,7 +26,7 @@ public class FuneralRoomAwakeningHall extends Card {
     public FuneralRoomAwakeningHall() {
         setRoomDoorManaCosts(List.of("{2}{B}", "{6}{B}{B}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Funeral Room", List.of())
                         .withManaCost("{2}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Awakening Hall", List.of())

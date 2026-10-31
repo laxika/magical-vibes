@@ -26,7 +26,7 @@ public class WingShards extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        )).addSpellEffect(new SacrificePermanentsEffect(
                 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedDuringCleanupEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectIfCreatureEffect;
 
@@ -10,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenPerp
 public class MeltThrough extends Card {
 
     public MeltThrough() {
-        addEffect(EffectSlot.SPELL,
-                new DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectIfCreatureEffect(
+        addSpellEffect(new DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectIfCreatureEffect(
                         2, new DamageNotRemovedDuringCleanupEffect()));
     }
 }

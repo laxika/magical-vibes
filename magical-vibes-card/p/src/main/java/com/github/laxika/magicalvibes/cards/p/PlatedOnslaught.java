@@ -15,6 +15,6 @@ public class PlatedOnslaught extends Card {
     public PlatedOnslaught() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 1));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(2, 1));
     }
 }

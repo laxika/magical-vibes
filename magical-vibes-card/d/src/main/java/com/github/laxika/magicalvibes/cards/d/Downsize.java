@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
@@ -28,7 +27,7 @@ public class Downsize extends Card {
 
     public Downsize() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{U}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new BoostTargetCreatureEffect(-4, 0),
                 new BoostAllCreaturesEffect(-4, 0,

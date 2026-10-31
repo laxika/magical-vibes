@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class FlashOfDefiance extends Card {
 
     public FlashOfDefiance() {
-        addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES,
+        addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN)),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE))))));

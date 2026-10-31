@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,9 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class JourneyToTheOracle extends Card {
 
     public JourneyToTheOracle() {
-        addEffect(EffectSlot.SPELL,
-                PutCardToBattlefieldEffect.anyNumber(new CardTypePredicate(CardType.LAND), "land"));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(PutCardToBattlefieldEffect.anyNumber(new CardTypePredicate(CardType.LAND), "land"));
+        addSpellEffect(new ConditionalEffect(
                 new ControlsPermanentCount(8, new PermanentIsLandPredicate()),
                 new MayEffect(
                         DiscardCardThenEffect.continuing(

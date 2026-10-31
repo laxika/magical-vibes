@@ -19,7 +19,7 @@ public class CosimaGodOfTheVoyage extends Card {
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                 new ExileSelfForVoyageEffect(), "Exile Cosima?"));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Cosima, God of the Voyage", List.of())
                         .withManaCost("{2}{U}"),
                 new ChooseOneEffect.ChooseOneOption("The Omenkeel", List.of())

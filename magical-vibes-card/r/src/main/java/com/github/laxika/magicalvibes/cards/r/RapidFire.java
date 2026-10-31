@@ -18,9 +18,9 @@ public class RapidFire extends Card {
     public RapidFire() {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.BEFORE_BLOCKERS_DECLARED);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+                .addSpellEffect(new GrantKeywordEffect(
                         Keyword.FIRST_STRIKE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetEffect(
+                .addSpellEffect(new GrantEffectToTargetEffect(
                         EffectSlot.ON_BECOMES_BLOCKED,
                         new RampageEffect(2),
                         EffectDuration.UNTIL_END_OF_TURN));

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -32,13 +31,13 @@ public class RisingMiasma extends Card {
     public RisingMiasma() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{B}{B}"))));
 
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
 
         target(TargetFilters.landYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(
                                 0, 0,

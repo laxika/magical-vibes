@@ -23,6 +23,6 @@ public class BuryInBooks extends Card {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(attackingCreature, 2));
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature"))
-                .addEffect(EffectSlot.SPELL, new PutTargetPermanentIntoLibraryNFromTopEffect(1));
+                .addSpellEffect(new PutTargetPermanentIntoLibraryNFromTopEffect(1));
     }
 }

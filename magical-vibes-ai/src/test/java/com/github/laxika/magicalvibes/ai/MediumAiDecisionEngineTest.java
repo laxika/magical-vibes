@@ -87,7 +87,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -243,8 +242,8 @@ class MediumAiDecisionEngineTest {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
                 "Target must be an untapped creature you control"))
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 1))
+                .addSpellEffect(new DrawCardEffect(2));
         harness.setHand(aiPlayer, List.of(spell));
 
         harness.forceActivePlayer(aiPlayer);
@@ -268,7 +267,7 @@ class MediumAiDecisionEngineTest {
         card.setName("Repeatable modal draw");
         card.setType(CardType.SORCERY);
         card.setManaCost("{G}");
-        card.addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+        card.addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption("Draw first", new DrawCardEffect(1)),
                 new ChooseOneEffect.ChooseOneOption("Draw second", new DrawCardEffect(1)),
                 new ChooseOneEffect.ChooseOneOption("Draw third", new DrawCardEffect(1))
@@ -289,7 +288,7 @@ class MediumAiDecisionEngineTest {
         card.setName("Choose Two with Explicit Option Filters");
         card.setType(CardType.INSTANT);
         card.setManaCost("{3}{U}{R}");
-        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        card.addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Draw with a permanent target", new DrawCardEffect(1),
                         TargetFilters.creatureYouControl()),
@@ -308,7 +307,7 @@ class MediumAiDecisionEngineTest {
         card.setManaCost("{2}{G}");
         card.setPower(2);
         card.setToughness(2);
-        card.addEffect(EffectSlot.SPELL, new ChooseCreatureTypeCost());
+        card.addCastingCost(new ChooseCreatureTypeCost());
         return card;
     }
 
@@ -402,7 +401,7 @@ class MediumAiDecisionEngineTest {
             PermanentPredicateTargetFilter creatureTarget = new PermanentPredicateTargetFilter(
                     new PermanentIsCreaturePredicate(), "Target must be a creature");
             card.target(creatureTarget, 0, 1)
-                    .addEffect(EffectSlot.SPELL, DestroyTargetPermanentEffect.forTargetGroup(targetGroup));
+                    .addSpellEffect(DestroyTargetPermanentEffect.forTargetGroup(targetGroup));
         }
         return card;
     }
@@ -412,11 +411,10 @@ class MediumAiDecisionEngineTest {
         card.setName("Repeatable artifact removal");
         card.setType(CardType.SORCERY);
         card.setManaCost("{X}{R}");
-        card.addEffect(EffectSlot.SPELL,
-                new RepeatableAdditionalManaCost(List.of("{1}{R}", "{1}{G}")));
+        card.addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{R}", "{1}{G}")));
         card.targetX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(), "Targets must be artifacts"), 100)
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
         return card;
     }
 
@@ -632,7 +630,7 @@ class MediumAiDecisionEngineTest {
         harness.setGraveyard(aiPlayer, List.of(evidence));
         UrgentNecropsy necropsy = new UrgentNecropsy();
         // Ensure this integration test reaches the shared cast path without changing production scoring.
-        necropsy.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        necropsy.addSpellEffect(new DrawCardEffect(2));
         harness.setHand(aiPlayer, List.of(necropsy));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
@@ -1752,7 +1750,7 @@ class MediumAiDecisionEngineTest {
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{1}{R}");
             spell.target(null, 1, 3)
-                    .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
+                    .addSpellEffect(DealDividedDamageEffect.chosenAmongTargetCreatures(3));
             mockGd.playerHands.get(mockAiPlayer.getId()).add(spell);
 
             ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
@@ -1914,7 +1912,7 @@ class MediumAiDecisionEngineTest {
         harness.addToBattlefield(aiPlayer, new Plains());
         FieryJustice fieryJustice = new FieryJustice();
         // Exercise target routing independently of the evaluator's divided-damage scoring.
-        fieryJustice.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        fieryJustice.addSpellEffect(new DrawCardEffect(1));
         harness.setHand(aiPlayer, List.of(fieryJustice));
         int lifeBefore = gd.getLife(human.getId());
 
@@ -1943,7 +1941,7 @@ class MediumAiDecisionEngineTest {
         giveAiPlains(2);
         harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
         FinalShowdown finalShowdown = new FinalShowdown();
-        finalShowdown.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        finalShowdown.addSpellEffect(new DrawCardEffect(2));
         harness.setHand(aiPlayer, List.of(finalShowdown));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
@@ -2045,7 +2043,7 @@ class MediumAiDecisionEngineTest {
         modalSpell.setName("Draw and Bolt");
         modalSpell.setType(CardType.SORCERY);
         modalSpell.setManaCost("{R}{W}");
-        modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        modalSpell.addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
                         new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
                 new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
@@ -2176,8 +2174,8 @@ class MediumAiDecisionEngineTest {
         spell.setName("Target-player graveyard X spell");
         spell.setType(CardType.INSTANT);
         spell.setManaCost("{X}{B}");
-        spell.addEffect(EffectSlot.SPELL, new ExileTargetPlayerGraveyardCardsEffect(1, 1));
-        spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        spell.addSpellEffect(new ExileTargetPlayerGraveyardCardsEffect(1, 1));
+        spell.addSpellEffect(new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
         harness.setHand(aiPlayer, List.of(spell));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
@@ -2227,7 +2225,7 @@ class MediumAiDecisionEngineTest {
         Shock affordable = new Shock();
         harness.setGraveyard(aiPlayer, List.of(tooExpensive, affordable));
         FinaleOfPromise finale = new FinaleOfPromise();
-        finale.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        finale.addSpellEffect(new DrawCardEffect(1));
         harness.setHand(aiPlayer, List.of(finale));
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
@@ -2401,9 +2399,8 @@ class MediumAiDecisionEngineTest {
         spell.setName("Mixed Graveyard Spell");
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{B}");
-        spell.addEffect(EffectSlot.SPELL,
-                new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
-        spell.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
+        spell.addCastingCost(new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
+        spell.addSpellEffect(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
 
         harness.setGraveyard(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.h.HolyDay(),
                 new GrizzlyBears(), new com.github.laxika.magicalvibes.cards.h.HolyDay()));
@@ -2575,8 +2572,7 @@ class MediumAiDecisionEngineTest {
         card.setManaCost("{1}{R}");
         card.setPower(2);
         card.setToughness(2);
-        card.addEffect(EffectSlot.SPELL,
-                new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+        card.addCastingCost(new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
         return card;
     }
 

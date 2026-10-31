@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -35,7 +34,7 @@ public class ObscuraCharm extends Card {
         //   to the battlefield tapped.
         // • Counter target instant or sorcery spell.
         // • Destroy target creature or planeswalker with mana value 3 or less.
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target multicolored permanent card with mana value 3 or less from your graveyard to the battlefield tapped",
                         ReturnCardFromGraveyardEffect.builder()

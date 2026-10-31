@@ -26,9 +26,9 @@ public class FlawlessForgery extends Card {
         GraveyardSearchScope opponentGraveyard = GraveyardSearchScope.OPPONENT_GRAVEYARD;
 
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(3));
+        addCastingCost(new CasualtyCost(3));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, opponentGraveyard));
-        addEffect(EffectSlot.SPELL, new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
+        addSpellEffect(new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
                 instantOrSorcery, opponentGraveyard));
     }
 }

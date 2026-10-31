@@ -37,7 +37,7 @@ public class DesculptingBlast extends Card {
 
     public DesculptingBlast() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandThenEffect(
+                .addSpellEffect(new ReturnTargetPermanentToHandThenEffect(
                         DRONE,
                         ThenEffectRecipient.CONTROLLER,
                         null,

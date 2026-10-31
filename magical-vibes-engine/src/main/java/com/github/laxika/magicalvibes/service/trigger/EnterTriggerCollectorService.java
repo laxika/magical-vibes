@@ -650,7 +650,7 @@ public class EnterTriggerCollectorService {
             // (Gruul Ragebeast's fight); target-only effects such as Reaper King's ignore it.
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-                if (sourceCard.getSpellTargets().size() > 1) {
+                if (sourceCard.getTargetGroups().size() > 1) {
                     match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
                             match.permanent().getId(), List.of(), 0, 0, List.of(), 0, List.of(),

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class Complicate extends Card {
 
     public Complicate() {
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(3));
+        addSpellEffect(new CounterUnlessPaysEffect(3));
 
         addCycling("{2}{U}");
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(

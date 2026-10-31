@@ -21,7 +21,7 @@ public class WalkInClosetForgottenCellar extends Card {
     public WalkInClosetForgottenCellar() {
         setRoomDoorManaCosts(List.of("{2}{G}", "{3}{G}{G}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Walk-In Closet", List.of())
                         .withManaCost("{2}{G}"),
                 new ChooseOneEffect.ChooseOneOption("Forgotten Cellar", List.of())

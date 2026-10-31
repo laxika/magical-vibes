@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -99,14 +99,14 @@ final class DeclaredEtbTargets {
             }
             return new CastTargets(null, List.of(), List.of());
         }
-        List<SpellTarget> etbGroups = etbTargetGroups(card);
-        if (!listed.isEmpty() && etbGroups.size() < card.getSpellTargets().size()
+        List<TargetGroup> etbGroups = etbTargetGroups(card);
+        if (!listed.isEmpty() && etbGroups.size() < card.getTargetGroups().size()
                 && etbGroups.stream().allMatch(group -> group.getMinTargets() == group.getMaxTargets())
-                && etbGroups.stream().mapToInt(SpellTarget::getMaxTargets).sum() == etbTargets.size()) {
+                && etbGroups.stream().mapToInt(TargetGroup::getMaxTargets).sum() == etbTargets.size()) {
             // Other groups belong to the card's other triggered abilities (Hunter's Talent's attack
             // trigger), so only the ETB ability's groups are checked against the declared targets.
             int offset = 0;
-            for (SpellTarget group : etbGroups) {
+            for (TargetGroup group : etbGroups) {
                 targetLegalityService.validateSpellTargetGroup(gameData, card, group.getIndex(),
                         etbTargets.subList(offset, offset + group.getMaxTargets()), player.getId(), xValue, kicked);
                 offset += group.getMaxTargets();
@@ -193,9 +193,9 @@ final class DeclaredEtbTargets {
     }
 
     /** The card's target groups that belong to its enter-the-battlefield ability (or to no ability). */
-    private static List<SpellTarget> etbTargetGroups(Card card) {
+    private static List<TargetGroup> etbTargetGroups(Card card) {
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
-        return card.getSpellTargets().stream()
+        return card.getTargetGroups().stream()
                 .filter(group -> card.getEffectsBoundToTargetGroup(group.getIndex()).stream()
                         .allMatch(effect -> etbEffects.stream().anyMatch(etb -> etb == effect)))
                 .toList();
@@ -363,11 +363,11 @@ final class DeclaredEtbTargets {
     }
 
     private static boolean hasDynamicSize(PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
-        List<SpellTarget> groups = multi.sourceCard().getSpellTargets();
+        List<TargetGroup> groups = multi.sourceCard().getTargetGroups();
         if (multi.currentGroupIndex() >= groups.size()) {
             return false;
         }
-        SpellTarget group = groups.get(multi.currentGroupIndex());
+        TargetGroup group = groups.get(multi.currentGroupIndex());
         return group.getDynamicMaxTargets() != null || group.isXScaled();
     }
 
@@ -449,7 +449,7 @@ final class DeclaredEtbTargets {
     }
 
     private static boolean auraWithEtbTargetGroup(Card card) {
-        return card.isAuraThatRequiresAttachment() && card.getSpellTargets().size() == 2
+        return card.isAuraThatRequiresAttachment() && card.getTargetGroups().size() == 2
                 && card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(effect -> card.getEffectTargetIndex(effect) == 1);
     }

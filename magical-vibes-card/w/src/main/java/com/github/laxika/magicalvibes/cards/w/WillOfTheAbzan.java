@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
@@ -36,7 +35,7 @@ public class WillOfTheAbzan extends Card {
         var ownGraveyardCreature = new GraveyardCardPredicateTargetFilter(
                 creatureCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Any number of target opponents each sacrifice a creature with the greatest power among creatures that player controls and lose 3 life",
                         List.of(new EachTargetPlayerLosesLifeAndSacrificesCreatureEffect(

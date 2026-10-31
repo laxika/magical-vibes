@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -15,6 +14,6 @@ public class ConfrontTheAssault extends Card {
         setCastCondition(new CreatureAttackingController());
 
         // Create three 1/1 white Spirit creature tokens with flying.
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.whiteSpirit(3));
+        addSpellEffect(CreateTokenEffect.whiteSpirit(3));
     }
 }

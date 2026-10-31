@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class Overrule extends Card {
 
     public Overrule() {
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
+        addSpellEffect(new CounterUnlessPaysEffect(0, true, false));
+        addSpellEffect(new GainLifeEffect(new XValue()));
     }
 }

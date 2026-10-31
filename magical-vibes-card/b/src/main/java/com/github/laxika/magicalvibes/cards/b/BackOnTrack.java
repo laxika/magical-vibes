@@ -21,7 +21,7 @@ import java.util.Set;
 public class BackOnTrack extends Card {
 
     public BackOnTrack() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
@@ -30,7 +30,7 @@ public class BackOnTrack extends Card {
                 .targetGraveyard(true)
                 .build());
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1,
                 "Pilot",
                 1,

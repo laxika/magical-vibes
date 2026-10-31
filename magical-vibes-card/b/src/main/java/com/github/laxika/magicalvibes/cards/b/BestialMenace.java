@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
@@ -18,7 +17,7 @@ import java.util.Set;
 public class BestialMenace extends Card {
 
     public BestialMenace() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
+        addSpellEffect(new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SNAKE), Set.of(), Set.of()).withSimultaneousTokens(List.of(
                 new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()),

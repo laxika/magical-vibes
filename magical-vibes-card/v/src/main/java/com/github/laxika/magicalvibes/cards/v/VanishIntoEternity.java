@@ -15,6 +15,6 @@ public class VanishIntoEternity extends Card {
         addEffect(EffectSlot.STATIC, new IncreaseOwnCastCostIfTargetingPermanentEffect(
                 new PermanentIsCreaturePredicate(), 3));
 
-        target(TargetFilters.nonlandPermanent()).addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+        target(TargetFilters.nonlandPermanent()).addSpellEffect(new ExileTargetPermanentEffect());
     }
 }

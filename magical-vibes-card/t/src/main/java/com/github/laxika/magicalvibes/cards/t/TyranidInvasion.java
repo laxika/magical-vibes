@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
@@ -18,7 +17,7 @@ import java.util.Set;
 public class TyranidInvasion extends Card {
 
     public TyranidInvasion() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new Sum(new PlayersInGame(), new Fixed(-1)),
                 "Tyranid Warrior", 3, 3, CardColor.GREEN,
                 List.of(CardSubtype.TYRANID, CardSubtype.WARRIOR), Set.of(Keyword.TRAMPLE), Set.of()));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -22,7 +21,7 @@ import java.util.List;
 public class SeasonOfGathering extends Card {
 
     public SeasonOfGathering() {
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.budgetedModes(List.of(
+        addSpellEffect(ChooseOneEffect.budgetedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on a creature you control. It gains vigilance and trample until end of turn.",
                         List.of(

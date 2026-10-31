@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAndCloakDisguisedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnTargetFaceUpEffect;
@@ -14,7 +13,7 @@ import java.util.List;
 public class ExposeTheCulprit extends Card {
 
     public ExposeTheCulprit() {
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Turn target face-down creature face up",
                         new TurnTargetFaceUpEffect()),

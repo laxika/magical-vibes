@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -13,7 +12,7 @@ import java.util.List;
 public class Timecrafting extends Card {
 
     public Timecrafting() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove X time counters from target permanent or suspended card",
                         new AdjustTimeCountersOnTargetEffect(false, new XValue())),

@@ -37,7 +37,7 @@ public class AnimateDead extends Card {
         // a graveyard at cast time. The graveyard-targeting SPELL effect drives cast-time targeting
         // (and marks the stack entry as a GRAVEYARD target); StackResolutionService reanimates the
         // enchanted creature under this Aura's controller and attaches this Aura to it.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardTypePredicate(CardType.CREATURE))

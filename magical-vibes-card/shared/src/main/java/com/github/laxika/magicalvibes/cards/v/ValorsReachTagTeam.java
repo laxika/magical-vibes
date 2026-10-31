@@ -23,7 +23,7 @@ import java.util.Set;
 public class ValorsReachTagTeam extends Card {
 
     public ValorsReachTagTeam() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 2, "Warrior", 3, 2, null,
                 Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.WARRIOR), Set.of(), Set.of(),
                 false, false,

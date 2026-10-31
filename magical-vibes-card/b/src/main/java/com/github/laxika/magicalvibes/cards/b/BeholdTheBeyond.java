@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 public class BeholdTheBeyond extends Card {
 
     public BeholdTheBeyond() {
-        addEffect(EffectSlot.SPELL, new DiscardHandEffect());
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(null, 3, 3));
+        addSpellEffect(new DiscardHandEffect());
+        addSpellEffect(new SearchLibraryEffect(null, 3, 3));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -39,9 +38,9 @@ public class InspiringCall extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
 
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(
+        addSpellEffect(new DrawCardEffect(
                 new PermanentCount(counteredCreature, CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+        addSpellEffect(new GrantKeywordEffect(
                 Keyword.INDESTRUCTIBLE,
                 GrantScope.ALL_OWN_CREATURES,
                 counteredCreature));

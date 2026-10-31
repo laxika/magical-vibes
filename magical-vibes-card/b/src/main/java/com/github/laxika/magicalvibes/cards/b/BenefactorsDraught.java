@@ -15,12 +15,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class BenefactorsDraught extends Card {
 
     public BenefactorsDraught() {
-        addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES));
-        addEffect(EffectSlot.SPELL, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES));
+        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 EffectSlot.ON_ANY_CREATURE_BLOCKS,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                         new DrawCardEffect())));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new DrawCardEffect());
     }
 }

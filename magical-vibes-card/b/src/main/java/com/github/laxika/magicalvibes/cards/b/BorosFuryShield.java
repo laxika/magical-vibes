@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -33,8 +32,8 @@ public class BorosFuryShield extends Card {
                 )),
                 "Target must be an attacking or blocking creature."
         ))
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures())
+                .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED),
                         new DealDamageToPlayersEffect(new TargetPower(), DamageRecipient.TARGET_PERMANENT_CONTROLLER)
                 ));

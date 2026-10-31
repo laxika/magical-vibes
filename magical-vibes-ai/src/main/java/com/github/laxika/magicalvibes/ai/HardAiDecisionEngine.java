@@ -905,7 +905,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * should be cast precombat (affects the attack) or can wait until postcombat.
      */
     private CombatRelevance classifyCombatRelevance(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
@@ -956,7 +956,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, spell, aiPlayer.getId())) return false;
         if (gameQueryService.hasHexproofFromColor(gameData, creature, spell.getColor())) return false;
 
-        for (CardEffect effect : spell.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : spell.getCastingCostsAndSpellEffects()) {
             if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
         for (CardEffect effect : spell.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
@@ -1785,7 +1785,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     double evaluateCombatTrickInCombat(GameData gameData, Card card, boolean isOpponentsTurn) {
         CreatureBoostEffect boost = null;
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof CreatureBoostEffect b) {
                 boost = b;
                 break;
@@ -2384,7 +2384,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (resolving != null && !resolving.isEmpty()) {
             return resolving;
         }
-        return entry.getCard() != null ? entry.getCard().getEffects(EffectSlot.SPELL) : List.of();
+        return entry.getCard() != null ? entry.getCard().getCastingCostsAndSpellEffects() : List.of();
     }
 
     private boolean targetsPermanent(StackEntry entry, UUID permanentId) {
@@ -3147,7 +3147,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             // The pump is cast during combat, after attackers are declared — instant speed only
             if (!isInstantSpeedCard(card) || !card.hasType(CardType.INSTANT)) continue;
             int boost = 0;
-            for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
                 if (effect instanceof CreatureBoostEffect b) {
                     boost = amountEvaluationService.evaluate(gameData, b.powerBoost(), amountCtx);
                     break;

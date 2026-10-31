@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 
 /**
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastT
 public class StrikingPalette extends Card {
 
     public StrikingPalette() {
-        addEffect(EffectSlot.SPELL, new CopyNextInstantOrSorceryCastThisTurnEffect());
+        addSpellEffect(new CopyNextInstantOrSorceryCastThisTurnEffect());
     }
 }

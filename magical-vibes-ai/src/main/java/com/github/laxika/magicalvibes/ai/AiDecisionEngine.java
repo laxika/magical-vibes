@@ -2458,7 +2458,7 @@ public abstract class AiDecisionEngine {
     }
 
     protected boolean hasDelveCost(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream().anyMatch(DelveCost.class::isInstance);
+        return card.getCastingCosts().stream().anyMatch(DelveCost.class::isInstance);
     }
 
     private boolean canPayManaCostWithDelve(GameData gameData, Card card, ManaCost cost,
@@ -2647,12 +2647,12 @@ public abstract class AiDecisionEngine {
      * selection when the card has no such cost, or null when the cost cannot be paid.
      */
     protected BeholdSelection selectBeholdCost(GameData gameData, Card card) {
-        BeholdAndExileCost cost = card.getEffects(EffectSlot.SPELL).stream()
+        BeholdAndExileCost cost = card.getCastingCosts().stream()
                 .filter(BeholdAndExileCost.class::isInstance)
                 .map(BeholdAndExileCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        boolean chooseCreatureOrRevealCreatureCard = card.getEffects(EffectSlot.SPELL).stream()
+        boolean chooseCreatureOrRevealCreatureCard = card.getCastingCosts().stream()
                 .anyMatch(ChooseCreatureOrRevealCreatureCardCost.class::isInstance);
         if (cost == null && !chooseCreatureOrRevealCreatureCard) {
             return new BeholdSelection(null, null);
@@ -2703,7 +2703,7 @@ public abstract class AiDecisionEngine {
     private CollectEvidenceCastPlan planCollectEvidenceCast(GameData gameData, Card card,
                                                             UUID targetId, List<UUID> targetIds,
                                                             List<Integer> existingGraveyardCardIndices) {
-        CollectEvidenceCost cost = card.getEffects(EffectSlot.SPELL).stream()
+        CollectEvidenceCost cost = card.getCastingCosts().stream()
                 .filter(CollectEvidenceCost.class::isInstance)
                 .map(CollectEvidenceCost.class::cast)
                 .findFirst()
@@ -2789,7 +2789,7 @@ public abstract class AiDecisionEngine {
                 : new BeholdSelection(null, null);
         Integer effectiveXValue = xValue;
         if (card.hasXScaledTargets()
-                && card.getEffects(EffectSlot.SPELL).stream()
+                && card.getCastingCosts().stream()
                 .anyMatch(RepeatableAdditionalManaCost.class::isInstance)) {
             // This request does not submit repeatable payments, so use the base target count.
             effectiveXValue = 1;
@@ -2828,13 +2828,13 @@ public abstract class AiDecisionEngine {
     }
 
     private CardSubtype chooseAdditionalCostCreatureType(Card card) {
-        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+        boolean requiresChoice = card.getCastingCosts().stream()
                 .anyMatch(ChooseCreatureTypeCost.class::isInstance);
         return requiresChoice ? CardSubtype.HUMAN : null;
     }
 
     private UUID chooseOpponentOwnedExiledCard(GameData gameData, Card card) {
-        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+        boolean requiresChoice = card.getCastingCosts().stream()
                 .anyMatch(PutOpponentOwnedExiledCardIntoGraveyardCost.class::isInstance);
         if (!requiresChoice) {
             return null;
@@ -2849,7 +2849,7 @@ public abstract class AiDecisionEngine {
 
     private CardSubtype chooseCastTimeCreatureType(GameData gameData, Card card, UUID targetId,
                                                     List<UUID> targetIds) {
-        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+        boolean requiresChoice = card.getSpellEffects().stream()
                 .filter(CastTimeCreatureTypeChoiceEffect.class::isInstance)
                 .map(CastTimeCreatureTypeChoiceEffect.class::cast)
                 .anyMatch(CastTimeCreatureTypeChoiceEffect::requiresCastTimeCreatureTypeChoice);
@@ -2895,7 +2895,7 @@ public abstract class AiDecisionEngine {
      * server refuses. Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
      */
     protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
-        List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
+        List<CardEffect> spellEffects = card.getCastingCostsAndSpellEffects();
         ExileCreaturesFromGraveyardAndCreateTokensEffect graveyardCreatureEffect = spellEffects.stream()
                 .filter(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance)
                 .map(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::cast)
@@ -3003,7 +3003,7 @@ public abstract class AiDecisionEngine {
 
     private int getMaxXForTargetPlayerGraveyardRequirement(
             GameData gameData, Card card, UUID targetPlayerId) {
-        TargetPlayerGraveyardExileEffect effect = card.getEffects(EffectSlot.SPELL).stream()
+        TargetPlayerGraveyardExileEffect effect = card.getSpellEffects().stream()
                 .filter(TargetPlayerGraveyardExileEffect.class::isInstance)
                 .map(TargetPlayerGraveyardExileEffect.class::cast)
                 .findFirst()
@@ -3021,7 +3021,7 @@ public abstract class AiDecisionEngine {
     }
 
     private boolean hasValidRequiredGraveyardReturnTargets(GameData gameData, Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
                     && !hasEnoughGraveyardReturnTargets(gameData, card, returnEffect)) {
                 return false;
@@ -3066,7 +3066,7 @@ public abstract class AiDecisionEngine {
     }
 
     private DiscardXCardsCost findDiscardXCardsCost(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCosts().stream()
                 .filter(DiscardXCardsCost.class::isInstance)
                 .map(DiscardXCardsCost.class::cast)
                 .findFirst()
@@ -3074,7 +3074,7 @@ public abstract class AiDecisionEngine {
     }
 
     private DiscardCardTypeCost findDiscardCardTypeCost(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCosts().stream()
                 .filter(DiscardCardTypeCost.class::isInstance)
                 .map(DiscardCardTypeCost.class::cast)
                 .findFirst()
@@ -3137,7 +3137,7 @@ public abstract class AiDecisionEngine {
      */
     protected UUID selectSacrificeTarget(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (!(effect instanceof CostEffect cost)) {
                 continue;
             }
@@ -3245,7 +3245,7 @@ public abstract class AiDecisionEngine {
      */
     protected List<UUID> selectMultiPermanentCostIds(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof SacrificeMultiplePermanentsCost cost) {
                 List<UUID> chosen = battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
@@ -3357,7 +3357,7 @@ public abstract class AiDecisionEngine {
      * Finds an ExileXCardsFromGraveyardCost in the card's SPELL effects, if any.
      */
     protected ExileXCardsFromGraveyardCost findExileXGraveyardCost(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof ExileXCardsFromGraveyardCost cost) {
                 return cost;
             }
@@ -3369,7 +3369,7 @@ public abstract class AiDecisionEngine {
      * Finds an ExileNCardsFromGraveyardCost in the card's SPELL effects, if any.
      */
     protected ExileNCardsFromGraveyardCost findExileNGraveyardCost(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof ExileNCardsFromGraveyardCost cost) {
                 return cost;
             }
@@ -3490,7 +3490,7 @@ public abstract class AiDecisionEngine {
      * Finds the ChooseOneEffect in the card's SPELL effects, if any.
      */
     protected ChooseOneEffect findChooseOneEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof ChooseOneEffect coe) {
                 return coe;
             }
@@ -3534,7 +3534,7 @@ public abstract class AiDecisionEngine {
         if (modeEncoding == null) {
             return "";
         }
-        SpreeAdditionalManaCost spreeCost = card.getEffects(EffectSlot.SPELL).stream()
+        SpreeAdditionalManaCost spreeCost = card.getCastingCosts().stream()
                 .filter(SpreeAdditionalManaCost.class::isInstance)
                 .map(SpreeAdditionalManaCost.class::cast)
                 .findFirst()

@@ -14,7 +14,7 @@ import java.util.Set;
 public class SpiritualVisit extends Card {
 
     public SpiritualVisit() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{W}"));
     }

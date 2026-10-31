@@ -15,6 +15,6 @@ public class Discontinuity extends Card {
     public Discontinuity() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
                 new ReduceOwnCastCostByManaCostEffect("{2}{U}{U}")));
-        addEffect(EffectSlot.SPELL, new EndTurnEffect());
+        addSpellEffect(new EndTurnEffect());
     }
 }

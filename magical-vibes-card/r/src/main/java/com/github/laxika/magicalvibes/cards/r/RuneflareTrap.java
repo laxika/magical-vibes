@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -22,8 +21,7 @@ public class RuneflareTrap extends Card {
                 new OpponentDrewAtLeastCardsThisTurn(3),
                 false
         ));
-        addEffect(EffectSlot.SPELL,
-                new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER),
+        addSpellEffect(new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER),
                         DamageRecipient.TARGET_PLAYER));
     }
 }

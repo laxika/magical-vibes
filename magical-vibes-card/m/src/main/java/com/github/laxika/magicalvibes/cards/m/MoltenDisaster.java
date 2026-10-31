@@ -19,7 +19,7 @@ public class MoltenDisaster extends Card {
     public MoltenDisaster() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
         addEffect(EffectSlot.STATIC, new GrantKeywordsToKickedSpellEffect(Keyword.SPLIT_SECOND));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(new XValue(), true, false,
+        addSpellEffect(new MassDamageEffect(new XValue(), true, false,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

@@ -17,7 +17,7 @@ public class EdgarsAwakening extends Card {
 
     public EdgarsAwakening() {
         // Return target creature card from your graveyard to the battlefield.
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

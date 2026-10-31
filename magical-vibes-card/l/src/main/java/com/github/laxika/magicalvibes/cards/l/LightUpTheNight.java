@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
@@ -24,7 +23,7 @@ import java.util.List;
 public class LightUpTheNight extends Card {
 
     public LightUpTheNight() {
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new TargetPermanentMatches(new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate()))),
                 new DealDamageToAnyTargetEffect(new XValue()),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -106,7 +105,7 @@ public class OutsideGameNormalCostCastSupport {
         }
 
         gameData.outsideGamePlayPermissions.add(cardId);
-        ChooseOneEffect modal = card.getEffects(EffectSlot.SPELL).stream()
+        ChooseOneEffect modal = card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()
@@ -148,7 +147,7 @@ public class OutsideGameNormalCostCastSupport {
             }
 
             List<com.github.laxika.magicalvibes.model.effect.CardEffect> spellEffects =
-                    new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+                    new ArrayList<>(card.getCastingCostsAndSpellEffects());
             StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
                     card, player.getId(), spellEffects, spellType, false, List.of(), 0,
@@ -184,7 +183,7 @@ public class OutsideGameNormalCostCastSupport {
                                       ChoiceContext.ExileFreeCastModeChoice context,
                                       List<Integer> chosenModeIndices) {
         Card card = context.cardToCast().createRuntimeCopy();
-        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         ChooseOneEffect modal = context.effect();
         ChooseOneEffect expandedModal = new ChooseOneEffect(
                 modal.options(), modal.optional(), modal.choicesRequired(), context.maximumChoices(),

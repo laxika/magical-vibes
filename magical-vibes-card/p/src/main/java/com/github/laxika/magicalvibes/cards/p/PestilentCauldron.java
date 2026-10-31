@@ -57,10 +57,10 @@ public class PestilentCauldron extends Card {
                 4
         ));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Pestilent Cauldron", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Restorative Burst", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Restorative Burst", backFace.getSpellEffects()))));
     }
 
     private static CreateTokenEffect pestToken() {

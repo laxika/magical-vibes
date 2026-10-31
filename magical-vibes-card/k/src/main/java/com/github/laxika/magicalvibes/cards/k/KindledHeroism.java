@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -14,8 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class KindledHeroism extends Card {
 
     public KindledHeroism() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new ScryEffect(1));
+        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET))
+                .addSpellEffect(new ScryEffect(1));
     }
 }

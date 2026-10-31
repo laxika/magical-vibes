@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class SpitFlame extends Card {
 
     public SpitFlame() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
 
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON),

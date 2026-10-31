@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -20,8 +19,8 @@ public class GraspingTentacles extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new MillEffect(8, MillRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new MayEffect(
+        )).addSpellEffect(new MillEffect(8, MillRecipient.TARGET_PLAYER))
+                .addSpellEffect(new MayEffect(
                         new TargetPlayerChoosesCardFromGraveyardToBattlefieldEffect(
                                 new CardTypePredicate(CardType.ARTIFACT), false, false),
                         "Put an artifact card from that player's graveyard onto the battlefield?"));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -15,7 +14,7 @@ public class DisorderInTheCourt extends Card {
 
     public DisorderInTheCourt() {
         targetExactlyX(TargetFilters.creature(), 100)
-                .addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStep(true))
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(new XValue()));
+                .addSpellEffect(FlickerEffect.exileTargetReturnAtEndStep(true))
+                .addSpellEffect(CreateTokenEffect.ofClueToken(new XValue()));
     }
 }

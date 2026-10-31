@@ -19,8 +19,8 @@ public class IncarnationTechnique extends Card {
     public IncarnationTechnique() {
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new DemonstrateEffect(), "Copy Incarnation Technique for an opponent?"));
-        addEffect(EffectSlot.SPELL, new MillEffect(5, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(new MillEffect(5, MillRecipient.CONTROLLER));
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .mandatory(true)

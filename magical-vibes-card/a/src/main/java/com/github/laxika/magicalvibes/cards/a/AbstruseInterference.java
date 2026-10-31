@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -20,8 +19,8 @@ import java.util.Set;
 public class AbstruseInterference extends Card {
 
     public AbstruseInterference() {
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(1));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CounterUnlessPaysEffect(1));
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
                 "Eldrazi Scion",

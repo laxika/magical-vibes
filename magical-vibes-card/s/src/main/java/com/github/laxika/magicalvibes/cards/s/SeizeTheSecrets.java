@@ -15,6 +15,6 @@ public class SeizeTheSecrets extends Card {
     public SeizeTheSecrets() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new CommittedCrimeThisTurn(), new ReduceOwnCastCostEffect(new Fixed(1))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

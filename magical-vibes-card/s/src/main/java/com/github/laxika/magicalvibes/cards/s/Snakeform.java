@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -22,11 +21,11 @@ public class Snakeform extends Card {
         // Until end of turn, target creature loses all abilities and becomes a green
         // Snake with base power and toughness 1/1.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new GrantColorUntilEndOfTurnEffect(CardColor.GREEN))
-                .addEffect(EffectSlot.SPELL, new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.SNAKE))
-                .addEffect(EffectSlot.SPELL, new SetBasePowerToughnessEffect(1, 1))
+                .addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
+                .addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.GREEN))
+                .addSpellEffect(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.SNAKE))
+                .addSpellEffect(new SetBasePowerToughnessEffect(1, 1))
                 // Draw a card.
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

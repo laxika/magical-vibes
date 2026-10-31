@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -17,8 +16,8 @@ public class InduceParanoia extends Card {
     public InduceParanoia() {
         // The countering step records the spell's mana value and controller on the resolving entry,
         // so the mill that follows reads the countered spell's last known values.
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK),
                 new MillEffect(new TargetSpellManaValue(), MillRecipient.TARGET_SPELL_CONTROLLER)));
     }

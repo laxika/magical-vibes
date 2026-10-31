@@ -28,7 +28,7 @@ public class CallForthTheTempest extends Card {
 
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(
+        addSpellEffect(new MassDamageEffect(
                 new TotalManaValueOfOtherSpellsCastThisTurn(), false, false, opponentCreature));
     }
 }

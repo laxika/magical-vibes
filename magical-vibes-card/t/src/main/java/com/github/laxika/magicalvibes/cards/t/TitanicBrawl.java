@@ -19,6 +19,6 @@ public class TitanicBrawl extends Card {
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+                .addSpellEffect(new FightTargetsEffect());
     }
 }

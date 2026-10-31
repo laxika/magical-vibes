@@ -72,7 +72,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Exhaustiveness guard for {@link TargetPolarityClassifier}: every permanent-targeting
- * effect that any registered card puts in its SPELL or ON_ENTER_BATTLEFIELD slot must
+ * effect that any registered card puts in its spell ability or ON_ENTER_BATTLEFIELD slot must
  * classify to a non-null {@link TargetPolarity}. An unclassified shape falls into
  * {@code AiTargetSelector.chooseTarget}'s own-battlefield-first general fallback, which
  * silently aims harmful spells at the AI's own permanents (the Quicksilver Geyser / Stun
@@ -329,17 +329,17 @@ class TargetPolarityGuardTest {
                 if (!seenCardClasses.add(card.getClass())) {
                     continue;
                 }
-                for (EffectSlot slot : new EffectSlot[]{EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD}) {
-                    for (CardEffect effect : card.getEffects(slot)) {
-                        if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                            continue;
-                        }
-                        if (classifier.classify(gd, effect, aiPlayerId) == null) {
-                            List<String> cards = unclassified.computeIfAbsent(
-                                    effect.getClass().getSimpleName(), k -> new ArrayList<>());
-                            if (cards.size() < 5) {
-                                cards.add(card.getClass().getSimpleName());
-                            }
+                List<CardEffect> effects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
+                effects.addAll(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+                for (CardEffect effect : effects) {
+                    if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                        continue;
+                    }
+                    if (classifier.classify(gd, effect, aiPlayerId) == null) {
+                        List<String> cards = unclassified.computeIfAbsent(
+                                effect.getClass().getSimpleName(), k -> new ArrayList<>());
+                        if (cards.size() < 5) {
+                            cards.add(card.getClass().getSimpleName());
                         }
                     }
                 }

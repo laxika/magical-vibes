@@ -22,7 +22,7 @@ public class OutrageousRobbery extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new ExileTopCardsToSourceEffect(
+        )).addSpellEffect(new ExileTopCardsToSourceEffect(
                 new XValue(), true, false, LibraryScope.TARGET_OPPONENT, true));
     }
 }

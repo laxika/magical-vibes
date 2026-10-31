@@ -204,6 +204,8 @@ public class PermanentCopierService {
         copy.setSetCode(target.getSetCode());
         copy.setCollectorNumber(target.getCollectorNumber());
         boolean hasPTOverride = powerOverride != null || toughnessOverride != null;
+        copy.addCastingCostsAndSpellEffectsFrom(target,
+                effect -> !hasPTOverride || !effect.isPowerToughnessDefining());
         for (EffectSlot slot : EffectSlot.values()) {
             for (EffectRegistration reg : target.getEffectRegistrations(slot)) {
                 // CR 707.9d: when a copy effect provides specific P/T values,

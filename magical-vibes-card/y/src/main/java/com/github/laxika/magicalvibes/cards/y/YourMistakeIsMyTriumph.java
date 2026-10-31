@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEachPlayerAndPutMilledCardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
@@ -10,8 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 public class YourMistakeIsMyTriumph extends Card {
 
     public YourMistakeIsMyTriumph() {
-        addEffect(EffectSlot.SPELL,
-                new MillEachPlayerAndPutMilledCardOntoBattlefieldEffect(
+        addSpellEffect(new MillEachPlayerAndPutMilledCardOntoBattlefieldEffect(
                         3, new CardIsPermanentPredicate()));
     }
 }

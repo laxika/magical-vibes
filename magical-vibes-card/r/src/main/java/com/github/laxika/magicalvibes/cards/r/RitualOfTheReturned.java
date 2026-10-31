@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect;
@@ -18,7 +17,7 @@ public class RitualOfTheReturned extends Card {
         // Its power is equal to that card's power and its toughness is equal to that card's toughness.
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
-        addEffect(EffectSlot.SPELL, new ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect(
+        addSpellEffect(new ExileTargetCreatureCardCreateTokenEqualToPowerToughnessEffect(
                 CreateTokenEffect.blackZombie(1)));
     }
 }

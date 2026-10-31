@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -31,7 +30,7 @@ public class HitRun extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player");
         PermanentIsAttackingPredicate attacking = new PermanentIsAttackingPredicate();
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Hit — Target player sacrifices an artifact or creature of their choice. Hit deals damage to that player equal to that permanent's mana value.",
                         new TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffect(artifactOrCreature),

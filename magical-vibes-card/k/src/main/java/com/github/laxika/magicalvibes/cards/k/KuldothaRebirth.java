@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -16,8 +15,8 @@ import java.util.Set;
 public class KuldothaRebirth extends Card {
 
     public KuldothaRebirth() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addCastingCost(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false));
+        addSpellEffect(new CreateTokenEffect(
                 3, "Goblin", 1, 1, CardColor.RED, List.of(CardSubtype.GOBLIN), Set.of(), Set.of()));
     }
 }

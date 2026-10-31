@@ -22,7 +22,7 @@ public class ElementalAppeal extends Card {
 
     public ElementalAppeal() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{5}"));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
                 "Elemental",
@@ -42,7 +42,6 @@ public class ElementalAppeal extends Card {
                 false,
                 0,
                 Set.of()));
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new Kicked(), new BoostCreatedTokensEffect(7, 0)));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new BoostCreatedTokensEffect(7, 0)));
     }
 }

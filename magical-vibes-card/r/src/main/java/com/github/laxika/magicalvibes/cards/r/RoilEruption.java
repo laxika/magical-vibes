@@ -13,7 +13,7 @@ public class RoilEruption extends Card {
 
     public RoilEruption() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{5}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DealDamageToAnyTargetEffect(3),
                 new DealDamageToAnyTargetEffect(5)

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
@@ -17,7 +16,7 @@ import java.util.List;
 public class TifasLimitBreak extends Card {
 
     public TifasLimitBreak() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Somersault - {0} - Target creature gets +2/+2 until end of turn",
                         new BoostTargetCreatureEffect(2, 2), TargetFilters.creature()),
@@ -32,6 +31,6 @@ public class TifasLimitBreak extends Card {
                                 new Scaled(new TargetToughness(), 2)),
                         TargetFilters.creature())
         )));
-        addEffect(EffectSlot.SPELL, new TieredManaCost(List.of("", "{2}", "{6}{G}")));
+        addCastingCost(new TieredManaCost(List.of("", "{2}", "{6}{G}")));
     }
 }

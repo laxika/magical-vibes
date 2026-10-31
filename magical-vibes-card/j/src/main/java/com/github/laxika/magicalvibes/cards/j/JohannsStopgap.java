@@ -33,7 +33,7 @@ public class JohannsStopgap extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new Kicked(), new ReduceOwnCastCostEffect(new Fixed(2))));
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new DrawCardEffect());
     }
 }

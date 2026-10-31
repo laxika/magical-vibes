@@ -16,7 +16,7 @@ import java.util.List;
 public class FlametongueYearling extends Card {
 
     public FlametongueYearling() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{2}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{2}")));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

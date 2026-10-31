@@ -30,7 +30,7 @@ public class GustOfWind extends Card {
                 new ReduceOwnCastCostEffect(new Fixed(2))
         ));
         target(TargetFilters.nonlandPermanentAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new DrawCardEffect());
     }
 }

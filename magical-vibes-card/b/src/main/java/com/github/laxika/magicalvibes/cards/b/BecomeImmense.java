@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -13,8 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BecomeImmense extends Card {
 
     public BecomeImmense() {
+        addCastingCost(new DelveCost());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DelveCost())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(6, 6));
+                .addSpellEffect(new BoostTargetCreatureEffect(6, 6));
     }
 }

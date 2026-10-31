@@ -24,7 +24,7 @@ import java.util.List;
 public class GravenArchfiend extends Card {
 
     public GravenArchfiend() {
-        addEffect(EffectSlot.SPELL, SacrificePermanentCost.optional(
+        addCastingCost(SacrificePermanentCost.optional(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON))

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,12 +23,12 @@ public class Moonhold extends Card {
         ));
 
         // Target player can't play lands this turn if {R} was spent to cast this spell.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.RED),
                 new TargetPlayerCantPlayLandsThisTurnEffect()));
 
         // ... and can't cast creature spells this turn if {W} was spent to cast this spell.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.WHITE),
                 new TargetPlayerCantCastSpellTypesThisTurnEffect(Set.of(CardType.CREATURE))));
     }

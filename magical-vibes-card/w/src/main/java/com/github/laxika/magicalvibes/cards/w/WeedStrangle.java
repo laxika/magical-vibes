@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -19,7 +18,7 @@ public class WeedStrangle extends Card {
         // The instructions are followed in the order written (CR 608.2c), so the destroy happens
         // before the clash. On a clash win the life gain uses the creature's last-known toughness.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new ClashEffect(new GainLifeEffect(new TargetToughness())));
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ClashEffect(new GainLifeEffect(new TargetToughness())));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -17,14 +16,14 @@ import java.util.List;
 public class ReckonersBargain extends Card {
 
     public ReckonersBargain() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentCost(
+        addCastingCost(new SacrificePermanentCost(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()
                 )),
                 "an artifact or creature", true, false, true, false
         ));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new GainLifeEffect(new XValue()));
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -31,8 +30,7 @@ public class SpiritFlare extends Card {
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 )),
                 "First target must be an untapped creature you control"
-        )).addEffect(EffectSlot.SPELL,
-                new TapTargetThenEffect(new TargetDealsPowerDamageToTargetEffect()));
+        )).addSpellEffect(new TapTargetThenEffect(new TargetDealsPowerDamageToTargetEffect()));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

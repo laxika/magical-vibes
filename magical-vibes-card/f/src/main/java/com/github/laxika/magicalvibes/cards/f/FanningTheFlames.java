@@ -16,7 +16,7 @@ public class FanningTheFlames extends Card {
 
     public FanningTheFlames() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

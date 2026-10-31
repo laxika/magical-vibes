@@ -23,8 +23,8 @@ public class ImpsTaunt extends Card {
 
     public ImpsTaunt() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        addEffect(EffectSlot.SPELL, new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
         target(TargetFilters.creature());
     }
 }

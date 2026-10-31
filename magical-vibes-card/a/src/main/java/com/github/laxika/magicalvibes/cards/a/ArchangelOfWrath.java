@@ -19,7 +19,7 @@ public class ArchangelOfWrath extends Card {
 
     public ArchangelOfWrath() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
+        addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
 
         targetWhenKicked(null, 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), new DealDamageToAnyTargetEffect(2)), TriggerMode.INDEPENDENT);

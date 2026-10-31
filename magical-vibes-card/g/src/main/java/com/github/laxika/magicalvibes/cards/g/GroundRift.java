@@ -28,7 +28,7 @@ public class GroundRift extends Card {
         );
 
         target(creatureWithoutFlying)
-                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

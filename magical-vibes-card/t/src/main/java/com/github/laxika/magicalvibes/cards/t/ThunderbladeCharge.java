@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 public class ThunderbladeCharge extends Card {
 
     public ThunderbladeCharge() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         null,

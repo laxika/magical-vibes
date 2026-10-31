@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -22,7 +21,7 @@ import java.util.List;
 public class MarchOfOtherworldlyLight extends Card {
 
     public MarchOfOtherworldlyLight() {
-        addEffect(EffectSlot.SPELL, new ExileAnyNumberOfCardsFromHandCost(
+        addCastingCost(new ExileAnyNumberOfCardsFromHandCost(
                 new CardColorPredicate(CardColor.WHITE), 2));
         PermanentPredicate artifactCreatureOrEnchantment = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
@@ -34,6 +33,6 @@ public class MarchOfOtherworldlyLight extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be an artifact, creature, or enchantment with mana value X or less"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect(targetFilter));
+                .addSpellEffect(new ExileTargetPermanentEffect(targetFilter));
     }
 }

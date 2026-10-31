@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GravestormEffect;
 public class FollowTheBodies extends Card {
 
     public FollowTheBodies() {
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+        addSpellEffect(CreateTokenEffect.ofClueToken(1));
         addEffect(EffectSlot.ON_SELF_CAST, new GravestormEffect());
     }
 }

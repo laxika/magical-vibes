@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -30,6 +29,6 @@ public class Divert extends Card {
                                 StackEntryType.BATTLE_SPELL)),
                         new StackEntryIsSingleTargetPredicate())),
                 "Target spell must have a single target."
-        )).addEffect(EffectSlot.SPELL, new ChangeTargetOfTargetSpellUnlessControllerPaysEffect(2));
+        )).addSpellEffect(new ChangeTargetOfTargetSpellUnlessControllerPaysEffect(2));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentsThenEachControllerMayCastEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,7 +25,6 @@ public class GuffRewritesHistory extends Card {
         target(new PermanentPredicateTargetFilter(
                 nonenchantmentNonland,
                 "Target must be a nonenchantment, nonland permanent"), 0, 99)
-                .addEffect(EffectSlot.SPELL,
-                        new ShuffleTargetPermanentsThenEachControllerMayCastEffect(nonenchantmentNonland));
+                .addSpellEffect(new ShuffleTargetPermanentsThenEachControllerMayCastEffect(nonenchantmentNonland));
     }
 }

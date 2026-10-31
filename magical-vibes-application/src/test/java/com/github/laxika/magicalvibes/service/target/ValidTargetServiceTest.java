@@ -446,7 +446,7 @@ class ValidTargetServiceTest {
         void returnsCreatures_forAnyTargetSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -466,7 +466,7 @@ class ValidTargetServiceTest {
         void excludesNonCreatures_forAnyTargetSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             Card enchantmentCard = new Card();
             enchantmentCard.setName("Test Enchantment");
@@ -486,7 +486,7 @@ class ValidTargetServiceTest {
         void returnsOnlyPermanents_forPermanentOnlySpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -504,7 +504,7 @@ class ValidTargetServiceTest {
             Card spell = createCard();
             spell.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Target must be a creature"))
-                    .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+                    .addSpellEffect(new DealDamageToAnyTargetEffect(3));
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
@@ -520,7 +520,7 @@ class ValidTargetServiceTest {
             Card spell = createCard();
             spell.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
-                    .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+                    .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)));
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
@@ -535,7 +535,7 @@ class ValidTargetServiceTest {
         void returnsOnlyPlayers_forPlayerOnlySpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);
@@ -549,7 +549,7 @@ class ValidTargetServiceTest {
         void excludesAlreadySelectedTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -565,7 +565,7 @@ class ValidTargetServiceTest {
         void excludesAlreadySelectedPlayerTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, List.of(player1Id));
@@ -578,7 +578,7 @@ class ValidTargetServiceTest {
         void filtersPlayer_withShroud() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             when(gameQueryService.playerHasShroud(gameData, player1Id)).thenReturn(false);
             when(gameQueryService.playerHasShroud(gameData, player2Id)).thenReturn(true);
@@ -594,7 +594,7 @@ class ValidTargetServiceTest {
         void filtersOpponentPlayer_withHexproof() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             when(gameQueryService.playerHasHexproof(gameData, player2Id)).thenReturn(true);
 
@@ -609,7 +609,7 @@ class ValidTargetServiceTest {
         void allowsSelfTarget_whenOpponentHasHexproof() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             when(gameQueryService.playerHasHexproof(gameData, player2Id)).thenReturn(true);
 
@@ -625,7 +625,7 @@ class ValidTargetServiceTest {
         void restrictsToOpponent_withPlayerRelationFilter() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
             spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent"));
 
@@ -640,7 +640,7 @@ class ValidTargetServiceTest {
         void restrictsToSelf_withPlayerRelationFilter() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
             spell.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.SELF), "target self"));
 
@@ -656,8 +656,8 @@ class ValidTargetServiceTest {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
             // Create a multi-target spell via the target builder API
-            spell.target(null, 1, 2).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
-            spell.target(null, 1, 2).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
 
             when(gameQueryService.isCreature(eq(gameData), any(Permanent.class))).thenReturn(true);
 
@@ -675,7 +675,7 @@ class ValidTargetServiceTest {
         void excludesShroudPermanents() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             Card creatureCard = createCreatureCard();
             Permanent creature = addPermanentToBattlefield(player2Id, creatureCard);
@@ -693,7 +693,7 @@ class ValidTargetServiceTest {
         void setsMinMaxTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.target(null, 1, 1).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.target(null, 1, 1).addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);
@@ -732,7 +732,7 @@ class ValidTargetServiceTest {
         private Card createModalSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.GREEN);
-            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Destroy target creature",
                             new DestroyTargetPermanentEffect(), mode0Filter),
                     new ChooseOneEffect.ChooseOneOption("Destroy target enchantment",
@@ -780,7 +780,7 @@ class ValidTargetServiceTest {
         @Test
         void appliesSinglePositionalModeFilter() {
             Card spell = createCard();
-            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Destroy a creature",
                             List.of(new DestroyTargetPermanentEffect()), List.of(mode0Filter)))));
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
@@ -839,7 +839,7 @@ class ValidTargetServiceTest {
             spell.setColor(CardColor.BLACK);
             TargetFilter opponentFilter = new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent");
-            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target opponent",
                             new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER), opponentFilter),
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
@@ -857,7 +857,7 @@ class ValidTargetServiceTest {
         void resolvesChooseTwoBitmask() {
             Card spell = createCard();
             spell.setColor(CardColor.WHITE);
-            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
                             new DealDamageToTargetCreatureEffect(3)),
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
@@ -880,7 +880,7 @@ class ValidTargetServiceTest {
         void noTargetMode_reportsNoTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+            spell.addSpellEffect(new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
                             new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER)),
                     new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
@@ -1609,7 +1609,7 @@ class ValidTargetServiceTest {
         void returnsTrue_whenValidPermanentExists() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1623,7 +1623,7 @@ class ValidTargetServiceTest {
         void returnsFalse_whenNoPermanentTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             // No permanents on any battlefield
 
@@ -1637,7 +1637,7 @@ class ValidTargetServiceTest {
         void returnsTrue_whenValidPlayerTargetExists() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             boolean result = validTargetService.hasValidTargetsForSpell(gameData, spell, player1Id);
 
@@ -1649,7 +1649,7 @@ class ValidTargetServiceTest {
         void returnsFalse_whenAllShrouded() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1671,7 +1671,7 @@ class ValidTargetServiceTest {
                 @Override
                 public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)); }
             };
-            spell.addEffect(EffectSlot.SPELL, graveyardEffect);
+            spell.addSpellEffect(graveyardEffect);
 
             boolean result = validTargetService.hasValidTargetsForSpell(gameData, spell, player1Id);
 
@@ -1689,7 +1689,7 @@ class ValidTargetServiceTest {
                 @Override
                 public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.exileCard()); }
             };
-            spell.addEffect(EffectSlot.SPELL, exileEffect);
+            spell.addSpellEffect(exileEffect);
 
             boolean result = validTargetService.hasValidTargetsForSpell(gameData, spell, player1Id);
 
@@ -1701,7 +1701,7 @@ class ValidTargetServiceTest {
         void returnsFalse_whenAllPlayersShrouded() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             when(gameQueryService.playerHasShroud(gameData, player1Id)).thenReturn(true);
             when(gameQueryService.playerHasShroud(gameData, player2Id)).thenReturn(true);
@@ -1716,7 +1716,7 @@ class ValidTargetServiceTest {
         void returnsTrue_anyTarget_whenPlayersValid() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
             when(gameQueryService.hasKeyword(gameData, creature, Keyword.SHROUD)).thenReturn(true);
@@ -1741,7 +1741,7 @@ class ValidTargetServiceTest {
         void returnsTrue_anyTarget_ownCreature() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             addPermanentToBattlefield(player1Id, createCreatureCard());
 
@@ -1757,8 +1757,8 @@ class ValidTargetServiceTest {
         void returnsTrue_multiTarget_withPlayerTargets() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.target(null, 1, 2).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
-            spell.target(null, 1, 2).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
 
             boolean result = validTargetService.hasValidTargetsForSpell(gameData, spell, player1Id);
 
@@ -1770,8 +1770,8 @@ class ValidTargetServiceTest {
         void returnsFalse_multiTarget_allPlayersShrouded() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.target(null, 1, 2).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
-            spell.target(null, 1, 2).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
+            spell.target(null, 1, 2).addSpellEffect(new DealDamageToAnyTargetEffect(1));
 
             when(gameQueryService.playerHasShroud(gameData, player1Id)).thenReturn(true);
             when(gameQueryService.playerHasShroud(gameData, player2Id)).thenReturn(true);
@@ -1797,7 +1797,7 @@ class ValidTargetServiceTest {
         void nullAlreadySelectedIds() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             addPermanentToBattlefield(player2Id, createCreatureCard());
 
@@ -1828,7 +1828,7 @@ class ValidTargetServiceTest {
         void planeswalkerIsValidAnyTarget() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             Card planeswalkerCard = new Card();
             planeswalkerCard.setName("Test Planeswalker");
@@ -1901,7 +1901,7 @@ class ValidTargetServiceTest {
         void multiplePermanentsEvaluated() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             Permanent creature1 = addPermanentToBattlefield(player1Id, createCreatureCard());
             Permanent creature2 = addPermanentToBattlefield(player2Id, createCreatureCard());
@@ -2046,7 +2046,7 @@ class ValidTargetServiceTest {
         @DisplayName("spell graveyard targets filtered by effect type")
         void spellGraveyardTargets_filteredByEffectType(String description, CardEffect effect, Set<String> expectedNames) {
             Card spell = createCard();
-            spell.addEffect(EffectSlot.SPELL, effect);
+            spell.addSpellEffect(effect);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);
@@ -2068,8 +2068,7 @@ class ValidTargetServiceTest {
             gameData.playerGraveyards.get(player1Id).add(ownInstant);
 
             Card spell = createCard();
-            spell.addEffect(EffectSlot.SPELL,
-                    new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+            spell.addSpellEffect(new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);
@@ -2128,7 +2127,7 @@ class ValidTargetServiceTest {
             gameData.playerGraveyards.put(player2Id, new ArrayList<>(List.of(gyInstant, gyBasicLand)));
 
             Card spell = createCard();
-            spell.addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
+            spell.addSpellEffect(new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);

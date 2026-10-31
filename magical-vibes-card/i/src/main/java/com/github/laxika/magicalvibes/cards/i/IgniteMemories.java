@@ -16,8 +16,7 @@ public class IgniteMemories extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL,
-                new RevealRandomCardFromTargetPlayerHandDealDamageEqualToManaValueEffect());
+        )).addSpellEffect(new RevealRandomCardFromTargetPlayerHandDealDamageEqualToManaValueEffect());
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

@@ -28,7 +28,7 @@ public class TheEaglesAreComing extends Card {
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
                 "Target must be a creature you own");
         targetWhenKicked(creatureYouOwn, 1, 1, 0, 99)
-                .addEffect(EffectSlot.SPELL, new ReturnTargetPermanentsThenEffect(
+                .addSpellEffect(new ReturnTargetPermanentsThenEffect(
                         RegisterDelayedCreateTokenAtNextUpkeepEffect.atAnyPlayerNextUpkeep(new CreateTokenEffect(
                                 new EventValue(), "Bird Soldier", 4, 4, CardColor.WHITE,
                                 List.of(CardSubtype.BIRD, CardSubtype.SOLDIER),

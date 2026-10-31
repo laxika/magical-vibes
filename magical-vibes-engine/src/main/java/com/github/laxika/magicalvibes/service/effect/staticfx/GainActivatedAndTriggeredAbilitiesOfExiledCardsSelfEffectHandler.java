@@ -21,7 +21,6 @@ public class GainActivatedAndTriggeredAbilitiesOfExiledCardsSelfEffectHandler
 
     private static final Set<EffectSlot> NON_ABILITY_SLOTS = EnumSet.of(
             EffectSlot.ON_TAP,
-            EffectSlot.SPELL,
             EffectSlot.STATIC,
             EffectSlot.MAY_SKIP_DRAW_STEP_DRAW,
             EffectSlot.GRAVEYARD_DRAW_REPLACEMENT,

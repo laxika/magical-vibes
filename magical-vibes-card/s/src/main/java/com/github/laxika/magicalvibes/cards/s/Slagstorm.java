@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -15,7 +14,7 @@ import java.util.List;
 public class Slagstorm extends Card {
 
     public Slagstorm() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Slagstorm deals 3 damage to each creature", new MassDamageEffect(3)),
                 new ChooseOneEffect.ChooseOneOption("Slagstorm deals 3 damage to each player", new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER))
         )));

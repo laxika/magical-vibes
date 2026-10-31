@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -26,8 +25,8 @@ import java.util.Set;
 public class SoundTheTrumpets extends Card {
 
     public SoundTheTrumpets() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new ConditionalEffect(
                 new TargetSpellMatches(new StackEntryMaxManaValuePredicate(2)),
                 SequenceEffect.of(
                         new DrawCardEffect(1),

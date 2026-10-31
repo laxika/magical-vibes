@@ -31,7 +31,7 @@ public class RowansGrimSearch extends Card {
                 )),
                 "an artifact, enchantment, or token"
         ));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new Kicked(),
                 new LookAtTopCardsEffect(
                         new Fixed(4),
@@ -43,7 +43,7 @@ public class RowansGrimSearch extends Card {
                         true
                 )
         ));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new LoseLifeEffect(2));
     }
 }

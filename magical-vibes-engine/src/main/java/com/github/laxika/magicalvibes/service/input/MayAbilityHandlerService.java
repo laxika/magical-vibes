@@ -1084,8 +1084,8 @@ public class MayAbilityHandlerService {
     private TargetFilter mayAbilityTargetFilter(Card sourceCard, PendingMayAbility ability) {
         for (CardEffect e : ability.effects()) {
             int idx = sourceCard.getEffectTargetIndex(e);
-            if (idx >= 0 && idx < sourceCard.getSpellTargets().size()) {
-                TargetFilter groupFilter = sourceCard.getSpellTargets().get(idx).getFilter();
+            if (idx >= 0 && idx < sourceCard.getTargetGroups().size()) {
+                TargetFilter groupFilter = sourceCard.getTargetGroups().get(idx).getFilter();
                 if (groupFilter != null) {
                     return groupFilter;
                 }
@@ -1385,7 +1385,7 @@ public class MayAbilityHandlerService {
      * on the stack (CR 603.3d), so choosing none there is not a reason to ask again at resolution.
      */
     private boolean declaredUpToMultipleTargets(StackEntry entry) {
-        return entry.getCard() != null && entry.getCard().getSpellTargets().stream()
+        return entry.getCard() != null && entry.getCard().getTargetGroups().stream()
                 .anyMatch(target -> target.getMinTargets() == 0 && target.getMaxTargets() > 1);
     }
 

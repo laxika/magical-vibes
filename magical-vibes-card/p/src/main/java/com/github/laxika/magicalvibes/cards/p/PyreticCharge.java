@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -17,9 +16,8 @@ import java.util.List;
 public class PyreticCharge extends Card {
 
     public PyreticCharge() {
-        addEffect(EffectSlot.SPELL, new DiscardOwnHandThenDrawEffect(new Fixed(4)));
-        addEffect(EffectSlot.SPELL,
-                new BoostAllOwnCreaturesEffect(new EventValue(), new Fixed(0)));
+        addSpellEffect(new DiscardOwnHandThenDrawEffect(new Fixed(4)));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(new EventValue(), new Fixed(0)));
 
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{R}"))));
     }

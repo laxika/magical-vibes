@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedThisTurnPredicate;
@@ -18,8 +17,7 @@ public class FireAndBrimstone extends Card {
                 new PlayerAttackedThisTurnPredicate(),
                 "Target must be a player who attacked this turn"
         )).bindEffect(targetDamage);
-        addSimultaneousEffects(EffectSlot.SPELL,
-                targetDamage,
+        addSimultaneousSpellEffects(targetDamage,
                 new DealDamageToPlayersEffect(4, DamageRecipient.CONTROLLER));
     }
 }

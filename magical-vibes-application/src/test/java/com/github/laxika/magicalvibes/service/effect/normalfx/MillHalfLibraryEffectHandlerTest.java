@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -109,7 +108,7 @@ player1Id = UUID.randomUUID();
 
                 Card spell = createCard("Singularity Rupture");
                 MillHalfLibraryEffect effect = new MillHalfLibraryEffect(false);
-                spell.target(0, 99).addEffect(EffectSlot.SPELL, effect);
+                spell.target(0, 99).addSpellEffect(effect);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell,
                         player1Id, "Singularity Rupture", List.of(effect), 0,
                         List.of(player1Id, player2Id));

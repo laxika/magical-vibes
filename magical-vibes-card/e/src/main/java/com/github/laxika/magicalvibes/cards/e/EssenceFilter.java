@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class EssenceFilter extends Card {
 
     public EssenceFilter() {
-        addEffect(EffectSlot.SPELL, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Destroy all enchantments",
                         new DestroyAllPermanentsEffect(new PermanentIsEnchantmentPredicate())),
                 new ChooseOneEffect.ChooseOneOption("Destroy all nonwhite enchantments",

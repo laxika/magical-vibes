@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VituGhaziInspector extends Card {
 
     public VituGhaziInspector() {
-        addEffect(EffectSlot.SPELL, new CollectEvidenceCost(6, true));
+        addCastingCost(new CollectEvidenceCost(6, true));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new CollectEvidenceCostPaid(), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),

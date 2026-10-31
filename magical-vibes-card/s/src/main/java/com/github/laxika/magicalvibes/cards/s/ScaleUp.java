@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -32,15 +31,15 @@ public class ScaleUp extends Card {
     public ScaleUp() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{G}{G}"))));
 
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantColorUntilEndOfTurnEffect(CardColor.GREEN),
                 new GrantColorUntilEndOfTurnEffect(CardColor.GREEN, GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WURM),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WURM, GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new SetBasePowerToughnessEffect(6, 4),
                 new SetAllOwnCreaturesBasePowerToughnessEffect(6, 4)));

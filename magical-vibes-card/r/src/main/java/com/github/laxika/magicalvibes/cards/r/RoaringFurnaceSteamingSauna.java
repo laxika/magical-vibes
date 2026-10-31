@@ -26,7 +26,7 @@ public class RoaringFurnaceSteamingSauna extends Card {
     public RoaringFurnaceSteamingSauna() {
         setRoomDoorManaCosts(List.of("{1}{R}", "{3}{U}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Roaring Furnace", List.of())
                         .withManaCost("{1}{R}"),
                 new ChooseOneEffect.ChooseOneOption("Steaming Sauna", List.of())

@@ -37,7 +37,7 @@ Using oracle text from Step 1, verify:
 
 1. **Oracle fidelity / rules accuracy** — every ability and mode is implemented; no invented behavior; ambiguous text checked against official rulings when needed.
 2. **Reuse over creation** — effects/predicates composed from existing building blocks; no unnecessary new effect/predicate classes.
-3. **Slots, targeting, costs** — correct `EffectSlot`s, target filters/`TargetSpec`, triggered/activated ability wiring. Grep `agent-docs/` when unsure (never read those docs in full): `CARD_PATTERN_INDEX.md`, `ORACLE_TEXT_EFFECT_MAP.md`, `EFFECTS_QUICK_REFERENCE.md`, `TRIGGER_SLOT_TARGETING.md`, `ACTIVATED_ABILITY_GUIDE.md`, `PREDICATES_REFERENCE.md`.
+3. **Slots, targeting, costs** — spell effects via `addSpellEffect`, additional cast costs via `addCastingCost` (never as spell effects), correct `EffectSlot`s, target filters/`TargetSpec`, triggered/activated ability wiring. Grep `agent-docs/` when unsure (never read those docs in full): `CARD_PATTERN_INDEX.md`, `ORACLE_TEXT_EFFECT_MAP.md`, `EFFECTS_QUICK_REFERENCE.md`, `TRIGGER_SLOT_TARGETING.md`, `ACTIVATED_ABILITY_GUIDE.md`, `PREDICATES_REFERENCE.md`.
 4. **Constructor hygiene** — constructor is engine logic only; no manual metadata setters.
 5. **Tests** — present when required (not basic land / vanilla); exercise behavior through the harness (`harness`/`gs`/`gd`), not Scryfall metadata or white-box wiring (`getEffects`, `EffectSlot`, reflection). Skip running the full suite; optionally run the focused test via `scripts/run-card-test.ps1` only if needed to confirm a suspected bug.
 

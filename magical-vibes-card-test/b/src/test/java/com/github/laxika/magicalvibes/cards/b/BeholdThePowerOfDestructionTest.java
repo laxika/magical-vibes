@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -33,7 +32,7 @@ class BeholdThePowerOfDestructionTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL),
+                scheme.getCastingCostsAndSpellEffects(),
                 player2.getId(),
                 (Zone) null));
         harness.passBothPriorities();
@@ -110,7 +109,7 @@ class BeholdThePowerOfDestructionTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(EffectSlot.SPELL),
+                scheme.getCastingCostsAndSpellEffects(),
                 player2.getId(),
                 (Zone) null));
     }

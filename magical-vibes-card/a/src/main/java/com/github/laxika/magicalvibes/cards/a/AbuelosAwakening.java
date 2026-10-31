@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -38,7 +37,7 @@ public class AbuelosAwakening extends Card {
                         new CardTypePredicate(CardType.ENCHANTMENT),
                         new CardNotPredicate(new CardIsAuraPredicate())))));
 
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(artifactOrNonAuraEnchantment)
                 .targetGraveyard(true)
@@ -48,7 +47,7 @@ public class AbuelosAwakening extends Card {
                         SetBasePowerToughnessEffect.indefinitely(1, 1),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.INDEFINITE)))
                 .build());
-        addEffect(EffectSlot.SPELL, new PutCounterOnReferencedPermanentEffect(
+        addSpellEffect(new PutCounterOnReferencedPermanentEffect(
                 PermanentReference.RETURNED, CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }
 }

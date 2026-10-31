@@ -16,7 +16,7 @@ public class ZukosConviction extends Card {
 
     public ZukosConviction() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -22,7 +21,7 @@ import java.util.List;
 public class PrishesWanderings extends Card {
 
     public PrishesWanderings() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 new CardAnyOfPredicate(List.of(
                         CardPredicateUtils.basicLand(),
                         new CardSubtypePredicate(CardSubtype.TOWN)
@@ -30,7 +29,7 @@ public class PrishesWanderings extends Card {
                 LibrarySearchDestination.BATTLEFIELD_TAPPED
         ));
         // When you search your library this way, put a +1/+1 counter on target creature you control.
-        addEffect(EffectSlot.SPELL, new QueueReflexiveAbilityEffect(
+        addSpellEffect(new QueueReflexiveAbilityEffect(
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType.PLUS_ONE_PLUS_ONE, 1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

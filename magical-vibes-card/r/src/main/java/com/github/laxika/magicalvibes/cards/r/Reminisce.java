@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -12,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Reminisce extends Card {
 
     public Reminisce() {
-        addEffect(EffectSlot.SPELL, new ShuffleGraveyardIntoLibraryEffect(true));
+        addSpellEffect(new ShuffleGraveyardIntoLibraryEffect(true));
     }
 }

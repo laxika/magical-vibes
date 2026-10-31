@@ -22,7 +22,7 @@ public class GrandEntrywayElegantRotunda extends Card {
     public GrandEntrywayElegantRotunda() {
         setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Grand Entryway", List.of())
                         .withManaCost("{1}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Elegant Rotunda", List.of())

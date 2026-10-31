@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -14,9 +13,9 @@ public class RapturousMoment extends Card {
 
     public RapturousMoment() {
         // Draw three cards, then discard two cards. Add {U}{U}{R}{R}{R}.
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.BLUE, 2));
-        addEffect(EffectSlot.SPELL, new AwardManaEffect(ManaColor.RED, 3));
+        addSpellEffect(new DrawCardEffect(3));
+        addSpellEffect(new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new AwardManaEffect(ManaColor.BLUE, 2));
+        addSpellEffect(new AwardManaEffect(ManaColor.RED, 3));
     }
 }

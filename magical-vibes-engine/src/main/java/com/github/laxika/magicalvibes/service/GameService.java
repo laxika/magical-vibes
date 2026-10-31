@@ -1997,8 +1997,8 @@ public class GameService {
                 }
             } else if (targetsPlayer || targetsPermanent
                     || effects.stream().anyMatch(permanent.getCard()::hasEffectTargetIndex)) {
-                boolean multiTarget = permanent.getCard().getSpellTargets().size() > 1
-                        || permanent.getCard().getSpellTargets().stream()
+                boolean multiTarget = permanent.getCard().getTargetGroups().size() > 1
+                        || permanent.getCard().getTargetGroups().stream()
                         .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
                                 || group.getDynamicMinTargets() != null);
                 if (multiTarget) {

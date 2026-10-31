@@ -41,7 +41,7 @@ public class Counterflux extends Card {
         target(new StackEntryPredicateTargetFilter(
                 spellYouDontControl,
                 "Target must be a spell you don't control"))
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+                .addSpellEffect(new ConditionalReplacementEffect(
                         new Overloaded(),
                         new CounterSpellEffect(),
                         new CounterMatchingSpellsEffect(spellYouDontControl)));

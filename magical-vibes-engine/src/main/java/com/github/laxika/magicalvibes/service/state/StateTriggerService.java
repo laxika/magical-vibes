@@ -219,7 +219,7 @@ public class StateTriggerService {
     }
 
     private boolean hasTargets(Permanent permanent, StateTriggerEffect trigger) {
-        if (etbTokenTargetService == null || permanent.getCard().getSpellTargets().isEmpty()) {
+        if (etbTokenTargetService == null || permanent.getCard().getTargetGroups().isEmpty()) {
             return false;
         }
         return trigger.effects().stream().anyMatch(effect ->

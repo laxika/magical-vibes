@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class ReignOfTerror extends Card {
 
     public ReignOfTerror() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Destroy all green creatures", wipe(CardColor.GREEN)),
                 new ChooseOneEffect.ChooseOneOption("Destroy all white creatures", wipe(CardColor.WHITE))
         )));

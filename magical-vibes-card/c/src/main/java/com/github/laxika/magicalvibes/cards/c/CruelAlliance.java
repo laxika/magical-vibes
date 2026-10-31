@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class CruelAlliance extends Card {
 
     public CruelAlliance() {
-        addEffect(EffectSlot.SPELL, new TeamworkCost(2));
+        addCastingCost(new TeamworkCost(2));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -29,7 +28,7 @@ public class CruelAlliance extends Card {
                 "Target must be a creature with mana value 3 or less",
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new TeamworkCostPaid(),
                 new ExileTargetPermanentEffect(),
                 SequenceEffect.of(new ExileTargetPermanentEffect(), new GainLifeEffect(3))

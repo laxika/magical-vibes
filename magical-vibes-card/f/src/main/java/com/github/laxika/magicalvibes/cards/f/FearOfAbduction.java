@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class FearOfAbduction extends Card {
 
     public FearOfAbduction() {
-        addEffect(EffectSlot.SPELL, new ExileCreatureCost());
+        addCastingCost(new ExileCreatureCost());
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentAndTrackWithSourceEffect());

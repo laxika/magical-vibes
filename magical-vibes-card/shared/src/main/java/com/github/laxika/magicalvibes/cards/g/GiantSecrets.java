@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToHandEffect;
 
@@ -25,7 +24,6 @@ public class GiantSecrets extends Card {
             new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("BRO", "65"));
 
     public GiantSecrets() {
-        addEffect(EffectSlot.SPELL,
-                new ConjureRandomCardFromSpellbookToHandEffect(SPELLBOOK, new XValue()));
+        addSpellEffect(new ConjureRandomCardFromSpellbookToHandEffect(SPELLBOOK, new XValue()));
     }
 }

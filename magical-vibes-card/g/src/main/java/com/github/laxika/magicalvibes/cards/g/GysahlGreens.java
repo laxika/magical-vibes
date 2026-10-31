@@ -20,7 +20,7 @@ public class GysahlGreens extends Card {
         CreateTokenEffect bird = new CreateTokenEffect(
                 1, "Bird", 2, 2, CardColor.GREEN, List.of(CardSubtype.BIRD), Set.of(), Set.of(),
                 Map.of(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new BoostSelfEffect(1, 0)));
-        addEffect(EffectSlot.SPELL, bird);
+        addSpellEffect(bird);
         addCastingOption(new FlashbackCast("{6}{G}"));
     }
 }

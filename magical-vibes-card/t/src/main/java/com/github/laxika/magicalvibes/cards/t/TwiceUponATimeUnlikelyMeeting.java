@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.u.UnlikelyMeeting;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
@@ -20,8 +19,8 @@ public class TwiceUponATimeUnlikelyMeeting extends Card {
         addCastingOption(new AdventureCast("{2}{U}"));
         setCastCondition(new ControlsPermanentCount(2,
                 new PermanentHasSubtypePredicate(CardSubtype.DOCTOR)));
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ExileSpellEffect());
     }
 
     @Override

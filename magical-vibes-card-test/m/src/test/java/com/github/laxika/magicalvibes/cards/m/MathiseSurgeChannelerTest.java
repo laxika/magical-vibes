@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.i.Inspiration;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
@@ -101,7 +100,7 @@ class MathiseSurgeChannelerTest extends BaseCardTest {
         xSpell.setName("X Spell");
         xSpell.setType(CardType.SORCERY);
         xSpell.setManaCost("{X}");
-        xSpell.addEffect(EffectSlot.SPELL, new DrawCardEffect(0));
+        xSpell.addSpellEffect(new DrawCardEffect(0));
 
         harness.addToBattlefield(player1, new MathiseSurgeChanneler());
         harness.setHand(player1, List.of(xSpell));

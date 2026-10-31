@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -19,8 +18,8 @@ public class MutualDestruction extends Card {
 
         // As an additional cost to cast this spell, sacrifice a creature.
         // Destroy target creature.
+        addCastingCost(new SacrificeCreatureCost());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new SacrificeCreatureCost())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

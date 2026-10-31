@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,8 +15,8 @@ public class CyclicalEvolution extends Card {
 
     public CyclicalEvolution() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3))
-                .addEffect(EffectSlot.SPELL, new ExileSpellEffect(3));
+                .addSpellEffect(new BoostTargetCreatureEffect(3, 3))
+                .addSpellEffect(new ExileSpellEffect(3));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{G}",

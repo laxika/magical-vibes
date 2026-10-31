@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -38,8 +37,8 @@ public class Lithobraking extends Card {
     );
 
     public Lithobraking() {
-        addEffect(EffectSlot.SPELL, LANDER);
-        addEffect(EffectSlot.SPELL, new MayEffect(
+        addSpellEffect(LANDER);
+        addSpellEffect(new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentIsArtifactPredicate(),
                         new MassDamageEffect(2),

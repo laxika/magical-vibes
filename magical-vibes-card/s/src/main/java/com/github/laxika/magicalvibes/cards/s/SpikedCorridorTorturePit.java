@@ -24,7 +24,7 @@ public class SpikedCorridorTorturePit extends Card {
     public SpikedCorridorTorturePit() {
         setRoomDoorManaCosts(List.of("{3}{R}", "{3}{R}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Spiked Corridor", List.of())
                         .withManaCost("{3}{R}"),
                 new ChooseOneEffect.ChooseOneOption("Torture Pit", List.of())

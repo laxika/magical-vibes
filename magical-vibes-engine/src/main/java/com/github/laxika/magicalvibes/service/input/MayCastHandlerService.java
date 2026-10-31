@@ -205,7 +205,7 @@ public class MayCastHandlerService {
             }
 
             List<CardEffect> spellEffects = permanentSpell(card)
-                    ? List.of() : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+                    ? List.of() : new ArrayList<>(card.getCastingCostsAndSpellEffects());
             if (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card)) {
                 List<UUID> validTargets = buildValidSpellTargets(
                         gameData, card, spellEffects, playerId, 0, false);
@@ -253,7 +253,7 @@ public class MayCastHandlerService {
      * zero targets even when no card in a graveyard can be chosen.
      */
     private static boolean choosesUpToZeroGraveyardTargets(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .anyMatch(effect -> effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                         && returnEffect.minTargets() == 0 && !returnEffect.xScaled());
     }
@@ -336,7 +336,7 @@ public class MayCastHandlerService {
             return;
         }
         Card card = deck.removeFirst().createRuntimeCopy();
-        List<CardEffect> chosenEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> chosenEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         spellCastingService.prepareModalSpellCast(gameData, player.getId(), card, chosenEffects, mode, false);
         if (castFromLibraryWithoutPaying(gameData, player, card, chosenEffects)) {
             return;
@@ -355,7 +355,7 @@ public class MayCastHandlerService {
     }
 
     private static ChooseOneEffect singleChoiceModal(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
                 .filter(modal -> modal.choicesRequired() == 1 && !modal.modesMayRepeat())
                 .findFirst().orElse(null);
@@ -378,7 +378,7 @@ public class MayCastHandlerService {
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
                 : chosenEffects != null ? chosenEffects
-                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects());
 
         if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
             // Targeted spell — need to choose target before putting on stack
@@ -555,9 +555,8 @@ public class MayCastHandlerService {
                     || cardToPlay.hasType(CardType.ENCHANTMENT)
                     || cardToPlay.hasType(CardType.PLANESWALKER);
             List<CardEffect> spellEffects = isPermanentSpell
-                    ? cardToPlay.getEffects(EffectSlot.SPELL).stream()
-                            .filter(com.github.laxika.magicalvibes.model.effect.CostEffect.class::isInstance).toList()
-                    : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
+                    ? new ArrayList<CardEffect>(cardToPlay.getCastingCosts())
+                    : new ArrayList<>(cardToPlay.getCastingCostsAndSpellEffects());
 
             if (EffectResolution.needsTarget(cardToPlay) || EffectResolution.needsSpellTarget(cardToPlay)) {
                 // Targeted spell — need to choose target before putting on stack
@@ -651,7 +650,7 @@ public class MayCastHandlerService {
                 || card.hasType(CardType.PLANESWALKER);
         List<CardEffect> spellEffects = permanentSpell
                 ? List.of()
-                : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(card.getCastingCostsAndSpellEffects());
         if (!canPayFreeCastCreatureSacrifice(gameData, player, spellEffects)) {
             return false;
         }
@@ -700,7 +699,7 @@ public class MayCastHandlerService {
                 || card.hasType(CardType.PLANESWALKER);
         List<CardEffect> spellEffects = permanentSpell
                 ? List.of()
-                : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(card.getCastingCostsAndSpellEffects());
 
         if (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card)) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects, player.getId());
@@ -1013,7 +1012,7 @@ public class MayCastHandlerService {
                 } else {
                     boolean isPermanentSpell = permanentSpell(cardToCast);
                     List<CardEffect> spellEffects = isPermanentSpell
-                            ? List.of() : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                            ? List.of() : new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects());
                     StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
 
                     if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
@@ -1239,7 +1238,7 @@ public class MayCastHandlerService {
                 || spellCard.hasType(CardType.BATTLE);
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
-                : new ArrayList<>(spellCard.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(spellCard.getCastingCostsAndSpellEffects());
         String tieredManaCost = "";
         if (modal != null) {
             Card modalCard = cardToCast.createRuntimeCopy();
@@ -1439,7 +1438,7 @@ public class MayCastHandlerService {
                 || cardToCast.hasType(CardType.BATTLE);
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
-                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects());
 
         if (EffectResolution.needsTarget(cardToCast)) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
@@ -1562,7 +1561,7 @@ public class MayCastHandlerService {
         // A mandatory additional cast cost (sacrifice a permanent or discard a card) is part of the total
         // cost even when the mana cost is not paid (CR 601.2f), and it must be paid (CR 601.2h). This path can't take that
         // payment, so the card stays where it is rather than being cast with the cost skipped.
-        if (cardToPlay.getEffects(EffectSlot.SPELL).stream()
+        if (cardToPlay.getCastingCosts().stream()
                 .anyMatch(effect -> effect instanceof SacrificePermanentOrDiscardCardCost
                         || effect instanceof DiscardCardTypeCost)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
@@ -1641,7 +1640,7 @@ public class MayCastHandlerService {
                 || cardToPlay.hasType(CardType.BATTLE);
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
-                : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(cardToPlay.getCastingCostsAndSpellEffects());
 
         if (EffectResolution.needsTarget(cardToPlay) || EffectResolution.needsSpellTarget(cardToPlay)) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, cardToPlay, spellEffects, player.getId());
@@ -1852,7 +1851,7 @@ public class MayCastHandlerService {
         ManaCost cost = new ManaCost(costStr);
         ManaPool pool = gameData.playerManaPools.get(player.getId());
 
-        List<CardEffect> miracleSpellEffects = cardToCast.getEffects(EffectSlot.SPELL);
+        List<CardEffect> miracleSpellEffects = cardToCast.getCastingCostsAndSpellEffects();
         if (!cost.hasX()
                 && (EffectResolution.needsSpellCastTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
                 && buildValidSpellTargets(gameData, cardToCast, miracleSpellEffects, player.getId(), 0, false)
@@ -1924,7 +1923,7 @@ public class MayCastHandlerService {
      * never exceeds the number of legal targets. Unbounded for every other spell.
      */
     private int xScaledGraveyardTargetCap(GameData gameData, UUID playerId, Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                     && returnEffect.xScaled()) {
                 return (int) gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
@@ -2019,7 +2018,7 @@ public class MayCastHandlerService {
     }
 
     private boolean hasOnlyOptionalDeclaredTargets(Card card, int xValue) {
-        return !card.isAura() && !card.getSpellTargets().isEmpty()
+        return !card.isAura() && !card.getTargetGroups().isEmpty()
                 && !card.hasDynamicTargetCount() && card.getEffectiveMinTargets(xValue) == 0;
     }
 
@@ -2108,7 +2107,7 @@ public class MayCastHandlerService {
             return;
         }
         List<CardEffect> madnessEffects = cardToCast.hasType(CardType.INSTANT) || cardToCast.hasType(CardType.SORCERY)
-                ? cardToCast.getEffects(EffectSlot.SPELL) : List.of();
+                ? cardToCast.getCastingCostsAndSpellEffects() : List.of();
         if ((cardToCast.hasType(CardType.INSTANT) || cardToCast.hasType(CardType.SORCERY) || cardToCast.isAura())
                 && (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
                 && !hasOnlyOptionalDeclaredTargets(cardToCast, 0)
@@ -2356,7 +2355,7 @@ public class MayCastHandlerService {
                 || cardToCast.hasType(CardType.PLANESWALKER);
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
-                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects());
 
         if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
@@ -2534,7 +2533,7 @@ public class MayCastHandlerService {
 
         if (!cardToCast.isAura() && cardToCast.getEffectiveMinTargets(0) > 0
                 && buildValidSpellTargets(gameData, cardToCast,
-                new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL)), player.getId(), 0, false).isEmpty()) {
+                new ArrayList<>(cardToCast.getCastingCostsAndSpellEffects()), player.getId(), 0, false).isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " has no legal targets and remains in hand."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2778,7 +2777,7 @@ public class MayCastHandlerService {
         boolean splitCard = SplitCardCastSupport.isSplitCard(cardToCast);
         if (!splitCard && !choosesUpToZeroGraveyardTargets(cardToCast)
                 && (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
-                && buildValidSpellTargets(gameData, cardToCast, cardToCast.getEffects(EffectSlot.SPELL),
+                && buildValidSpellTargets(gameData, cardToCast, cardToCast.getCastingCostsAndSpellEffects(),
                 player.getId(), 0, false).isEmpty()) {
             queueDeclineEffect(gameData, ability);
             if (scryIfDeclined) queueScryFallback(gameData);
@@ -3041,7 +3040,7 @@ public class MayCastHandlerService {
                 || card.hasType(CardType.PLANESWALKER);
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
-                : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+                : new ArrayList<>(card.getCastingCostsAndSpellEffects());
 
         com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect xScaledGraveyardReturn =
                 spellEffects.stream()

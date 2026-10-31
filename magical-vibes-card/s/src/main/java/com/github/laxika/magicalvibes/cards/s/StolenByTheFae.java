@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -29,8 +28,8 @@ public class StolenByTheFae extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureWithManaValueX,
                 "Target must be a creature with mana value X."
-        )).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target(creatureWithManaValueX));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        )).addSpellEffect(ReturnToHandEffect.target(creatureWithManaValueX));
+        addSpellEffect(new CreateTokenEffect(
                 new XValue(), "Faerie", 1, 1, CardColor.BLUE,
                 List.of(CardSubtype.FAERIE), Set.of(Keyword.FLYING), Set.of()));
     }

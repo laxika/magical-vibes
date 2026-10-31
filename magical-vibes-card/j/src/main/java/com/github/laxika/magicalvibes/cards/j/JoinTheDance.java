@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -20,7 +19,7 @@ public class JoinTheDance extends Card {
 
     public JoinTheDance() {
         // Create two 1/1 white Human creature tokens.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Human", 1, 1,
+        addSpellEffect(new CreateTokenEffect(2, "Human", 1, 1,
                 CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of()));
         // Flashback {3}{G}{W}
         addCastingOption(new FlashbackCast("{3}{G}{W}"));

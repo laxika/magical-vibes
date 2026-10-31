@@ -16,6 +16,6 @@ public class DemonicDread extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
 
         // Target creature can't block this turn (target declared by the effect's own targetSpec()).
-        addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+        addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
     }
 }

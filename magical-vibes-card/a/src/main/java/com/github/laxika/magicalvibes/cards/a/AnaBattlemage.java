@@ -32,7 +32,7 @@ public class AnaBattlemage extends Card {
 
     public AnaBattlemage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{B}"), true, 1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{B}"), true, 1));
 
         targetWhenKicked(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

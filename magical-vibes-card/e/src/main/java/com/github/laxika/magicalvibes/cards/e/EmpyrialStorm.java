@@ -21,7 +21,7 @@ public class EmpyrialStorm extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForEachCommanderCastEffect(false));
 
         // Create a 4/4 white Angel creature token with flying.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Angel", 4, 4, CardColor.WHITE, List.of(CardSubtype.ANGEL),
                 Set.of(Keyword.FLYING), Set.of()));
     }

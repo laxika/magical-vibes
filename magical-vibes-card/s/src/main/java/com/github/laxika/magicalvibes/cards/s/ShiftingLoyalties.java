@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -15,8 +14,7 @@ public class ShiftingLoyalties extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.SHARE_CARD_TYPE);
         target(TargetFilters.permanent());
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL,
-                        ExchangeControlOfTargetPermanentsEffect.withSharedCardType(
+                .addSpellEffect(ExchangeControlOfTargetPermanentsEffect.withSharedCardType(
                                 new PermanentTruePredicate()));
     }
 }

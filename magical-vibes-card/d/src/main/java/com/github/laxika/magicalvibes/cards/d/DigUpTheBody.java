@@ -18,9 +18,9 @@ public class DigUpTheBody extends Card {
 
     public DigUpTheBody() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(1));
-        addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new MayEffect(
+        addCastingCost(new CasualtyCost(1));
+        addSpellEffect(new MillEffect(2, MillRecipient.CONTROLLER));
+        addSpellEffect(new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))

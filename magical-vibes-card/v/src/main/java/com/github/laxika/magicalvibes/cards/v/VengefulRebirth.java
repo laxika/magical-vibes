@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -28,14 +27,14 @@ public class VengefulRebirth extends Card {
     public VengefulRebirth() {
         // Return target card from your graveyard to your hand (any card). The graveyard card is the
         // entry's targetId (targetZone GRAVEYARD); the any target below is group 0 (targetIds).
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .targetGraveyard(true)
                 .build());
 
         // If you return a nonland card to your hand this way, record its mana value as the event
         // value. Unbound so the resolver keeps targetId on the returned graveyard card.
-        addEffect(EffectSlot.SPELL, new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.NONLAND_MANA_VALUE));
+        addSpellEffect(new RecordReturnedGraveyardCardValueEffect(ReturnedGraveyardCardValue.NONLAND_MANA_VALUE));
 
         // ... Vengeful Rebirth deals damage equal to that card's mana value to any target. Bound to
         // the any-target group (group 0) so the position accepts players and the AI reads it as
@@ -47,9 +46,9 @@ public class VengefulRebirth extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new EventValue(), false, false, 0));
+        )).addSpellEffect(new DealDamageToAnyTargetEffect(new EventValue(), false, false, 0));
 
         // Exile Vengeful Rebirth.
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

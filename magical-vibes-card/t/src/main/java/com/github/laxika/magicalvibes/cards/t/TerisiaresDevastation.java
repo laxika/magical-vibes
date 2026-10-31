@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -18,11 +17,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class TerisiaresDevastation extends Card {
 
     public TerisiaresDevastation() {
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofPowerstoneToken(new XValue()));
+        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addSpellEffect(CreateTokenEffect.ofPowerstoneToken(new XValue()));
 
         // All creatures get -1/-1 until end of turn for each artifact you control.
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(
+        addSpellEffect(new BoostAllCreaturesEffect(
                 new Scaled(new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER), -1),
                 new Scaled(new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER), -1)));
     }

@@ -17,8 +17,8 @@ public class ProtectTheNegotiators extends Card {
 
     public ProtectTheNegotiators() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(1)));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(
+        addSpellEffect(new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(1)));
+        addSpellEffect(new CounterUnlessPaysEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }
 }

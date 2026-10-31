@@ -24,8 +24,8 @@ public class RadiantSmite extends Card {
                         new PermanentPowerAtLeastPredicate(4)
                 )),
                 "Target must be a creature with power 4 or greater"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(
                 new ControllerWasNotStartingPlayer(), new GainLifeEffect(4)));
 
         addCycling("{W}");

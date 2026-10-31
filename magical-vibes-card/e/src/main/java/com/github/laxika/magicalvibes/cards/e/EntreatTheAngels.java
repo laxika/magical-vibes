@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -25,8 +24,7 @@ public class EntreatTheAngels extends Card {
         addCastingOption(new MiracleCast("{X}{W}{W}"));
 
         // Create X 4/4 white Angel creature tokens with flying.
-        addEffect(EffectSlot.SPELL,
-                new CreateTokenEffect(new XValue(), "Angel", 4, 4,
+        addSpellEffect(new CreateTokenEffect(new XValue(), "Angel", 4, 4,
                         CardColor.WHITE, List.of(CardSubtype.ANGEL),
                         Set.of(Keyword.FLYING), Set.of()));
     }

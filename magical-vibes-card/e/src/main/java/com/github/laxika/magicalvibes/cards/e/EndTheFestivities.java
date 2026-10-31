@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -30,8 +29,7 @@ public class EndTheFestivities extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
 
-        addSimultaneousEffects(EffectSlot.SPELL,
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+        addSimultaneousSpellEffects(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
                 new MassDamageEffect(1, false, false, true, opponentCreatureOrPlaneswalker)
                         .withFilterAppliedToPlaneswalkers());
     }

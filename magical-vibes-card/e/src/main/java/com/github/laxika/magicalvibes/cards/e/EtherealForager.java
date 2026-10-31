@@ -20,7 +20,7 @@ public class EtherealForager extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.SPELL, new DelveCost());
+        addCastingCost(new DelveCost());
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new PutCardExiledWithSourceIntoHandEffect(null, instantOrSorcery, true),
                 "Return an instant or sorcery card exiled with Ethereal Forager to its owner's hand?"));

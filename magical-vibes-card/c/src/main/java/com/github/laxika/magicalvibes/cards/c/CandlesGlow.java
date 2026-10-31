@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 public class CandlesGlow extends Card {
 
     public CandlesGlow() {
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.nextToTargetAndGainLife(3));
+        addSpellEffect(PreventDamageEffect.nextToTargetAndGainLife(3));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{W}"));
     }
 }

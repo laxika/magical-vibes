@@ -51,7 +51,7 @@ public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWith
                 tokenCopy, false, removeLegendary, colorOverride);
     }
 
-    /** No-filter form — used by spells like Twincast where the filter is on the Card's SpellTarget. */
+    /** No-filter form — used by spells like Twincast where the filter is on the Card's TargetGroup. */
     public CopySpellEffect() { this(null, false, false, false, false, false, false, null); }
 
     /** Filter-only form — used by ETB copy triggers like Naru Meha. */

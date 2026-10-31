@@ -17,8 +17,8 @@ import java.util.Set;
 public class MakeMischief extends Card {
 
     public MakeMischief() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(new CreateTokenEffect(
                 1, "Devil", 1, 1, CardColor.RED,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(),
                 Map.of(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1))

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 public class ExpansionAlgorithm extends Card {
 
     public ExpansionAlgorithm() {
-        addEffect(EffectSlot.SPELL, new ProliferateEffect(new XValue()));
+        addSpellEffect(new ProliferateEffect(new XValue()));
     }
 }

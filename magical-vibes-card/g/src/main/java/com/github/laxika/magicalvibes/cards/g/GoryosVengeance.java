@@ -21,7 +21,7 @@ import java.util.List;
 public class GoryosVengeance extends Card {
 
     public GoryosVengeance() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.LEGENDARY),

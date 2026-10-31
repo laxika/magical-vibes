@@ -29,8 +29,6 @@ class GrantedAbilitiesTest {
 
     @Test
     void aSlotAndAnEffectStandForTheAbilityOfTheirKind() {
-        assertThat(LegacySlots.ability(EffectSlot.SPELL, DRAW_ONE))
-                .isEqualTo(new SpellAbility(List.of(new EffectRegistration(DRAW_ONE))));
         assertThat(LegacySlots.ability(EffectSlot.STATIC, DRAW_ONE)).isEqualTo(new StaticAbility(List.of(DRAW_ONE)));
         assertThat(LegacySlots.ability(EffectSlot.COMMAND_ZONE_STATIC, DRAW_ONE))
                 .isEqualTo(new StaticAbility(List.of(DRAW_ONE), AbilityZones.COMMAND));
@@ -38,8 +36,7 @@ class GrantedAbilitiesTest {
         assertThat(death).isInstanceOf(TriggeredAbility.class);
         assertThat(((TriggeredAbility) death).conditions().getFirst().trigger())
                 .isEqualTo(new LegacySlotTrigger(EffectSlot.ON_DEATH));
-        for (EffectSlot slot : List.of(EffectSlot.SPELL, EffectSlot.STATIC, EffectSlot.COMMAND_ZONE_STATIC,
-                EffectSlot.ON_DEATH)) {
+        for (EffectSlot slot : List.of(EffectSlot.STATIC, EffectSlot.COMMAND_ZONE_STATIC, EffectSlot.ON_DEATH)) {
             Ability ability = LegacySlots.ability(slot, DRAW_ONE);
             assertThat(LegacySlots.slotOf(ability)).isEqualTo(slot);
             assertThat(LegacySlots.effectsOf(ability)).containsExactly(DRAW_ONE);
@@ -50,6 +47,14 @@ class GrantedAbilitiesTest {
     void anOptionalGrantWithoutAnEffectIsNoAbility() {
         assertThat(LegacySlots.grant(null, null)).isNull();
         assertThat(LegacySlots.grant(EffectSlot.ON_DEATH, null)).isNull();
+    }
+
+    @Test
+    void aSpellAbilityIsInNoSlot() {
+        SpellAbility spell = new SpellAbility(List.of(new EffectRegistration(DRAW_ONE)));
+
+        assertThat(LegacySlots.slotOf(spell)).isNull();
+        assertThat(LegacySlots.effectsOf(spell)).containsExactly(DRAW_ONE);
     }
 
     @Test
@@ -84,12 +89,12 @@ class GrantedAbilitiesTest {
     @Test
     void anAddedAbilityJoinsTheCardsSlotViews() {
         Card card = new Card();
-        card.addEffect(EffectSlot.SPELL, DRAW_ONE);
+        card.addSpellEffect(DRAW_ONE);
 
-        card.addAbility(LegacySlots.ability(EffectSlot.SPELL, DRAW_TWO));
+        card.addAbility(new SpellAbility(List.of(new EffectRegistration(DRAW_TWO))));
         card.addAbility(LegacySlots.ability(EffectSlot.STATIC, GAIN_ONE));
 
-        assertThat(card.getEffects(EffectSlot.SPELL)).containsExactly(DRAW_ONE, DRAW_TWO);
+        assertThat(card.getSpellEffects()).containsExactly(DRAW_ONE, DRAW_TWO);
         assertThat(card.getAbilities()).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC)).containsExactly(GAIN_ONE);
     }

@@ -30,8 +30,8 @@ public class TributeToUrborg extends Card {
                 CountScope.CONTROLLER);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-2, -2))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new BoostTargetCreatureEffect(-2, -2))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new BoostTargetCreatureEffect(
                                 new Scaled(instantOrSorceryCount, -1),
                                 new Scaled(instantOrSorceryCount, -1))));

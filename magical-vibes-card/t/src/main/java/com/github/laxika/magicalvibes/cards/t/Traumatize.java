@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -16,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Traumatize extends Card {
 
     public Traumatize() {
-        addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
+        addSpellEffect(new MillHalfLibraryEffect(false));
     }
 }

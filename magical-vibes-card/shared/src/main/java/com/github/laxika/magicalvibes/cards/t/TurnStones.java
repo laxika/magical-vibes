@@ -17,7 +17,7 @@ import java.util.Set;
 public class TurnStones extends Card {
 
     public TurnStones() {
-        addEffect(EffectSlot.SPELL, new CreateTokensForEachOpponentEffect(new CreateTokenEffect(
+        addSpellEffect(new CreateTokensForEachOpponentEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(), false, false,

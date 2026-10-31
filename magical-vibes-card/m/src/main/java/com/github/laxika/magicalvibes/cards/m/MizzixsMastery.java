@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
@@ -33,11 +32,11 @@ public class MizzixsMastery extends Card {
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
 
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{R}{R}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new ExileTargetCardFromGraveyardAndMayCastCopyEffect(instantOrSorcery, ownGraveyard),
                 new ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect()));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, ownGraveyard));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

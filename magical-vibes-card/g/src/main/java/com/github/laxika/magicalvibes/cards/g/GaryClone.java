@@ -16,7 +16,7 @@ import java.util.List;
 public class GaryClone extends Card {
 
     public GaryClone() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
         addEffect(EffectSlot.ON_ATTACK,

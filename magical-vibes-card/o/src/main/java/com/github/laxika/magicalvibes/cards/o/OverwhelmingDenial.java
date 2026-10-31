@@ -21,6 +21,6 @@ public class OverwhelmingDenial extends Card {
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()),
                 false));
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,7 +26,7 @@ public class DarkOffering extends Card {
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
                 )),
                 "Target must be a nonblack creature."
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(false));
+        addSpellEffect(new GainLifeEffect(3));
     }
 }

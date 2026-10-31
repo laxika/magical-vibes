@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -23,7 +22,7 @@ public class VanquishTheFoul extends Card {
                 )),
                 "Target must be a creature with power 4 or greater"
         ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false));
-        addEffect(EffectSlot.SPELL, new ScryEffect(1));
+        addSpellEffect(new DestroyTargetPermanentEffect(false));
+        addSpellEffect(new ScryEffect(1));
     }
 }

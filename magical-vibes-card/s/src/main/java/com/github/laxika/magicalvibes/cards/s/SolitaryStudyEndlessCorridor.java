@@ -26,7 +26,7 @@ public class SolitaryStudyEndlessCorridor extends Card {
     public SolitaryStudyEndlessCorridor() {
         setRoomDoorManaCosts(List.of("{1}{W}", "{1}{W}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Solitary Study", List.of())
                         .withManaCost("{1}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Endless Corridor", List.of())

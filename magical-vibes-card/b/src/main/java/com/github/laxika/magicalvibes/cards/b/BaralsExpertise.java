@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -25,8 +24,8 @@ public class BaralsExpertise extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 "Target must be an artifact or creature"), 0, 3)
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
+                .addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
                 new CardMaxManaValuePredicate(4)));
     }
 }

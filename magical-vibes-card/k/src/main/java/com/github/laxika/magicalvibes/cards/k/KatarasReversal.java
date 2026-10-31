@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterEachTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -42,8 +41,8 @@ public class KatarasReversal extends Card {
                 "Target must be an artifact or creature.");
 
         target(spellOrAbility, 0, 4)
-                .addEffect(EffectSlot.SPELL, new CounterEachTargetSpellEffect());
+                .addSpellEffect(new CounterEachTargetSpellEffect());
         target(artifactOrCreature, 0, 4)
-                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

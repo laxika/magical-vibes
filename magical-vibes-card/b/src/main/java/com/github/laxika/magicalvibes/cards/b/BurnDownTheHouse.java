@@ -25,7 +25,7 @@ public class BurnDownTheHouse extends Card {
         Map<EffectSlot, CardEffect> tokenEffects =
                 Map.of(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Burn Down the House deals 5 damage to each creature and each planeswalker",
                         new MassDamageEffect(5, false, false, true, null)),

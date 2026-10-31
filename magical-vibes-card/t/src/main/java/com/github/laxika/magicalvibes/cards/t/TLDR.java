@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TLDR extends Card {
 
     public TLDR() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(
+        target(TargetFilters.creature()).addSpellEffect(new ConditionalEffect(
                         new NotCondition(new TargetPermanentMatches(
                                 new PermanentHasNoNonKeywordAbilitiesPredicate())),
                         new ExileTargetPermanentEffect()));

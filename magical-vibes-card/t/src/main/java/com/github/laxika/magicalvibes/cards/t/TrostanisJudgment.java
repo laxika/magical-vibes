@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +17,7 @@ public class TrostanisJudgment extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
         ))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new PopulateEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect());
+        addSpellEffect(new PopulateEffect());
     }
 }

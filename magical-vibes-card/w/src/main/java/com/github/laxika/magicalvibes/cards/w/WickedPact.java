@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,10 +25,10 @@ public class WickedPact extends Card {
         // differ. One effect bound to both groups destroys them at the same time.
         DestroyTargetPermanentEffect destroy = new DestroyTargetPermanentEffect();
         target(nonblackCreatureFilter("First target must be a nonblack creature"))
-                .addEffect(EffectSlot.SPELL, destroy);
+                .addSpellEffect(destroy);
         target(nonblackCreatureFilter("Second target must be a nonblack creature")).bindEffect(destroy);
 
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(5));
+        addSpellEffect(new LoseLifeEffect(5));
     }
 
     private static PermanentPredicateTargetFilter nonblackCreatureFilter(String description) {

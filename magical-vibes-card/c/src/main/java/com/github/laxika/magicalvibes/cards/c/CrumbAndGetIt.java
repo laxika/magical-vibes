@@ -26,10 +26,10 @@ public class CrumbAndGetIt extends Card {
     public CrumbAndGetIt() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         TargetOpponentCreatesTokenEffect.gift(foodToken())))
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)));
     }
 

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndSameNameFromHandIfGodEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,6 +10,6 @@ public class HourOfGlory extends Card {
 
     public HourOfGlory() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ExileTargetCreatureAndSameNameFromHandIfGodEffect());
+                .addSpellEffect(new ExileTargetCreatureAndSameNameFromHandIfGodEffect());
     }
 }

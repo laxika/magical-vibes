@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
@@ -22,13 +21,13 @@ public class Abeyance extends Card {
         ));
 
         // Until end of turn, target player can't cast instant or sorcery spells, ...
-        addEffect(EffectSlot.SPELL, new TargetPlayerCantCastSpellTypesThisTurnEffect(
+        addSpellEffect(new TargetPlayerCantCastSpellTypesThisTurnEffect(
                 Set.of(CardType.INSTANT, CardType.SORCERY)));
 
         // ... and that player can't activate abilities that aren't mana abilities.
-        addEffect(EffectSlot.SPELL, new TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect());
+        addSpellEffect(new TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect());
 
         // Draw a card.
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -12,7 +11,7 @@ public class GoneMissing extends Card {
 
     public GoneMissing() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect())
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+                .addSpellEffect(new PutTargetOnTopOfLibraryEffect())
+                .addSpellEffect(CreateTokenEffect.ofClueToken(1));
     }
 }

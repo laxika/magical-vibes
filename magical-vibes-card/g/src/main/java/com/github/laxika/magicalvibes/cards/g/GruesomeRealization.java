@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -18,7 +17,7 @@ public class GruesomeRealization extends Card {
     public GruesomeRealization() {
         var opponentCreatures = new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate());
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "You draw two cards and you lose 2 life",
                         List.of(new DrawCardEffect(2), new LoseLifeEffect(2))),

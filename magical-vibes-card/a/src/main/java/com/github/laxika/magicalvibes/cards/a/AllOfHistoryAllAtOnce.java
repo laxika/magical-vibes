@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 public class AllOfHistoryAllAtOnce extends Card {
 
     public AllOfHistoryAllAtOnce() {
-        addEffect(EffectSlot.SPELL, new TimeTravelEffect(1));
+        addSpellEffect(new TimeTravelEffect(1));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

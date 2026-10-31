@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -23,7 +22,7 @@ public class MidnightCharm extends Card {
         var creatureTarget = new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature.");
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Midnight Charm deals 1 damage to target creature and you gain 1 life",
                         List.of(new DealDamageToTargetCreatureEffect(1), new GainLifeEffect(1)),

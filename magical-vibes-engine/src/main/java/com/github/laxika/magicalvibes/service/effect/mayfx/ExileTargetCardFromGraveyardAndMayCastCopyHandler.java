@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -142,7 +141,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
     }
 
     private static ChooseOneEffect singleChoiceModal(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
                 .filter(modal -> modal.choicesRequired() == 1 && !modal.modesMayRepeat())
                 .findFirst().orElse(null);
@@ -167,7 +166,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
                           ExileTargetCardFromGraveyardAndMayCastCopyEffect effect, int xValue) {
         Card copy = ability.sourceCard();
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(copy);
-        List<CardEffect> spellEffects = new ArrayList<>(copy.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(copy.getCastingCostsAndSpellEffects());
         if (EffectResolution.needsTarget(copy) || EffectResolution.needsSpellTarget(spellEffects)) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(
                     gameData, copy, player.getId());

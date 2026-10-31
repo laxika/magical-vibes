@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -19,7 +18,6 @@ public class VoicesFromTheVoid extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ));
-        addEffect(EffectSlot.SPELL,
-                new DiscardEffect(new BasicLandTypesAmongControlledLands(), DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(new BasicLandTypesAmongControlledLands(), DiscardRecipient.TARGET_PLAYER));
     }
 }

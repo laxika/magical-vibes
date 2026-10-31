@@ -17,7 +17,7 @@ public class SanguineIndulgence extends Card {
     public SanguineIndulgence() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new GainedLifeThisTurn(3), new ReduceOwnCastCostEffect(new Fixed(3))));
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                 new CardTypePredicate(CardType.CREATURE), 2));
     }
 }

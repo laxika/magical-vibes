@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 public class BoardTheWeatherlight extends Card {
 
     public BoardTheWeatherlight() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(5, new CardIsHistoricPredicate()));
+        addSpellEffect(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(5, new CardIsHistoricPredicate()));
     }
 }

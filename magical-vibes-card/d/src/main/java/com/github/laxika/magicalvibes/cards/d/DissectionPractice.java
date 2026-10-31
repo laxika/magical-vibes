@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -21,12 +20,12 @@ public class DissectionPractice extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(1));
+                .addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+        addSpellEffect(new GainLifeEffect(1));
 
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 1));
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, -1));
+                .addSpellEffect(new BoostTargetCreatureEffect(-1, -1));
     }
 }

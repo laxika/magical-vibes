@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class DeathSpark extends Card {
 
     public DeathSpark() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(new DealDamageToAnyTargetEffect(1));
 
         // At the beginning of your upkeep, if this card is in your graveyard with a creature card
         // directly above it, you may pay {1}. If you do, return this card to your hand.

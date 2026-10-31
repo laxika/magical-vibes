@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffect;
@@ -26,7 +25,7 @@ public class DisplayOfDominance extends Card {
         PermanentPredicate blueOrBlackNoncreature = new PermanentAllOfPredicate(List.of(
                 new PermanentColorInPredicate(colors),
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate())));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target blue or black noncreature permanent",
                         new DestroyTargetPermanentEffect(),

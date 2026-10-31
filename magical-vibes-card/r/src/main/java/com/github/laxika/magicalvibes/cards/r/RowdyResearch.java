@@ -18,6 +18,6 @@ public class RowdyResearch extends Card {
                 new ReduceOwnCastCostEffect(new CreaturesAttackedThisTurn(CountScope.ANY_PLAYER)));
 
         // Draw three cards.
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
+        addSpellEffect(new DrawCardEffect(3));
     }
 }

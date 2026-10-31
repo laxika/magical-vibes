@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -13,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveControllerRadCountersEffe
 public class ContaminatedDrink extends Card {
 
     public ContaminatedDrink() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new XValue()));
-        addEffect(EffectSlot.SPELL,
-                new GiveControllerRadCountersEffect(new HalvedRoundedUp(new XValue())));
+        addSpellEffect(new DrawCardEffect(new XValue()));
+        addSpellEffect(new GiveControllerRadCountersEffect(new HalvedRoundedUp(new XValue())));
     }
 }

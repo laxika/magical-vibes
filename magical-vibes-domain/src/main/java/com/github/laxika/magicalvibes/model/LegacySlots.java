@@ -21,14 +21,12 @@ public final class LegacySlots {
     }
 
     /**
-     * The ability that {@code effect} in {@code slot} stands for: a {@link SpellAbility} for
-     * {@code SPELL}, a {@link StaticAbility} of the battlefield or the command zone for {@code STATIC}
-     * and {@code COMMAND_ZONE_STATIC}, and otherwise a {@link TriggeredAbility} with a
-     * {@link LegacySlotTrigger}.
+     * The ability that {@code effect} in {@code slot} stands for: a {@link StaticAbility} of the
+     * battlefield or the command zone for {@code STATIC} and {@code COMMAND_ZONE_STATIC}, and otherwise a
+     * {@link TriggeredAbility} with a {@link LegacySlotTrigger}.
      */
     public static Ability ability(EffectSlot slot, CardEffect effect) {
         return switch (slot) {
-            case SPELL -> new SpellAbility(List.of(new EffectRegistration(effect)));
             case STATIC -> new StaticAbility(List.of(effect));
             case COMMAND_ZONE_STATIC -> new StaticAbility(List.of(effect), AbilityZones.COMMAND);
             default -> triggered(slot, effect);
@@ -75,26 +73,16 @@ public final class LegacySlots {
             List<EffectRegistration> group = new ArrayList<>();
             for (EffectRegistration registration : registrations) {
                 if (!registration.simultaneousWithPrevious() && !group.isEmpty()) {
-                    abilities.add(ability(slot, group));
+                    abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
                     group = new ArrayList<>();
                 }
                 group.add(registration);
             }
             if (!group.isEmpty()) {
-                abilities.add(ability(slot, group));
+                abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
             }
         });
         return List.copyOf(abilities);
-    }
-
-    private static Ability ability(EffectSlot slot, List<EffectRegistration> group) {
-        return switch (slot) {
-            case SPELL -> new SpellAbility(group.stream()
-                    .map(registration -> new EffectRegistration(registration.effect(), TriggerMode.NORMAL,
-                            registration.simultaneousWithPrevious()))
-                    .toList());
-            default -> new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group);
-        };
     }
 
     /** The triggered ability that {@code effect} in the trigger slot {@code slot} stands for. */
@@ -104,12 +92,12 @@ public final class LegacySlots {
     }
 
     /**
-     * The slot whose views show {@code ability}: {@code SPELL}, {@code STATIC} or
-     * {@code COMMAND_ZONE_STATIC}, or a triggered ability's legacy slot.
+     * The slot whose views show {@code ability}: {@code STATIC} or {@code COMMAND_ZONE_STATIC}, or a
+     * triggered ability's legacy slot. A spell ability has left the slots, so it has none ({@code null}).
      */
     public static EffectSlot slotOf(Ability ability) {
         return switch (ability) {
-            case SpellAbility spell -> EffectSlot.SPELL;
+            case SpellAbility spell -> null;
             case StaticAbility statik -> statik.zones().functionsIn(Zone.COMMAND)
                     ? EffectSlot.COMMAND_ZONE_STATIC
                     : EffectSlot.STATIC;

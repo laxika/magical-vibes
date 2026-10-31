@@ -13,7 +13,7 @@ public class StormOfForms extends Card {
 
     public StormOfForms() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForEachCounterKindEffect());
     }
 }

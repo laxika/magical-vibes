@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -128,6 +127,6 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
         }
         return copies.stream().noneMatch(copy -> EffectResolution.needsTarget(copy)
                 || EffectResolution.needsSpellTarget(copy)
-                || copy.getEffects(EffectSlot.SPELL).stream().anyMatch(ChooseOneEffect.class::isInstance));
+                || copy.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance));
     }
 }

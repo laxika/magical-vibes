@@ -28,6 +28,6 @@ public class GeistlightSnare extends Card {
                 new ControlsPermanent(new PermanentIsEnchantmentPredicate()),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         // Counter target spell unless its controller pays {3}.
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(3));
+        addSpellEffect(new CounterUnlessPaysEffect(3));
     }
 }

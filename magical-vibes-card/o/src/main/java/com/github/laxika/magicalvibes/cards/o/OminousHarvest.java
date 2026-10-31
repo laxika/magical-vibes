@@ -20,8 +20,8 @@ public class OminousHarvest extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(1, false, true))
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))
+                .addSpellEffect(new DrawCardForTargetPlayerEffect(1, false, true))
+                .addSpellEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))
                 .addEffect(EffectSlot.ON_SELF_CAST, new GravestormEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RancidEarth extends Card {
 
     public RancidEarth() {
-        target(TargetFilters.land()).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(TargetFilters.land()).addSpellEffect(new ConditionalReplacementEffect(
                 new GraveyardCardThreshold(7, null), new DestroyTargetPermanentEffect(),
                 SequenceEffect.of(new DestroyTargetPermanentEffect(), new MassDamageEffect(1, true))));
     }

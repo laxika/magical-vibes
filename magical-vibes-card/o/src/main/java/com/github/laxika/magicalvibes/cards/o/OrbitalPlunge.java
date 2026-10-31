@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -36,7 +35,7 @@ public class OrbitalPlunge extends Card {
     );
 
     public OrbitalPlunge() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(6));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new EventValueAtLeast(1), LANDER));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(6));
+        addSpellEffect(new ConditionalEffect(new EventValueAtLeast(1), LANDER));
     }
 }

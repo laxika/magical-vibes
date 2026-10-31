@@ -16,9 +16,8 @@ public class PlumbTheForbidden extends Card {
 
     public PlumbTheForbidden() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForXValueEffect());
-        addEffect(EffectSlot.SPELL,
-                new SacrificeAnyNumberOfPermanentsCost(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(1));
+        addCastingCost(new SacrificeAnyNumberOfPermanentsCost(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new DrawCardEffect());
+        addSpellEffect(new LoseLifeEffect(1));
     }
 }

@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class DecreeOfPain extends Card {
 
     public DecreeOfPain() {
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(
+        addSpellEffect(new DestroyAllPermanentsEffect(
                 new PermanentIsCreaturePredicate(),
                 true,
                 EachPermanentScope.ALL_PLAYERS,

@@ -32,16 +32,15 @@ public class PerchProtection extends Card {
         targetWhenGiftPromised(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        ), 0, 1, 1).addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new GiftPromised(), new ExtraTurnEffect(1)));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(4, "Bird", 2, 2,
+        ), 0, 1, 1).addSpellEffect(new ConditionalEffect(new GiftPromised(), new ExtraTurnEffect(1)));
+        addSpellEffect(new CreateTokenEffect(4, "Bird", 2, 2,
                 CardColor.BLUE, List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new PhaseOutPermanentsEffect(new PermanentTruePredicate(), true)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new LifeTotalCantChangeUntilNextTurnEffect()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new GrantProtectionFromEverythingUntilNextTurnEffect()));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

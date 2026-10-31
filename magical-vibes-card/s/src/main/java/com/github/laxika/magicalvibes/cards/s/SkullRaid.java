@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsThenControllerDrawsShortfallEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,8 +15,7 @@ public class SkullRaid extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL,
-                        new TargetPlayerDiscardsThenControllerDrawsShortfallEffect(2));
+                .addSpellEffect(new TargetPlayerDiscardsThenControllerDrawsShortfallEffect(2));
         addCastingOption(new ForetellCast("{1}{B}"));
     }
 }

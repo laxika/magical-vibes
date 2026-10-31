@@ -566,7 +566,7 @@ public class GameSimulator {
             // Policy: an extra-combat spell that grants no additional attacks (no
             // surviving attackers to untap, nothing held back after combat) is a dead
             // cast — the few rollout iterations can't reliably punish it, so skip it.
-            if (card.getEffects(EffectSlot.SPELL).stream()
+            if (card.getSpellEffects().stream()
                         .anyMatch(AdditionalCombatMainPhaseEffect.class::isInstance)
                     && spellEvaluator.extraCombatDamageGain(gd, card, playerId) <= 0) {
                 continue;
@@ -574,7 +574,7 @@ public class GameSimulator {
             // Policy: "can't block this turn" with no attackers (or no blockers to shut
             // off) is a dead cast — Panic Attack is legal with zero targets, and MCTS
             // would otherwise explore dumping it.
-            if (card.getEffects(EffectSlot.SPELL).stream()
+            if (card.getSpellEffects().stream()
                         .anyMatch(CantBlockThisTurnEffect.class::isInstance)
                     && spellEvaluator.estimateSpellValue(gd, card, playerId) <= 0) {
                 continue;
@@ -829,7 +829,7 @@ public class GameSimulator {
     }
 
     private UUID computeOpponentOwnedExiledCard(GameData gd, UUID playerId, Card card) {
-        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+        boolean requiresChoice = card.getCastingCosts().stream()
                 .anyMatch(PutOpponentOwnedExiledCardIntoGraveyardCost.class::isInstance);
         if (!requiresChoice) {
             return null;
@@ -843,12 +843,12 @@ public class GameSimulator {
     }
 
     private BeholdSelection computeBeholdSelection(GameData gd, UUID playerId, Card card) {
-        BeholdAndExileCost cost = card.getEffects(EffectSlot.SPELL).stream()
+        BeholdAndExileCost cost = card.getCastingCosts().stream()
                 .filter(BeholdAndExileCost.class::isInstance)
                 .map(BeholdAndExileCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        boolean chooseCreatureOrRevealCreatureCard = card.getEffects(EffectSlot.SPELL).stream()
+        boolean chooseCreatureOrRevealCreatureCard = card.getCastingCosts().stream()
                 .anyMatch(ChooseCreatureOrRevealCreatureCardCost.class::isInstance);
         if (cost == null && !chooseCreatureOrRevealCreatureCard) {
             return new BeholdSelection(null, null);
@@ -1280,7 +1280,7 @@ public class GameSimulator {
      * graveyard cards of a given type. Returns null if the card has no such cost.
      */
     private List<Integer> computeExileNGraveyardIndices(GameData gd, UUID playerId, Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof CostEffect cost && cost.consumedGraveyardCardCount() > 0) {
                 int count = cost.consumedGraveyardCardCount();
                 CardType requiredType = cost.consumedGraveyardCardType();
@@ -1320,7 +1320,7 @@ public class GameSimulator {
 
     /** Returns the number of cards available for a spell's X-discard additional cost. */
     private int getMaxXForDiscardCost(GameData gd, UUID playerId, Card card) {
-        DiscardXCardsCost cost = card.getEffects(EffectSlot.SPELL).stream()
+        DiscardXCardsCost cost = card.getCastingCosts().stream()
                 .filter(DiscardXCardsCost.class::isInstance)
                 .map(DiscardXCardsCost.class::cast)
                 .findFirst()
@@ -1354,7 +1354,7 @@ public class GameSimulator {
             return new ArrayList<>(valid.subList(0, fixedCost.count()));
         }
 
-        DiscardXCardsCost cost = card.getEffects(EffectSlot.SPELL).stream()
+        DiscardXCardsCost cost = card.getCastingCosts().stream()
                 .filter(DiscardXCardsCost.class::isInstance)
                 .map(DiscardXCardsCost.class::cast)
                 .findFirst()
@@ -1375,7 +1375,7 @@ public class GameSimulator {
     }
 
     private DiscardCardTypeCost findDiscardCardTypeCost(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getCastingCosts().stream()
                 .filter(DiscardCardTypeCost.class::isInstance)
                 .map(DiscardCardTypeCost.class::cast)
                 .findFirst()
@@ -1389,7 +1389,7 @@ public class GameSimulator {
      */
     private UUID computeSacrificeTarget(GameData gd, UUID playerId, Card card) {
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof SacrificeMultiplePermanentsCost
                     || effect instanceof SacrificeFractionRoundedUpCost
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
@@ -1426,7 +1426,7 @@ public class GameSimulator {
      */
     private List<UUID> computeMultiSacrificeTargets(GameData gd, UUID playerId, Card card) {
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof SacrificeMultiplePermanentsCost cost) {
                 List<UUID> chosen = battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, cost.filter()))
@@ -1767,7 +1767,7 @@ public class GameSimulator {
     }
 
     private UUID findBestGraveyardTarget(GameData gd, Card card, UUID playerId, UUID opponentId) {
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (!effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) continue;
 
             List<Card> candidates;

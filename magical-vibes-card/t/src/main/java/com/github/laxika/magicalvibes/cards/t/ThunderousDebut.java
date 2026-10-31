@@ -43,8 +43,8 @@ public class ThunderousDebut extends Card {
                 new Fixed(20), new Fixed(2), creature,
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD, true);
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(), toHand, toBattlefield));
-        addEffect(EffectSlot.SPELL, new ShuffleLibraryEffect(false));
+        addSpellEffect(new ShuffleLibraryEffect(false));
     }
 }

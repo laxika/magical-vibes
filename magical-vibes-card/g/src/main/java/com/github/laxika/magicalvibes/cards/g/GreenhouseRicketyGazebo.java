@@ -20,7 +20,7 @@ public class GreenhouseRicketyGazebo extends Card {
     public GreenhouseRicketyGazebo() {
         setRoomDoorManaCosts(List.of("{2}{G}", "{3}{G}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Greenhouse", List.of())
                         .withManaCost("{2}{G}"),
                 new ChooseOneEffect.ChooseOneOption("Rickety Gazebo", List.of())

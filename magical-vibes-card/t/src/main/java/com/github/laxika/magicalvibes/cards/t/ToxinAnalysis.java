@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -16,8 +15,7 @@ public class ToxinAnalysis extends Card {
 
     public ToxinAnalysis() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+                .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.TARGET))
+                .addSpellEffect(CreateTokenEffect.ofClueToken(1));
     }
 }

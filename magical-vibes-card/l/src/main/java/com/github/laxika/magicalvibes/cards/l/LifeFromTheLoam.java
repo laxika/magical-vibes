@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class LifeFromTheLoam extends Card {
 
     public LifeFromTheLoam() {
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                 new CardTypePredicate(CardType.LAND), 3));
         addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(3));
     }

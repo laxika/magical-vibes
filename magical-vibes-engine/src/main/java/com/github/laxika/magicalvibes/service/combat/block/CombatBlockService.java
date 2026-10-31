@@ -1615,7 +1615,7 @@ public class CombatBlockService {
                     graveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting(gameData, activeId,
                             attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice);
                     pushed++;
-                } else if (!effects.isEmpty() && attacker.getCard().getSpellTargets().size() > 1) {
+                } else if (!effects.isEmpty() && attacker.getCard().getTargetGroups().size() > 1) {
                     // "destroy target creature and target land" (Goblin Grenadiers): two positional target
                     // groups, so the single-target may/attack pipelines can't collect them. Reuse the ETB
                     // slot-by-slot picker — the targets are chosen as the trigger goes on the stack

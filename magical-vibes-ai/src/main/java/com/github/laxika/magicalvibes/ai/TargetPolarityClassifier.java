@@ -94,17 +94,18 @@ public class TargetPolarityClassifier {
     }
 
     /**
-     * Card-level polarity over the SPELL and ON_ENTER_BATTLEFIELD slots, collapsed by
+     * Card-level polarity over the ON_ENTER_BATTLEFIELD slot and the spell ability, collapsed by
      * priority: removal beats damage beats other harm beats beneficial beats neutral.
      * This mirrors (and must preserve) the branch order {@code chooseTarget} routed with
      * before the consolidation. Returns null when no effect classifies.
      */
     public TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
         TargetPolarity best = null;
-        for (EffectSlot slot : new EffectSlot[]{EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.SPELL}) {
-            for (CardEffect effect : card.getEffects(slot)) {
-                best = higherPriority(best, classify(gameData, effect, aiPlayerId));
-            }
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            best = higherPriority(best, classify(gameData, effect, aiPlayerId));
+        }
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
+            best = higherPriority(best, classify(gameData, effect, aiPlayerId));
         }
         return best;
     }

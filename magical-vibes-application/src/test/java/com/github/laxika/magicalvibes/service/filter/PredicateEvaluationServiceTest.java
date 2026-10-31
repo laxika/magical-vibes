@@ -405,8 +405,7 @@ class PredicateEvaluationServiceTest {
             Card kickerCard = new Card();
             kickerCard.addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
             Card multikickerCard = new Card();
-            multikickerCard.addEffect(EffectSlot.SPELL,
-                    RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
+            multikickerCard.addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
             Card ordinary = new Card();
 
             assertThat(evaluator.matchesCardPredicate(kickerCard, new CardHasKickerPredicate(), null)).isTrue();

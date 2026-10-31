@@ -14,7 +14,7 @@ public class PollenRemedy extends Card {
 
     public PollenRemedy() {
         addEffect(EffectSlot.STATIC, new KickerEffect(new PermanentIsLandPredicate(), "a land"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new PreventDividedDamageEffect(3),
                 new PreventDividedDamageEffect(6)

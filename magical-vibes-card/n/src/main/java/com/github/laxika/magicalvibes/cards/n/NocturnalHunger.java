@@ -25,10 +25,10 @@ public class NocturnalHunger extends Card {
     public NocturnalHunger() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         TargetOpponentCreatesTokenEffect.gift(foodToken())))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(new GiftPromised()),
+                .addSpellEffect(new DestroyTargetPermanentEffect())
+                .addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                         new LoseLifeEffect(2)));
     }
 

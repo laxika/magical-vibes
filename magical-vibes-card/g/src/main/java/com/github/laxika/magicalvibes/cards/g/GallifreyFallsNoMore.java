@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
@@ -20,7 +19,7 @@ public class GallifreyFallsNoMore extends Card {
         var gallifreyFalls = MassDamageEffect.exilingDamageToEachCreature(4);
         var noMore = new PhaseOutEffect(PhaseOutSubject.TARGET);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Gallifrey Falls — Gallifrey Falls deals 4 damage to each creature. If a creature dealt damage this way would die this turn, exile it instead",
                         gallifreyFalls

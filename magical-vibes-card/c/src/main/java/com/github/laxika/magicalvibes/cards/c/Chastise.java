@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -15,7 +14,7 @@ public class Chastise extends Card {
 
     public Chastise() {
         target(TargetFilters.attackingCreature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetPower()));
+                .addSpellEffect(new DestroyTargetPermanentEffect(false))
+                .addSpellEffect(new GainLifeEffect(new TargetPower()));
     }
 }

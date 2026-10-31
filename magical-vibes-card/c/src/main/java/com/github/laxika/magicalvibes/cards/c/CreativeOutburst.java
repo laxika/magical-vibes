@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -15,9 +14,8 @@ import java.util.List;
 public class CreativeOutburst extends Card {
 
     public CreativeOutburst() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(5));
-        addEffect(EffectSlot.SPELL,
-                LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new Fixed(5), 1));
+        addSpellEffect(new DealDamageToAnyTargetEffect(5));
+        addSpellEffect(LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new Fixed(5), 1));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{U/R}{U/R}",

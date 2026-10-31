@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -19,10 +18,10 @@ public class SpringCleaning extends Card {
 
     public SpringCleaning() {
         // Destroy target enchantment.
-        target(TargetFilters.enchantment()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false));
+        target(TargetFilters.enchantment()).addSpellEffect(new DestroyTargetPermanentEffect(false));
 
         // Clash with an opponent. If you win, destroy all enchantments your opponents control.
-        addEffect(EffectSlot.SPELL, new ClashEffect(new DestroyAllPermanentsEffect(
+        addSpellEffect(new ClashEffect(new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())

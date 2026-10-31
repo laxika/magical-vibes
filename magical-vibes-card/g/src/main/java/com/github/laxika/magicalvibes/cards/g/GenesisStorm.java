@@ -15,6 +15,6 @@ public class GenesisStorm extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForEachCommanderCastEffect(false));
 
         // Reveal cards from the top of your library until you reveal a nonland permanent card.
-        addEffect(EffectSlot.SPELL, new RevealUntilNonlandPermanentToBattlefieldEffect());
+        addSpellEffect(new RevealUntilNonlandPermanentToBattlefieldEffect());
     }
 }

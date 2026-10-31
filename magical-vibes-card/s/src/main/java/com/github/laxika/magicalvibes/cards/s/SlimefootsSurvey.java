@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -34,9 +33,9 @@ public class SlimefootsSurvey extends Card {
                 basicLandType
         ));
 
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new Fixed(2), landWithBasicLandType,
+        addSpellEffect(new SearchLibraryEffect(new Fixed(2), landWithBasicLandType,
                 LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.SPELL, new LookAtTopCardsEffect(
+        addSpellEffect(new LookAtTopCardsEffect(
                 new BasicLandTypesAmongControlledLands(), new Fixed(1), null,
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.TOP_OF_LIBRARY, true));

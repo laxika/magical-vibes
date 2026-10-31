@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,9 +16,9 @@ import java.util.Set;
 public class IlluminateHistory extends Card {
 
     public IlluminateHistory() {
-        addEffect(EffectSlot.SPELL, new DiscardUpToThenDrawThatManyEffect(
+        addSpellEffect(new DiscardUpToThenDrawThatManyEffect(
                 DiscardUpToThenDrawThatManyEffect.ANY_NUMBER));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new CreateTokenEffect("Spirit", 3, 2, CardColor.RED,
                         Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.SPIRIT))));

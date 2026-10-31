@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -15,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class Exsanguinate extends Card {
 
     public Exsanguinate() {
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT, true));
+        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.EACH_OPPONENT, true));
     }
 }

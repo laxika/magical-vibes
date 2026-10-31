@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -21,7 +20,7 @@ public class BoomBust extends Card {
         TargetFilter landYouControl = TargetFilters.landYouControl();
         TargetFilter landYouDoNotControl = TargetFilters.landAnOpponentControls();
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Boom — Destroy target land you control and target land you don't control",
                         List.<CardEffect>of(new DestroyTargetPermanentEffect(), new DestroyTargetPermanentEffect()),

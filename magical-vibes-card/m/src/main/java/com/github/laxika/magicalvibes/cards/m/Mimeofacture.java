@@ -16,12 +16,11 @@ import java.util.List;
 public class Mimeofacture extends Card {
 
     public Mimeofacture() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{3}{U}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}{U}")));
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                 "Target must be a permanent an opponent controls"))
-                .addEffect(EffectSlot.SPELL,
-                        new SearchTargetPermanentControllerLibraryForSameNameToBattlefieldEffect());
+                .addSpellEffect(new SearchTargetPermanentControllerLibraryForSameNameToBattlefieldEffect());
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{3}{U}"));
     }
 }

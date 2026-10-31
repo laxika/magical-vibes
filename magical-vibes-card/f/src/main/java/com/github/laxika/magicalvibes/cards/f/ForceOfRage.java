@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -29,7 +28,7 @@ public class ForceOfRage extends Card {
                 false));
 
         // Create two 3/1 red Elemental creature tokens with trample and haste.
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 2,
                 "Elemental",
                 3,
@@ -40,7 +39,7 @@ public class ForceOfRage extends Card {
                 Set.of()));
 
         // Sacrifice those tokens at the beginning of your next upkeep.
-        addEffect(EffectSlot.SPELL, ScheduleCreatedPermanentsEffect.forController(
+        addSpellEffect(ScheduleCreatedPermanentsEffect.forController(
                 DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP));
     }
 }

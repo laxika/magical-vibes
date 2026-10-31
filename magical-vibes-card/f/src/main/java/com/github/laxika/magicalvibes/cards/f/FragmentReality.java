@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -41,7 +40,7 @@ public class FragmentReality extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetPredicate,
                 "Target must be a nontoken artifact, creature, or enchantment an opponent controls"))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+                .addSpellEffect(new ExileTargetPermanentThenEffect(
                         EventStat.MANA_VALUE,
                         SeekLibraryEffect.randomWithoutSeeking(
                                 new Fixed(1),

@@ -26,8 +26,7 @@ public class BloodTribute extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL,
-                new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()),
+        )).addSpellEffect(new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()),
                         LoseLifeRecipient.TARGET_PLAYER, true, null, new Kicked()));
     }
 }

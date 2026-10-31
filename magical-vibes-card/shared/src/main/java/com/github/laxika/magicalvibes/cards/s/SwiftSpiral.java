@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,6 +19,6 @@ public class SwiftSpiral extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                 )),
                 "Target must be a nontoken creature"
-        )).addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStep());
+        )).addSpellEffect(FlickerEffect.exileTargetReturnAtEndStep());
     }
 }

@@ -19,6 +19,6 @@ public class ScourTheLaboratory extends Card {
                 new Delirium(), new ReduceOwnCastCostEffect(new Fixed(2))));
 
         // Draw three cards.
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
+        addSpellEffect(new DrawCardEffect(3));
     }
 }

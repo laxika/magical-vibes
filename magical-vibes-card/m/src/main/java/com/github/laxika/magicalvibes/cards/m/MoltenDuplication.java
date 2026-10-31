@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +26,7 @@ public class MoltenDuplication extends Card {
                         "Target must be an artifact or creature you control");
 
         target(artifactOrCreatureYouControl)
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(CardType.ARTIFACT), null, null, Map.of(),
                         true, false, true, false).withHasteUntilEndOfTurn());
     }

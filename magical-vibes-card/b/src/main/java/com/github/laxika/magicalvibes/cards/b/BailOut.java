@@ -26,7 +26,7 @@ public class BailOut extends Card {
         SequenceEffect returnAndDamage = SequenceEffect.of(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(true, false, java.util.Set.of(), null, false, true),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.ON_DEATH, returnAndDamage),
                 new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(EffectSlot.ON_DEATH, returnAndDamage)));

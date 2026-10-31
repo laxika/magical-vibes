@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -14,7 +13,7 @@ import java.util.List;
 public class DismissiveDenial extends Card {
 
     public DismissiveDenial() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
         addHandActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),
                 "Basic landcycling {2} ({2}, Discard this card: Search your library for a basic land card, "

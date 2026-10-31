@@ -79,7 +79,6 @@ import com.github.laxika.magicalvibes.cards.z.ZoyowaLavaTongue;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -1862,7 +1861,7 @@ class GravebaneZombieTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card scheme = new RunningIsUseless();
         gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, scheme, player1.getId(),
-                scheme.getName(), scheme.getEffects(EffectSlot.SPELL)));
+                scheme.getName(), scheme.getCastingCostsAndSpellEffects()));
         harness.passBothPriorities();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(zombie.getId(), bears.getId()));

@@ -26,14 +26,14 @@ public class CoilingRebirth extends Card {
 
         addEffect(EffectSlot.STATIC, new GiftEffect());
         target(new GraveyardCardPredicateTargetFilter(creatureCards, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new EachOtherPlayerDrawsCardEffect(1)))
-                .addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+                .addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(creatureCards)
                         .targetGraveyard(true)
                         .build())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new CreateTokenCopyOfReturnedPermanentEffect(
                                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)), 1, 1)));
     }

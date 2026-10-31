@@ -241,9 +241,9 @@ public class MiscTriggerCollectorService {
                                 || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                                 || card.getEffectTargetIndex(triggeredEffect) >= 0);
         if (needsTarget) {
-            boolean multiTarget = card.getSpellTargets().stream()
+            boolean multiTarget = card.getTargetGroups().stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
-                    || card.getSpellTargets().size() > 1;
+                    || card.getTargetGroups().size() > 1;
             if (multiTarget) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, su.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
@@ -299,9 +299,9 @@ public class MiscTriggerCollectorService {
                                 || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                                 || card.getEffectTargetIndex(triggeredEffect) >= 0);
         if (needsTarget) {
-            boolean multiTarget = card.getSpellTargets().stream()
+            boolean multiTarget = card.getTargetGroups().stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
-                    || card.getSpellTargets().size() > 1;
+                    || card.getTargetGroups().size() > 1;
             if (multiTarget) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, match.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
@@ -312,7 +312,7 @@ public class MiscTriggerCollectorService {
                         "unlocks a Room door", match.permanent().getId(), null,
                         triggeredEffects.stream().anyMatch(candidate ->
                                 candidate instanceof OptionalTargetEffect || candidate.hasOptionalTarget())
-                                || card.getSpellTargets().stream().anyMatch(target -> target.getMinTargets() == 0
+                                || card.getTargetGroups().stream().anyMatch(target -> target.getMinTargets() == 0
                                 && matchingEffects.stream().anyMatch(candidate ->
                                 card.getEffectTargetIndex(candidate) == target.getIndex()))));
             }
@@ -371,9 +371,9 @@ public class MiscTriggerCollectorService {
                         || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         if (needsTarget) {
-            boolean multiTarget = card.getSpellTargets().stream()
+            boolean multiTarget = card.getTargetGroups().stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
-                    || card.getSpellTargets().size() > 1;
+                    || card.getTargetGroups().size() > 1;
             if (multiTarget) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, sm.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
@@ -1524,7 +1524,7 @@ public class MiscTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         int lifeGained = ((TriggerContext.LifeGain) ctx).lifeGainedAmount();
 
-        if (sourceCard.getSpellTargets().stream()
+        if (sourceCard.getTargetGroups().stream()
                 .anyMatch(target -> target.getDynamicMaxTargets() != null)) {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     sourceCard,
@@ -2760,7 +2760,7 @@ public class MiscTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         int nonlandCardCount = ((TriggerContext.NonlandCardsMilled) ctx).nonlandCardCount();
 
-        if (sourceCard.getSpellTargets().stream()
+        if (sourceCard.getTargetGroups().stream()
                 .anyMatch(target -> target.getDynamicMaxTargets() != null)) {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     sourceCard,
@@ -3257,7 +3257,7 @@ public class MiscTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
         TargetFilter targetFilter = targetGroupIndex >= 0
-                ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
+                ? sourceCard.getTargetGroups().get(targetGroupIndex).getFilter()
                 : sourceCard.getTargetFilter();
         var damagedPlayerRestriction = new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(
                 damage.damagedPlayerId());

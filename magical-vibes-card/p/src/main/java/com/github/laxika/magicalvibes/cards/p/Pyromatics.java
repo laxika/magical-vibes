@@ -15,8 +15,8 @@ import java.util.List;
 public class Pyromatics extends Card {
 
     public Pyromatics() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{R}")));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{R}")));
+        addSpellEffect(new DealDamageToAnyTargetEffect(1));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{1}{R}"));
     }
 }

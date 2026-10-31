@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 public class AbhorrentOculus extends Card {
 
     public AbhorrentOculus() {
-        addEffect(EffectSlot.SPELL, new ExileNCardsFromGraveyardCost(6, null));
+        addCastingCost(new ExileNCardsFromGraveyardCost(6, null));
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, ManifestDreadEffect.forController());
     }
 }

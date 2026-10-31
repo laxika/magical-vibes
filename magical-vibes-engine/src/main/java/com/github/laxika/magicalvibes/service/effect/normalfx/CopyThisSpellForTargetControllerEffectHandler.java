@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -60,7 +59,7 @@ public class CopyThisSpellForTargetControllerEffectHandler implements NormalEffe
         Card copyCard = copySupport.createCopyCard(spellCard);
         StackEntry copyEntry = copySupport.createCopyStackEntry(entry, copyCard, copyControllerId, targetId);
         copyEntry.getEffectsToResolve().clear();
-        copyEntry.getEffectsToResolve().addAll(copyCard.getEffects(EffectSlot.SPELL));
+        copyEntry.getEffectsToResolve().addAll(copyCard.getCastingCostsAndSpellEffects());
         copyEntry.setEntryType(copyCard.hasType(CardType.INSTANT)
                 ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL);
         copySupport.addCopyToStack(gameData, copyEntry, new PendingMayAbility(

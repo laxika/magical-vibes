@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -821,11 +820,11 @@ public class SplitCardCastSupport {
 
     /** Whether the half declares its own target slots, rather than a single cast-time target. */
     private static boolean hasTargetSlots(Card card) {
-        return !card.getSpellTargets().isEmpty();
+        return !card.getTargetGroups().isEmpty();
     }
 
     private static ChooseOneEffect splitModal(Card card) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        return card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
                 .map(ChooseOneEffect.class::cast)
                 .findFirst()

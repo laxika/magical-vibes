@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
@@ -21,8 +20,8 @@ public class FatalFrenzy extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
         ))
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect(false, true));
+                .addSpellEffect(new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new SacrificeTargetPermanentAtEndStepEffect(false, true));
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PermanentAuctionEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ThievesAuction extends Card {
 
     public ThievesAuction() {
-        addEffect(EffectSlot.SPELL, new PermanentAuctionEffect());
+        addSpellEffect(new PermanentAuctionEffect());
     }
 }

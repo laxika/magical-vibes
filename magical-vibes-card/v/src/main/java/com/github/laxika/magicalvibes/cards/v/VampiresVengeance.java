@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -20,11 +19,11 @@ import java.util.List;
 public class VampiresVengeance extends Card {
 
     public VampiresVengeance() {
-        addEffect(EffectSlot.SPELL, new DealDamageToEachMatchingPermanentEffect(2,
+        addSpellEffect(new DealDamageToEachMatchingPermanentEffect(2,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)))),
                 EachPermanentScope.ALL_PLAYERS));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofBloodToken(1));
+        addSpellEffect(CreateTokenEffect.ofBloodToken(1));
     }
 }

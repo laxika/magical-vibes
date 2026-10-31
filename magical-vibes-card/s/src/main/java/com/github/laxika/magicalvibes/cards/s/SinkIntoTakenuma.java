@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -20,10 +19,8 @@ public class SinkIntoTakenuma extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL,
-                new ReturnAnyNumberOfPermanentsToHandEffect(
+        )).addSpellEffect(new ReturnAnyNumberOfPermanentsToHandEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.SWAMP)));
-        addEffect(EffectSlot.SPELL,
-                new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER));
     }
 }

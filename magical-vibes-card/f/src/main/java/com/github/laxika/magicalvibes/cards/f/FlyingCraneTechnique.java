@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,9 +15,9 @@ import java.util.Set;
 public class FlyingCraneTechnique extends Card {
 
     public FlyingCraneTechnique() {
-        addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
+        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+        addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE), GrantScope.OWN_CREATURES));
     }
 }

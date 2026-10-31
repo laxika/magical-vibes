@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayShuffleZonesIntoLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -15,8 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class TurtlesInTime extends Card {
 
     public TurtlesInTime() {
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SPELL, new EachPlayerMayShuffleZonesIntoLibraryAndDrawEffect(7));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new EachPlayerMayShuffleZonesIntoLibraryAndDrawEffect(7));
+        addSpellEffect(new ExileSpellEffect());
     }
 }

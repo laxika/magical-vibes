@@ -144,7 +144,7 @@ public class CardViewFactory {
         ChooseOneEffect modalEffect = findModalEffect(card);
         // A modal ETB's mode is announced with the cast, but its targets are chosen as the trigger is
         // put on the stack (CR 603.3d), so its options never ask for targets while casting.
-        boolean modalEtb = modalEffect != null && !card.getEffects(EffectSlot.SPELL).contains(modalEffect);
+        boolean modalEtb = modalEffect != null && !card.getCastingCostsAndSpellEffects().contains(modalEffect);
         List<ModalOptionView> modalOptions = modalEffect == null ? null
                 : IntStream.range(0, modalEffect.options().size())
                 .mapToObj(index -> modalEtb
@@ -153,12 +153,12 @@ public class CardViewFactory {
                                 isHandOnlyMode(card, modalEffect.options().get(index), index)))
                 .toList();
 
-        ChooseXValueCost xValueCost = card.getEffects(EffectSlot.SPELL).stream()
+        ChooseXValueCost xValueCost = card.getCastingCosts().stream()
                 .filter(ChooseXValueCost.class::isInstance)
                 .map(ChooseXValueCost.class::cast)
                 .findFirst()
                 .orElse(null);
-        boolean chooseCreatureTypeCost = card.getEffects(EffectSlot.SPELL).stream()
+        boolean chooseCreatureTypeCost = card.getCastingCosts().stream()
                 .anyMatch(ChooseCreatureTypeCost.class::isInstance);
         List<String> creatureTypeChoices = chooseCreatureTypeCost
                 ? java.util.Arrays.stream(CardSubtype.values())
@@ -166,14 +166,14 @@ public class CardViewFactory {
                 .map(CardSubtype::getDisplayName)
                 .toList()
                 : List.of();
-        PayLifeOrPayManaCost additionalCost = card.getEffects(EffectSlot.SPELL).stream()
+        PayLifeOrPayManaCost additionalCost = card.getCastingCosts().stream()
                 .filter(PayLifeOrPayManaCost.class::isInstance)
                 .map(PayLifeOrPayManaCost.class::cast)
                 .findFirst()
                 .orElse(null);
         Card additionalCostCard = card.getCastingOption(AdventureCast.class).isPresent()
                 && card.getBackFaceCard() != null ? card.getBackFaceCard() : card;
-        boolean additionalSacrificeCreature = additionalCostCard.getEffects(EffectSlot.SPELL).stream()
+        boolean additionalSacrificeCreature = additionalCostCard.getCastingCosts().stream()
                 .anyMatch(SacrificeCreatureCost.class::isInstance);
 
         // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
@@ -408,7 +408,7 @@ public class CardViewFactory {
      * or a modal ETB trigger whose mode is picked at cast time (ON_ENTER_BATTLEFIELD slot).
      */
     private ChooseOneEffect findModalEffect(Card card) {
-        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {

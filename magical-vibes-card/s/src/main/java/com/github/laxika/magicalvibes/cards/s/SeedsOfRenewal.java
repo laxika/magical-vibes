@@ -20,9 +20,9 @@ public class SeedsOfRenewal extends Card {
                 new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
 
         // Return up to two target cards from your graveyard to your hand.
-        addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(null, 2));
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(null, 2));
 
         // Exile Seeds of Renewal.
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
+        addSpellEffect(new ExileSpellEffect());
     }
 }

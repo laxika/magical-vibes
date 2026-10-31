@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -36,10 +35,10 @@ public class SlimeAgainstHumanity extends Card {
                 new CardsInGraveyard(oozeOrSlimeAgainstHumanity, CountScope.CONTROLLER),
                 new CardsInExile(oozeOrSlimeAgainstHumanity, CountScope.CONTROLLER));
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Ooze", 0, 0, CardColor.GREEN, List.of(CardSubtype.OOZE),
                 Set.of(Keyword.TRAMPLE), Set.of()));
-        addEffect(EffectSlot.SPELL, new PutCountersOnCreatedPermanentsEffect(
+        addSpellEffect(new PutCountersOnCreatedPermanentsEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, counterAmount));
     }
 }

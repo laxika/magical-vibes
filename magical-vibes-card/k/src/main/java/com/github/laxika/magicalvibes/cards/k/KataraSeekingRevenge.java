@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class KataraSeekingRevenge extends Card {
 
     public KataraSeekingRevenge() {
-        addEffect(EffectSlot.SPELL, WaterbendCost.optional(2));
+        addCastingCost(WaterbendCost.optional(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new DrawCardEffect(1),
                 new ConditionalEffect(

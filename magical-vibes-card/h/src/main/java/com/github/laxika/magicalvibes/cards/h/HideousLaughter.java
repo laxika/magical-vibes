@@ -12,7 +12,7 @@ public class HideousLaughter extends Card {
 
     public HideousLaughter() {
         // All creatures get -2/-2 until end of turn.
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(-2, -2));
+        addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
 
         // Splice onto Arcane {3}{B}{B}
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{3}{B}{B}"));

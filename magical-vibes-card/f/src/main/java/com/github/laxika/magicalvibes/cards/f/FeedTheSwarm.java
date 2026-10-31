@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
@@ -54,7 +53,7 @@ public class FeedTheSwarm extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be a creature or enchantment an opponent controls."
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        )).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.MANA_VALUE,
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER),
                 ThenEffectRecipient.CONTROLLER

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DepartTheRealm extends Card {
 
     public DepartTheRealm() {
-        target(TargetFilters.nonlandPermanent()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.nonlandPermanent()).addSpellEffect(ReturnToHandEffect.target());
         addCastingOption(new ForetellCast("{U}"));
     }
 }

@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Resize extends Card {
 
     public Resize() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new BoostTargetCreatureEffect(3, 3));
+        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(3, 3));
         addEffect(EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new MayPayManaEffect("{1}{G}",
                         new ReturnSourceCardFromGraveyardToOwnerHandEffect(),

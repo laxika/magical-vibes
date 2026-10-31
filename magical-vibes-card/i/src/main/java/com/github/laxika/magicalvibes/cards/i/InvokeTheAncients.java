@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensWithChosenCountersEffect;
 
@@ -26,7 +25,7 @@ public class InvokeTheAncients extends Card {
                 Set.of(),
                 Set.of());
 
-        addEffect(EffectSlot.SPELL, new CreateTokensWithChosenCountersEffect(
+        addSpellEffect(new CreateTokensWithChosenCountersEffect(
                 spirit,
                 List.of(CounterType.REACH, CounterType.VIGILANCE, CounterType.TRAMPLE)));
     }

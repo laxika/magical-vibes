@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.SoulBurnEffect;
 
@@ -19,6 +18,6 @@ public class DrainLife extends Card {
 
     public DrainLife() {
         setXColorRestrictions(ManaColor.BLACK);
-        addEffect(EffectSlot.SPELL, new SoulBurnEffect(false));
+        addSpellEffect(new SoulBurnEffect(false));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.c.Chance;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -24,7 +23,7 @@ public class LeaveChance extends Card {
         target(new OwnedPermanentPredicateTargetFilter(
                 new PermanentTruePredicate(),
                 "Target must be a permanent you own"
-        ), 0, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        ), 0, Integer.MAX_VALUE).addSpellEffect(ReturnToHandEffect.target());
     }
 
     @Override

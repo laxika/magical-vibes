@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -23,7 +22,7 @@ public class Scrollshift extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsEnchantmentPredicate())),
                         "Target must be an artifact, creature, or enchantment you control"), 0, 1)
-                .addEffect(EffectSlot.SPELL, FlickerEffect.flickerTarget())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(FlickerEffect.flickerTarget())
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

@@ -16,7 +16,7 @@ public class LiftedByClouds extends Card {
     public LiftedByClouds() {
         // Target creature gains flying until end of turn.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
 
         // Splice onto Arcane {1}{U}
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{U}"));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 
@@ -11,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 public class IgniteTheFuture extends Card {
 
     public IgniteTheFuture() {
-        addEffect(EffectSlot.SPELL,
-                new ExileTopCardsMayPlayUntilNextTurnEffect(3, false, true));
+        addSpellEffect(new ExileTopCardsMayPlayUntilNextTurnEffect(3, false, true));
         addCastingOption(new FlashbackCast("{7}{R}"));
     }
 }

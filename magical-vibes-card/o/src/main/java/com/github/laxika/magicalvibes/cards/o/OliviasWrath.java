@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -23,7 +22,7 @@ public class OliviasWrath extends Card {
     public OliviasWrath() {
         PermanentCount vampiresYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(
+        addSpellEffect(new BoostAllCreaturesEffect(
                 new Scaled(vampiresYouControl, -1),
                 new Scaled(vampiresYouControl, -1),
                 new PermanentAllOfPredicate(List.of(

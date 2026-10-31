@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 public class RecklessAbandon extends Card {
 
     public RecklessAbandon() {
-        addEffect(EffectSlot.SPELL, new SacrificeCreatureCost());
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(4));
+        addCastingCost(new SacrificeCreatureCost());
+        addSpellEffect(new DealDamageToAnyTargetEffect(4));
     }
 }

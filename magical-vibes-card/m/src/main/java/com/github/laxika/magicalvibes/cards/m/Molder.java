@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -29,7 +28,7 @@ public class Molder extends Card {
                 )),
                 "Target must be an artifact or enchantment with mana value X"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new XValue()));
+                .addSpellEffect(new DestroyTargetPermanentEffect(true))
+                .addSpellEffect(new GainLifeEffect(new XValue()));
     }
 }

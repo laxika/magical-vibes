@@ -15,8 +15,8 @@ public class CutOfTheProfits extends Card {
 
     public CutOfTheProfits() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(3));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
+        addCastingCost(new CasualtyCost(3));
+        addSpellEffect(new DrawCardEffect(new XValue()));
+        addSpellEffect(new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
     }
 }

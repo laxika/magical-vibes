@@ -19,11 +19,11 @@ public class PeerlessRecycling extends Card {
         CardIsPermanentPredicate permanentCards = new CardIsPermanentPredicate();
 
         addEffect(EffectSlot.STATIC, new GiftEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
         targetWhenGiftPromised(new GraveyardCardPredicateTargetFilter(
                 permanentCards, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 1, 2, 2)
-                .addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToHandEffect(
+                .addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(
                         permanentCards, 2));
     }
 }

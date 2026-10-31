@@ -23,8 +23,8 @@ public class LostInTheSpiritWorld extends Card {
 
     public LostInTheSpiritWorld() {
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
-        addEffect(EffectSlot.SPELL, spiritToken());
+                .addSpellEffect(ReturnToHandEffect.target());
+        addSpellEffect(spiritToken());
     }
 
     private static CreateTokenEffect spiritToken() {

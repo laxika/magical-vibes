@@ -14,6 +14,6 @@ public class SurgingAether extends Card {
     public SurgingAether() {
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new RippleEffect(4), "Reveal the top four cards of your library?"));
-        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.permanent()).addSpellEffect(ReturnToHandEffect.target());
     }
 }

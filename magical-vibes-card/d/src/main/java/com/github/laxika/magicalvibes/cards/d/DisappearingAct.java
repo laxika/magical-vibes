@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 public class DisappearingAct extends Card {
 
     public DisappearingAct() {
-        addEffect(EffectSlot.SPELL, new ReturnPermanentToHandCost());
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addCastingCost(new ReturnPermanentToHandCost());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

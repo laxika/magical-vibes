@@ -24,7 +24,7 @@ public class GlassworksShatteredYard extends Card {
     public GlassworksShatteredYard() {
         setRoomDoorManaCosts(List.of("{2}{R}", "{4}{R}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Glassworks", List.of())
                         .withManaCost("{2}{R}"),
                 new ChooseOneEffect.ChooseOneOption("Shattered Yard", List.of())

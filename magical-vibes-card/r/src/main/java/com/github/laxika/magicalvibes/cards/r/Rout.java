@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,6 +17,6 @@ public class Rout extends Card {
     public Rout() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{W}{W}")), null, true)
                 .withFlashAdditionalGenericCost(2));
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate(), true));
     }
 }

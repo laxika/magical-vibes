@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -34,8 +33,8 @@ public class Corpsehatch extends Card {
                 )),
                 "Target must be a nonblack creature"
         ));
-        addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 2, "Eldrazi Spawn", 0, 1, null, null,
                 List.of(CardSubtype.ELDRAZI, CardSubtype.SPAWN), Set.of(), Set.of(), false, false,
                 Map.of(), List.of(new ActivatedAbility(

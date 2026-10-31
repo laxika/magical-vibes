@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -25,8 +24,8 @@ public class VolcanicEruption extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                 "Targets must be Mountains"
-        ), 100).addEffect(EffectSlot.SPELL, DestroyEachTargetPermanentEffect.countingPermanentsPutIntoAGraveyard());
+        ), 100).addSpellEffect(DestroyEachTargetPermanentEffect.countingPermanentsPutIntoAGraveyard());
 
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(new EventValue(), true));
+        addSpellEffect(new MassDamageEffect(new EventValue(), true));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -21,7 +20,7 @@ public class Unmask extends Card {
     public Unmask() {
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.BLACK), "black"))));
-        addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
+        addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -12,9 +11,9 @@ public class Firestorm extends Card {
 
     public Firestorm() {
         // Additional cost: discard X cards (the same X the spell is cast for).
-        addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
+        addCastingCost(new DiscardXCardsCost());
         // Firestorm deals X damage to each of X targets: one X-scaled any-target group,
         // each chosen target taking the full X (not divided).
-        targetExactlyX(null, 1000).addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new XValue()));
+        targetExactlyX(null, 1000).addSpellEffect(new DealDamageToEachTargetEffect(new XValue()));
     }
 }

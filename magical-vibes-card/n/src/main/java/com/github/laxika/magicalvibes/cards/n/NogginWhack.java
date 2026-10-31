@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.TargetRevealsCardsControllerChoosesDiscardEffect;
 
@@ -19,6 +18,6 @@ public class NogginWhack extends Card {
 
         // Target player reveals three cards from their hand. You choose two of them. That player
         // discards those cards. (canTargetPlayer() supplies the target-player requirement.)
-        addEffect(EffectSlot.SPELL, new TargetRevealsCardsControllerChoosesDiscardEffect(3, 2));
+        addSpellEffect(new TargetRevealsCardsControllerChoosesDiscardEffect(3, 2));
     }
 }

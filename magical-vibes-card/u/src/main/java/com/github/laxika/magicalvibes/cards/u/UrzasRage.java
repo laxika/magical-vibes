@@ -20,7 +20,7 @@ public class UrzasRage extends Card {
     public UrzasRage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{8}{R}"));
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DealDamageToAnyTargetEffect(new Fixed(3)),
                 new DealDamageToAnyTargetEffect(new Fixed(10), new Kicked())

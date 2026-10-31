@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Max;
@@ -30,7 +29,7 @@ public class SuperiorNumbers extends Card {
     public SuperiorNumbers() {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new Max(
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(new Max(
                 new Fixed(0),
                 new Sum(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),

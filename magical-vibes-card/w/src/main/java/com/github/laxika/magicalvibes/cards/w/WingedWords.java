@@ -28,6 +28,6 @@ public class WingedWords extends Card {
                 ))),
                 new ReduceOwnCastCostEffect(new Fixed(1))
         ));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

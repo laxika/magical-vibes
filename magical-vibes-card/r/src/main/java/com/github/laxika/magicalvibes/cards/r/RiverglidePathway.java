@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.l.LavaglidePathway;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -18,7 +17,7 @@ public class RiverglidePathway extends Card {
         setModalDoubleFaced(true);
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Riverglide Pathway", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Lavaglide Pathway", List.of())
         )));

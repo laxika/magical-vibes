@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -1081,7 +1081,7 @@ public class PermanentChoiceSpellHandlerService {
 
     private int targetGroupIndexForPosition(Card card, int positionIndex) {
         int positionOffset = 0;
-        for (SpellTarget target : card.getSpellTargets()) {
+        for (TargetGroup target : card.getTargetGroups()) {
             int targetCount = target.getMaxTargets();
             if (positionIndex < positionOffset + targetCount) {
                 return target.getIndex();

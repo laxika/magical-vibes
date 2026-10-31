@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -28,6 +27,6 @@ public class TidalSurge extends Card {
                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))
                 )),
                 "Target must be a creature without flying"
-        ), 0, 3).addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+        ), 0, 3).addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

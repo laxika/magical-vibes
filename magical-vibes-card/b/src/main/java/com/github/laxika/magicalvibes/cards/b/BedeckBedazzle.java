@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -46,7 +45,7 @@ public class BedeckBedazzle extends Card {
         CardEffect destroyNonbasicLand = new DestroyTargetPermanentEffect();
         CardEffect dealDamage = new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT);
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Bedeck — Target creature gets +3/-3 until end of turn",
                         bedeck,

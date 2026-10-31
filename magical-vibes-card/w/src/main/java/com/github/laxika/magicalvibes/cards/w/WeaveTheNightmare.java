@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -39,7 +38,7 @@ public class WeaveTheNightmare extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Heist target opponent's library",
                         new HeistTargetLibraryEffect(), opponentFilter),

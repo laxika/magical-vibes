@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
@@ -22,7 +21,7 @@ public class ArrowVolleyTrap extends Card {
                 List.of(new ManaCastingCost("{1}{W}")),
                 new AnyPlayerControlsPermanentCount(4, new PermanentIsAttackingPredicate()),
                 false));
-        addEffect(EffectSlot.SPELL, new DealDividedDamageEffect(
+        addSpellEffect(new DealDividedDamageEffect(
                 new Fixed(5),
                 null,
                 DivisionMode.CHOSEN,

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -17,7 +16,7 @@ import java.util.List;
 public class FlamethrowerSonata extends Card {
 
     public FlamethrowerSonata() {
-        addEffect(EffectSlot.SPELL, new DiscardCardThenEffect(
+        addSpellEffect(new DiscardCardThenEffect(
                 null,
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                         new LastDiscardedCardManaValue(),
@@ -27,7 +26,7 @@ public class FlamethrowerSonata extends Card {
                 false,
                 null,
                 null));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new DrawCardEffect());
     }
 
     private static CardAnyOfPredicate instantOrSorcery() {

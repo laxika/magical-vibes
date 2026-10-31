@@ -22,14 +22,13 @@ public class FiresOfVictory extends Card {
 
     public FiresOfVictory() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new DrawCardEffect()));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new DrawCardEffect()));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
                 "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL,
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(
+                .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                                 new CardsInHand(CountScope.CONTROLLER)));
     }
 }

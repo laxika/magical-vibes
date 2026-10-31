@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToTargetCreatureToControllerEffect;
@@ -23,6 +22,6 @@ public class SivvisValor extends Card {
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
                 false));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new RedirectAllDamageToTargetCreatureToControllerEffect());
+                .addSpellEffect(new RedirectAllDamageToTargetCreatureToControllerEffect());
     }
 }

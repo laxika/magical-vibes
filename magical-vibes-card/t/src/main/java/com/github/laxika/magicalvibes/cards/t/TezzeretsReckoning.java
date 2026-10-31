@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 public class TezzeretsReckoning extends Card {
 
     public TezzeretsReckoning() {
-        addEffect(EffectSlot.SPELL, SeekLibraryEffect.randomExileWithSource(new Fixed(3), null, true));
+        addSpellEffect(SeekLibraryEffect.randomExileWithSource(new Fixed(3), null, true));
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, false,
                 ExileAccessScope.CONTROLLER, false, false, true, false, false, null,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -21,13 +20,13 @@ import java.util.List;
 public class SearchForGlory extends Card {
 
     public SearchForGlory() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(new CardAnyOfPredicate(List.of(
+        addSpellEffect(new SearchLibraryEffect(new CardAnyOfPredicate(List.of(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardSupertypePredicate(CardSupertype.SNOW))),
                 new CardSupertypePredicate(CardSupertype.LEGENDARY),
                 new CardSubtypePredicate(CardSubtype.SAGA)
         ))));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new SnowManaSpentToCast()));
+        addSpellEffect(new GainLifeEffect(new SnowManaSpentToCast()));
     }
 }

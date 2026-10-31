@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.SnowManaSpentToCast;
@@ -19,9 +18,9 @@ import java.util.List;
 public class BlessingOfFrost extends Card {
 
     public BlessingOfFrost() {
-        addEffect(EffectSlot.SPELL, new DistributeCountersAmongControlledCreaturesEffect(
+        addSpellEffect(new DistributeCountersAmongControlledCreaturesEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new SnowManaSpentToCast()));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new PermanentCount(
+        addSpellEffect(new DrawCardEffect(new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4))),

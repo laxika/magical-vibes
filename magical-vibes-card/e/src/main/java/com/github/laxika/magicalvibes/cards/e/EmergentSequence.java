@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.LandsEnteredBattlefieldThisTurn;
@@ -23,7 +22,7 @@ import java.util.Set;
 public class EmergentSequence extends Card {
 
     public EmergentSequence() {
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 new Fixed(1),
                 CardPredicateUtils.basicLand(),
                 LibrarySearchDestination.BATTLEFIELD_TAPPED,
@@ -43,7 +42,7 @@ public class EmergentSequence extends Card {
                         EffectDuration.PERMANENT,
                         null,
                         Set.of(CardColor.GREEN, CardColor.BLUE))));
-        addEffect(EffectSlot.SPELL, new PutCountersOnChosenPermanentEffect(
+        addSpellEffect(new PutCountersOnChosenPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new LandsEnteredBattlefieldThisTurn()));
     }
 }

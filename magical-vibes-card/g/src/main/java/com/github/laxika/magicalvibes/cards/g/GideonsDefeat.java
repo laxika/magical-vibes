@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -37,7 +36,7 @@ public class GideonsDefeat extends Card {
                         ))
                 )),
                 "Target must be a white creature that's attacking or blocking"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+        )).addSpellEffect(new ExileTargetPermanentThenEffect(
                 new GainLifeEffect(5),
                 ThenEffectRecipient.CONTROLLER,
                 new PermanentHasSubtypePredicate(CardSubtype.GIDEON)));

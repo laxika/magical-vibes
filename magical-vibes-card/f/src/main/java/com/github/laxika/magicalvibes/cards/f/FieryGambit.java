@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -23,7 +22,7 @@ public class FieryGambit extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "You must target a creature."
-        )).addEffect(EffectSlot.SPELL, new FlipUntilLoseOrStopEffect(List.of(
+        )).addSpellEffect(new FlipUntilLoseOrStopEffect(List.of(
                 new DealDamageToTargetCreatureEffect(3),
                 new DealDamageToPlayersEffect(6, DamageRecipient.EACH_OPPONENT),
                 SequenceEffect.of(

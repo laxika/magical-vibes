@@ -24,6 +24,6 @@ public class DovinsVeto extends Card {
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
                 ),
                 "Target must be a noncreature spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addSpellEffect(new CounterSpellEffect());
     }
 }

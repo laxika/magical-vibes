@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -22,9 +21,8 @@ public class AncientExcavation extends Card {
     public AncientExcavation() {
         // Draw cards equal to the number of cards in your hand, then discard a card for each card
         // drawn this way.
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new CardsInHand(CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL,
-                new DiscardEffect(new CardsDrawnThisResolution(), DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DrawCardEffect(new CardsInHand(CountScope.CONTROLLER)));
+        addSpellEffect(new DiscardEffect(new CardsDrawnThisResolution(), DiscardRecipient.CONTROLLER));
 
         addHandActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),

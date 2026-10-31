@@ -19,6 +19,6 @@ public class DraconicLore extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
+        addSpellEffect(new DrawCardEffect(3));
     }
 }

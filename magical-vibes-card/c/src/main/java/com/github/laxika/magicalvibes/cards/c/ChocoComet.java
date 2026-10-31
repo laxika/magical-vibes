@@ -27,7 +27,7 @@ public class ChocoComet extends Card {
                 CardColor.GREEN, null, List.of(CardSubtype.BIRD), Set.of(), Set.of(),
                 false, false, birdTokenEffects, List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, birdToken);
+        addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
+        addSpellEffect(birdToken);
     }
 }

@@ -29,7 +29,7 @@ public class GaladrielsDismissal extends Card {
                         new PlayerRelationPredicate(PlayerRelation.ANY),
                         "Target must be a player"),
                 1, 1, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+                .addSpellEffect(new ConditionalReplacementEffect(
                         new Kicked(),
                         new PhaseOutEffect(PhaseOutSubject.TARGET),
                         PhaseOutPermanentsEffect.targetPlayer(new PermanentIsCreaturePredicate())));

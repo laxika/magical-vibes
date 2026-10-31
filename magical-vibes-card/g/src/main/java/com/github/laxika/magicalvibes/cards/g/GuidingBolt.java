@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +21,7 @@ public class GuidingBolt extends Card {
                         new PermanentPowerAtLeastPredicate(4)
                 )),
                 "Target must be a creature with power 4 or greater"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ScryEffect(2));
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ScryEffect(2));
     }
 }

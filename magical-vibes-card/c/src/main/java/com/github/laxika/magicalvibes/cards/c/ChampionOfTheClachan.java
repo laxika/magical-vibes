@@ -16,7 +16,7 @@ import java.util.Set;
 public class ChampionOfTheClachan extends Card {
 
     public ChampionOfTheClachan() {
-        addEffect(EffectSlot.SPELL, new BeholdAndExileCost(CardSubtype.KITHKIN));
+        addCastingCost(new BeholdAndExileCost(CardSubtype.KITHKIN));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.KITHKIN))));
     }

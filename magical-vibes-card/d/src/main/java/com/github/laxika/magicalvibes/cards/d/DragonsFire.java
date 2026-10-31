@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.BeheldPower;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
@@ -21,14 +20,14 @@ import java.util.List;
 public class DragonsFire extends Card {
 
     public DragonsFire() {
-        addEffect(EffectSlot.SPELL, BeholdCost.optional(CardSubtype.DRAGON));
+        addCastingCost(BeholdCost.optional(CardSubtype.DRAGON));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new BeholdCostPaid(),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(3),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new BeheldPower())

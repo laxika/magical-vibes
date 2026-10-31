@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -13,6 +12,6 @@ public class Doppelgang extends Card {
 
     public Doppelgang() {
         targetExactlyX(TargetFilters.permanent(), Integer.MAX_VALUE)
-                .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(new XValue()));
+                .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(new XValue()));
     }
 }

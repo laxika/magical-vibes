@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect;
 
@@ -16,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeAddExtraManaUnt
 public class HighTide extends Card {
 
     public HighTide() {
-        addEffect(EffectSlot.SPELL,
-                new LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect(CardSubtype.ISLAND, ManaColor.BLUE));
+        addSpellEffect(new LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect(CardSubtype.ISLAND, ManaColor.BLUE));
     }
 }

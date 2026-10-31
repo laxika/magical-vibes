@@ -19,7 +19,7 @@ public class SearingTouch extends Card {
 
     public SearingTouch() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{4}"));
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new DealDamageToAnyTargetEffect(1));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

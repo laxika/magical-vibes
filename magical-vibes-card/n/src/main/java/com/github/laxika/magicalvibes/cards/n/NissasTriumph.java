@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -29,7 +28,7 @@ public class NissasTriumph extends Card {
         CardAllOfPredicate basicForest = new CardAllOfPredicate(List.of(
                 new CardSupertypePredicate(CardSupertype.BASIC),
                 new CardSubtypePredicate(CardSubtype.FOREST)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.NISSA)),
                 new SearchLibraryEffect(new Fixed(2), basicForest, LibrarySearchDestination.HAND),
                 new SearchLibraryEffect(new Fixed(3), new CardTypePredicate(CardType.LAND), LibrarySearchDestination.HAND)

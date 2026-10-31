@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ChampionsOfTheShoal extends Card {
 
     public ChampionsOfTheShoal() {
-        addEffect(EffectSlot.SPELL, new BeholdAndExileCost(CardSubtype.MERFOLK));
+        addCastingCost(new BeholdAndExileCost(CardSubtype.MERFOLK));
 
         var tapAndStun = SequenceEffect.of(
                 new TapPermanentsEffect(TapUntapScope.TARGET),

@@ -19,7 +19,7 @@ public class UnderwaterTunnelSlimyAquarium extends Card {
     public UnderwaterTunnelSlimyAquarium() {
         setRoomDoorManaCosts(List.of("{U}", "{3}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Underwater Tunnel", List.of())
                         .withManaCost("{U}"),
                 new ChooseOneEffect.ChooseOneOption("Slimy Aquarium", List.of())

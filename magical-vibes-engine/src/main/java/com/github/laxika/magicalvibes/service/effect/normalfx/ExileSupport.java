@@ -388,7 +388,7 @@ public class ExileSupport {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (chosenCard.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e instanceof SacrificeCreatureCost)) {
+        if (chosenCard.getCastingCosts().stream().anyMatch(e -> e instanceof SacrificeCreatureCost)) {
             gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                     " has a mandatory additional cost that can't be paid (Knowledge Pool) and stays exiled."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -404,7 +404,7 @@ public class ExileSupport {
             return;
         }
 
-        boolean chooseOneSpell = chosenCard.getEffects(EffectSlot.SPELL).stream()
+        boolean chooseOneSpell = chosenCard.getSpellEffects().stream()
                 .anyMatch(e -> e instanceof ChooseOneEffect modal
                         && (modal.options().stream().anyMatch(option -> option.manaCost() != null)
                         || (modal.choicesRequired() == 1 && !modal.modesMayRepeat())));
@@ -416,7 +416,7 @@ public class ExileSupport {
 
         // Determine spell type
         StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
-        List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getCastingCostsAndSpellEffects());
 
         String playerName = gameData.playerIdToName.get(playerId);
 

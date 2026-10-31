@@ -15,7 +15,7 @@ public class QuantumReduction extends Card {
 
     public QuantumReduction() {
         setFlashCastCondition(new TeamworkCostPaid());
-        addEffect(EffectSlot.SPELL, new TeamworkCost(2));
+        addCastingCost(new TeamworkCost(2));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-5, 0, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE));

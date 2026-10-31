@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,6 +30,6 @@ public class TacticalAdvantage extends Card {
                         ))
                 )),
                 "Target must be a blocking or blocked creature you control"
-        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
+        )).addSpellEffect(new BoostTargetCreatureEffect(2, 2));
     }
 }

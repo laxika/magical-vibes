@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,11 +15,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class NahirisLithoforming extends Card {
 
     public NahirisLithoforming() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+        addSpellEffect(new SacrificePermanentsEffect(
                 new XValue(), new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER)
                 .withRecordedSacrificeCount());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new EventValue()));
-        addEffect(EffectSlot.SPELL, new PlayAdditionalLandsEffect(new XValue()));
-        addEffect(EffectSlot.SPELL, new PermanentsEnterTappedThisTurnEffect(new PermanentIsLandPredicate()));
+        addSpellEffect(new DrawCardEffect(new EventValue()));
+        addSpellEffect(new PlayAdditionalLandsEffect(new XValue()));
+        addSpellEffect(new PermanentsEnterTappedThisTurnEffect(new PermanentIsLandPredicate()));
     }
 }

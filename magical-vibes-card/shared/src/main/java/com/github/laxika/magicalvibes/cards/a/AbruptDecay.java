@@ -30,6 +30,6 @@ public class AbruptDecay extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentMaxManaValuePredicate(3))),
                 "Target must be a nonland permanent with mana value 3 or less."
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

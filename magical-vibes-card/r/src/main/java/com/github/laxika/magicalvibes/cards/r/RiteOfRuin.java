@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -37,7 +36,7 @@ public class RiteOfRuin extends Card {
     private static final PermanentPredicate LANDS = new PermanentIsLandPredicate();
 
     public RiteOfRuin() {
-        addEffect(EffectSlot.SPELL, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 order("Artifacts, then creatures, then lands", ARTIFACTS, CREATURES, LANDS),
                 order("Artifacts, then lands, then creatures", ARTIFACTS, LANDS, CREATURES),
                 order("Creatures, then artifacts, then lands", CREATURES, ARTIFACTS, LANDS),

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -19,8 +18,8 @@ public class VampiresKiss extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(2))
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofBloodToken(2));
+        )).addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
+                .addSpellEffect(new GainLifeEffect(2))
+                .addSpellEffect(CreateTokenEffect.ofBloodToken(2));
     }
 }

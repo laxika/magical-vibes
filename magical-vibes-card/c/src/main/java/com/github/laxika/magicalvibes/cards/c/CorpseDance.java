@@ -32,7 +32,7 @@ public class CorpseDance extends Card {
 
     public CorpseDance() {
         addEffect(EffectSlot.STATIC, new BuybackEffect("{2}"));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .topmost(true)
@@ -40,6 +40,6 @@ public class CorpseDance extends Card {
                 .battlefieldEffectGrantDuration(EffectDuration.UNTIL_END_OF_TURN)
                 .exileAtEndStep(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

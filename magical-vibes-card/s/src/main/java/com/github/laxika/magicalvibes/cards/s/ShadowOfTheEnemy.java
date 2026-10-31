@@ -23,7 +23,7 @@ public class ShadowOfTheEnemy extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new ExileGraveyardCardsEffect(
+        )).addSpellEffect(new ExileGraveyardCardsEffect(
                 0, GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING, creature,
                 null, false, true, false));
     }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimateChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -22,10 +21,10 @@ import java.util.Set;
 public class TurbochargedEscape extends Card {
 
     public TurbochargedEscape() {
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))))));
-        addEffect(EffectSlot.SPELL, new AnimateChosenOwnPermanentEffect(
+        addSpellEffect(new AnimateChosenOwnPermanentEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
                         Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT, null)));

@@ -17,8 +17,8 @@ public class DwarvenLandslide extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}", new PermanentIsLandPredicate(), "a land"));
 
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
         targetWhenKicked(TargetFilters.land(), 0, 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect()));
+                .addSpellEffect(new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect()));
     }
 }

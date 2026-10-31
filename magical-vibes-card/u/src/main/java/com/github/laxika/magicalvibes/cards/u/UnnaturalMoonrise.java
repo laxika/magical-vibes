@@ -18,11 +18,11 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class UnnaturalMoonrise extends Card {
 
     public UnnaturalMoonrise() {
-        addEffect(EffectSlot.SPELL, new BecomeNightEffect());
+        addSpellEffect(new BecomeNightEffect());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1)));
         addCastingOption(new FlashbackCast("{2}{R}{G}"));
     }

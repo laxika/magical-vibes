@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.condition.SpellCounteredThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,8 +19,8 @@ public class FoldIntoAether extends Card {
         // card from their hand onto the battlefield. The counter is listed first so the rider sees the
         // outcome of the counter (CR 608.2c).
         target(null, 1, 1)
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new ConditionalEffect(
                         new SpellCounteredThisWay(),
                         new MayEffect(
                                 new PutCardToBattlefieldForTargetSpellControllerEffect(

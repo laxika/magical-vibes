@@ -12,7 +12,7 @@ public class RobTheArchives extends Card {
 
     public RobTheArchives() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(1));
-        addEffect(EffectSlot.SPELL, new ExileTopCardMayPlayThisTurnEffect(2, false));
+        addCastingCost(new CasualtyCost(1));
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(2, false));
     }
 }

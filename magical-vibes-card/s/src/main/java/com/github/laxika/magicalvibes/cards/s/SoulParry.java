@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SoulParry extends Card {
 
     public SoulParry() {
-        target(TargetFilters.creature(), 1, 2).addEffect(EffectSlot.SPELL, PreventDamageEffect.allByTargetCreatures());
+        target(TargetFilters.creature(), 1, 2).addSpellEffect(PreventDamageEffect.allByTargetCreatures());
     }
 }

@@ -32,7 +32,7 @@ public class CommenceTheEndgame extends Card {
 
     public CommenceTheEndgame() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
 
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -40,14 +40,12 @@ public class CommenceTheEndgame extends Card {
         ControlsPermanent controlsArmy = new ControlsPermanent(army);
         CardsInHand handSize = new CardsInHand(CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(controlsArmy,
+        addSpellEffect(ConditionalEffect.unless(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, handSize, army),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
-        addEffect(EffectSlot.SPELL,
-                ConditionalEffect.unless(new NotCondition(controlsArmy),
+        addSpellEffect(ConditionalEffect.unless(new NotCondition(controlsArmy),
                         SequenceEffect.of(
                                 new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,

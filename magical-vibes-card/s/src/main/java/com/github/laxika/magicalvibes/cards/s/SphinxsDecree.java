@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellTypesNextTurnEffect;
 import java.util.Set;
 
@@ -11,7 +10,7 @@ import java.util.Set;
 public class SphinxsDecree extends Card {
 
     public SphinxsDecree() {
-        addEffect(EffectSlot.SPELL, new OpponentsCantCastSpellTypesNextTurnEffect(
+        addSpellEffect(new OpponentsCantCastSpellTypesNextTurnEffect(
                 Set.of(CardType.INSTANT, CardType.SORCERY)));
     }
 }

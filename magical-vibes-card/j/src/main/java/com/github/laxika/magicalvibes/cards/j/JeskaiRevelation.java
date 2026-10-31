@@ -33,8 +33,7 @@ import java.util.Set;
 public class JeskaiRevelation extends Card {
 
     public JeskaiRevelation() {
-        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL,
-                new ReturnTargetSpellOrPermanentToHandEffect());
+        target(TargetFilters.permanent()).addSpellEffect(new ReturnTargetSpellOrPermanentToHandEffect());
 
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -42,20 +41,19 @@ public class JeskaiRevelation extends Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any target")).addEffect(EffectSlot.SPELL,
-                new DealDamageToAnyTargetEffect(4));
+                "Target must be any target")).addSpellEffect(new DealDamageToAnyTargetEffect(4));
 
         Map<EffectSlot, CardEffect> monkTokenEffects = Map.of(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new BoostSelfEffect(1, 1))));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 2, "Monk", 1, 1,
                 CardColor.WHITE, null, List.of(CardSubtype.MONK),
                 Set.of(), Set.of(), false, false, monkTokenEffects, List.of(),
                 false, false, false, 0, Set.of()));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
+        addSpellEffect(new DrawCardEffect(2));
+        addSpellEffect(new GainLifeEffect(4));
     }
 }

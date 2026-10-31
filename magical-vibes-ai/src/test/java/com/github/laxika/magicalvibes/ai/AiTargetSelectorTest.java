@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -235,7 +234,7 @@ class AiTargetSelectorTest {
         Card damageSpell = new Card();
         damageSpell.setName("Test Shock");
         damageSpell.setType(CardType.INSTANT);
-        damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        damageSpell.addSpellEffect(new DealDamageToAnyTargetEffect(2));
 
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
@@ -250,7 +249,7 @@ class AiTargetSelectorTest {
         Card damageSpell = new Card();
         damageSpell.setName("Test Shock");
         damageSpell.setType(CardType.INSTANT);
-        damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        damageSpell.addSpellEffect(new DealDamageToAnyTargetEffect(2));
 
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
@@ -268,7 +267,7 @@ class AiTargetSelectorTest {
         Card damageSpell = new Card();
         damageSpell.setName("Test Creature Burn");
         damageSpell.setType(CardType.INSTANT);
-        damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(2));
+        damageSpell.addSpellEffect(new DealDamageToTargetCreatureEffect(2));
 
         UUID target = targetSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
@@ -349,7 +348,7 @@ class AiTargetSelectorTest {
         Card tapSpell = new Card();
         tapSpell.setName("Test Tap");
         tapSpell.setType(CardType.INSTANT);
-        tapSpell.addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+        tapSpell.addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
 
         UUID target = targetSelector.chooseTarget(gd, tapSpell, aiPlayer.getId());
 
@@ -365,7 +364,7 @@ class AiTargetSelectorTest {
         Card tapSpell = new Card();
         tapSpell.setName("Test Tap");
         tapSpell.setType(CardType.INSTANT);
-        tapSpell.addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+        tapSpell.addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
 
         UUID target = targetSelector.chooseTarget(gd, tapSpell, aiPlayer.getId());
 
@@ -467,7 +466,7 @@ class AiTargetSelectorTest {
         Card pumpSpell = new Card();
         pumpSpell.setName("Test Growth");
         pumpSpell.setType(CardType.INSTANT);
-        pumpSpell.addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3));
+        pumpSpell.addSpellEffect(new BoostTargetCreatureEffect(3, 3));
 
         UUID target = targetSelector.chooseTarget(gd, pumpSpell, aiPlayer.getId());
 
@@ -772,7 +771,7 @@ class AiTargetSelectorTest {
         Card spellCard = new Card();
         spellCard.setName("Test Spell");
         spellCard.setType(CardType.SORCERY);
-        spellCard.addEffect(EffectSlot.SPELL, effect);
+        spellCard.addSpellEffect(effect);
 
         List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
 
@@ -792,8 +791,7 @@ class AiTargetSelectorTest {
         Card spellCard = new Card();
         spellCard.setName("Test Spell");
         spellCard.setType(CardType.SORCERY);
-        spellCard.addEffect(EffectSlot.SPELL,
-                new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+        spellCard.addSpellEffect(new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
 
         List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
 
@@ -812,7 +810,7 @@ class AiTargetSelectorTest {
         Card spellCard = new Card();
         spellCard.setName("Test Spell");
         spellCard.setType(CardType.SORCERY);
-        spellCard.addEffect(EffectSlot.SPELL, new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
+        spellCard.addSpellEffect(new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
 
         List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
 
@@ -844,7 +842,7 @@ class AiTargetSelectorTest {
         ReturnTargetCardsFromGraveyardToHandEffect effect =
                 ReturnTargetCardsFromGraveyardToHandEffect.exactly(
                         new CardTypePredicate(CardType.CREATURE), 2);
-        spell.addEffect(EffectSlot.SPELL, effect);
+        spell.addSpellEffect(effect);
 
         assertThat(targetSelector.findValidGraveyardReturnTargets(
                 gd, spell, aiPlayer.getId(), effect)).isEmpty();
@@ -906,7 +904,7 @@ class AiTargetSelectorTest {
         @DisplayName("Returns null for spell with no divided damage effect")
         void returnsNullForNonDividedDamageSpell() {
             Card bolt = new Card();
-            bolt.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            bolt.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             assertThat(unitSelector.buildDamageAssignments(unitGd, bolt, aiId)).isNull();
         }
@@ -918,7 +916,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.target(1, 3).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
+            spell.target(1, 3).addSpellEffect(DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -931,7 +929,7 @@ class AiTargetSelectorTest {
         void returnsNullForCreatureOnlyWithNoTargets() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.target(1, 3).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
+            spell.target(1, 3).addSpellEffect(DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             assertThat(unitSelector.buildDamageAssignments(unitGd, spell, aiId)).isNull();
         }
@@ -943,7 +941,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+            spell.addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
                     DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
@@ -960,7 +958,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
+            spell.addSpellEffect(DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -972,7 +970,7 @@ class AiTargetSelectorTest {
         void anyTargetTargetsOpponentWhenNoCreatures() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
+            spell.addSpellEffect(DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -988,7 +986,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
+            spell.addSpellEffect(DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -1037,7 +1035,7 @@ class AiTargetSelectorTest {
             Card spell = new Card();
             spell.setName("Test Player Spell");
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
+            spell.addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
             return spell;
         }
 
@@ -1095,7 +1093,7 @@ class AiTargetSelectorTest {
             // Kicked: any targets (canTargetPermanent=true, canTargetPlayer=true)
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+            spell.addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
                     DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
@@ -1118,7 +1116,7 @@ class AiTargetSelectorTest {
         void nonWrappedAnyTargetIncludesBoth() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
 
@@ -1131,7 +1129,7 @@ class AiTargetSelectorTest {
         void creatureOnlyIncludesPermanent() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+            spell.addSpellEffect(new DealDamageToTargetCreatureEffect(3));
 
             Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
 
@@ -1150,7 +1148,7 @@ class AiTargetSelectorTest {
         @DisplayName("Returns true for CHOSEN among-target-creatures DealDividedDamageEffect")
         void trueForCreatureOnlyDividedDamage() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
+            spell.addSpellEffect(DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
         }
@@ -1159,7 +1157,7 @@ class AiTargetSelectorTest {
         @DisplayName("Returns true for direct CHOSEN any-targets DealDividedDamageEffect")
         void trueForDirectAnyTargetDividedDamage() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(5));
+            spell.addSpellEffect(DealDividedDamageEffect.chosenAmongAnyTargets(5));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
         }
@@ -1168,7 +1166,7 @@ class AiTargetSelectorTest {
         @DisplayName("Returns false for regular damage spell")
         void falseForRegularDamageSpell() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            spell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
         }
@@ -1179,7 +1177,7 @@ class AiTargetSelectorTest {
             // The DealDividedDamageEffect is inside a ConditionalReplacementEffect,
             // so needsDamageDistribution should return false (the wrapper type doesn't match)
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
+            spell.addSpellEffect(new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
                     DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
@@ -1382,7 +1380,7 @@ class AiTargetSelectorTest {
             pumpSpell.setType(CardType.INSTANT);
             pumpSpell.target(new PermanentPredicateTargetFilter(
                     new PermanentIsCreaturePredicate(), "Target must be a creature"), 0, 2)
-                    .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2));
+                    .addSpellEffect(new BoostTargetCreatureEffect(2, 2));
 
             List<UUID> targets = targetSelector.chooseMultiTargets(gd, pumpSpell, aiPlayer.getId());
 
@@ -1664,7 +1662,7 @@ class AiTargetSelectorTest {
             StackEntry sorcerySpell = new StackEntry(
                     com.github.laxika.magicalvibes.model.StackEntryType.INSTANT_SPELL,
                     bolt, human.getId(), "Wizard's Lightning",
-                    bolt.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL), 0);
+                    bolt.getCastingCostsAndSpellEffects(), 0);
             gd.stack.add(sorcerySpell);
 
             UUID target = targetSelector.chooseSpellTarget(gd, scatter, aiPlayer.getId());
@@ -1983,7 +1981,7 @@ class AiTargetSelectorTest {
             Card destroySpell = new Card();
             destroySpell.setName("Test Destroy");
             destroySpell.setType(CardType.INSTANT);
-            destroySpell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+            destroySpell.addSpellEffect(new DestroyTargetPermanentEffect());
 
             UUID target = threatAwareSelector.chooseTarget(gd, destroySpell, aiPlayer.getId());
 
@@ -2002,7 +2000,7 @@ class AiTargetSelectorTest {
             Card destroySpell = new Card();
             destroySpell.setName("Test Destroy");
             destroySpell.setType(CardType.INSTANT);
-            destroySpell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+            destroySpell.addSpellEffect(new DestroyTargetPermanentEffect());
 
             UUID target = threatAwareSelector.chooseTarget(gd, destroySpell, aiPlayer.getId());
 
@@ -2026,7 +2024,7 @@ class AiTargetSelectorTest {
             Card exileSpell = new Card();
             exileSpell.setName("Test Exile");
             exileSpell.setType(CardType.INSTANT);
-            exileSpell.addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+            exileSpell.addSpellEffect(new ExileTargetPermanentEffect());
 
             UUID target = threatAwareSelector.chooseTarget(gd, exileSpell, aiPlayer.getId());
 
@@ -2051,7 +2049,7 @@ class AiTargetSelectorTest {
             Card bounceSpell = new Card();
             bounceSpell.setName("Test Bounce");
             bounceSpell.setType(CardType.INSTANT);
-            bounceSpell.addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+            bounceSpell.addSpellEffect(ReturnToHandEffect.target());
 
             UUID target = threatAwareSelector.chooseTarget(gd, bounceSpell, aiPlayer.getId());
 
@@ -2075,7 +2073,7 @@ class AiTargetSelectorTest {
             Card damageSpell = new Card();
             damageSpell.setName("Test Bolt");
             damageSpell.setType(CardType.INSTANT);
-            damageSpell.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            damageSpell.addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
             UUID target = threatAwareSelector.chooseTarget(gd, damageSpell, aiPlayer.getId());
 
@@ -2095,7 +2093,7 @@ class AiTargetSelectorTest {
             Card destroySpell = new Card();
             destroySpell.setName("Test Destroy");
             destroySpell.setType(CardType.INSTANT);
-            destroySpell.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+            destroySpell.addSpellEffect(new DestroyTargetPermanentEffect());
 
             // Original selector without BoardEvaluator — uses raw power
             UUID target = targetSelector.chooseTarget(gd, destroySpell, aiPlayer.getId());

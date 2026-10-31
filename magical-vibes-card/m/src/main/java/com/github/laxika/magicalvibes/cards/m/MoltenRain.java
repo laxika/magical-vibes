@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
@@ -22,7 +21,7 @@ public class MoltenRain extends Card {
         // Destroy target land. If that land was nonbasic, Molten Rain deals 2 damage to the land's
         // controller.
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,
                         new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,

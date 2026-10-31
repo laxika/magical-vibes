@@ -25,7 +25,7 @@ import java.util.List;
 public class Showstopper extends Card {
 
     public Showstopper() {
-        addEffect(EffectSlot.SPELL, new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 EffectSlot.ON_DEATH,
                 new DealDamageToTargetCreatureEffect(2, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

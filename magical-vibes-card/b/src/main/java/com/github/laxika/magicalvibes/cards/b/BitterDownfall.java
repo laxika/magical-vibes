@@ -24,7 +24,7 @@ public class BitterDownfall extends Card {
                         new PermanentDealtDamageThisTurnPredicate()
                 )), 3));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        target(TargetFilters.creature()).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 new LoseLifeEffect(2), ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }

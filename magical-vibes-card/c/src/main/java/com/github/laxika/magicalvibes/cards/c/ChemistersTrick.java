@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
@@ -32,11 +31,11 @@ public class ChemistersTrick extends Card {
         var opponentCreatures = new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate());
 
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new BoostTargetCreatureEffect(-2, 0),
                 new BoostAllCreaturesEffect(-2, 0, opponentCreatures)));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK),
                 new MatchingCreaturesMustAttackThisTurnEffect(opponentCreatures, true)));

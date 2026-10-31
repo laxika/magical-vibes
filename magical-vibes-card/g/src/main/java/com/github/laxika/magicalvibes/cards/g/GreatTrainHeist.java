@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -29,13 +28,13 @@ import java.util.List;
 public class GreatTrainHeist extends Card {
 
     public GreatTrainHeist() {
-        addEffect(EffectSlot.SPELL, new SpreeAdditionalManaCost(List.of("{2}{R}", "{2}", "{R}")));
+        addCastingCost(new SpreeAdditionalManaCost(List.of("{2}{R}", "{2}", "{R}")));
 
         var opponentFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent.");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMore(List.of(
+        addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap all creatures you control. If it's your combat phase, there is an additional combat phase after this phase.",
                         List.of(

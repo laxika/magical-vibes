@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -33,10 +32,10 @@ public class VolcanicOffering extends Card {
 
         target(new PermanentPredicateTargetFilter(nonbasicLand,
                 "Target must be a nonbasic land you don't control"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
         target(new PermanentPredicateTargetFilter(nonbasicLand,
                 "Target must be a nonbasic land you don't control"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
         DealDamageToTargetCreatureEffect firstCreatureDamage = new DealDamageToTargetCreatureEffect(7);
         DealDamageToTargetCreatureEffect secondCreatureDamage = new DealDamageToTargetCreatureEffect(7);
         target(new PermanentPredicateTargetFilter(opposingCreature,
@@ -45,7 +44,7 @@ public class VolcanicOffering extends Card {
         target(new PermanentPredicateTargetFilter(opposingCreature,
                 "Target must be a creature you don't control"))
                 .bindEffect(secondCreatureDamage);
-        addSimultaneousEffects(EffectSlot.SPELL, firstCreatureDamage, secondCreatureDamage);
+        addSimultaneousSpellEffects(firstCreatureDamage, secondCreatureDamage);
 
         setAllowSharedTargets(true);
         setOpponentChosenSpellTargetIndices(List.of(1, 3));

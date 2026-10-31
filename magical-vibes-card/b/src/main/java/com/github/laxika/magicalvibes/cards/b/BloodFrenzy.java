@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
@@ -29,7 +28,7 @@ public class BloodFrenzy extends Card {
                 )),
                 "Target must be an attacking or blocking creature"
         ))
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(4, 0))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAtEndStepEffect());
+                .addSpellEffect(new BoostTargetCreatureEffect(4, 0))
+                .addSpellEffect(new DestroyTargetPermanentAtEndStepEffect());
     }
 }

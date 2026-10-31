@@ -16,7 +16,7 @@ import java.util.List;
 public class VoyagerDrake extends Card {
 
     public VoyagerDrake() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{U}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{U}")));
         targetUpTo(new RepeatedAdditionalCostCount("{U}"), TargetFilters.creature(), 100)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));

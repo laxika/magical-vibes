@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 public class Evermind extends Card {
 
     public Evermind() {
-        addEffect(EffectSlot.SPELL, new DrawCardEffect());
+        addSpellEffect(new DrawCardEffect());
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{U}"));
     }
 }

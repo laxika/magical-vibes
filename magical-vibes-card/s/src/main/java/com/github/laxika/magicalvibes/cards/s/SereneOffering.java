@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -13,7 +12,7 @@ public class SereneOffering extends Card {
 
     public SereneOffering() {
         target(TargetFilters.enchantment())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetManaValue()));
+                .addSpellEffect(new DestroyTargetPermanentEffect(false))
+                .addSpellEffect(new GainLifeEffect(new TargetManaValue()));
     }
 }

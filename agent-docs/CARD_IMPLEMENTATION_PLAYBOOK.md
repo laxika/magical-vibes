@@ -30,7 +30,7 @@ public class ExampleCard extends Card {
 ## Canonical patterns
 
 - Targeted burn spell:
-  - `addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(N))`
+  - `addSpellEffect(new DealDamageToAnyTargetEffect(N))`
   - Targeting is computed from effects — no `setNeedsTarget` call needed.
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/Shock.java`
 
@@ -44,12 +44,12 @@ public class ExampleCard extends Card {
   - Rationale: a single `getEffectivePower` call with a manual guard is the historical source of "stuck game" bugs (attacker with negative effective power sent a negative damage total to the engine). The three-way split makes "signed stat" vs. "damage amount" a compile-time-visible distinction.
 
 - Multi-step spell resolution with shared target:
-  - chain effects in order with repeated `addEffect(EffectSlot.SPELL, ...)`
+  - chain effects in order with repeated `addSpellEffect(...)`
   - Example: `magical-vibes-card/c/src/main/java/com/github/laxika/magicalvibes/cards/c/Condemn.java`
 
 - Spell that targets stack entries:
-  - `target(new StackEntryPredicateTargetFilter(...)).addEffect(EffectSlot.SPELL, new CounterSpellEffect())` if restricted
-  - `addEffect(EffectSlot.SPELL, new CounterSpellEffect())` if targeting any spell (no filter needed)
+  - `target(new StackEntryPredicateTargetFilter(...)).addSpellEffect(new CounterSpellEffect())` if restricted
+  - `addSpellEffect(new CounterSpellEffect())` if targeting any spell (no filter needed)
   - Spell targeting is computed from effects — no `setNeedsSpellTarget` call needed.
   - Example: `magical-vibes-card/t/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 
@@ -192,7 +192,7 @@ public class ExampleCard extends Card {
 
 - Overload ("Overload {cost}" — CR 702.96, RTR/GTC/GRN, e.g. Blustersquall, Vandalblast, Cyclonic Rift):
   - Two halves. The **cost** is a plain pure-mana alternate hand cast: `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"))))` — same shape as evoke/prowl, so it replaces the mana cost and is forced through a dedicated entry point (`GameService.playCardWithOverload` / harness `castWithOverload(player, cardIndex)`; no target argument).
-  - The **text change** ("replace all instances of 'target' with 'each'", CR 702.96a) is a `ConditionalReplacementEffect(new Overloaded(), printedTargetedEffect, massEffect)` in `EffectSlot.SPELL`. Declare the printed targeting normally with `target(...)`; per CR 702.96b an overloaded spell chooses **no** targets, so the upgraded branch must be a non-targeting mass effect.
+  - The **text change** ("replace all instances of 'target' with 'each'", CR 702.96a) is a `ConditionalReplacementEffect(new Overloaded(), printedTargetedEffect, massEffect)` added with `addSpellEffect`. Declare the printed targeting normally with `target(...)`; per CR 702.96b an overloaded spell chooses **no** targets, so the upgraded branch must be a non-targeting mass effect.
     - Blustersquall = `ConditionalReplacementEffect(new Overloaded(), new TapPermanentsEffect(TapUntapScope.TARGET), new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))` + `target(TargetFilters.creatureAnOpponentControls())`.
   - `Overloaded` is the one `ConditionalReplacementEffect` condition whose branches differ in **target shape**, so `ConditionalReplacementEffect.targetSpec()` special-cases it and reports the *base* (printed) spec. The overload cast path instead resolves the wrapper away up front via `EffectResolution.resolveEffects(effects, kicked, overloaded, modeIndex)` before deciding whether a target is required, and stamps `StackEntry.overloaded` so the same swap happens again at resolution (`ConditionContext.overloaded()` → `ConditionEvaluationService`).
   - Like evoke and prowl, overload has **no websocket/UI path yet** — it is reachable from the engine and tests only. The AI never overloads.
@@ -238,7 +238,7 @@ public class ExampleCard extends Card {
 - Add `setTargetFilter(...)` (on Card) or pass a `TargetFilter` to the `ActivatedAbility` constructor when target legality is restricted.
 - Cross-group target uniqueness: by default, all targets across target groups must be distinct (matching the common MTG "another target" pattern). When the card's oracle text does NOT say "another" and its target filters can overlap (e.g. "target creature" + "target Merfolk"), call `setAllowSharedTargets(true)` to allow the same permanent for different target groups (CR 114.6c). Example: `RiverHeraldsBoon` allows a Merfolk as both targets; `BloodFeud` uses the default (distinct) since it says "another target creature".
 - Multi-zone targeting (spell + permanent): when a spell targets both a spell on the stack and a permanent (e.g. Lost in the Mist), chain both effects (`CounterSpellEffect` + `ReturnToHandEffect.target()`). The engine stores the spell target in `targetId` (Zone.STACK) and permanent targets in `targetIds`. Uses multi-zone fizzle logic: only fizzles when ALL targets become illegal. Cast in tests via `castInstant(player, cardIndex, spellTargetId, permanentTargetId)`.
-- Multi-zone targeting (graveyard + permanent): when a spell targets both a card in a graveyard and a permanent (e.g. Yawgmoth's Vile Offering), use `addEffect(SPELL, ReturnCardFromGraveyardEffect.builder().targetGraveyard(true)...)` for the graveyard target and `target(filter, 0, 1).addEffect(SPELL, ...)` for the permanent target. The engine stores the graveyard target in `targetId` (Zone.GRAVEYARD) and permanent targets in `targetIds`. Cast in tests via `castSorcery(player, cardIndex, graveyardCardId, List.of(permanentId))`.
+- Multi-zone targeting (graveyard + permanent): when a spell targets both a card in a graveyard and a permanent (e.g. Yawgmoth's Vile Offering), use `addSpellEffect(ReturnCardFromGraveyardEffect.builder().targetGraveyard(true)...)` for the graveyard target and `target(filter, 0, 1).addSpellEffect(...)` for the permanent target. The engine stores the graveyard target in `targetId` (Zone.GRAVEYARD) and permanent targets in `targetIds`. Cast in tests via `castSorcery(player, cardIndex, graveyardCardId, List.of(permanentId))`.
 
 ## MayEffect lifecycle
 

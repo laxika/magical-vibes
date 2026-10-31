@@ -36,7 +36,7 @@ public class VivisPersistence extends Card {
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))));
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD),
                 Set.of(), Set.of(), wizardTokenEffects));
 

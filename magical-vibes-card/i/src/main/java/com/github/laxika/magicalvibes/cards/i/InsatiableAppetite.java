@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class InsatiableAppetite extends Card {
 
     public InsatiableAppetite() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentsOrElseEffect(
+        addSpellEffect(new SacrificePermanentsOrElseEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                 1,
                 new BoostTargetCreatureEffect(5, 5),

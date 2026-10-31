@@ -24,6 +24,6 @@ public class Thoughtcast extends Card {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(artifactsYouControl));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        addSpellEffect(new DrawCardEffect(2));
     }
 }

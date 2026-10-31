@@ -17,7 +17,7 @@ import java.util.Set;
 public class ElementalEruption extends Card {
 
     public ElementalEruption() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 "Dragon Elemental",
                 4,
                 4,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -25,6 +24,6 @@ public class Daze extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ReturnPermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.ISLAND))
         )));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(1));
+        addSpellEffect(new CounterUnlessPaysEffect(1));
     }
 }

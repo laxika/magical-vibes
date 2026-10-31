@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Index extends Card {
 
     public Index() {
-        addEffect(EffectSlot.SPELL, new ReorderTopCardsOfLibraryEffect(5));
+        addSpellEffect(new ReorderTopCardsOfLibraryEffect(5));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -14,6 +13,6 @@ public class SolidarityOfHeroes extends Card {
     public SolidarityOfHeroes() {
         setAdditionalManaCostPerExtraTarget("{1}{G}");
         target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
-                .addEffect(EffectSlot.SPELL, new DoublePlusOneCountersOnTargetCreatureEffect());
+                .addSpellEffect(new DoublePlusOneCountersOnTargetCreatureEffect());
     }
 }

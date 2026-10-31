@@ -24,7 +24,7 @@ public class Icefall extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(false));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(false));
 
         addEffect(EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new MayPayManaEffect("{R}{R}",

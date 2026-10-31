@@ -18,9 +18,9 @@ public class SewerPlague extends Card {
         PermanentPredicate opponentCreature = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new PerpetuallyBoostTargetCreatureEffect(-2, -2,
+                .addSpellEffect(new PerpetuallyBoostTargetCreatureEffect(-2, -2,
                         opponentCreature))
-                .addEffect(EffectSlot.SPELL, new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
+                .addSpellEffect(new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                         EffectSlot.EACH_UPKEEP_TRIGGERED,
                         new PerpetuallyBoostSourceEffect(-1, -1),
                         opponentCreature));

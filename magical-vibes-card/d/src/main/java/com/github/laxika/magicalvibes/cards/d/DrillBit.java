@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
@@ -20,7 +19,7 @@ public class DrillBit extends Card {
                 List.of(new ManaCastingCost("{B}")),
                 new OpponentLostLifeThisTurn(1),
                 false));
-        addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(
+        addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
     }
 }

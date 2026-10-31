@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -12,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 public class PulseOfTheFields extends Card {
 
     public PulseOfTheFields() {
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new GainLifeEffect(4));
+        addSpellEffect(new ConditionalEffect(
                 new AnOpponentHasMoreLifeThanController(), ReturnToHandEffect.selfSpell()));
     }
 }

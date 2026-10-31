@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -35,7 +34,7 @@ public class StreetSpasm extends Card {
 
     public StreetSpasm() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{X}{X}{R}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new DealDamageToTargetCreatureEffect(new XValue()),
                 new MassDamageEffect(new XValue(), false, false, notYoursAndWithoutFlying())));

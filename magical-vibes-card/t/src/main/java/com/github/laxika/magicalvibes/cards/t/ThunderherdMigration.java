@@ -16,7 +16,6 @@ public class ThunderherdMigration extends Card {
 
     public ThunderherdMigration() {
         addEffect(EffectSlot.STATIC, new IncreaseOwnCastCostUnlessRevealSubtypeEffect(1, CardSubtype.DINOSAUR));
-        addEffect(EffectSlot.SPELL,
-                new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
+        addSpellEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

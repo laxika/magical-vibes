@@ -256,10 +256,10 @@ public class EffectResolutionService {
                     && resolvingTargetGroup >= 0
                     && entry.targetsForEffect(effect).isEmpty()
                     && entry.getTargetCardIds().isEmpty()
-                    && !(resolvingTargetGroup < entry.getCard().getSpellTargets().size()
-                    && entry.getCard().getSpellTargets().get(resolvingTargetGroup).getMinTargets() == 0)
+                    && !(resolvingTargetGroup < entry.getCard().getTargetGroups().size()
+                    && entry.getCard().getTargetGroups().get(resolvingTargetGroup).getMinTargets() == 0)
                     && !(entry.getTargetId() != null && entry.getTargetIds().isEmpty()
-                    && entry.getCard().getSpellTargets().size() == 1)) {
+                    && entry.getCard().getTargetGroups().size() == 1)) {
                 continue;
             }
 
@@ -434,7 +434,7 @@ public class EffectResolutionService {
             }
 
             // Multi-target support: set entry.targetId to this effect's group target based on
-            // the Card's SpellTarget declarations (StackEntry.targetsForEffect slices the flat
+            // the Card's TargetGroup declarations (StackEntry.targetsForEffect slices the flat
             // target list by group). Single-target handlers read the remapped targetId; handlers
             // that support several targets per group consult targetsForEffect themselves.
             int targetIdx = resolvingTargetGroup;

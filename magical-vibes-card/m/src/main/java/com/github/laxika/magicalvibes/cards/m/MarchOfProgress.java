@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -22,7 +21,7 @@ public class MarchOfProgress extends Card {
 
     public MarchOfProgress() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{6}{U}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new CreateTokenCopyOfTargetPermanentEffect(),
                 new CreateTokenCopyOfEachOtherControlledPermanentEffect(

@@ -11,7 +11,7 @@ public class ResoundingThunder extends Card {
     public ResoundingThunder() {
         // Resounding Thunder deals 3 damage to any target. (DealDamageToAnyTargetEffect's
         // TargetSpec narrows the legal target to any target — no explicit filter needed.)
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+        addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
         // "When you cycle this card, it deals 6 damage to any target." The cycle trigger is separate
         // from the cycling draw, so its target fizzling never stops the draw, and it resolves first.

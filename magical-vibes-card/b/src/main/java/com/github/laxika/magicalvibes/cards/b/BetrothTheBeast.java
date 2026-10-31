@@ -22,7 +22,7 @@ public class BetrothTheBeast extends Card {
 
     public BetrothTheBeast() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new CreateTokenAttachedToTargetEffect(royalRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(royalRoleToken()));
     }
 
     private static CreateTokenEffect royalRoleToken() {

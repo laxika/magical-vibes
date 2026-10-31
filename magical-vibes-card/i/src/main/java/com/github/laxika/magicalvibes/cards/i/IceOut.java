@@ -20,7 +20,7 @@ import java.util.List;
 public class IceOut extends Card {
 
     public IceOut() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
         addEffect(EffectSlot.STATIC, new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

@@ -27,7 +27,7 @@ import java.util.Set;
 public class EndlessRanksOfHYDRA extends Card {
 
     public EndlessRanksOfHYDRA() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new Sum(new PlayersInGame(), new Fixed(-1)), "Villain", 2, 1,
                 CardColor.BLACK, List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of()));
 

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 public class SkullRend extends Card {
 
     public SkullRend() {
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT, true));
+        addSpellEffect(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+        addSpellEffect(new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT, true));
     }
 }

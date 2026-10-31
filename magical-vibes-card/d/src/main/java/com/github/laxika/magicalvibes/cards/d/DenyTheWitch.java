@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -31,8 +30,8 @@ public class DenyTheWitch extends Card {
                         StackEntryType.TRIGGERED_ABILITY)),
                 "Target must be a spell, activated ability, or triggered ability."
         ))
-                .addEffect(EffectSlot.SPELL, new TargetSpellControllerLosesLifeEffect(
+                .addSpellEffect(new TargetSpellControllerLosesLifeEffect(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                .addSpellEffect(new CounterSpellEffect());
     }
 }

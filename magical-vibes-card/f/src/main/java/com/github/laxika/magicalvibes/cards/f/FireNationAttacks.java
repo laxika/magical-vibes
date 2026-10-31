@@ -20,7 +20,7 @@ import java.util.Set;
 public class FireNationAttacks extends Card {
 
     public FireNationAttacks() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 2, "Soldier", 2, 2,
                 CardColor.RED, Set.of(), List.of(CardSubtype.SOLDIER),
                 Set.of(Keyword.FIREBENDING), Set.of(), false, false,

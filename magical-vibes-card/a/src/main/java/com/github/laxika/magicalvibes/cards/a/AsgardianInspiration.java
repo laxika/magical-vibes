@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 public class AsgardianInspiration extends Card {
 
     public AsgardianInspiration() {
-        addEffect(EffectSlot.SPELL, new ExileTopCardMayPlayThisTurnEffect(false));
+        addSpellEffect(new ExileTopCardMayPlayThisTurnEffect(false));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
                 new MayPayManaEffect("{2}", new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
                         "Pay {2} to return Asgardian Inspiration from your graveyard to your hand?"));

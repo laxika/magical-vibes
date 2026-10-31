@@ -13,7 +13,7 @@ public class Cinderclasm extends Card {
 
     public Cinderclasm() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new MassDamageEffect(1),
                 new MassDamageEffect(2)));
     }

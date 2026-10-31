@@ -16,7 +16,7 @@ public class Forbid extends Card {
 
     public Forbid() {
         addEffect(EffectSlot.STATIC, new BuybackEffect(2));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

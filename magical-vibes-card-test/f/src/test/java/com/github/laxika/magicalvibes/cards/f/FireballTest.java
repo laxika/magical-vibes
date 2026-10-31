@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -340,7 +339,7 @@ class FireballTest extends BaseCardTest {
         // to prove the resolution-side guard holds on its own.
         Card fireball = new Fireball();
         gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, fireball, player1.getId(),
-                fireball.getName(), fireball.getEffects(EffectSlot.SPELL), 5, List.of(plainsId)));
+                fireball.getName(), fireball.getCastingCostsAndSpellEffects(), 5, List.of(plainsId)));
 
         harness.passBothPriorities();
 

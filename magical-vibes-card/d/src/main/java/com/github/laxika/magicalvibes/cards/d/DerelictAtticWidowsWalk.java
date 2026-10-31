@@ -25,7 +25,7 @@ public class DerelictAtticWidowsWalk extends Card {
     public DerelictAtticWidowsWalk() {
         setRoomDoorManaCosts(List.of("{2}{B}", "{3}{B}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Derelict Attic", List.of())
                         .withManaCost("{2}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Widow's Walk", List.of())

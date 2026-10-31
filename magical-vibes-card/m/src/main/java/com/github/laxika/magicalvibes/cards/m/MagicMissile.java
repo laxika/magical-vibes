@@ -13,7 +13,7 @@ public class MagicMissile extends Card {
 
     public MagicMissile() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.SPELL, new DealDividedDamageEffect(
+        addSpellEffect(new DealDividedDamageEffect(
                 new Fixed(3), null, DivisionMode.CHOSEN, null, 3, true, false, false));
     }
 }

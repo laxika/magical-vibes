@@ -29,7 +29,7 @@ public class SurgicalSuiteHospitalRoom extends Card {
     public SurgicalSuiteHospitalRoom() {
         setRoomDoorManaCosts(List.of("{1}{W}", "{3}{W}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Surgical Suite", List.of())
                         .withManaCost("{1}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Hospital Room", List.of())

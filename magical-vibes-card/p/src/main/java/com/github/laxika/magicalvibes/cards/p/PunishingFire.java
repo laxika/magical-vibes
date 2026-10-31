@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class PunishingFire extends Card {
 
     public PunishingFire() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
+        addSpellEffect(new DealDamageToAnyTargetEffect(2));
 
         addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_GAINS_LIFE,
                 new MayPayManaEffect("{R}",

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -19,7 +18,7 @@ public class LureOfPrey extends Card {
 
     public LureOfPrey() {
         setCastCondition(new OpponentCastSpellThisTurn(new CardTypePredicate(CardType.CREATURE)));
-        addEffect(EffectSlot.SPELL, new MayEffect(new PutCardToBattlefieldEffect(
+        addSpellEffect(new MayEffect(new PutCardToBattlefieldEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardColorPredicate(CardColor.GREEN))),

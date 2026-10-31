@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -17,7 +16,7 @@ public class BlessedReversal extends Card {
 
     public BlessedReversal() {
         // You gain 3 life for each creature attacking you.
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new Scaled(
+        addSpellEffect(new GainLifeEffect(new Scaled(
                 new PermanentCount(new PermanentIsAttackingSourceControllerPredicate(), CountScope.ANY_PLAYER), 3)));
     }
 }

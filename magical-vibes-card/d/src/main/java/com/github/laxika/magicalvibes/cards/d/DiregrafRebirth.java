@@ -19,7 +19,7 @@ public class DiregrafRebirth extends Card {
     public DiregrafRebirth() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

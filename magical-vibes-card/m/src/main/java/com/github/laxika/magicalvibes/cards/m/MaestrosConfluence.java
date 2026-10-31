@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -34,7 +33,7 @@ public class MaestrosConfluence extends Card {
         CardPredicate monocoloredInstantOrSorcery = new CardAllOfPredicate(List.of(
                 new CardHasExactlyNColorsPredicate(1), instantOrSorcery));
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+        addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Return target monocolored instant or sorcery card from your graveyard to your hand",
                         () -> ReturnCardFromGraveyardEffect.builder()

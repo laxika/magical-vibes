@@ -19,7 +19,7 @@ import java.util.List;
 public class PowderGanger extends Card {
 
     public PowderGanger() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         target(TargetFilters.artifact(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

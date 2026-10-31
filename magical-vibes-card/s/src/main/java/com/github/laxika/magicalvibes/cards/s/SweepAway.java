@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -21,10 +20,10 @@ public class SweepAway extends Card {
         // If the creature is attacking on resolution and the caster accepts, it is tucked and the trailing
         // bounce finds nothing; declining (or a non-attacking target) falls through to the bounce.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsAttackingPredicate()),
                         new MayEffect(new PutTargetOnTopOfLibraryEffect(),
                                 "You may put that creature on top of its owner's library instead.")))
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
     }
 }

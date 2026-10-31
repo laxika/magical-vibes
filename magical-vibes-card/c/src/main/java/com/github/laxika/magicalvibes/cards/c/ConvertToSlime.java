@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,8 +23,8 @@ public class ConvertToSlime extends Card {
         target(TargetFilters.artifact(), 0, 1);
         target(TargetFilters.creature(), 0, 1);
         target(TargetFilters.enchantment(), 0, 1);
-        addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new DestroyEachTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(
                         new Delirium(),
                         new CreateTokenEffect("Ooze", new TotalManaValueOfDestroyedPermanents(),
                                 new TotalManaValueOfDestroyedPermanents(), CardColor.GREEN,

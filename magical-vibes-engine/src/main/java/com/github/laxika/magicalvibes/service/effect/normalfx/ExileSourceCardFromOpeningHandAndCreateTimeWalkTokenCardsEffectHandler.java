@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -83,7 +82,7 @@ public class ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHand
         tokenCard.setOwnerId(ownerId);
         tokenCard.setToken(true);
         tokenCard.setTokenCard(true);
-        tokenCard.addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
+        tokenCard.addSpellEffect(new ControllerExtraTurnEffect(1));
         tokenCard.freeze();
         return tokenCard;
     }

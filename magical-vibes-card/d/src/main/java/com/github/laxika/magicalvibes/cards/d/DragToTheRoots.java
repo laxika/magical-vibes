@@ -22,6 +22,6 @@ public class DragToTheRoots extends Card {
         PermanentNotPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         target(new PermanentPredicateTargetFilter(nonland,
                 "Target must be a nonland permanent"))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addSpellEffect(new DestroyTargetPermanentEffect());
     }
 }

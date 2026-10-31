@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 public class Providence extends Card {
 
     public Providence() {
-        addEffect(EffectSlot.SPELL, new SetLifeTotalEffect(26));
+        addSpellEffect(new SetLifeTotalEffect(26));
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
                 new RegisterOpeningHandUpkeepTriggerEffect(new SetLifeTotalEffect(26)),
                 "Reveal this card from your opening hand?"

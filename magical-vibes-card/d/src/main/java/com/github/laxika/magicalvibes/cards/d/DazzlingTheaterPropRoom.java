@@ -23,7 +23,7 @@ public class DazzlingTheaterPropRoom extends Card {
     public DazzlingTheaterPropRoom() {
         setRoomDoorManaCosts(List.of("{3}{W}", "{2}{W}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Dazzling Theater", List.of())
                         .withManaCost("{3}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Prop Room", List.of())

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -18,14 +17,14 @@ import java.util.Set;
 public class EmergencyWeld extends Card {
 
     public EmergencyWeld() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.CREATURE))))
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Soldier", 1, 1, null,
+        addSpellEffect(new CreateTokenEffect("Soldier", 1, 1, null,
                 List.of(CardSubtype.SOLDIER), Set.of(), Set.of(CardType.ARTIFACT)));
     }
 }

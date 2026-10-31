@@ -27,6 +27,6 @@ public class LullmagesDomination extends Card {
                         new PermanentManaValueEqualsXPredicate()
                 )),
                 "Target must be a creature with mana value equal to X"
-        )).addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+        )).addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -28,11 +27,11 @@ public class RootsOfWisdom extends Card {
                 new CardTypePredicate(CardType.LAND),
                 new CardSubtypePredicate(CardSubtype.ELF)));
 
-        addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new MillEffect(3, MillRecipient.CONTROLLER));
+        addSpellEffect(new ConditionalEffect(
                 new NotCondition(new GraveyardCardThreshold(1, returnableCard)),
                 new DrawCardEffect()));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(returnableCard)
                 .mandatory(true)

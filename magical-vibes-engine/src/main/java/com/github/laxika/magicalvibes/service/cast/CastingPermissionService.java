@@ -1289,7 +1289,7 @@ public class CastingPermissionService {
     }
 
     private boolean hasAvailableTeamworkPayment(GameData gameData, UUID playerId, Card card) {
-        TeamworkCost teamworkCost = card.getEffects(EffectSlot.SPELL).stream()
+        TeamworkCost teamworkCost = card.getCastingCosts().stream()
                 .filter(TeamworkCost.class::isInstance)
                 .map(TeamworkCost.class::cast)
                 .findFirst()

@@ -12,7 +12,7 @@ public class NexusOfFate extends Card {
 
     public NexusOfFate() {
         // Take an extra turn after this one.
-        addEffect(EffectSlot.SPELL, new ControllerExtraTurnEffect(1));
+        addSpellEffect(new ControllerExtraTurnEffect(1));
 
         // If Nexus of Fate would be put into a graveyard from anywhere, reveal it and shuffle it
         // into its owner's library instead.

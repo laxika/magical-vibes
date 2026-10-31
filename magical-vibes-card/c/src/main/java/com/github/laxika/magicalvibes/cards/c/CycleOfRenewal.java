@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -14,9 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class CycleOfRenewal extends Card {
 
     public CycleOfRenewal() {
-        addEffect(EffectSlot.SPELL, new SacrificePermanentThenEffect(
+        addSpellEffect(new SacrificePermanentThenEffect(
                 new PermanentIsLandPredicate(), null, "a land", false, false));
-        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+        addSpellEffect(new SearchLibraryEffect(
                 new Fixed(2), CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -31,7 +30,6 @@ public class Contagion extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
-        ), 1, 2).addEffect(EffectSlot.SPELL,
-                DistributeCountersAmongTargetsEffect.evenlyAmongTargets(CounterType.MINUS_TWO_MINUS_ONE, 2));
+        ), 1, 2).addSpellEffect(DistributeCountersAmongTargetsEffect.evenlyAmongTargets(CounterType.MINUS_TWO_MINUS_ONE, 2));
     }
 }

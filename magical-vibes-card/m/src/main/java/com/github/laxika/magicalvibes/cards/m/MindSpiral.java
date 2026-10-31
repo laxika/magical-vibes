@@ -28,18 +28,18 @@ public class MindSpiral extends Card {
 
     public MindSpiral() {
         addEffect(EffectSlot.STATIC, new GiftEffect(1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+        addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(3, false, true));
+        )).addSpellEffect(new DrawCardForTargetPlayerEffect(3, false, true));
 
         targetWhenGiftPromised(TargetFilters.creatureAnOpponentControls(), 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new TapPermanentsEffect(TapUntapScope.TARGET)))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN)));
     }
 

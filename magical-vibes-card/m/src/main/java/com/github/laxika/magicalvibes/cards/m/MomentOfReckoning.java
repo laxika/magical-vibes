@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -28,7 +27,7 @@ public class MomentOfReckoning extends Card {
 
     public MomentOfReckoning() {
         var nonlandPermanent = TargetFilters.nonlandPermanent();
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.upToWithRepeatedModes(List.of(
+        addSpellEffect(ChooseOneEffect.upToWithRepeatedModes(List.of(
                 ChooseOneEffect.ChooseOneOption.withEffectFactory(
                         "Destroy target nonland permanent",
                         () -> new DestroyTargetPermanentEffect(nonlandPermanent.predicate()),

@@ -35,7 +35,7 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL),
+                scheme.getCastingCostsAndSpellEffects(),
                 (UUID) null,
                 List.of(exiled.getId())));
         harness.passBothPriorities();
@@ -60,7 +60,7 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL),
+                scheme.getCastingCostsAndSpellEffects(),
                 (UUID) null,
                 List.of(ownPermanent.getId())));
         harness.passBothPriorities();
@@ -198,7 +198,7 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
                 scheme,
                 player1.getId(),
                 scheme.getName(),
-                scheme.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL),
+                scheme.getCastingCostsAndSpellEffects(),
                 (UUID) null,
                 targetIds));
         harness.passBothPriorities();

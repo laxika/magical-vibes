@@ -29,7 +29,7 @@ public class NightscapeBattlemage extends Card {
 
     public NightscapeBattlemage() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}"));
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}{U}"), true, 1));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}{U}"), true, 1));
 
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentIsLandPredicate(), "Target must be a land"),

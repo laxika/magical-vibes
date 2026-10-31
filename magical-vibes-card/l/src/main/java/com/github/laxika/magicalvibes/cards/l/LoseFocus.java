@@ -13,8 +13,8 @@ import java.util.List;
 public class LoseFocus extends Card {
 
     public LoseFocus() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{U}")));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(2));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}")));
+        addSpellEffect(new CounterUnlessPaysEffect(2));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{U}"));
     }
 }

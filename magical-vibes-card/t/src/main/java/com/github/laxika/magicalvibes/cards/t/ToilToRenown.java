@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -20,7 +19,7 @@ public class ToilToRenown extends Card {
 
     public ToilToRenown() {
         // Each tapped permanent is counted once, so an artifact creature only adds 1 life.
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(new PermanentCount(
+        addSpellEffect(new GainLifeEffect(new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsTappedPredicate(),
                         new PermanentAnyOfPredicate(List.of(

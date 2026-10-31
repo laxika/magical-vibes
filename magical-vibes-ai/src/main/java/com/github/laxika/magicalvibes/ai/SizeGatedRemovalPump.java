@@ -2,10 +2,9 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
@@ -53,7 +52,7 @@ public class SizeGatedRemovalPump {
         int powerBoost = 0;
         int toughnessBoost = 0;
         AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
-        for (CardEffect effect : pumpCard.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : pumpCard.getCastingCostsAndSpellEffects()) {
             if (effect instanceof CreatureBoostEffect boost) {
                 powerBoost += amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
                 toughnessBoost += amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
@@ -108,7 +107,7 @@ public class SizeGatedRemovalPump {
 
     private void collectSizeGatesFromCard(Card card, List<SizeGate> gates) {
         boolean hasRemoval = false;
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (effect instanceof RemovalEffect) {
                 hasRemoval = true;
             }
@@ -129,7 +128,7 @@ public class SizeGatedRemovalPump {
         }
         if (hasRemoval) {
             collectSizeGatesFromFilter(card.getTargetFilter(), gates);
-            for (SpellTarget spellTarget : card.getSpellTargets()) {
+            for (TargetGroup spellTarget : card.getTargetGroups()) {
                 collectSizeGatesFromFilter(spellTarget.getFilter(), gates);
             }
         }

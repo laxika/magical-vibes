@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellFromEachOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -23,7 +22,7 @@ public class FlotsamJetsam extends Card {
                 new MillEffect(3, MillRecipient.EACH_OPPONENT),
                 new CastSpellFromEachOpponentGraveyardEffect());
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Flotsam — Mill three cards. Investigate",
                         flotsam

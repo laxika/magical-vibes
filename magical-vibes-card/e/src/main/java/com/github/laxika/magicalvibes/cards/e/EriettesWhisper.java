@@ -30,11 +30,10 @@ public class EriettesWhisper extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
+        )).addSpellEffect(new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER));
 
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
     }
 
     private static CreateTokenEffect wickedRoleToken() {

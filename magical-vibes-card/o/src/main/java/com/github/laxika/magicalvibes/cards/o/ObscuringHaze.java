@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
@@ -21,6 +20,6 @@ public class ObscuringHaze extends Card {
         addCastingOption(new AlternateHandCast(List.of(), new ControllerControlsCommander(), false));
 
         // Prevent all damage that would be dealt this turn by creatures your opponents control.
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allByOpponentCreatures());
+        addSpellEffect(PreventDamageEffect.allByOpponentCreatures());
     }
 }

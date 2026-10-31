@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,7 +15,6 @@ public class FaithAndGrief extends Card {
         CardPredicate artifactOrEnchantment = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.ARTIFACT),
                 new CardTypePredicate(CardType.ENCHANTMENT)));
-        addEffect(EffectSlot.SPELL,
-                new ReturnTargetCardsFromGraveyardToHandEffect(artifactOrEnchantment, 2));
+        addSpellEffect(new ReturnTargetCardsFromGraveyardToHandEffect(artifactOrEnchantment, 2));
     }
 }

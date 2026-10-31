@@ -21,7 +21,7 @@ public class BogDown extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        )).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
                 new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)

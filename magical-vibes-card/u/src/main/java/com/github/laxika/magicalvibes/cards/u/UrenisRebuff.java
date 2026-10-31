@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.HarmonizeCast;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class UrenisRebuff extends Card {
 
     public UrenisRebuff() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.creature()).addSpellEffect(ReturnToHandEffect.target());
         addCastingOption(new HarmonizeCast("{5}{U}"));
     }
 }

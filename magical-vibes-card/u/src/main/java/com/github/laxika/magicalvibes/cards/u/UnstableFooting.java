@@ -14,8 +14,8 @@ public class UnstableFooting extends Card {
 
     public UnstableFooting() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}{R}"));
-        addEffect(EffectSlot.SPELL, new DamageCantBePreventedThisTurnEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+        addSpellEffect(new DamageCantBePreventedThisTurnEffect());
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(5)));
     }
 }

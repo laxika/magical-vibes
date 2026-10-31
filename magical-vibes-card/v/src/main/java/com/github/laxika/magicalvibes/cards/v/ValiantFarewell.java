@@ -19,12 +19,12 @@ public class ValiantFarewell extends Card {
 
     public ValiantFarewell() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                         RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
                                 new CardTypePredicate(CardType.CREATURE),
                                 List.of(new PerpetuallyBoostTriggeringCardEffect(2, 0))), true))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

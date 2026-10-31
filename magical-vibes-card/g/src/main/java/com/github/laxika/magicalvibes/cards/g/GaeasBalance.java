@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachSubtypeEffect;
@@ -16,9 +15,9 @@ import java.util.List;
 public class GaeasBalance extends Card {
 
     public GaeasBalance() {
-        addEffect(EffectSlot.SPELL, new SacrificeMultiplePermanentsCost(5, new PermanentIsLandPredicate()));
+        addCastingCost(new SacrificeMultiplePermanentsCost(5, new PermanentIsLandPredicate()));
         // One search for a land card of each basic land type; the found lands enter together.
-        addEffect(EffectSlot.SPELL, new SearchLibraryForOneCardOfEachSubtypeEffect(
+        addSpellEffect(new SearchLibraryForOneCardOfEachSubtypeEffect(
                 List.of(CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
                         CardSubtype.MOUNTAIN, CardSubtype.FOREST),
                 CardType.LAND,

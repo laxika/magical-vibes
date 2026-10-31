@@ -16,7 +16,7 @@ public class DecreeOfSavagery extends Card {
     private static final String PROMPT = "Put four +1/+1 counters on target creature?";
 
     public DecreeOfSavagery() {
-        addEffect(EffectSlot.SPELL, new PutCounterOnEachControlledPermanentEffect(
+        addSpellEffect(new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 4, new PermanentIsCreaturePredicate()));
 
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(

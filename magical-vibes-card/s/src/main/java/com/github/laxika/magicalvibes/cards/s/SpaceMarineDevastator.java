@@ -19,7 +19,7 @@ import java.util.List;
 public class SpaceMarineDevastator extends Card {
 
     public SpaceMarineDevastator() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{2}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")), TriggerMode.INDEPENDENT);
 

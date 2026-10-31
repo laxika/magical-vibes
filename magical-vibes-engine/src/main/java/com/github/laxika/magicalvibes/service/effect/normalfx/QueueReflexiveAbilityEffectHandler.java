@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -168,22 +168,22 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     }
 
     private boolean isAnyNumberOfTargetsGroup(StackEntry entry, int targetGroupIndex) {
-        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getSpellTargets().size()
-                || entry.getCard().getSpellTargets().size() != 1) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getTargetGroups().size()
+                || entry.getCard().getTargetGroups().size() != 1) {
             return false;
         }
-        var group = entry.getCard().getSpellTargets().get(targetGroupIndex);
-        return group.getMaxTargets() == SpellTarget.ANY_NUMBER_OF_TARGETS
+        var group = entry.getCard().getTargetGroups().get(targetGroupIndex);
+        return group.getMaxTargets() == TargetGroup.ANY_NUMBER_OF_TARGETS
                 && group.getDynamicMinTargets() == null
                 && group.getDynamicMaxTargets() == null;
     }
 
     private boolean isMultiTargetGroup(StackEntry entry, int targetGroupIndex) {
-        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getSpellTargets().size()) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getTargetGroups().size()) {
             return false;
         }
-        var group = entry.getCard().getSpellTargets().get(targetGroupIndex);
-        return entry.getCard().getSpellTargets().size() > 1
+        var group = entry.getCard().getTargetGroups().get(targetGroupIndex);
+        return entry.getCard().getTargetGroups().size() > 1
                 || group.getMaxTargets() > 1
                 || group.getMinTargets() == 0
                 || group.getDynamicMinTargets() != null
@@ -277,10 +277,10 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
      */
     private TargetFilter targetGroupFilter(StackEntry entry, CardEffect effect) {
         int targetGroupIndex = entry.getCard().getEffectTargetIndex(effect);
-        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getSpellTargets().size()) {
+        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getTargetGroups().size()) {
             return null;
         }
-        return entry.getCard().getSpellTargets().get(targetGroupIndex).getFilter();
+        return entry.getCard().getTargetGroups().get(targetGroupIndex).getFilter();
     }
 
     private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId) {

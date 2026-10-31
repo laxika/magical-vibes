@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class CreepingChill extends Card {
 
     public CreepingChill() {
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        addSpellEffect(new DealDamageToPlayersEffect(3, DamageRecipient.EACH_OPPONENT));
+        addSpellEffect(new GainLifeEffect(3));
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY, new ConditionalEffect(
                 new SourceCardInGraveyard(),
                 new MayEffect(

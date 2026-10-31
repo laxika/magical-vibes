@@ -18,7 +18,7 @@ public class Anoint extends Card {
         // card into your hand as it resolves.)
         // Prevent the next 3 damage that would be dealt to target creature this turn.
         addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.nextToTargetCreature(3));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(PreventDamageEffect.nextToTargetCreature(3));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

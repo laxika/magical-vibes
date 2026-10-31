@@ -17,9 +17,9 @@ public class WalkTheAeons extends Card {
 
     public WalkTheAeons() {
         target(1, 1)
-                .addEffect(EffectSlot.SPELL, new ExtraTurnEffect(1));
+                .addSpellEffect(new ExtraTurnEffect(1));
         addEffect(EffectSlot.STATIC, new BuybackEffect(
                 3, new PermanentHasSubtypePredicate(CardSubtype.ISLAND), "three Islands"));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

@@ -16,8 +16,7 @@ public class InnocuousInsect extends Card {
         // Buyback {1}{U} (You may pay an additional {1}{U} as you cast this spell. If you do, put
         // this card into your hand as it resolves.)
         addEffect(EffectSlot.STATIC, new BuybackEffect("{1}{U}"));
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
+        addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
 
         // When you cast this spell, draw a card.
         addEffect(EffectSlot.ON_SELF_CAST, new DrawCardEffect());

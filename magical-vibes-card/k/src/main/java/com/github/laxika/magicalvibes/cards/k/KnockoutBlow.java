@@ -37,7 +37,7 @@ public class KnockoutBlow extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        )).addSpellEffect(new DealDamageToTargetCreatureEffect(4))
+                .addSpellEffect(new GainLifeEffect(2));
     }
 }

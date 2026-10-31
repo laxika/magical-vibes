@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.HarmonizeCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 public class ZenithFestival extends Card {
 
     public ZenithFestival() {
-        addEffect(EffectSlot.SPELL, new ExileTopCardsMayPlayUntilNextTurnEffect(new XValue()));
+        addSpellEffect(new ExileTopCardsMayPlayUntilNextTurnEffect(new XValue()));
         addCastingOption(new HarmonizeCast("{X}{R}{R}"));
     }
 }

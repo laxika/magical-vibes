@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
@@ -31,13 +30,12 @@ public class VengeantEarth extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsLandPredicate())))),
                 "Target must be a creature or land you control"))
-                .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
+                .addSpellEffect(new AnimatePermanentsEffect(
                         4, 4,
                         List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.HASTE),
                         null, Set.of(),
                         GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
-                .addEffect(EffectSlot.SPELL,
-                        SetCombatRequirementThisTurnEffect.targetPermanent(CombatRequirement.MUST_BE_BLOCKED));
+                .addSpellEffect(SetCombatRequirementThisTurnEffect.targetPermanent(CombatRequirement.MUST_BE_BLOCKED));
     }
 }

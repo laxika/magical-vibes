@@ -26,7 +26,7 @@ public class Degavolver extends Card {
 
     public Degavolver() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
+        addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));

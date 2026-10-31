@@ -19,7 +19,7 @@ public class GaladhrimBrigade extends Card {
 
     public GaladhrimBrigade() {
         // Squad {1}{G}
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{G}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{G}")));
 
         // Create a token copy of Galadhrim Brigade for each time its squad cost was paid.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

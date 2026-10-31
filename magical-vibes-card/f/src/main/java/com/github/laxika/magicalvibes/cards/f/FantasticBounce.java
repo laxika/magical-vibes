@@ -24,7 +24,7 @@ public class FantasticBounce extends Card {
                 )), 2));
 
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target())
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(ReturnToHandEffect.target())
+                .addSpellEffect(new DrawCardEffect(1));
     }
 }

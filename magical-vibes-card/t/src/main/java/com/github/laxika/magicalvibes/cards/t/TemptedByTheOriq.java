@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -32,7 +31,6 @@ public class TemptedByTheOriq extends Card {
                         new PermanentMaxManaValuePredicate(3)
                 )),
                 "Target must be a creature or planeswalker an opponent controls with mana value 3 or less"
-        ), 0, 99).addEffect(EffectSlot.SPELL,
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT));
+        ), 0, 99).addSpellEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT));
     }
 }

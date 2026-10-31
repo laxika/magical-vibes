@@ -35,7 +35,7 @@ import java.util.List;
 public class EverflowingChalice extends Card {
 
     public EverflowingChalice() {
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{2}")));
+        addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.CHARGE, new RepeatedAdditionalCostCount("{2}")));
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -16,7 +15,6 @@ public class CommonBond extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
-        ), 1, 2).addEffect(EffectSlot.SPELL,
-                DistributeCountersAmongTargetsEffect.separateEvenInstructions(CounterType.PLUS_ONE_PLUS_ONE, 2));
+        ), 1, 2).addSpellEffect(DistributeCountersAmongTargetsEffect.separateEvenInstructions(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

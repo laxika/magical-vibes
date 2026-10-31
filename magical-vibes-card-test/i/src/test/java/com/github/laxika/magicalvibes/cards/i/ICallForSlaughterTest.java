@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -150,7 +149,7 @@ class ICallForSlaughterTest extends BaseCardTest {
                 sourceCard,
                 player1.getId(),
                 sourceCard.getName() + "'s set-in-motion ability",
-                sourceCard.getEffects(EffectSlot.SPELL),
+                sourceCard.getCastingCostsAndSpellEffects(),
                 (UUID) null,
                 (UUID) null));
         harness.passBothPriorities();

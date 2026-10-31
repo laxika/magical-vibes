@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -30,8 +29,7 @@ public class AnOfferYouCantRefuse extends Card {
                 ),
                 "Target must be a noncreature spell."
         ))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-                .addEffect(EffectSlot.SPELL,
-                        new TargetSpellControllerCreatesTokensEffect(CreateTokenEffect.ofTreasureToken(2)));
+                .addSpellEffect(new CounterSpellEffect())
+                .addSpellEffect(new TargetSpellControllerCreatesTokensEffect(CreateTokenEffect.ofTreasureToken(2)));
     }
 }

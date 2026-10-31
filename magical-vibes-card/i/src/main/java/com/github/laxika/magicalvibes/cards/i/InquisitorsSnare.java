@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -38,8 +37,8 @@ public class InquisitorsSnare extends Card {
                 )),
                 "Target must be an attacking or blocking creature."
         ))
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allByTargetCreatures())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                .addSpellEffect(PreventDamageEffect.allByTargetCreatures())
+                .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.BLACK, CardColor.RED))),
                         new DestroyTargetPermanentEffect()
                 ));

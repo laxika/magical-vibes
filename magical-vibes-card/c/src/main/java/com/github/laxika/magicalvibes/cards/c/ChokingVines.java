@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
@@ -20,7 +19,7 @@ public class ChokingVines extends Card {
         // creatures. One X-scaled attacking-creature group feeds both effects; a creature that is
         // already blocked just takes the damage.
         targetExactlyX(TargetFilters.attackingCreature(), Integer.MAX_VALUE)
-                .addEffect(EffectSlot.SPELL, new MakeTargetAttackingCreatureBlockedEffect())
-                .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+                .addSpellEffect(new MakeTargetAttackingCreatureBlockedEffect())
+                .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)));
     }
 }

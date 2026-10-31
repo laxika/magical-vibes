@@ -22,7 +22,7 @@ public class Undergrowth extends Card {
 
         // Prevent all combat damage that would be dealt this turn. If this spell's additional
         // cost was paid, this effect doesn't affect combat damage that would be dealt by red creatures.
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 PreventDamageEffect.allCombat(),
                 PreventDamageEffect.allCombatExcept(new PermanentColorInPredicate(Set.of(CardColor.RED)))));
     }

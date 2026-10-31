@@ -15,7 +15,7 @@ public class DenyReality extends Card {
     public DenyReality() {
         // Return target permanent to its owner's hand (any-permanent bounce; the "any permanent"
         // restriction comes from ReturnToHandEffect.target()'s targetSpec, same as Boomerang).
-        addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        addSpellEffect(ReturnToHandEffect.target());
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser mana
         // value, may cast it for free, rest to the bottom in a random order (CascadeEffectHandler).

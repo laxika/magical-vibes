@@ -13,7 +13,7 @@ public class Overblaze extends Card {
 
     public Overblaze() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.SPELL, new DoubleDamageFromTargetPermanentThisTurnEffect());
+                .addSpellEffect(new DoubleDamageFromTargetPermanentThisTurnEffect());
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{2}{R}{R}"));
     }
 }

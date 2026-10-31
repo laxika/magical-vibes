@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -27,7 +26,7 @@ public class CrashingFootfalls extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(4));
 
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Rhino", 4, 4, CardColor.GREEN,
+        addSpellEffect(new CreateTokenEffect(2, "Rhino", 4, 4, CardColor.GREEN,
                 List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()));
     }
 }

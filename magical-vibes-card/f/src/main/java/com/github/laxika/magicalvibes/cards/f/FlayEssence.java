@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -25,7 +24,7 @@ public class FlayEssence extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
+        )).addSpellEffect(new ExileTargetPermanentThenEffect(
                 EventStat.TOTAL_COUNTERS,
                 new GainLifeEffect(new EventValue()),
                 ThenEffectRecipient.CONTROLLER));

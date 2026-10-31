@@ -30,7 +30,7 @@ public class FurygaleFlocking extends Card {
                         new CardTypePredicate(CardType.SORCERY))),
                 CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.SPELL, new CreateTokensForEachOpponentAttackingEffect(
+        addSpellEffect(new CreateTokensForEachOpponentAttackingEffect(
                 new CreateTokenEffect(
                         CardType.CREATURE,
                         2,

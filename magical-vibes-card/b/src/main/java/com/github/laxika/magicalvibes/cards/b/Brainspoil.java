@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -28,7 +27,7 @@ public class Brainspoil extends Card {
                         new PermanentNotPredicate(new PermanentIsEnchantedPredicate())
                 )),
                 "Target must be a creature that isn't enchanted."
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
+        )).addSpellEffect(new DestroyTargetPermanentEffect(true));
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -22,7 +21,7 @@ public class FuryOfTheHorde extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.RED), "red", 2))));
 
-        addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES));
-        addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1, null, true));
+        addSpellEffect(new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES));
+        addSpellEffect(new AdditionalCombatMainPhaseEffect(1, null, true));
     }
 }

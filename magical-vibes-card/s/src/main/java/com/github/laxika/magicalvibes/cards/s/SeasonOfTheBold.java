@@ -16,7 +16,7 @@ import java.util.List;
 public class SeasonOfTheBold extends Card {
 
     public SeasonOfTheBold() {
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.budgetedModes(List.of(
+        addSpellEffect(ChooseOneEffect.budgetedModes(List.of(
                 new ChooseOneEffect.ChooseOneOption("Create a tapped Treasure token",
                         CreateTokenEffect.ofTreasureToken(1, true)),
                 new ChooseOneEffect.ChooseOneOption(

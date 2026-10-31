@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -28,7 +27,7 @@ public class Blustersquall extends Card {
 
     public Blustersquall() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new TapPermanentsEffect(TapUntapScope.TARGET),
                 new TapPermanentsEffect(TapUntapScope.ALL_CREATURES,

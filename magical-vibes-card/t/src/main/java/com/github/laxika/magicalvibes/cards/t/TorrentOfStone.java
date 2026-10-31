@@ -16,7 +16,7 @@ import java.util.List;
 public class TorrentOfStone extends Card {
 
     public TorrentOfStone() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(4));
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, List.of(
                 new SacrificePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)))));
     }

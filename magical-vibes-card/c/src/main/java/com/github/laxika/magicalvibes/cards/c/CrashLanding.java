@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -34,7 +33,7 @@ public class CrashLanding extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )),
                 "Target must be a creature with flying"
-        )).addEffect(EffectSlot.SPELL, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(forestsYouControl));
+        )).addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(forestsYouControl));
     }
 }

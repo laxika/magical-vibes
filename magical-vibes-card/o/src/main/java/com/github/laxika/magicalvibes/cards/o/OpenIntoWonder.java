@@ -22,8 +22,8 @@ public class OpenIntoWonder extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100)
-                .addEffect(EffectSlot.SPELL, new MakeCreatureUnblockableEffect())
-                .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addSpellEffect(new MakeCreatureUnblockableEffect())
+                .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1)));
     }
 }

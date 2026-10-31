@@ -16,7 +16,7 @@ public class ReclaimTheWastes extends Card {
 
     public ReclaimTheWastes() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand()),
                 new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.HAND)));

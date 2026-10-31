@@ -20,7 +20,7 @@ import java.util.List;
 public class SecuritronSquadron extends Card {
 
     public SecuritronSquadron() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{3}")));
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}")));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,

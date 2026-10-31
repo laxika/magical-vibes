@@ -15,7 +15,7 @@ public class CanopySurge extends Card {
 
     public CanopySurge() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new MassDamageEffect(1, false, true, new PermanentHasKeywordPredicate(Keyword.FLYING)),
                 new MassDamageEffect(4, false, true, new PermanentHasKeywordPredicate(Keyword.FLYING))
         ));

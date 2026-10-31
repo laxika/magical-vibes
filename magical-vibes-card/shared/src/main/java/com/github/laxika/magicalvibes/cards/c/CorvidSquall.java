@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class CorvidSquall extends Card {
 
     public CorvidSquall() {
-        addEffect(EffectSlot.SPELL, new ConjureCardNamedOntoBattlefieldEffect("9ED", "100"));
+        addSpellEffect(new ConjureCardNamedOntoBattlefieldEffect("9ED", "100"));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

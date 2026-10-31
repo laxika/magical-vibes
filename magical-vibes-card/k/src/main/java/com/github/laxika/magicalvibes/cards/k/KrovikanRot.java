@@ -24,7 +24,7 @@ public class KrovikanRot extends Card {
                         new PermanentPowerAtMostPredicate(2)
                 )),
                 "Target must be a creature with power 2 or less"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
 
         addEffect(EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                 new MayPayManaEffect("{1}{B}{B}",

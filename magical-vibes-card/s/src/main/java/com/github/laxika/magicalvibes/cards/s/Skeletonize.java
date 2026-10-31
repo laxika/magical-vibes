@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
@@ -31,7 +30,7 @@ public class Skeletonize extends Card {
                 false, false, false, 0, Set.<Keyword>of());
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3))
-                .addEffect(EffectSlot.SPELL, ResolveEffectOnTargetDeathThisTurnEffect.ifDealtDamageThisWay(skeletonToken));
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(3))
+                .addSpellEffect(ResolveEffectOnTargetDeathThisTurnEffect.ifDealtDamageThisWay(skeletonToken));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterAbilityAndLockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -31,8 +30,7 @@ public class Interdict extends Card {
                         new StackEntryCardTypeInPredicate(Set.of(
                                 CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT, CardType.LAND)))),
                 "Target must be an activated ability from an artifact, creature, enchantment, or land."))
-                .addEffect(EffectSlot.SPELL,
-                        new CounterAbilityAndLockSourceEffect(EffectDuration.UNTIL_END_OF_TURN));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addSpellEffect(new CounterAbilityAndLockSourceEffect(EffectDuration.UNTIL_END_OF_TURN));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

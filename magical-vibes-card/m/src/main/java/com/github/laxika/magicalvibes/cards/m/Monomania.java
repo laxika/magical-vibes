@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -26,7 +25,7 @@ public class Monomania extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new DiscardEffect(
+                .addSpellEffect(new DiscardEffect(
                         new Max(new Fixed(0), new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-1))),
                         DiscardRecipient.TARGET_PLAYER
                 ));

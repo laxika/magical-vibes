@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,15 +25,15 @@ public class RhinosRampage extends Card {
 
     public RhinosRampage() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 0));
         var fightTarget = target(TargetFilters.creatureAnOpponentControls());
-        fightTarget.addEffect(EffectSlot.SPELL, new FightTargetsEffect());
+        fightTarget.addSpellEffect(new FightTargetsEffect());
 
         PermanentPredicate artifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 new PermanentMaxManaValuePredicate(3)));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new EventValueAtLeast(1),
                 new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(artifact), true)));
     }

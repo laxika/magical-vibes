@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 
@@ -11,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 public class MeteorBlast extends Card {
 
     public MeteorBlast() {
-        targetExactlyX(null, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL,
-                new DealDamageToEachTargetEffect(new Fixed(4)));
+        targetExactlyX(null, Integer.MAX_VALUE).addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(4)));
     }
 }

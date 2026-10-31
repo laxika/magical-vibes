@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -21,9 +20,8 @@ import java.util.List;
 public class PyrrhicStrike extends Card {
 
     public PyrrhicStrike() {
-        addEffect(EffectSlot.SPELL,
-                new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 2, true));
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(
+        addCastingCost(new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 2, true));
+        addSpellEffect(new ChooseOneEffect(
                 List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Destroy target artifact or enchantment",

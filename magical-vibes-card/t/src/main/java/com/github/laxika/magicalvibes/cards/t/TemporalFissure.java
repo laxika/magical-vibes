@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TemporalFissure extends Card {
 
     public TemporalFissure() {
-        target(TargetFilters.permanent()).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        target(TargetFilters.permanent()).addSpellEffect(ReturnToHandEffect.target());
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

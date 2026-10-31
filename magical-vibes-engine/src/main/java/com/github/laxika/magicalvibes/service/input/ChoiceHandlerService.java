@@ -4621,8 +4621,10 @@ public class ChoiceHandlerService {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         // Shared-target modes reuse the target chosen when the spell or ability was put on
         // the stack. Choosing zero targets for an optional group remains final.
-        boolean sharedTargetMode = java.util.Arrays.stream(EffectSlot.values())
-                .flatMap(slot -> ctx.sourceCard().getEffects(slot).stream())
+        boolean sharedTargetMode = java.util.stream.Stream.concat(
+                        ctx.sourceCard().getCastingCostsAndSpellEffects().stream(),
+                        java.util.Arrays.stream(EffectSlot.values())
+                                .flatMap(slot -> ctx.sourceCard().getEffects(slot).stream()))
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect modal
                         && modal.options().equals(ctx.effect().options()));
         if (sharedTargetMode) {
@@ -4769,7 +4771,7 @@ public class ChoiceHandlerService {
         boolean hasTargets = selectedEffects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT));
-        if (hasTargets && ctx.sourceCard().getSpellTargets().isEmpty()) {
+        if (hasTargets && ctx.sourceCard().getTargetGroups().isEmpty()) {
             TargetFilter targetFilter = ctx.effect().options().stream()
                     .filter(option -> chosenLabels.contains(option.label()))
                     .map(ChooseOneEffect.ChooseOneOption::targetFilter)
@@ -4779,7 +4781,7 @@ public class ChoiceHandlerService {
                 return;
             }
         }
-        if (hasTargets && !ctx.sourceCard().getSpellTargets().isEmpty()) {
+        if (hasTargets && !ctx.sourceCard().getTargetGroups().isEmpty()) {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     ctx.sourceCard(), ctx.controllerId(), selectedEffects, ctx.sourcePermanentId(),
                     List.of(), 0, 0, List.of(), 0, true));

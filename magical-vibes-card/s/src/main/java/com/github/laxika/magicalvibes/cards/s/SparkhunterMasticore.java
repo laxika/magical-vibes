@@ -21,7 +21,7 @@ import java.util.Set;
 public class SparkhunterMasticore extends Card {
 
     public SparkhunterMasticore() {
-        addEffect(EffectSlot.SPELL, new DiscardCardTypeCost(null, null));
+        addCastingCost(new DiscardCardTypeCost(null, null));
         addEffect(EffectSlot.STATIC,
                 new ProtectionFromCardTypesEffect(Set.of(CardType.PLANESWALKER)));
 

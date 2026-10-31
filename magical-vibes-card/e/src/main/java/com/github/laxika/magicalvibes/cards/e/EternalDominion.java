@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
@@ -23,13 +22,13 @@ public class EternalDominion extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "You must target an opponent."
         ))
-                .addEffect(EffectSlot.SPELL, new SearchTargetLibraryEffect(1,
+                .addSpellEffect(new SearchTargetLibraryEffect(1,
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardTypePredicate(CardType.ENCHANTMENT),
                                 new CardTypePredicate(CardType.LAND))),
                         LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER, true))
-                .addEffect(EffectSlot.SPELL, new EpicEffect());
+                .addSpellEffect(new EpicEffect());
     }
 }

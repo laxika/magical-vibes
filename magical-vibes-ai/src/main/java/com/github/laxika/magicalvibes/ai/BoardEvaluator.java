@@ -272,7 +272,7 @@ public class BoardEvaluator {
             return resolving;
         }
         if (entry.getCard() != null) {
-            return entry.getCard().getEffects(EffectSlot.SPELL);
+            return entry.getCard().getCastingCostsAndSpellEffects();
         }
         return List.of();
     }

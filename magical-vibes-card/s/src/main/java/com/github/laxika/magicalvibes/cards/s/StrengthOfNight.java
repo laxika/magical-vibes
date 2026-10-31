@@ -15,8 +15,8 @@ public class StrengthOfNight extends Card {
 
     public StrengthOfNight() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(1, 1));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
+        addSpellEffect(new ConditionalEffect(new Kicked(),
                 new BoostAllOwnCreaturesEffect(2, 2, new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))));
     }
 }

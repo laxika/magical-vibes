@@ -24,13 +24,11 @@ public class BecomeBrutes extends Card {
 
     public BecomeBrutes() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(monsterRoleToken(), PlayerRelation.ANY));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(monsterRoleToken(), PlayerRelation.ANY));
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL,
-                        new CreateTokenAttachedToTargetEffect(monsterRoleToken(), PlayerRelation.ANY));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(monsterRoleToken(), PlayerRelation.ANY));
     }
 
     private static CreateTokenEffect monsterRoleToken() {

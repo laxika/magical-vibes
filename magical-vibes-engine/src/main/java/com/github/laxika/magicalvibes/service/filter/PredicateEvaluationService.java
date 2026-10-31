@@ -821,7 +821,7 @@ public class PredicateEvaluationService {
                     card.getCastingOption(ForetellCast.class).isPresent();
             case CardHasKickerPredicate ignored ->
                     card.getEffects(EffectSlot.STATIC).stream().anyMatch(KickerEffect.class::isInstance)
-                            || card.getEffects(EffectSlot.SPELL).stream()
+                            || card.getCastingCosts().stream()
                             .filter(RepeatableAdditionalManaCost.class::isInstance)
                             .map(RepeatableAdditionalManaCost.class::cast)
                             .anyMatch(RepeatableAdditionalManaCost::multikicker);
@@ -4722,7 +4722,6 @@ public class PredicateEvaluationService {
             return true;
         }
         return java.util.Arrays.stream(EffectSlot.values())
-                .filter(slot -> slot != EffectSlot.SPELL)
                 .anyMatch(slot -> !card.getEffects(slot).isEmpty());
     }
 
@@ -4739,7 +4738,6 @@ public class PredicateEvaluationService {
             return true;
         }
         return java.util.Arrays.stream(EffectSlot.values())
-                .filter(slot -> slot != EffectSlot.SPELL)
                 .anyMatch(slot -> !card.getEffects(slot).isEmpty());
     }
 
@@ -4752,7 +4750,6 @@ public class PredicateEvaluationService {
             return true;
         }
         return java.util.Arrays.stream(EffectSlot.values())
-                .filter(slot -> slot != EffectSlot.SPELL)
                 .anyMatch(slot -> !card.getEffects(slot).isEmpty());
     }
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -27,9 +26,9 @@ public class TouchOfVitae extends Card {
                 .withMaxActivationsPerGame(1);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantActivatedAbilityEffect(
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new GrantActivatedAbilityEffect(
                         grantedAbility, GrantScope.TARGET, null, EffectDuration.UNTIL_END_OF_TURN))
-                .addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
+                .addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

@@ -23,7 +23,7 @@ public class SecretArcadeDustyParlor extends Card {
     public SecretArcadeDustyParlor() {
         setRoomDoorManaCosts(List.of("{4}{W}", "{2}{W}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Secret Arcade", List.of())
                         .withManaCost("{4}{W}"),
                 new ChooseOneEffect.ChooseOneOption("Dusty Parlor", List.of())

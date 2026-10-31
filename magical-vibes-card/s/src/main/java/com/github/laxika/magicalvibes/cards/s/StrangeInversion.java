@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 public class StrangeInversion extends Card {
 
     public StrangeInversion() {
-        addEffect(EffectSlot.SPELL, new SwitchPowerToughnessEffect());
+        addSpellEffect(new SwitchPowerToughnessEffect());
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{R}"));
     }
 }

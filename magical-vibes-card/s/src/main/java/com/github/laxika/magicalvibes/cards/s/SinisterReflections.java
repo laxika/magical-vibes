@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureIntoHandEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,6 +21,6 @@ public class SinisterReflections extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                 "Target must be a nontoken creature you control"), 0, 2)
-                .addEffect(EffectSlot.SPELL, new ConjureDuplicateOfTargetCreatureIntoHandEffect());
+                .addSpellEffect(new ConjureDuplicateOfTargetCreatureIntoHandEffect());
     }
 }

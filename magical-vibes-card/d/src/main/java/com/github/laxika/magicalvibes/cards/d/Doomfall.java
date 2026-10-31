@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
@@ -24,7 +23,7 @@ public class Doomfall extends Card {
         var opponentTarget = new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
         target(opponentTarget)
-                .addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                .addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneOption("Target opponent exiles a creature they control.",
                         new TargetPlayerChoosesCreatureExileEffect(), opponentTarget),
                 new ChooseOneOption("Target opponent reveals their hand. You choose a nonland card from it. Exile that card.",

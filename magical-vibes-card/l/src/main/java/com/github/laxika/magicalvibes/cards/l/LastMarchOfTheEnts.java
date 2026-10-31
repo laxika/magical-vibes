@@ -20,8 +20,8 @@ public class LastMarchOfTheEnts extends Card {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
 
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(new GreatestToughnessAmongControlled()));
-        addEffect(EffectSlot.SPELL, new PutUpToCardsFromHandOntoBattlefieldEffect(
+        addSpellEffect(new DrawCardEffect(new GreatestToughnessAmongControlled()));
+        addSpellEffect(new PutUpToCardsFromHandOntoBattlefieldEffect(
                 creature,
                 "creature",
                 new MatchingCardsInHand(CountScope.CONTROLLER, creature)));

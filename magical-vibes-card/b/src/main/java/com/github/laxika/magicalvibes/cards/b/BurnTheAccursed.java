@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -20,9 +19,9 @@ public class BurnTheAccursed extends Card {
         DealDamageToPlayersEffect controllerDamage =
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
+                .addSpellEffect(new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
                 .bindEffect(creatureDamage)
                 .bindEffect(controllerDamage);
-        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, controllerDamage);
+        addSimultaneousSpellEffects(creatureDamage, controllerDamage);
     }
 }

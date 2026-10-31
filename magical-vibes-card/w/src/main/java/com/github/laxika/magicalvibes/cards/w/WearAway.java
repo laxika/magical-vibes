@@ -24,7 +24,7 @@ public class WearAway extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact or enchantment."
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{3}{G}"));
     }
 }

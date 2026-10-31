@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -23,9 +22,9 @@ import java.util.Set;
 public class HeroicReinforcements extends Card {
 
     public HeroicReinforcements() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(2, "Soldier", 1, 1,
+        addSpellEffect(new CreateTokenEffect(2, "Soldier", 1, 1,
                 CardColor.WHITE, List.of(CardSubtype.SOLDIER), Set.of(), Set.of()));
-        addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(1, 1));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new BoostAllOwnCreaturesEffect(1, 1));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
     }
 }

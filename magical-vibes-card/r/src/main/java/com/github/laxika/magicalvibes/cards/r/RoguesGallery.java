@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -17,7 +16,7 @@ import java.util.List;
 public class RoguesGallery extends Card {
 
     public RoguesGallery() {
-        addEffect(EffectSlot.SPELL, new ReturnUpToOneOfEachFilterFromGraveyardToHandEffect(List.of(
+        addSpellEffect(new ReturnUpToOneOfEachFilterFromGraveyardToHandEffect(List.of(
                 creatureOfColor(CardColor.WHITE),
                 creatureOfColor(CardColor.BLUE),
                 creatureOfColor(CardColor.BLACK),

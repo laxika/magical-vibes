@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilNextTurnEffect;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilNe
 public class BlossomingCalm extends Card {
 
     public BlossomingCalm() {
-        addEffect(EffectSlot.SPELL, new GrantControllerKeywordUntilNextTurnEffect(Keyword.HEXPROOF));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
+        addSpellEffect(new GrantControllerKeywordUntilNextTurnEffect(Keyword.HEXPROOF));
+        addSpellEffect(new GainLifeEffect(2));
     }
 }

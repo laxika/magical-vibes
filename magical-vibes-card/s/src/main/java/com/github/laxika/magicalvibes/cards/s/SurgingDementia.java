@@ -20,6 +20,6 @@ public class SurgingDementia extends Card {
                 "Target must be a player"));
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new RippleEffect(4), "Reveal the top four cards of your library?"));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -55,7 +54,7 @@ public class TargetSpellBecomesCopyOfCardEffectHandler implements NormalEffectHa
         targetSpell.setCastWithFlashback(false);
         targetSpell.setCastCard(copiedCard);
         targetSpell.setDescription(copiedCard.getName());
-        targetSpell.replaceEffectsToResolve(copiedCard.getEffects(EffectSlot.SPELL));
+        targetSpell.replaceEffectsToResolve(copiedCard.getCastingCostsAndSpellEffects());
         targetSpell.setTargetFilter(copiedCard.getTargetFilter());
         targetSpell.setTargetFilters(List.of());
         targetSpell.setTargetZone(null);

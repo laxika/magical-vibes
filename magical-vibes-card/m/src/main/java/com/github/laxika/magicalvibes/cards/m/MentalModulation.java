@@ -29,7 +29,7 @@ public class MentalModulation extends Card {
                 new PermanentIsCreaturePredicate()));
         target(new PermanentPredicateTargetFilter(artifactOrCreature,
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
+                .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new DrawCardEffect());
     }
 }

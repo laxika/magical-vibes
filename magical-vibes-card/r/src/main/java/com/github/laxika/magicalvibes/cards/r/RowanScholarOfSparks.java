@@ -50,10 +50,10 @@ public class RowanScholarOfSparks extends Card {
                         EMBLEM_TEXT)),
                 "-4: You get an emblem with \"" + EMBLEM_TEXT + "\""));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Rowan, Scholar of Sparks", List.of()),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Will, Scholar of Frost", backFace.getEffects(EffectSlot.SPELL)))));
+                        "Will, Scholar of Frost", backFace.getSpellEffects()))));
     }
 
     @Override

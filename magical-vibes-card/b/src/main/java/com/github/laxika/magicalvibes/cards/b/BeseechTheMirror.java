@@ -25,7 +25,6 @@ public class BeseechTheMirror extends Card {
                 )),
                 "an artifact, enchantment, or token"
         ));
-        addEffect(EffectSlot.SPELL,
-                new SearchLibraryForCardToExileFaceDownAndMayCastOrPutIntoHandEffect(4));
+        addSpellEffect(new SearchLibraryForCardToExileFaceDownAndMayCastOrPutIntoHandEffect(4));
     }
 }

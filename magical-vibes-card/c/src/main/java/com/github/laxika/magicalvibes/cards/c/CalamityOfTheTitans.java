@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -22,12 +21,12 @@ import java.util.List;
 public class CalamityOfTheTitans extends Card {
 
     public CalamityOfTheTitans() {
-        addEffect(EffectSlot.SPELL, new RevealCardFromHandCost(
+        addCastingCost(new RevealCardFromHandCost(
                 new CardAllOfPredicate(List.of(
                         new CardIsColorlessPredicate(),
                         new CardTypePredicate(CardType.CREATURE)
                 )), "colorless creature", true));
-        addEffect(EffectSlot.SPELL, new ExileAllPermanentsEffect(
+        addSpellEffect(new ExileAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

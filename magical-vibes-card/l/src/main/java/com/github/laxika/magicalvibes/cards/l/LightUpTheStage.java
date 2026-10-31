@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 
@@ -16,6 +15,6 @@ public class LightUpTheStage extends Card {
 
     public LightUpTheStage() {
         addCastingOption(AlternateHandCast.spectacle("{R}", new OpponentLostLifeThisTurn(1)));
-        addEffect(EffectSlot.SPELL, new ExileTopCardsMayPlayUntilNextTurnEffect(2));
+        addSpellEffect(new ExileTopCardsMayPlayUntilNextTurnEffect(2));
     }
 }

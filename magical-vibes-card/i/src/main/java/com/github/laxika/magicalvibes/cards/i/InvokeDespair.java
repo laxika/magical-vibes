@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -27,12 +26,9 @@ public class InvokeDespair extends Card {
                 "Target must be an opponent.");
 
         target(opponent)
-                .addEffect(EffectSlot.SPELL,
-                        sacrificeOrElse(new PermanentIsCreaturePredicate(), "a creature"))
-                .addEffect(EffectSlot.SPELL,
-                        sacrificeOrElse(new PermanentIsEnchantmentPredicate(), "an enchantment"))
-                .addEffect(EffectSlot.SPELL,
-                        sacrificeOrElse(new PermanentIsPlaneswalkerPredicate(), "a planeswalker"));
+                .addSpellEffect(sacrificeOrElse(new PermanentIsCreaturePredicate(), "a creature"))
+                .addSpellEffect(sacrificeOrElse(new PermanentIsEnchantmentPredicate(), "an enchantment"))
+                .addSpellEffect(sacrificeOrElse(new PermanentIsPlaneswalkerPredicate(), "a planeswalker"));
     }
 
     private ForcedCostOrElseEffect sacrificeOrElse(PermanentPredicate filter, String description) {

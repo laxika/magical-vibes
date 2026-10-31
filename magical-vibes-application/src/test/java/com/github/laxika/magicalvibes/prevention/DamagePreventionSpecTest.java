@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -268,7 +267,7 @@ class DamagePreventionSpecTest extends BaseCardTest {
         card.setName("Colorless Bolt");
         card.setType(CardType.INSTANT);
         card.setManaCost("{1}");
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        card.addSpellEffect(new DealDamageToTargetCreatureEffect(4));
         return card;
     }
 }

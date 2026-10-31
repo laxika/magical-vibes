@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -83,9 +82,9 @@ public class ExileTopUntilNonlandMayCastByDiscardEffectHandler implements Normal
         }
 
         boolean needsSpellTarget = EffectResolution.needsSpellCastTarget(
-                EffectResolution.resolveEffects(hit.getEffects(EffectSlot.SPELL), false, null),
+                EffectResolution.resolveEffects(hit.getCastingCostsAndSpellEffects(), false, null),
                 hit.isAuraThatRequiresAttachment(), hit.isEnchantPlayer())
-                || EffectResolution.needsSpellTarget(hit.getEffects(EffectSlot.SPELL));
+                || EffectResolution.needsSpellTarget(hit.getCastingCostsAndSpellEffects());
         if (needsSpellTarget && !validTargetService.hasValidTargetsForSpell(gameData, hit, controllerId, null)) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + " exiles cards until a nonland card is found, but " + hit.getName()

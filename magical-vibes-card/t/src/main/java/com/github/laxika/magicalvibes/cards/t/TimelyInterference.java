@@ -18,9 +18,9 @@ public class TimelyInterference extends Card {
     public TimelyInterference() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, 0))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
+                .addSpellEffect(new BoostTargetCreatureEffect(-1, 0))
+                .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BLOCK)));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        addSpellEffect(new DrawCardEffect(1));
     }
 }

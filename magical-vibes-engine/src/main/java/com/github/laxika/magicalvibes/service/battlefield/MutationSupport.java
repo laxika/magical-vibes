@@ -144,7 +144,8 @@ public class MutationSupport {
         for (var ability : underlying.getActivatedAbilities()) {
             merged.addActivatedAbility(ability);
         }
-        List<CardEffect> inheritedEffects = new ArrayList<>();
+        List<CardEffect> inheritedEffects = new ArrayList<>(underlying.getCastingCostsAndSpellEffects());
+        merged.addCastingCostsAndSpellEffectsFrom(underlying, effect -> true);
         for (EffectSlot slot : EffectSlot.values()) {
             for (var registration : underlying.getEffectRegistrations(slot)) {
                 merged.addEffect(slot, registration.effect(), registration.triggerMode());

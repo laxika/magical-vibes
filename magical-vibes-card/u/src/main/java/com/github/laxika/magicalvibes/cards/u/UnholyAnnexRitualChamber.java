@@ -29,7 +29,7 @@ public class UnholyAnnexRitualChamber extends Card {
     public UnholyAnnexRitualChamber() {
         setRoomDoorManaCosts(List.of("{2}{B}", "{3}{B}{B}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Unholy Annex", List.of())
                         .withManaCost("{2}{B}"),
                 new ChooseOneEffect.ChooseOneOption("Ritual Chamber", List.of())

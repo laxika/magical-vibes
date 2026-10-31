@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +24,6 @@ public class SpinningWheelKick extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Targets must be creatures or planeswalkers"
-        ), 100).addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToEachTargetEffect());
+        ), 100).addSpellEffect(new TargetCreatureDealsPowerDamageToEachTargetEffect());
     }
 }

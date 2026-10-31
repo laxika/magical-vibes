@@ -22,7 +22,7 @@ public class BottomlessPoolLockerRoom extends Card {
     public BottomlessPoolLockerRoom() {
         setRoomDoorManaCosts(List.of("{U}", "{4}{U}"));
 
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Bottomless Pool", List.of())
                         .withManaCost("{U}"),
                 new ChooseOneEffect.ChooseOneOption("Locker Room", List.of())

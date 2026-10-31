@@ -28,7 +28,7 @@ public class DismantlingBlow extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be an artifact or enchantment"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new DrawCardEffect(2)));
+        )).addSpellEffect(new DestroyTargetPermanentEffect());
+        addSpellEffect(new ConditionalEffect(new Kicked(), new DrawCardEffect(2)));
     }
 }

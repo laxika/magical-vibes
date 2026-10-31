@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,7 +15,7 @@ import java.util.List;
 public class VisionOfLove extends Card {
 
     public VisionOfLove() {
-        addEffect(EffectSlot.SPELL, new MayEffect(
+        addSpellEffect(new MayEffect(
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Sacrifice an artifact. If you do, draw two cards",

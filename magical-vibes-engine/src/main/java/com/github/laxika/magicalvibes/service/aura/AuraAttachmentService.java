@@ -231,7 +231,7 @@ public class AuraAttachmentService {
     }
 
     private boolean enchantsCardInZone(Permanent aura, TargetPredicate.Kind kind) {
-        return aura.getChosenPermanentId() == null && aura.getCard().getEffects(EffectSlot.SPELL).stream()
+        return aura.getChosenPermanentId() == null && aura.getCard().getCastingCostsAndSpellEffects().stream()
                 .anyMatch(effect -> effect.targetSpec().admits(kind));
     }
 

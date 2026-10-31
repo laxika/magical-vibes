@@ -33,7 +33,7 @@ public class DismantlingWave extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrEnchantmentOpponentControls,
                 "Targets must be artifacts or enchantments an opponent controls"), 0, 99)
-                .addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+                .addSpellEffect(new DestroyEachTargetPermanentEffect());
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addCycling("{6}{W}{W}");

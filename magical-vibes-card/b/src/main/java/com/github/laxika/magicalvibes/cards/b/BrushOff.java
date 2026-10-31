@@ -19,6 +19,6 @@ public class BrushOff extends Card {
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)), 1, "{U}"));
 
         // Counter target spell.
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addSpellEffect(new CounterSpellEffect());
     }
 }

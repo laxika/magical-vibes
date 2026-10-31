@@ -25,6 +25,6 @@ public class MachineOverMatter extends Card {
                         new PermanentIsCreaturePredicate()))),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
     }
 }

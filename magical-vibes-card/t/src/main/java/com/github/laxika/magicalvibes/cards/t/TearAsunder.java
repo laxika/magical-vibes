@@ -34,7 +34,7 @@ public class TearAsunder extends Card {
                 artifactOrEnchantment,
                 "Target must be an artifact or enchantment",
                 nonland
-        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(),
+        )).addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new ExileTargetPermanentEffect(),
                 new ExileTargetPermanentEffect()));
     }

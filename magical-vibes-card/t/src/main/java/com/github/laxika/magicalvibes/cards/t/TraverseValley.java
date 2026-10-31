@@ -27,7 +27,7 @@ public class TraverseValley extends Card {
         ));
 
         addEffect(EffectSlot.STATIC, KickerEffect.forage());
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new SeekLibraryEffect(1, nonbasicLand, LibrarySearchDestination.HAND),
                 new SeekLibraryEffect(1, nonbasicLand, LibrarySearchDestination.BATTLEFIELD_TAPPED)

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -15,10 +14,10 @@ public class BontusLastReckoning extends Card {
 
     public BontusLastReckoning() {
         // Destroy all creatures.
-        addEffect(EffectSlot.SPELL, new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentIsCreaturePredicate()));
 
         // Lands you control don't untap during your next untap step.
-        addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(
+        addSpellEffect(new SkipNextUntapEffect(
                 TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
     }
 }

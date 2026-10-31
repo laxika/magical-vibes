@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
@@ -24,8 +23,8 @@ public class DovinsDismissal extends Card {
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"), 0, 1)
-                .addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());
-        addEffect(EffectSlot.SPELL, new MayEffect(
+                .addSpellEffect(new PutTargetOnTopOfLibraryEffect());
+        addSpellEffect(new MayEffect(
                 new SearchLibraryAndOrGraveyardForCardToHandEffect(
                         new CardNamedPredicate("Dovin, Architect of Law")),
                 "Search your library and/or graveyard for a card named Dovin, Architect of Law?"));

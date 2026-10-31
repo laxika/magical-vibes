@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,10 +23,8 @@ public class GracefulTakedown extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a creature you don't control"));
-        victimTarget.addEffect(EffectSlot.SPELL,
-                new EachTargetCreatureDealsPowerDamageToTargetCreatureEffect(1, 0));
-        victimTarget.addEffect(EffectSlot.SPELL,
-                new EachTargetCreatureDealsPowerDamageToTargetCreatureEffect(2, 0));
+        victimTarget.addSpellEffect(new EachTargetCreatureDealsPowerDamageToTargetCreatureEffect(1, 0));
+        victimTarget.addSpellEffect(new EachTargetCreatureDealsPowerDamageToTargetCreatureEffect(2, 0));
 
         target(TargetFilters.creatureYouControl(), 0, 1);
         target(new ControlledPermanentPredicateTargetFilter(

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -37,7 +36,6 @@ public class DeflectingSwat extends Card {
                         StackEntryType.ACTIVATED_ABILITY,
                         StackEntryType.TRIGGERED_ABILITY)),
                 "Target must be a spell or ability."
-        )).addEffect(EffectSlot.SPELL,
-                new MayEffect(new ChooseNewTargetsForTargetSpellEffect(), "Choose new targets?"));
+        )).addSpellEffect(new MayEffect(new ChooseNewTargetsForTargetSpellEffect(), "Choose new targets?"));
     }
 }

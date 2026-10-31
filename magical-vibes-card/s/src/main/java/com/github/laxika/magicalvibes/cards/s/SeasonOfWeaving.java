@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseControlledArtifactOrCreatureTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class SeasonOfWeaving extends Card {
 
     public SeasonOfWeaving() {
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(buildModes()));
+        addSpellEffect(new ChooseOneEffect(buildModes()));
     }
 
     private static List<ChooseOneEffect.ChooseOneOption> buildModes() {

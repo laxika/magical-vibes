@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -32,9 +31,9 @@ public class IncreasingVengeance extends Card {
                         new StackEntryControlledByPredicate()
                 )),
                 "Target must be an instant or sorcery spell you control."
-        )).addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        )).addSpellEffect(new ConditionalEffect(
                 new NotCondition(new CastFromZone(Zone.GRAVEYARD)), new CopySpellEffect()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+        addSpellEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD), CopySpellEffect.times(2)));
 
         addCastingOption(new FlashbackCast("{3}{R}{R}"));

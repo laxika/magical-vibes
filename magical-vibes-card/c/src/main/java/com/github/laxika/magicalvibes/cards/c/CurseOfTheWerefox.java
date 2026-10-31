@@ -26,7 +26,7 @@ public class CurseOfTheWerefox extends Card {
 
     public CurseOfTheWerefox() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new CreateTokenAttachedToTargetThenEffect(
+                .addSpellEffect(new CreateTokenAttachedToTargetThenEffect(
                         monsterRoleToken(),
                         new EnteringCreatureFightsTargetCreatureEffect(
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));

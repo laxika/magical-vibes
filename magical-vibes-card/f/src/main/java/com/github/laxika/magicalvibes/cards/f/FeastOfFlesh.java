@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -18,7 +17,7 @@ public class FeastOfFlesh extends Card {
         var amount = new Sum(
                 new Fixed(1),
                 new CardsInGraveyard(new CardNamedPredicate("Feast of Flesh"), CountScope.ANY_PLAYER));
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(amount));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(amount));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(amount));
+        addSpellEffect(new GainLifeEffect(amount));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,7 +23,7 @@ public class ScourTheDesert extends Card {
         // tokens with flying, where X is the exiled card's toughness.
         target(new GraveyardCardPredicateTargetFilter(
                 new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
-        addEffect(EffectSlot.SPELL, new ExileTargetCreatureCardCreateTokensEqualToToughnessEffect(
+        addSpellEffect(new ExileTargetCreatureCardCreateTokensEqualToToughnessEffect(
                 new CreateTokenEffect("Bird", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()),
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD));

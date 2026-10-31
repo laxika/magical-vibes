@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,7 +16,7 @@ import java.util.List;
 public class RepairAndRecharge extends Card {
 
     public RepairAndRecharge() {
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
@@ -25,6 +24,6 @@ public class RepairAndRecharge extends Card {
                         new CardTypePredicate(CardType.PLANESWALKER))))
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofPowerstoneToken(new Fixed(1)));
+        addSpellEffect(CreateTokenEffect.ofPowerstoneToken(new Fixed(1)));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCre
 public class BlastfireBolt extends Card {
 
     public BlastfireBolt() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
-        addEffect(EffectSlot.SPELL, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
+        addSpellEffect(new DealDamageToTargetCreatureEffect(5));
+        addSpellEffect(new DestroyAttachmentsOnTargetCreatureEffect(false, true));
     }
 }

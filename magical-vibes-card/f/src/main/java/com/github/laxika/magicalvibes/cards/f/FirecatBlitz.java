@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
@@ -22,7 +21,7 @@ import java.util.Set;
 public class FirecatBlitz extends Card {
 
     public FirecatBlitz() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Elemental Cat", 1, 1,
                 CardColor.RED, null, List.of(CardSubtype.ELEMENTAL, CardSubtype.CAT),
                 Set.of(Keyword.HASTE), Set.of(), false, false, Map.of(), List.of(),

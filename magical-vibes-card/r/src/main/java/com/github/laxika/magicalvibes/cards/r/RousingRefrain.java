@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -25,9 +24,9 @@ public class RousingRefrain extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.SPELL, new AwardPersistentManaEffect(
+                .addSpellEffect(new AwardPersistentManaEffect(
                         ManaColor.RED, new CardsInHand(CountScope.TARGET_PLAYER)))
-                .addEffect(EffectSlot.SPELL, new ExileSpellEffect(3));
+                .addSpellEffect(new ExileSpellEffect(3));
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

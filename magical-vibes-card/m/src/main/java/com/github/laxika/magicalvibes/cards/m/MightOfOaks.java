@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -14,6 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MightOfOaks extends Card {
 
     public MightOfOaks() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(7, 7));
+        addSpellEffect(new BoostTargetCreatureEffect(7, 7));
     }
 }

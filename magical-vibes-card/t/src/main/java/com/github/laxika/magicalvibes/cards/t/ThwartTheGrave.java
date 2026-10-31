@@ -31,7 +31,7 @@ public class ThwartTheGrave extends Card {
                         new CardSubtypePredicate(CardSubtype.ROGUE),
                         new CardSubtypePredicate(CardSubtype.WARRIOR),
                         new CardSubtypePredicate(CardSubtype.WIZARD)))));
-        addEffect(EffectSlot.SPELL, new ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
+        addSpellEffect(new ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
                 List.of(creature, partyCreature),
                 List.of(GraveyardChoiceDestination.BATTLEFIELD, GraveyardChoiceDestination.BATTLEFIELD),
                 List.of("creature card", "Cleric, Rogue, Warrior, or Wizard creature card"),

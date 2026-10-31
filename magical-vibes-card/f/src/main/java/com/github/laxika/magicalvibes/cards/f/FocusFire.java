@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -32,7 +31,7 @@ public class FocusFire extends Card {
                         ))
                 )),
                 "Target must be an attacking or blocking creature."
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new Sum(
+        )).addSpellEffect(new DealDamageToTargetCreatureEffect(new Sum(
                 new Fixed(2),
                 new PermanentCount(new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

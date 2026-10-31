@@ -19,10 +19,10 @@ public class BloomingBlast extends Card {
     public BloomingBlast() {
         addEffect(EffectSlot.STATIC, new GiftEffect());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         TargetOpponentCreatesTokenEffect.gift(CreateTokenEffect.ofTreasureToken(1))))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(2))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(2))
+                .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PERMANENT_CONTROLLER)));
     }
 }

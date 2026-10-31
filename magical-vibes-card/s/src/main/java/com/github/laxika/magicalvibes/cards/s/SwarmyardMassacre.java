@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class SwarmyardMassacre extends Card {
 
     public SwarmyardMassacre() {
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 2, "Squirrel", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SQUIRREL), Set.of(), Set.of()));
 
@@ -32,7 +31,7 @@ public class SwarmyardMassacre extends Card {
                 CardSubtype.SQUIRREL
         ));
         var swarmyardCreatureCount = new PermanentCount(swarmyardTypes, CountScope.CONTROLLER);
-        addEffect(EffectSlot.SPELL, new BoostAllCreaturesEffect(
+        addSpellEffect(new BoostAllCreaturesEffect(
                 new Scaled(swarmyardCreatureCount, -1),
                 new Scaled(swarmyardCreatureCount, -1),
                 new PermanentNotPredicate(swarmyardTypes)));

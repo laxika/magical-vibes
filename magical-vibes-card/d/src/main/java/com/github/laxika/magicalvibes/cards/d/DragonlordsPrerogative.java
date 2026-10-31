@@ -18,10 +18,10 @@ import java.util.List;
 public class DragonlordsPrerogative extends Card {
 
     public DragonlordsPrerogative() {
-        addEffect(EffectSlot.SPELL, RevealCardFromHandCost.optional(
+        addCastingCost(RevealCardFromHandCost.optional(
                 new CardSubtypePredicate(CardSubtype.DRAGON), "Dragon"));
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect(new AnyOf(List.of(
                 new RevealCardFromHandCostPaid(), new ControlledDragonAsCast()))));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(4));
+        addSpellEffect(new DrawCardEffect(4));
     }
 }

@@ -19,8 +19,8 @@ import java.util.Set;
 public class SendInThePest extends Card {
 
     public SendInThePest() {
-        addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+        addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(),

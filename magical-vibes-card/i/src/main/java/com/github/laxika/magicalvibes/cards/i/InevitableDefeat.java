@@ -16,8 +16,8 @@ public class InevitableDefeat extends Card {
     public InevitableDefeat() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
+                .addSpellEffect(new GainLifeEffect(3));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,13 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 public class BurningCuriosity extends Card {
 
     public BurningCuriosity() {
-        addEffect(EffectSlot.SPELL,
-                new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1, true));
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new PutCounterCostPaid(),
+        addCastingCost(new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 1, true));
+        addSpellEffect(new ConditionalEffect(new PutCounterCostPaid(),
                         new ExileTopCardsMayPlayUntilNextTurnEffect(3)));
-        addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new NotCondition(new PutCounterCostPaid()),
+        addSpellEffect(new ConditionalEffect(new NotCondition(new PutCounterCostPaid()),
                         new ExileTopCardsMayPlayUntilNextTurnEffect(2)));
     }
 }

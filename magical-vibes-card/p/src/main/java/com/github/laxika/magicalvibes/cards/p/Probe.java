@@ -18,12 +18,11 @@ public class Probe extends Card {
 
     public Probe() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
-        addEffect(EffectSlot.SPELL, new DiscardEffect(2, DiscardRecipient.CONTROLLER));
+        addSpellEffect(new DrawCardEffect(3));
+        addSpellEffect(new DiscardEffect(2, DiscardRecipient.CONTROLLER));
         targetWhenKicked(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ), 0, 0, 1, 1).addEffect(EffectSlot.SPELL,
-                new ConditionalEffect(new Kicked(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)));
+        ), 0, 0, 1, 1).addSpellEffect(new ConditionalEffect(new Kicked(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)));
     }
 }

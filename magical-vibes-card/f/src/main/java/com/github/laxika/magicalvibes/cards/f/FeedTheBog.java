@@ -19,9 +19,9 @@ import java.util.List;
 public class FeedTheBog extends Card {
 
     public FeedTheBog() {
-        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{B}")));
-        addEffect(EffectSlot.SPELL, new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1));
-        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
+        addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{B}")));
+        addSpellEffect(new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1));
+        addSpellEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

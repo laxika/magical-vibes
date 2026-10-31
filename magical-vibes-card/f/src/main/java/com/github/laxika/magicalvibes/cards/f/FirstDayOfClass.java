@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -20,8 +19,8 @@ public class FirstDayOfClass extends Card {
         CardEffect enteringCreatureEffect = SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
-        addEffect(EffectSlot.SPELL, new RegisterDelayedAllyCreatureEntersTriggerEffect(enteringCreatureEffect));
+        addSpellEffect(new RegisterDelayedAllyCreatureEntersTriggerEffect(enteringCreatureEffect));
 
-        addEffect(EffectSlot.SPELL, new LearnEffect());
+        addSpellEffect(new LearnEffect());
     }
 }

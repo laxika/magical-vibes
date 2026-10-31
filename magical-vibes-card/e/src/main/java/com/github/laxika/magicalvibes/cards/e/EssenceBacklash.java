@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -23,8 +22,8 @@ public class EssenceBacklash extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                 "Target must be a creature spell."
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect())
-          .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
+        )).addSpellEffect(new CounterSpellEffect())
+          .addSpellEffect(new DealDamageToPlayersEffect(
                 new TargetSpellPower(), DamageRecipient.TARGET_SPELL_CONTROLLER));
     }
 }

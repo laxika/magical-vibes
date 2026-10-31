@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -22,7 +21,7 @@ public class BiomanticMastery extends Card {
         PermanentCount creatures = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER);
 
-        target(playerTarget).addEffect(EffectSlot.SPELL, new DrawCardEffect(creatures));
-        target(playerTarget).addEffect(EffectSlot.SPELL, new DrawCardEffect(creatures));
+        target(playerTarget).addSpellEffect(new DrawCardEffect(creatures));
+        target(playerTarget).addSpellEffect(new DrawCardEffect(creatures));
     }
 }

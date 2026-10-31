@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -22,7 +21,7 @@ public class SaprolingSymbiosis extends Card {
     public SaprolingSymbiosis() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{5}{G}")), null, true)
                 .withFlashAdditionalGenericCost(2));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+        addSpellEffect(new CreateTokenEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 "Saproling", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -16,8 +15,8 @@ public class Overprotect extends Card {
 
     public Overprotect() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 3))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
+                .addSpellEffect(new BoostTargetCreatureEffect(3, 3))
+                .addSpellEffect(new GrantKeywordEffect(
                         Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
     }
 }

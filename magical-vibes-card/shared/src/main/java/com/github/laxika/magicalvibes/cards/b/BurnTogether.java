@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -28,7 +27,7 @@ public class BurnTogether extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Second target must be any other target"));
-        victimTarget.addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToAnyTargetEffect());
-        sourceTarget.addEffect(EffectSlot.SPELL, new SacrificeTargetCreatureEffect());
+        victimTarget.addSpellEffect(new TargetCreatureDealsPowerDamageToAnyTargetEffect());
+        sourceTarget.addSpellEffect(new SacrificeTargetCreatureEffect());
     }
 }

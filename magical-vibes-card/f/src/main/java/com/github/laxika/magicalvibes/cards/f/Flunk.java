@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -21,7 +20,6 @@ public class Flunk extends Card {
         // in that creature's controller's hand.
         CardsInHand targetControllerHand = new CardsInHand(CountScope.TARGET_PLAYER);
         DynamicAmount amount = new Max(new Fixed(0), new Sum(new Fixed(7), new Scaled(targetControllerHand, -1)));
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL,
-                new BoostTargetCreatureEffect(new Scaled(amount, -1), new Scaled(amount, -1)));
+        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreatureEffect(new Scaled(amount, -1), new Scaled(amount, -1)));
     }
 }

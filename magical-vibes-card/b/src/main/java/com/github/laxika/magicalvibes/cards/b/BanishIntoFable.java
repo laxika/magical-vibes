@@ -25,8 +25,8 @@ public class BanishIntoFable extends Card {
 
     public BanishIntoFable() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target())
-                .addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+                .addSpellEffect(ReturnToHandEffect.target())
+                .addSpellEffect(new CreateTokenEffect(
                         1, "Knight", 2, 2, CardColor.WHITE,
                         List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of()));
 

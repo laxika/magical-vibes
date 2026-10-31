@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
@@ -33,7 +32,7 @@ public class Injury extends Card {
                 "Second target must be a player or planeswalker"
         ));
         // 2 damage to each chosen target.
-        addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(2)));
+        addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(2)));
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{2}{R}"));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetSpellEffect;
@@ -35,6 +34,6 @@ public class Commandeer extends Card {
                         StackEntryType.BATTLE_SPELL)),
                 "Target must be a noncreature spell."
         ));
-        addEffect(EffectSlot.SPELL, new GainControlOfTargetSpellEffect(true));
+        addSpellEffect(new GainControlOfTargetSpellEffect(true));
     }
 }

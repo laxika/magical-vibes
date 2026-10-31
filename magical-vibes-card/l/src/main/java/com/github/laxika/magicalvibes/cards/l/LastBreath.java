@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -29,7 +28,7 @@ public class LastBreath extends Card {
                 )),
                 "Target must be a creature with power 2 or less"
         ))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new Fixed(4), GainLifeRecipient.TARGET_CONTROLLER));
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(new GainLifeEffect(new Fixed(4), GainLifeRecipient.TARGET_CONTROLLER));
     }
 }

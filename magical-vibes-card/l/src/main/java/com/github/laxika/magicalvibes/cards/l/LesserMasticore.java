@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -14,7 +13,7 @@ import java.util.List;
 public class LesserMasticore extends Card {
 
     public LesserMasticore() {
-        addEffect(EffectSlot.SPELL, new DiscardCardTypeCost(null, null));
+        addCastingCost(new DiscardCardTypeCost(null, null));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

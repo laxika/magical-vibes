@@ -16,7 +16,7 @@ public class VoyageHome extends Card {
     public VoyageHome() {
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
-        addEffect(EffectSlot.SPELL, new GainLifeEffect(3));
+        addSpellEffect(new DrawCardEffect(3));
+        addSpellEffect(new GainLifeEffect(3));
     }
 }

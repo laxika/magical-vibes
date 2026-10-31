@@ -31,7 +31,7 @@ public class TheEnd extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentAndAllWithSameNameFromZonesEffect(
+        )).addSpellEffect(new ExileTargetPermanentAndAllWithSameNameFromZonesEffect(
                 creatureOrPlaneswalker, null, true, true));
     }
 }

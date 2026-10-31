@@ -13,6 +13,6 @@ public class AstralSteel extends Card {
     public AstralSteel() {
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 2));
+                .addSpellEffect(new BoostTargetCreatureEffect(1, 2));
     }
 }

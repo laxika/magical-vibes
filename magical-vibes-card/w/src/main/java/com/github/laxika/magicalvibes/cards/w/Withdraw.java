@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -12,8 +11,8 @@ public class Withdraw extends Card {
 
     public Withdraw() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+                .addSpellEffect(ReturnToHandEffect.target());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new ReturnTargetCreatureUnlessControllerPaysEffect("{1}"));
+                .addSpellEffect(new ReturnTargetCreatureUnlessControllerPaysEffect("{1}"));
     }
 }

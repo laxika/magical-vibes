@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
@@ -17,9 +16,9 @@ public class FaithsShield extends Card {
         // The spell always targets a permanent you control (even during fateful hour).
         target(TargetFilters.permanentYouControl())
                 // If you have 6 or more life: target permanent gains protection from the color of your choice.
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerLifeAtLeast(6), new GrantProtectionChoiceUntilEndOfTurnEffect()))
+                .addSpellEffect(new ConditionalEffect(new ControllerLifeAtLeast(6), new GrantProtectionChoiceUntilEndOfTurnEffect()))
                 // Fateful hour — If you have 5 or less life, instead you and each permanent you control
                 // gain protection from the color of your choice until end of turn.
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerLifeAtMost(5), new GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect()));
+                .addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect()));
     }
 }

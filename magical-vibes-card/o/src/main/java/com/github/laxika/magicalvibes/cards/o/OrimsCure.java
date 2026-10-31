@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -21,6 +20,6 @@ public class OrimsCure extends Card {
                 List.of(new TapUntappedPermanentsCost(1, new PermanentIsCreaturePredicate())),
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
                 false));
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.nextToTarget(4));
+        addSpellEffect(PreventDamageEffect.nextToTarget(4));
     }
 }

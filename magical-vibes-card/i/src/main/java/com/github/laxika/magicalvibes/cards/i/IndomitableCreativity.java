@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,9 +25,8 @@ public class IndomitableCreativity extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 "Targets must be artifacts and/or creatures"), 100)
-                .addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
-        addEffect(EffectSlot.SPELL,
-                new RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect(
+                .addSpellEffect(new DestroyEachTargetPermanentEffect());
+        addSpellEffect(new RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect(
                         Set.of(CardType.ARTIFACT, CardType.CREATURE)));
     }
 }

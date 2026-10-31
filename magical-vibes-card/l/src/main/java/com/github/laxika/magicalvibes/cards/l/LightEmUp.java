@@ -12,7 +12,7 @@ public class LightEmUp extends Card {
 
     public LightEmUp() {
         addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect());
-        addEffect(EffectSlot.SPELL, new CasualtyCost(2));
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(2));
+        addCastingCost(new CasualtyCost(2));
+        addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(2));
     }
 }

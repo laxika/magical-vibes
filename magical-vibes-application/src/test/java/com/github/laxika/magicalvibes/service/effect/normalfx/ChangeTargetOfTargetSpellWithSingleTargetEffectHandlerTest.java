@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -103,7 +102,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
         private Card createDamageSpellCard(String name, int damage) {
             Card card = createCard(name);
             card.setType(CardType.INSTANT);
-            card.addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(damage));
+            card.addSpellEffect(new DealDamageToAnyTargetEffect(damage));
             return card;
         }
 
@@ -116,7 +115,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
         /** Creates a stack entry representing a spell that targets a single permanent/player. */
         private StackEntry spellEntry(Card card, UUID controllerId, UUID targetId) {
             return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
-                    card.getName(), card.getEffects(EffectSlot.SPELL), 0, targetId, null);
+                    card.getName(), card.getCastingCostsAndSpellEffects(), 0, targetId, null);
         }
 
         /** Creates a stack entry for ChangeTargetOfTargetSpellToSourceEffect (e.g. Spellskite trigger). */
@@ -444,7 +443,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 Card redirectCard = createCard("Deflection");
                 Card counterspellCard = createCard("Counterspell");
                 counterspellCard.setType(CardType.INSTANT);
-                counterspellCard.addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                counterspellCard.addSpellEffect(new CounterSpellEffect());
 
                 Card currentTargetSpell = createCard("Giant Growth");
                 Card validSpell = createCard("Shock");
@@ -459,7 +458,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
 
                 // Counterspell targets Giant Growth on the stack
                 StackEntry counterspellEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
-                        counterspellCard, player2Id, "Counterspell", counterspellCard.getEffects(EffectSlot.SPELL),
+                        counterspellCard, player2Id, "Counterspell", counterspellCard.getCastingCostsAndSpellEffects(),
                         currentTargetSpell.getId(), Zone.STACK);
                 addToStack(currentTargetEntry);
                 addToStack(validEntry);
@@ -491,7 +490,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 Card redirectCard = createCard("Deflection");
                 Card counterspellCard = createCard("Counterspell");
                 counterspellCard.setType(CardType.INSTANT);
-                counterspellCard.addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                counterspellCard.addSpellEffect(new CounterSpellEffect());
 
                 Card targetOnStack = createCard("Giant Growth");
                 Card anotherSpellOnStack = createCard("Lightning Bolt");
@@ -503,7 +502,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
 
                 // Counterspell targets Giant Growth on the stack
                 StackEntry counterspellEntry = new StackEntry(StackEntryType.INSTANT_SPELL,
-                        counterspellCard, player2Id, "Counterspell", counterspellCard.getEffects(EffectSlot.SPELL),
+                        counterspellCard, player2Id, "Counterspell", counterspellCard.getCastingCostsAndSpellEffects(),
                         targetOnStack.getId(), Zone.STACK);
                 addToStack(giantGrowthEntry);
                 addToStack(anotherEntry);
@@ -534,7 +533,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .targetGraveyard(true)
                         .build();
-                graveyardSpellCard.addEffect(EffectSlot.SPELL, graveyardEffect);
+                graveyardSpellCard.addSpellEffect(graveyardEffect);
 
                 Card currentGraveyardTarget = createCard("Grizzly Bears");
                 currentGraveyardTarget.setType(CardType.CREATURE);
@@ -544,7 +543,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 gd.playerGraveyards.get(player2Id).add(anotherGraveyardCard);
 
                 StackEntry graveyardSpell = new StackEntry(StackEntryType.INSTANT_SPELL,
-                        graveyardSpellCard, player2Id, "Raise Dead", graveyardSpellCard.getEffects(EffectSlot.SPELL),
+                        graveyardSpellCard, player2Id, "Raise Dead", graveyardSpellCard.getCastingCostsAndSpellEffects(),
                         currentGraveyardTarget.getId(), Zone.GRAVEYARD);
                 addToStack(graveyardSpell);
 
@@ -573,7 +572,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                         .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                         .targetGraveyard(true)
                         .build();
-                graveyardSpellCard.addEffect(EffectSlot.SPELL, graveyardEffect);
+                graveyardSpellCard.addSpellEffect(graveyardEffect);
 
                 Card cardInControllerGraveyard = createCard("Grizzly Bears");
                 cardInControllerGraveyard.setType(CardType.CREATURE);
@@ -588,7 +587,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 gd.playerGraveyards.get(player1Id).add(cardInOpponentGraveyard);
 
                 StackEntry graveyardSpell = new StackEntry(StackEntryType.INSTANT_SPELL,
-                        graveyardSpellCard, player2Id, "Disentomb", graveyardSpellCard.getEffects(EffectSlot.SPELL),
+                        graveyardSpellCard, player2Id, "Disentomb", graveyardSpellCard.getCastingCostsAndSpellEffects(),
                         currentTarget.getId(), Zone.GRAVEYARD);
                 addToStack(graveyardSpell);
 

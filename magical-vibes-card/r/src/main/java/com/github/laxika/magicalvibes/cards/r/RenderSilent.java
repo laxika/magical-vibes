@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
 
@@ -16,7 +15,7 @@ public class RenderSilent extends Card {
         //
         // The counter comes first: a replacement of it (Guile) lets its controller cast the spell
         // before the restriction applies, which then uses the controller recorded by the counter.
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
-        addEffect(EffectSlot.SPELL, new TargetSpellControllerCantCastSpellsThisTurnEffect());
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(new TargetSpellControllerCantCastSpellsThisTurnEffect());
     }
 }

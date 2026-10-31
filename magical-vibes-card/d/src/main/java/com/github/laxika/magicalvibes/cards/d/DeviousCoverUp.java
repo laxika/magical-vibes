@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 public class DeviousCoverUp extends Card {
 
     public DeviousCoverUp() {
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect(CounteredSpellDestination.EXILE));
-        addEffect(EffectSlot.SPELL, ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.optional(null, 4));
+        addSpellEffect(new CounterSpellEffect(CounteredSpellDestination.EXILE));
+        addSpellEffect(ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.optional(null, 4));
     }
 }

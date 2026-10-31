@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -26,7 +25,7 @@ public class FeastOfWorms extends Card {
         // of their choice. The legendary check is last-known information read before destruction;
         // the sacrifice is routed to the destroyed land's controller. "Another" excludes the targeted
         // land itself, which is gone if destroyed and is still a candidate only if it survived.
-        target(TargetFilters.land()).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+        target(TargetFilters.land()).addSpellEffect(new DestroyTargetPermanentThenEffect(
                 EventStat.NONE,
                 new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
