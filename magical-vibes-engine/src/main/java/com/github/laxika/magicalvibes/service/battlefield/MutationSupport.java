@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -154,6 +155,10 @@ public class MutationSupport {
                 merged.addEffect(slot, registration.effect(), registration.triggerMode());
                 inheritedEffects.add(registration.effect());
             }
+        }
+        for (TriggeredAbility ability : underlying.getUnslottedTriggeredAbilities()) {
+            merged.addTriggeredAbility(ability);
+            ability.effects().forEach(registration -> inheritedEffects.add(registration.effect()));
         }
         merged.appendSpellTargetingForEffectsFrom(underlying, inheritedEffects);
         String topText = top.getCardText() == null ? "" : top.getCardText();

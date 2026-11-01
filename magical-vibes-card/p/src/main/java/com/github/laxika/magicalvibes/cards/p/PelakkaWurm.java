@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M19", collectorNumber = "192")
 @CardRegistration(set = "ROE", collectorNumber = "204")
@@ -13,6 +15,6 @@ public class PelakkaWurm extends Card {
 
     public PelakkaWurm() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(7));
-        addEffect(EffectSlot.ON_DEATH, new DrawCardEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect());
     }
 }

@@ -481,10 +481,6 @@ public sealed interface TriggerContext {
 
     // ── Death / leaves-battlefield contexts ────────────────────────────
 
-    /**
-     * Context for a card's own death triggers (ON_DEATH).
-     * The dying permanent may be null when the 4-arg overload is used.
-     */
     /** Context for one token-creation event, preserving the number of tokens that entered together. */
     record TokensEnter(int count, int perEffectTriggerCount, List<UUID> permanentIds) implements TriggerContext {
         public TokensEnter {
@@ -497,36 +493,6 @@ public sealed interface TriggerContext {
 
         public TokensEnter(int count, int perEffectTriggerCount) {
             this(count, perEffectTriggerCount, List.of());
-        }
-    }
-
-    record SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
-                     Permanent dyingPermanent, Card castingSpell, int dyingPower) implements TriggerContext {
-        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
-                         Permanent dyingPermanent) {
-            this(dyingCard, controllerId, wasCreature, dyingPermanent, null,
-                    defaultDyingPower(dyingCard, dyingPermanent));
-        }
-
-        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
-                         Permanent dyingPermanent, Card castingSpell) {
-            this(dyingCard, controllerId, wasCreature, dyingPermanent, castingSpell,
-                    defaultDyingPower(dyingCard, dyingPermanent));
-        }
-
-        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
-                         Permanent dyingPermanent, int dyingPower) {
-            this(dyingCard, controllerId, wasCreature, dyingPermanent, null, dyingPower);
-        }
-
-        private static int defaultDyingPower(Card dyingCard, Permanent dyingPermanent) {
-            if (dyingPermanent != null) return dyingPermanent.getEffectivePower();
-            return dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0;
-        }
-
-        @Override
-        public boolean causedByCreatureDying() {
-            return wasCreature;
         }
     }
 
@@ -857,28 +823,6 @@ public sealed interface TriggerContext {
      * @param graveyardOwnerId  the owner of the graveyard the card was put into
      */
     record PermanentCardPutIntoGraveyard(Card permanentCard, UUID graveyardOwnerId) implements TriggerContext {}
-
-    /**
-     * Context for ON_SELF_LEAVES_BATTLEFIELD triggers. {@code causedByCreatureDeath} is set when the
-     * leaving permanent was a creature put into the graveyard from the battlefield, so the leave
-     * trigger counts as a creature-death trigger for multipliers such as Teysa Karlov.
-     */
-    record SelfLeaves(UUID controllerId, Zone destination, boolean exiledWhileActivatingCraftAbility,
-                      boolean causedByCreatureDeath)
-            implements TriggerContext {
-        public SelfLeaves(UUID controllerId) {
-            this(controllerId, Zone.GRAVEYARD, false, false);
-        }
-
-        public SelfLeaves(UUID controllerId, Zone destination) {
-            this(controllerId, destination, false, false);
-        }
-
-        @Override
-        public boolean causedByCreatureDying() {
-            return causedByCreatureDeath;
-        }
-    }
 
     /** Context for a permanent becoming monstrous. */
     record SelfBecomesMonstrous(UUID controllerId, int xValue) implements TriggerContext {

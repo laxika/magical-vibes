@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,7 @@ public class ShaunFatherOfSynths extends Card {
         )).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new MayEffect(synthCopy, "Create a tapped and attacking Synth token copy?"));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsTokenPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.SYNTH),

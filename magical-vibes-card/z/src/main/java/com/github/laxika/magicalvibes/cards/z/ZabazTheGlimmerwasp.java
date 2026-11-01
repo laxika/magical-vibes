@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToModularAbilityEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class ZabazTheGlimmerwasp extends Card {
     public ZabazTheGlimmerwasp() {
         addStaticEffect(new AddOnePlusOneCountersToModularAbilityEffect());
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         true,

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,10 +29,10 @@ public class GirderGoons extends Card {
         // created as the spell resolves.
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 1, "Rogue", 2, 2, CardColor.BLACK, List.of(CardSubtype.ROGUE),
                 Set.<Keyword>of(), Set.<CardType>of(), true));
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new DrawCardEffect(1)));
     }
 }

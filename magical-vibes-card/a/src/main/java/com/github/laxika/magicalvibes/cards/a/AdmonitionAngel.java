@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class AdmonitionAngel extends Card {
                         new MayEffect(new ExileTargetPermanentAndTrackWithSourceEffect(),
                                 "Exile target nonland permanent other than Admonition Angel?"));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceEffect());
     }
 }

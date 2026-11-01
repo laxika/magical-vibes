@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestO
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +40,6 @@ public class AtlaPalaniNestTender extends Card {
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
                         new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.BATTLEFIELD));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, eggDeath);
-        addEffect(EffectSlot.ON_DEATH, eggDeath);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), eggDeath);
     }
 }

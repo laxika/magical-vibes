@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class Reveillark extends Card {
         // "When this creature leaves the battlefield, return up to two target creature cards with
         // power 2 or less from your graveyard to the battlefield." The targets are chosen when the
         // trigger is put on the stack.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

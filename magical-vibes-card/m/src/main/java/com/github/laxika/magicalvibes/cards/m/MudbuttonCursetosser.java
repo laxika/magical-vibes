@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,6 +30,6 @@ public class MudbuttonCursetosser extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                         new PermanentPowerAtMostPredicate(2))),
                 "Target must be a creature an opponent controls with power 2 or less"))
-                .addEffect(EffectSlot.ON_DEATH, new DestroyTargetPermanentEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
     }
 }

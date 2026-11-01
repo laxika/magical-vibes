@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "2213")
 public class KratosStoicFather extends Card {
@@ -25,7 +27,7 @@ public class KratosStoicFather extends Card {
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.GOD),
                 new ExperienceCountersEffect(1)));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.GOD),
                 new ExperienceCountersEffect(1)));
 

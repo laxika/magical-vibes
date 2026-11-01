@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ public class AzlaskTheSwellingScourge extends Card {
     public AzlaskTheSwellingScourge() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentIsColorlessPredicate(), new ExperienceCountersEffect(1)));
-        addEffect(EffectSlot.ON_DEATH, new ExperienceCountersEffect(1));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ExperienceCountersEffect(1));
 
         PermanentHasAnySubtypePredicate scionsAndSpawns = new PermanentHasAnySubtypePredicate(
                 Set.of(CardSubtype.SCION, CardSubtype.SPAWN));

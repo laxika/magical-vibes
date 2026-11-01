@@ -1,18 +1,24 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantingPermanentAwareEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,32 +33,6 @@ import org.springframework.stereotype.Component;
 public class GrantedTriggeredAbilitySupport {
 
     private final GameQueryService gameQueryService;
-
-    /**
-     * The abilities that Auras/Equipment attached to {@code permanentId} grant it for {@code slot},
-     * read straight off the attached permanents instead of through the layer system.
-     *
-     * <p>Needed by the death-trigger path: by the time death triggers are collected the dying
-     * permanent has already left the battlefield, so a layered static-bonus assembly no longer
-     * sees it, while the Aura granting the ability is still attached (orphaned Auras only fall
-     * off in a later state-based-action pass). Only plain, unconditional grants are read here.
-     */
-    public List<CardEffect> grantedTriggeredEffectsFromAttachments(GameData gameData, UUID permanentId, EffectSlot slot) {
-        List<CardEffect> result = new ArrayList<>();
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            for (Permanent source : battlefield) {
-                if (!source.isAttached() || !permanentId.equals(source.getAttachedTo())) continue;
-                for (CardEffect effect : source.getCard().getStaticEffects()) {
-                    if (effect instanceof GrantTriggeredAbilityEffect grant
-                            && grant.slot() == slot
-                            && ATTACHMENT_SCOPES.contains(grant.scope())) {
-                        result.add(bindGrantingPermanent(grant.grantedEffect(), source.getId()));
-                    }
-                }
-            }
-        }
-        return result;
-    }
 
     private static final Set<GrantScope> ATTACHMENT_SCOPES = EnumSet.of(
             GrantScope.ENCHANTED_CREATURE, GrantScope.ENCHANTED_PERMANENT, GrantScope.EQUIPPED_CREATURE);
@@ -77,10 +57,33 @@ public class GrantedTriggeredAbilitySupport {
      */
     public List<CardEffect> grantedTriggeredEffects(
             GameData gameData, Permanent permanent, GameQueryService.StaticBonus staticBonus, EffectSlot slot) {
-        List<CardEffect> result = new ArrayList<>();
+        return grantedTriggeredAbilities(gameData, permanent, staticBonus,
+                ability -> LegacySlots.slotOf(ability) == slot).stream()
+                .map(ability -> ability.effects().getFirst().effect())
+                .toList();
+    }
+
+    /**
+     * The abilities other permanents' static abilities grant {@code permanent} that trigger on its own zone
+     * change ("when this dies", "when this leaves the battlefield"), as it is now. A departure records them
+     * before the permanent leaves, so its look-back triggers see them (CR 603.10a).
+     */
+    public List<TriggeredAbility> grantedSelfZoneChangeAbilities(GameData gameData, Permanent permanent) {
+        return grantedTriggeredAbilities(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null),
+                ability -> ability.conditions().stream().anyMatch(condition ->
+                        condition.trigger() instanceof ZoneChangeTrigger trigger
+                                && trigger.relation() == ObjectRelation.THIS));
+    }
+
+    private List<TriggeredAbility> grantedTriggeredAbilities(GameData gameData, Permanent permanent,
+                                                             GameQueryService.StaticBonus staticBonus,
+                                                             Predicate<TriggeredAbility> wanted) {
+        List<TriggeredAbility> result = new ArrayList<>();
         for (CardEffect granted : staticBonus.grantedEffects()) {
-            if (granted instanceof GrantTriggeredAbilityEffect grant && grant.slot() == slot) {
-                result.add(grant.grantedEffect());
+            if (granted instanceof GrantTriggeredAbilityEffect grant
+                    && grant.grantedAbility() instanceof TriggeredAbility ability && wanted.test(ability)) {
+                result.add(ability);
             }
         }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
@@ -88,13 +91,15 @@ public class GrantedTriggeredAbilitySupport {
                 if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())) continue;
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (!(effect instanceof GrantTriggeredAbilityEffect grant)
-                            || grant.slot() != slot
+                            || !(grant.grantedAbility() instanceof TriggeredAbility ability)
+                            || !wanted.test(ability)
                             || !ATTACHMENT_SCOPES.contains(grant.scope())
                             || !(grant.grantedEffect() instanceof GrantingPermanentAwareEffect)) {
                         continue;
                     }
-                    CardEffect bound = bindGrantingPermanent(grant.grantedEffect(), source.getId());
-                    int unboundIndex = result.indexOf(grant.grantedEffect());
+                    TriggeredAbility bound = ability.withEffects(List.of(new EffectRegistration(
+                            bindGrantingPermanent(grant.grantedEffect(), source.getId()))));
+                    int unboundIndex = result.indexOf(ability);
                     if (unboundIndex >= 0) {
                         result.set(unboundIndex, bound);
                     } else {

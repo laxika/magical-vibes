@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +20,7 @@ import java.util.Set;
 public class InjectorCrocodile extends Card {
 
     public InjectorCrocodile() {
-        addEffect(EffectSlot.ON_DEATH, incubator(3));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), incubator(3));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP))),

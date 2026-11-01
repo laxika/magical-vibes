@@ -87,12 +87,15 @@ public class PermanentControlSupport {
      */
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                        String sourceSetCode, int power, int toughness) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, Map.of());
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, List.of());
     }
 
-    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
+    /** As above, with {@code additionalAbilities} on each token as well. */
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
+                                       String sourceSetCode, int power, int toughness,
+                                       List<Ability> additionalAbilities) {
         return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
-                additionalEffects == null ? List.of() : LegacySlots.registrationAbilities(additionalEffects));
+                additionalAbilities);
     }
 
     /**

@@ -4146,8 +4146,11 @@ public class GameData {
     /** Last-known continuously granted ON_ANY_CREATURE_DIES effects for the current death event. */
     public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedCreatureDeathEffects =
             new ConcurrentHashMap<>();
-    /** Continuously granted ON_DEATH abilities before any permanent leaves a simultaneous death event. */
-    public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedSelfDeathEffects =
+    /**
+     * Continuously granted abilities that trigger on the permanent's own zone change ("when this dies"), as they
+     * were before any permanent left a simultaneous death event.
+     */
+    public final Map<UUID, List<TriggeredAbility>> simultaneousDyingGrantedSelfAbilities =
             new ConcurrentHashMap<>();
 
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
@@ -10477,8 +10480,8 @@ public class GameData {
         this.simultaneousDyingGrantedCreatureDeathEffects.forEach((permanentId, effects) ->
                 copy.simultaneousDyingGrantedCreatureDeathEffects.put(
                         permanentId, List.copyOf(effects)));
-        this.simultaneousDyingGrantedSelfDeathEffects.forEach((permanentId, effects) ->
-                copy.simultaneousDyingGrantedSelfDeathEffects.put(permanentId, List.copyOf(effects)));
+        this.simultaneousDyingGrantedSelfAbilities.forEach((permanentId, abilities) ->
+                copy.simultaneousDyingGrantedSelfAbilities.put(permanentId, List.copyOf(abilities)));
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourceNamesThisTurn.putAll(this.combatDamageSourceNamesThisTurn);
@@ -11641,7 +11644,11 @@ public class GameData {
 
     /** Like {@link #grantPerpetualAbility}, but does nothing when the card already has an equal grant. */
     public void grantPerpetualAbilityOnce(UUID cardId, EffectSlot slot, CardEffect effect) {
-        Ability ability = LegacySlots.ability(slot, effect);
+        grantPerpetualAbilityOnce(cardId, LegacySlots.ability(slot, effect));
+    }
+
+    /** Like {@link #grantPerpetualAbility(UUID, Ability)}, but does nothing when the card already has an equal grant. */
+    public void grantPerpetualAbilityOnce(UUID cardId, Ability ability) {
         perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability),
                 (existing, added) -> existing.contains(ability) ? existing : concatAbilities(existing, added));
     }

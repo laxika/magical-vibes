@@ -16,18 +16,19 @@ import java.util.UUID;
  * @param creature                    whether it was a creature immediately before it left
  * @param triggerKeywordInstances     its persist and undying instance counts, for creatures
  * @param grantedCreatureDeathEffects continuously granted "whenever a creature dies" abilities, for creatures
- * @param grantedSelfDeathEffects     continuously granted "when this dies" abilities
+ * @param grantedSelfAbilities        continuously granted abilities that trigger on its own zone change ("when this
+ *                                    dies")
  */
 public record DepartureSnapshot(Permanent permanent, UUID controllerId, boolean creature,
                                 Map<Keyword, Integer> triggerKeywordInstances,
                                 List<CardEffect> grantedCreatureDeathEffects,
-                                List<CardEffect> grantedSelfDeathEffects) {
+                                List<TriggeredAbility> grantedSelfAbilities) {
 
     public DepartureSnapshot {
         Objects.requireNonNull(permanent, "permanent");
         triggerKeywordInstances = Map.copyOf(triggerKeywordInstances);
         grantedCreatureDeathEffects = List.copyOf(grantedCreatureDeathEffects);
-        grantedSelfDeathEffects = List.copyOf(grantedSelfDeathEffects);
+        grantedSelfAbilities = List.copyOf(grantedSelfAbilities);
     }
 
     public UUID permanentId() {
@@ -37,6 +38,6 @@ public record DepartureSnapshot(Permanent permanent, UUID controllerId, boolean 
     /** Copies the mutable last-known permanent; everything else is immutable. */
     public DepartureSnapshot deepCopy() {
         return new DepartureSnapshot(new Permanent(permanent), controllerId, creature, triggerKeywordInstances,
-                grantedCreatureDeathEffects, grantedSelfDeathEffects);
+                grantedCreatureDeathEffects, grantedSelfAbilities);
     }
 }

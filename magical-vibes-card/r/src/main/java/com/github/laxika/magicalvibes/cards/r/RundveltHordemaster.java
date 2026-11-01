@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class RundveltHordemaster extends Card {
                 new ExileTopCardsMayCastMatchingUntilNextTurnEffect(1, new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.GOBLIN))));
-        addEffect(EffectSlot.ON_DEATH, deathEffect);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), deathEffect);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), deathEffect));
     }

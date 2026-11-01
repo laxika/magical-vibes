@@ -19,7 +19,7 @@ class TriggerConditionTest {
 
     @Test
     void needsATriggerAndZones() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.ON_DEATH);
+        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
 
         assertThatThrownBy(() -> new TriggerCondition(null)).isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> new TriggerCondition(null, AbilityZones.BATTLEFIELD))

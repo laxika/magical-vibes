@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class LoathsomeCatoblepas extends Card {
 
     public LoathsomeCatoblepas() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_DEATH, new BoostTargetCreatureEffect(-3, -3));
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(-3, -3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

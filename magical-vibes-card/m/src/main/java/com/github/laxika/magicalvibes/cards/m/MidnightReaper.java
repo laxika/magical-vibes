@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GRN", collectorNumber = "77")
 @CardRegistration(set = "SLD", collectorNumber = "1171")
@@ -27,7 +29,7 @@ public class MidnightReaper extends Card {
                 new DrawCardEffect(1));
 
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, deathEffect);
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new SourceIsToken()), deathEffect));
     }
 }

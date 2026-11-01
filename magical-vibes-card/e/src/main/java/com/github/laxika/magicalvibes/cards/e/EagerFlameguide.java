@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
 @CardRegistration(set = "YDSK", collectorNumber = "14")
@@ -21,7 +23,7 @@ public class EagerFlameguide extends Card {
 
         // When Eager Flameguide dies, exile the top two cards of your library. Until the end of
         // your next turn, you may cast creature spells from among the exiled cards.
-        addEffect(EffectSlot.ON_DEATH, new ExileTopCardsMayCastMatchingUntilNextTurnEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ExileTopCardsMayCastMatchingUntilNextTurnEffect(
                 2, new CardTypePredicate(CardType.CREATURE)));
     }
 }

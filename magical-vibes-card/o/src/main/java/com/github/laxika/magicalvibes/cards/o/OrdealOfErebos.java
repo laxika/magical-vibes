@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "THS", collectorNumber = "99")
 public class OrdealOfErebos extends Card {
@@ -29,6 +31,6 @@ public class OrdealOfErebos extends Card {
                                                 CounterType.PLUS_ONE_PLUS_ONE, 3),
                                         "enchanted creature has three or more +1/+1 counters"),
                                 new SacrificeSelfEffect())));
-        addEffect(EffectSlot.ON_DEATH, DiscardEffect.sacrificeOnly(2));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), DiscardEffect.sacrificeOnly(2));
     }
 }

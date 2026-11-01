@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -22,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class SatsukiTheLivingLore extends Card {
         CardSubtypePredicate sagaCard = new CardSubtypePredicate(CardSubtype.SAGA);
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
 
-        addEffect(EffectSlot.ON_DEATH, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target Saga or enchantment creature you control to its owner's hand",
                         ReturnToHandEffect.target(), controlledSagaOrEnchantmentCreature),

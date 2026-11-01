@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class LazotepSliver extends Card {
                 new CardSubtypePredicate(CardSubtype.SLIVER),
                 new AmassGoblinsEffect(2, CardSubtype.SLIVER));
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, sliverDeath);
-        addEffect(EffectSlot.ON_DEATH, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringCardConditionalEffect(
                 new CardAllOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.SLIVER),
                         new CardNotPredicate(new CardIsTokenPredicate()))),

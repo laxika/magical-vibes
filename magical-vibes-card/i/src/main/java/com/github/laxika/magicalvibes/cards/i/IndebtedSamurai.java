@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOK", collectorNumber = "9")
 public class IndebtedSamurai extends Card {
@@ -28,7 +30,7 @@ public class IndebtedSamurai extends Card {
                                 "Put a +1/+1 counter on Indebted Samurai?")));
         // Printed creatures are excluded from their own ON_ALLY_CREATURE_DIES scan, so its own death
         // (it is a Samurai it controls) is authored here.
-        addEffect(EffectSlot.ON_DEATH, ConditionalEffect.unless(new SourceIsOnBattlefield(),
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ConditionalEffect.unless(new SourceIsOnBattlefield(),
                 new MayEffect(new PutCountersOnSourceEffect(1, 1, 1), "Put a +1/+1 counter on Indebted Samurai?")));
     }
 }

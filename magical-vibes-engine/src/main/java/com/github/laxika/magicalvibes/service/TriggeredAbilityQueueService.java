@@ -821,7 +821,7 @@ public class TriggeredAbilityQueueService {
             Set<Integer> compatibleTargetGroups = java.util.stream.Stream.concat(
                             java.util.stream.Stream.concat(sourceCard.getCastingCostsAndSpellEffects().stream(),
                                     sourceCard.getStaticEffects().stream()),
-                            Arrays.stream(EffectSlot.values()).flatMap(slot -> sourceCard.getEffects(slot).stream()))
+                            sourceCard.getTriggeredEffects().stream())
                     .filter(authored -> effects.stream()
                             .anyMatch(queued -> authored.getClass().equals(queued.getClass())
                                     || authored instanceof AllyCombatDamageTriggerEffect ally

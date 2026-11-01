@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({RuinRat.class, GrizzlyBears.class, WrathOfGod.class})
 class RuinRatTest extends BaseCardTest {
 
-    /** Wraths the board so Ruin Rat (player1's only creature) dies, firing its ON_DEATH trigger. */
+    /** Wraths the board so Ruin Rat (player1's only creature) dies, firing its dies trigger. */
     private void wrathToKillRuinRat() {
         harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Wrath resolves — Ruin Rat dies, graveyard-target choice presented

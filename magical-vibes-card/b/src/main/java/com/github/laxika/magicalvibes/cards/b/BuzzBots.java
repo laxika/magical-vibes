@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMT", collectorNumber = "32")
 public class BuzzBots extends Card {
 
     public BuzzBots() {
-        addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1));
     }
 }

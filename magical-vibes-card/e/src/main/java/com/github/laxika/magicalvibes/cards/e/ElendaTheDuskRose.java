@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class ElendaTheDuskRose extends Card {
 
         // When Elenda dies, create X 1/1 white Vampire creature tokens with lifelink, where X is
         // Elenda's power. SourcePower uses Elenda's last-known power after it leaves the battlefield.
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 new SourcePower(),
                 "Vampire",
                 1,

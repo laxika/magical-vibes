@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ import java.util.List;
 public class CherishedHatchling extends Card {
 
     public CherishedHatchling() {
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 SequenceEffect.of(new GrantFlashToCardTypeThisTurnEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)),
                 new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.DINOSAUR),

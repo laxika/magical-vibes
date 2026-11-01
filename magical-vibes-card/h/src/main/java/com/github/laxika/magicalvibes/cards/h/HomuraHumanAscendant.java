@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOK", collectorNumber = "103")
 public class HomuraHumanAscendant extends Card {
@@ -13,7 +14,7 @@ public class HomuraHumanAscendant extends Card {
         setBackFaceCard(new HomurasEssence());
 
         addStaticEffect(new CantBlockEffect());
-        addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnSourceTransformedFromGraveyardEffect());
     }
 
     @Override

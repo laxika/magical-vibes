@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "112")
 public class GrixisSojourners extends Card {
@@ -14,7 +16,7 @@ public class GrixisSojourners extends Card {
     public GrixisSojourners() {
         // When you cycle this card and when this creature dies, you may exile target card from a graveyard.
         // The target is chosen when each trigger goes on the stack; the "may" is asked on resolution.
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(exileTargetedGraveyardCard(),
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(exileTargetedGraveyardCard(),
                 "Exile the targeted card from a graveyard?"));
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(exileTargetedGraveyardCard(),
                 "Exile the targeted card from a graveyard?"));

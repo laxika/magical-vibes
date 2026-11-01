@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,9 +42,9 @@ public class Sporogenesis extends Card {
                 new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, saprolingsForFungusCounters);
-        addEffect(EffectSlot.ON_DEATH, saprolingsForFungusCounters);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), saprolingsForFungusCounters);
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveAllCountersFromMatchingPermanentsEffect(
                         CounterType.FUNGUS, new PermanentIsCreaturePredicate()));
     }

@@ -5,13 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesLandsThenDestroyRestEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class UrzasSylex extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new SelfExiledFromBattlefieldEffect(new MayPayManaEffect(
                         "{2}",
                         new SearchLibraryEffect(new CardTypePredicate(CardType.PLANESWALKER)),

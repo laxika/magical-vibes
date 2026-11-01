@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ATQ", collectorNumber = "66")
 @CardRegistration(set = "ME1", collectorNumber = "168")
@@ -12,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 public class SuChi extends Card {
 
     public SuChi() {
-        addEffect(EffectSlot.ON_DEATH, new AwardManaEffect(ManaColor.COLORLESS, 4));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new AwardManaEffect(ManaColor.COLORLESS, 4));
     }
 }

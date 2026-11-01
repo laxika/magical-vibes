@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * When this creature dies during combat, it deals {@code damage} to each creature
  * it blocked this combat (e.g. Cathedral Membrane).
  *
- * <p>This is an ON_DEATH marker effect. At death-trigger collection time the engine
+ * <p>This is an "when this dies" marker effect. At death-trigger collection time the engine
  * resolves the blocked-attacker permanent IDs from the dying permanent's
  * {@code blockingTargetIds} and bakes them into the stack entry's
  * {@code targetIds}. Resolution then deals the specified damage to each

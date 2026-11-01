@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardT
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "46")
 @CardRegistration(set = "LTC", collectorNumber = "129")
@@ -18,7 +20,7 @@ public class TheBalrogOfMoria extends Card {
     public TheBalrogOfMoria() {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
-                .addEffect(EffectSlot.ON_DEATH, new MayEffect(
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                         new ExileSourceCardFromGraveyardThenEffect(new ExileTargetPermanentEffect()),
                         "Exile The Balrog of Moria?"));
         addCycling("{3}{R}");

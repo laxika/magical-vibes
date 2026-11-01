@@ -40,7 +40,7 @@ class RingskipperTest extends BaseCardTest {
         Permanent ringskipper = harness.addToBattlefieldAndReturn(player1, new Ringskipper());
         Card ringskipperCard = ringskipper.getCard();
 
-        // Player 2 destroys Ringskipper — it dies, ON_DEATH clash trigger goes on the stack.
+        // Player 2 destroys Ringskipper — it dies, dies clash trigger goes on the stack.
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

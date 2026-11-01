@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "37")
 public class Chronozoa extends Card {
@@ -27,7 +29,7 @@ public class Chronozoa extends Card {
         addEffect(EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED,
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect()));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.TIME)),
                 new CreateTokenCopyOfSourceEffect(false, 2)));
     }

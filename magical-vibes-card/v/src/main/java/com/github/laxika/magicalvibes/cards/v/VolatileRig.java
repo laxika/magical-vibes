@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RTR", collectorNumber = "236")
 public class VolatileRig extends Card {
@@ -15,7 +17,7 @@ public class VolatileRig extends Card {
         addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new FlipCoinWinEffect(null, new SacrificeSelfEffect()));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new FlipCoinWinEffect(null, new MassDamageEffect(4, true)));
     }
 }

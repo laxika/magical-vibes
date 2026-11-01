@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentOwnedByPlayerToHandThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +36,7 @@ public class PhenomenonInvestigators extends Card {
                 new CreateTokenEffect(1, "Horror", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT)));
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, believeHorror);
-        addEffect(EffectSlot.ON_DEATH, believeHorror);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), believeHorror);
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new SourceHasChosenMode(DOUBT),

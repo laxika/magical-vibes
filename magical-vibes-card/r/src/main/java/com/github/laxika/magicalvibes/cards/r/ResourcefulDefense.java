@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class ResourcefulDefense extends Card {
         PutCountersOnTargetForEachLeavingSourceCountersEffect transferCounters =
                 new PutCountersOnTargetForEachLeavingSourceCountersEffect(new PermanentTruePredicate());
         var targetPermanentYouControl = target(TargetFilters.permanentYouControl());
-        targetPermanentYouControl.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        targetPermanentYouControl.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.ANY), transferCounters));
         targetPermanentYouControl.addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,

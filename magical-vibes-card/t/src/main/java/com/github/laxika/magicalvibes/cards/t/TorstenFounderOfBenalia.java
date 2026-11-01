@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,6 +28,6 @@ public class TorstenFounderOfBenalia extends Card {
                         new CardTypePredicate(CardType.LAND))),
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true,
                 LibrarySearchDestination.HAND, true));
-        addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.whiteSoldier(7));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), CreateTokenEffect.whiteSoldier(7));
     }
 }

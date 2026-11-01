@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "161")
 @CardRegistration(set = "WTH", collectorNumber = "129")
@@ -20,6 +22,6 @@ public class GaeasBlessing extends Card {
     public GaeasBlessing() {
         addSpellEffect(new ShuffleTargetCardsFromGraveyardIntoLibraryEffect(null, 3));
         addSpellEffect(new DrawCardEffect(1));
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY, new ShuffleGraveyardIntoLibraryEffect(false));
+        addTrigger(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, ObjectRelation.THIS), new ShuffleGraveyardIntoLibraryEffect(false));
     }
 }

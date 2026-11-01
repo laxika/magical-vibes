@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -62,6 +64,6 @@ public class TheScarabGod extends Card {
                 "{2}{U}{B}: Exile target creature card from a graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie."));
 
         // When The Scarab God dies, return it to its owner's hand at the beginning of the next end step.
-        addEffect(EffectSlot.ON_DEATH, new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
     }
 }

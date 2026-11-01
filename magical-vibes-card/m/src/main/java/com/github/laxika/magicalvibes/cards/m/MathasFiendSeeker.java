@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -14,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,10 +30,10 @@ public class MathasFiendSeeker extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY),
                         new GrantEffectsToCounterBearersEffect(CounterType.BOUNTY, List.of(
                                 new GrantTriggeredAbilityEffect(
-                                        EffectSlot.ON_DEATH,
+                                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                                         SequenceEffect.of(
                                                 new EachOpponentDrawsCardEffect(1),
-                                                new GainLifeEffect(new Fixed(2), GainLifeRecipient.OPPONENT)),
+                                                new GainLifeEffect(new Fixed(2), GainLifeRecipient.OPPONENT))),
                                         GrantScope.SELF)),
                                 true)));
     }

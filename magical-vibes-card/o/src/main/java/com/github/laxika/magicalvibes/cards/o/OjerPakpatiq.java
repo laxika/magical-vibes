@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGr
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class OjerPakpatiq extends Card {
                 false,
                 null,
                 0));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new ReturnSourceTransformedFromGraveyardEffect(true, CounterType.TIME, 3, true));
     }
 

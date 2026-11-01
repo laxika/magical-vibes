@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FUT", collectorNumber = "11")
 @CardRegistration(set = "TSR", collectorNumber = "24")
@@ -24,7 +26,7 @@ public class LostAuramancers extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.TIME)),
                 new MayEffect(
                         new SearchLibraryEffect(new CardTypePredicate(CardType.ENCHANTMENT),

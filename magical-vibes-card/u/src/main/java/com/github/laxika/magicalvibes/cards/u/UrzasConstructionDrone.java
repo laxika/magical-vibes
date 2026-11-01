@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,6 +30,6 @@ public class UrzasConstructionDrone extends Card {
                 new CardSubtypePredicate(CardSubtype.URZAS)));
         SeekLibraryEffect seekUrzasLand = new SeekLibraryEffect(1, urzasLand);
         addEffect(EffectSlot.ON_ATTACK, seekUrzasLand);
-        addEffect(EffectSlot.ON_DEATH, seekUrzasLand);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), seekUrzasLand);
     }
 }

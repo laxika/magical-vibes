@@ -27,7 +27,7 @@ class ZodiacDragonTest extends BaseCardTest {
         Permanent dragon = harness.addToBattlefieldAndReturn(player2, new ZodiacDragon());
         Card dragonCard = dragon.getCard();
 
-        // Overwhelming Forces resolves — the Dragon dies and its ON_DEATH may-trigger goes on the stack.
+        // Overwhelming Forces resolves — the Dragon dies and its dies may-trigger goes on the stack.
         harness.setHand(player1, List.of(new OverwhelmingForces()));
         harness.addMana(player1, ManaColor.BLACK, 8);
         harness.castAndResolveSorcery(player1, 0, player2.getId());

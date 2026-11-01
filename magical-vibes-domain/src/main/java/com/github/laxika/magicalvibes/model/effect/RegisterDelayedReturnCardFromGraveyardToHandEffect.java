@@ -10,7 +10,7 @@ import java.util.UUID;
  * a graveyard from the battlefield, you may return that card to its owner's hand at the
  * beginning of the next end step." The collector bakes the dying card's id into {@code cardId}.
  *
- * <p>Also used by The Locust God on {@code ON_DEATH} with {@code cardId == null}: the handler
+ * <p>Also used by The Locust God on "when this dies" with {@code cardId == null}: the handler
  * falls back to the stack-entry source card. On creature-death slots, the trigger collector binds
  * the dying card through {@link DyingCreatureCardAwareEffect}.
  *

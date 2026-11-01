@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,6 +33,6 @@ public class SlitheryStalker extends Card {
                 "Target must be a green or white creature an opponent controls"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileTargetPermanentAndTrackWithSourceEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ReturnAllCardsExiledWithSourceEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ReturnAllCardsExiledWithSourceEffect());
     }
 }

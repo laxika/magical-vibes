@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BRO", collectorNumber = "101")
 public class GnawingVermin extends Card {
@@ -21,6 +23,6 @@ public class GnawingVermin extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new MillEffect(2, MillRecipient.TARGET_PLAYER));
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_DEATH, new BoostTargetCreatureEffect(-1, -1));
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(-1, -1));
     }
 }

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "9")
 public class FearOfAbduction extends Card {
@@ -16,7 +18,7 @@ public class FearOfAbduction extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentAndTrackWithSourceEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }
 }

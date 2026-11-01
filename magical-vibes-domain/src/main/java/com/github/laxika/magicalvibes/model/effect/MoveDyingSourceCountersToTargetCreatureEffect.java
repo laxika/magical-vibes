@@ -12,7 +12,7 @@ import java.util.Map;
  * Death trigger for transferring every concrete counter from a dying creature to a target creature
  * (e.g. Scolding Administrator, Host of the Hereafter, and Parish-Blade Trainee).
  * <p>
- * On {@code ON_DEATH}, the death-trigger collector snapshots the dying permanent's counters into
+ * On "when this dies", the death-trigger collector snapshots the dying permanent's counters into
  * {@code counters}. When {@code requiresCounters} is true, an empty snapshot suppresses the
  * trigger; otherwise the trigger still requires a target and simply places no counters. On
  * {@code ON_ALLY_CREATURE_DIES}, the ally-death pipeline binds the same snapshot through

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "88")
 public class AlBhedSalvagers extends Card {
@@ -28,7 +30,7 @@ public class AlBhedSalvagers extends Card {
                 "Target must be an opponent"
         ));
 
-        addEffect(EffectSlot.ON_DEATH, DRAIN);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DRAIN);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()), DRAIN));

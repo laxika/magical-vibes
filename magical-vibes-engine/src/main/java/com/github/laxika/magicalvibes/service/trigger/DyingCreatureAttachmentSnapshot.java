@@ -7,15 +7,30 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-record DyingCreatureAttachmentSnapshot(List<UUID> auraCardIds, List<UUID> equipmentPermanentIds) {
+/**
+ * The Auras and Equipment attached to a permanent as it died, for death abilities that look back at them
+ * (CR 603.10a).
+ */
+public record DyingCreatureAttachmentSnapshot(List<UUID> auraCardIds, List<UUID> equipmentPermanentIds) {
 
-    static DyingCreatureAttachmentSnapshot capture(GameData gameData, UUID dyingPermanentId) {
+    /** The attachments a departure event recorded. */
+    public static DyingCreatureAttachmentSnapshot of(DepartedAttachments attachments) {
+        return new DyingCreatureAttachmentSnapshot(attachments.auraCardIds(), attachments.equipmentPermanentIds());
+    }
+
+    /** These attachments, for a departure event. */
+    public DepartedAttachments toDepartedAttachments() {
+        return new DepartedAttachments(auraCardIds, equipmentPermanentIds);
+    }
+
+    public static DyingCreatureAttachmentSnapshot capture(GameData gameData, UUID dyingPermanentId) {
         List<UUID> auraCardIds = new ArrayList<>();
         List<UUID> equipmentPermanentIds = new ArrayList<>();
 
@@ -35,7 +50,7 @@ record DyingCreatureAttachmentSnapshot(List<UUID> auraCardIds, List<UUID> equipm
      * attachment conditions still hold when the Auras or Equipment left in the same event. Leaves that
      * are not attachment-dependent are decided by {@code matchesNow}.
      */
-    static boolean satisfiedAtDeath(DyingCreatureAttachmentSnapshot snapshot, PermanentPredicate predicate,
+    public static boolean satisfiedAtDeath(DyingCreatureAttachmentSnapshot snapshot, PermanentPredicate predicate,
                                     Predicate<PermanentPredicate> matchesNow) {
         if (matchesNow.test(predicate)) {
             return true;

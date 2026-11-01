@@ -36,12 +36,10 @@ public class PerpetuallyGrantTriggeredAbilityToOwnCreaturesEffectHandler impleme
             }
 
             UUID cardId = permanent.getOriginalCard().getId();
-            gameData.grantPerpetualAbilityOnce(cardId, perpetual.triggeredAbilitySlot(), perpetual.triggeredAbility());
+            gameData.grantPerpetualAbilityOnce(cardId, perpetual.grantedAbility());
 
-            if (!permanent.getPersistentTriggeredEffects(perpetual.triggeredAbilitySlot())
-                    .contains(perpetual.triggeredAbility())) {
-                permanent.addPersistentTriggeredEffect(
-                        perpetual.triggeredAbilitySlot(), perpetual.triggeredAbility());
+            if (!permanent.getPersistentTriggeredAbilities().contains(perpetual.grantedAbility())) {
+                permanent.addPersistentAbility(perpetual.grantedAbility());
             }
         }
     }

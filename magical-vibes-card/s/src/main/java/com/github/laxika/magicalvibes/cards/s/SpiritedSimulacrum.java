@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SeekToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class SpiritedSimulacrum extends Card {
     public SpiritedSimulacrum() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SeekToBattlefieldEffect(new CardTypePredicate(CardType.LAND)));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new SeekEffect(new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}"))));
     }

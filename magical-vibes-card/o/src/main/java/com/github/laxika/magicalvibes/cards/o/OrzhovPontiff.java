@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,6 +34,6 @@ public class OrzhovPontiff extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(modes));
         addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new ChooseOneAtTriggerTimeEffect(modes));
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
+        target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
     }
 }

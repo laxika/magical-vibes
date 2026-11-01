@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +29,7 @@ public class RekindlingPhoenix extends Card {
     private static final String NAME = "Rekindling Phoenix";
 
     public RekindlingPhoenix() {
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 1,
                 "Elemental",
                 0,

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "35")
 @CardRegistration(set = "PIP", collectorNumber = "378")
@@ -23,7 +25,7 @@ public class NickValentinePrivateEye extends Card {
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
 
         MayEffect investigate = new MayEffect(CreateTokenEffect.ofClueToken(1), "Investigate?");
-        addEffect(EffectSlot.ON_DEATH, investigate);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), investigate);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(new CardTypePredicate(CardType.ARTIFACT), investigate));
     }

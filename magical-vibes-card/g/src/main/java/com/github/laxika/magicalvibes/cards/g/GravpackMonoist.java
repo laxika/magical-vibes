@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -14,7 +15,7 @@ import java.util.Set;
 public class GravpackMonoist extends Card {
 
     public GravpackMonoist() {
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 1, "Robot", 2, 2, null,
                 List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT), true));
     }

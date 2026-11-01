@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,6 +21,6 @@ public class SanguineEvangelist extends Card {
         CreateTokenEffect bat = new CreateTokenEffect(
                 "Bat", 1, 1, CardColor.BLACK, List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, bat);
-        addEffect(EffectSlot.ON_DEATH, bat);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), bat);
     }
 }

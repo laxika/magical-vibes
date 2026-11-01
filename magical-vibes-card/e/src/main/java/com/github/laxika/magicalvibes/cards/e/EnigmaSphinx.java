@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "106")
 @CardRegistration(set = "PC2", collectorNumber = "89")
@@ -20,7 +22,7 @@ public class EnigmaSphinx extends Card {
         // When this creature is put into your graveyard from the battlefield, put it into
         // your library third from the top (0-indexed position 2).
         // It goes to its owner's graveyard, so only the owner's ability can trigger.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new TriggeringPermanentConditionalEffect(new PermanentOwnedBySourceControllerPredicate(),
                         new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2)));
 

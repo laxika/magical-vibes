@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -42,7 +44,7 @@ public class ForgebornPhoenix extends Card {
         var perpetualGrant = new PerpetuallyGrantTriggeredAbilityToSourceCardEffect(
                 EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                 returnTrigger);
-        addEffect(EffectSlot.ON_DEATH, perpetualGrant);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), perpetualGrant);
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, perpetualGrant);
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

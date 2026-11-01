@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndRet
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "USG", collectorNumber = "130")
 @CardRegistration(set = "PD3", collectorNumber = "22")
@@ -27,7 +29,7 @@ public class DiabolicServitude extends Card {
                 .linkToSource(true)
                 .build());
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new ExileTriggeringCreatureAndReturnSourceToHandEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
     }
 }

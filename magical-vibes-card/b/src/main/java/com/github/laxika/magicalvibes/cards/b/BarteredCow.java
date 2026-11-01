@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class BarteredCow extends Card {
             )));
 
     public BarteredCow() {
-        addEffect(EffectSlot.ON_DEATH, FOOD_TOKEN);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), FOOD_TOKEN);
         addEffect(EffectSlot.ON_SELF_DISCARDED, FOOD_TOKEN);
     }
 }

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOW", collectorNumber = "118")
 @CardRegistration(set = "SLD", collectorNumber = "844")
@@ -21,6 +23,6 @@ public class HeadlessRider extends Card {
         // Zombie creature token.
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.ZOMBIE), ZOMBIE_TOKEN));
-        addEffect(EffectSlot.ON_DEATH, ZOMBIE_TOKEN);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ZOMBIE_TOKEN);
     }
 }

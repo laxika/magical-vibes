@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ManifestTopCardOfDamagedPlaye
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTC", collectorNumber = "150")
 @CardRegistration(set = "C19", collectorNumber = "21")
@@ -21,11 +23,11 @@ public class ThievingAmalgam extends Card {
 
         // "A creature you control but don't own" includes this card itself while an opponent owns it
         // (it can be controlled by another player's Control Magic effect), and ON_ALLY_CREATURE_DIES
-        // never looks at the watcher's own death, so that case is authored on ON_DEATH.
+        // never looks at the watcher's own death, so that case is authored by its dies trigger.
         var drainOwner = new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate()),
                 new DrainLifeFromDyingCreatureOwnerEffect(2));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drainOwner);
-        addEffect(EffectSlot.ON_DEATH, drainOwner);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), drainOwner);
     }
 }

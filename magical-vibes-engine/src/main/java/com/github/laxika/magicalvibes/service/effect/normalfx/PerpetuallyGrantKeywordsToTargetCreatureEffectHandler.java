@@ -54,17 +54,10 @@ public class PerpetuallyGrantKeywordsToTargetCreatureEffectHandler implements No
                     .computeIfAbsent(cardId, ignored -> EnumSet.noneOf(Keyword.class))
                     .addAll(grantable);
 
-            if (grant.triggeredAbilitySlot() != null) {
-                addPerpetualTriggeredAbility(gameData, cardId, grant.triggeredAbilitySlot(),
-                        grant.triggeredAbility());
-                target.addPersistentTriggeredEffect(grant.triggeredAbilitySlot(),
-                        grant.triggeredAbility());
+            if (grant.grantedAbility() != null) {
+                gameData.grantPerpetualAbility(cardId, grant.grantedAbility());
+                target.addPersistentAbility(grant.grantedAbility());
             }
         }
-    }
-
-    private void addPerpetualTriggeredAbility(GameData gameData, UUID cardId, EffectSlot slot,
-                                               CardEffect triggeredAbility) {
-        gameData.grantPerpetualAbility(cardId, slot, triggeredAbility);
     }
 }

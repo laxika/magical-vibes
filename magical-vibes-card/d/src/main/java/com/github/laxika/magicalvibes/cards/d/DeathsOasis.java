@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class DeathsOasis extends Card {
     public DeathsOasis() {
         CardEffect deathEffect = nontokenCreatureDeathEffect();
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, deathEffect);
-        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DyingPermanentWasCreatureConditionalEffect(new TriggeringCardConditionalEffect(
                 new CardNotPredicate(new CardIsTokenPredicate()), deathEffect)));
 
         addActivatedAbility(new ActivatedAbility(

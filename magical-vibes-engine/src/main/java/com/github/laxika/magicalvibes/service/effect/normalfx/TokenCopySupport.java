@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -33,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.replacement.TokenCopyBatch;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -725,12 +728,17 @@ public class TokenCopySupport {
      * the copiable values) are stored on the token permanent rather than its copiable card, so a copy
      * of the token does not inherit them.
      */
+    /** Whether {@code ability} is a "when this dies" ability. */
+    private static boolean isDeathAbility(Ability ability) {
+        return ability instanceof TriggeredAbility triggered
+                && triggered.hasTrigger(Triggers.dies(ObjectRelation.THIS));
+    }
+
     private static Permanent withGrantedDeathEffects(Permanent token, CreateTokenCopyOfTargetPermanentEffect effect) {
         if (effect.additionalAbilities() != null) {
             effect.additionalAbilities().stream()
-                    .filter(ability -> LegacySlots.slotOf(ability) == EffectSlot.ON_DEATH)
-                    .flatMap(ability -> LegacySlots.effectsOf(ability).stream())
-                    .forEach(death -> token.addPersistentTriggeredEffect(EffectSlot.ON_DEATH, death));
+                    .filter(TokenCopySupport::isDeathAbility)
+                    .forEach(token::addPersistentAbility);
         }
         return token;
     }
@@ -958,7 +966,7 @@ public class TokenCopySupport {
     }
 
     /**
-     * @param deathGrantsOnPermanent when true, granted ON_DEATH effects are left off the returned card;
+     * @param deathGrantsOnPermanent when true, granted "when this dies" abilities are left off the returned card;
      *                               the caller attaches them to the token permanent instead
      */
     private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
@@ -1108,16 +1116,26 @@ public class TokenCopySupport {
                 tokenCard.addEffect(slot, registration.effect(), registration.triggerMode());
             }
         }
+        for (TriggeredAbility ability : sourceCard.getUnslottedTriggeredAbilities()) {
+            if (!hasPTOverride || ability.effects().stream()
+                    .noneMatch(registration -> registration.effect().isPowerToughnessDefining())) {
+                tokenCard.addTriggeredAbility(ability);
+            }
+        }
         if (effect.additionalAbilities() != null) {
             for (Ability ability : effect.additionalAbilities()) {
                 if (ability instanceof StaticAbility statik) {
                     statik.effects().forEach(additionalEffect -> tokenCard.addStaticEffect(statik.zones(), additionalEffect));
                     continue;
                 }
-                EffectSlot slot = LegacySlots.slotOf(ability);
-                if (deathGrantsOnPermanent && slot == EffectSlot.ON_DEATH) {
+                if (deathGrantsOnPermanent && isDeathAbility(ability)) {
                     continue;
                 }
+                if (ability instanceof TriggeredAbility triggered && LegacySlots.slotOf(ability) == null) {
+                    tokenCard.addTriggeredAbility(triggered);
+                    continue;
+                }
+                EffectSlot slot = LegacySlots.slotOf(ability);
                 LegacySlots.effectsOf(ability).forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect,
                         com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT));
             }

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "STX", collectorNumber = "175")
 public class DaemogothWoeEater extends Card {
@@ -18,7 +20,7 @@ public class DaemogothWoeEater extends Card {
     public DaemogothWoeEater() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.sacrificeOnly(
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), SequenceEffect.sacrificeOnly(
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
                 new DrawCardEffect(1),
                 new GainLifeEffect(2)));

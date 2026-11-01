@@ -55,20 +55,18 @@ public class CastTargetInstantOrSorceryFromGraveyardHandler implements MayEffect
         if (source == null) {
             return;
         }
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (CardEffect effect : source.getCard().getEffects(slot)) {
-                if (effect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()
-                        && castEffect.equals(once.wrapped())) {
-                    if (once.key() == null) {
-                        gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
-                    } else {
-                        gameData.keyedOncePerTurnTriggersFiredThisTurn
-                                .computeIfAbsent(source.getId(),
-                                        ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                                .add(once.key());
-                    }
-                    return;
+        for (CardEffect effect : source.getCard().getTriggeredEffects()) {
+            if (effect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()
+                    && castEffect.equals(once.wrapped())) {
+                if (once.key() == null) {
+                    gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+                } else {
+                    gameData.keyedOncePerTurnTriggersFiredThisTurn
+                            .computeIfAbsent(source.getId(),
+                                    ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .add(once.key());
                 }
+                return;
             }
         }
     }

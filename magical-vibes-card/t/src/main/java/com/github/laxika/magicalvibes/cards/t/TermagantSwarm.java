@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,7 @@ public class TermagantSwarm extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new CreateTokenEffect(new EventValue(), "Tyranid", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.TYRANID), Set.of(), Set.of()));
     }

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class CavalierOfNight extends Card {
                         "another creature"),
                 "Sacrifice another creature?"));
 
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

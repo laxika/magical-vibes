@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -15,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbil
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,8 +30,8 @@ public class SeethingSkitterPriest extends Card {
                 new PerpetuallyGrantTriggeredAbilityToMatchingCardsEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         new PermanentIsCreaturePredicate(),
-                        EffectSlot.ON_DEATH,
-                        phyrexianMite()));
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
+                        phyrexianMite())));
     }
 
     private static CreateTokenEffect phyrexianMite() {

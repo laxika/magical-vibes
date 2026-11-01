@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -42,6 +44,6 @@ public class VoiceOfResurgence extends Card {
 
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                 SpellCastTriggerEffect.duringYourTurn(null, List.of(token)));
-        addEffect(EffectSlot.ON_DEATH, token);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), token);
     }
 }

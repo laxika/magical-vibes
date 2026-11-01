@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LRW", collectorNumber = "240")
 @CardRegistration(set = "DPA", collectorNumber = "88")
@@ -20,6 +21,6 @@ public class Vigor extends Card {
         // Put a +1/+1 counter on that creature for each 1 damage prevented this way."
         addStaticEffect(new PreventDamageToOtherCreaturesAndAddPlusCountersEffect());
         // "When Vigor is put into a graveyard from anywhere, shuffle it into its owner's library."
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, new ShuffleSelfFromGraveyardIntoLibraryEffect());
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS), new ShuffleSelfFromGraveyardIntoLibraryEffect());
     }
 }

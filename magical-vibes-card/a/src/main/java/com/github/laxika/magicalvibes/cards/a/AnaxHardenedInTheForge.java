@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,6 +41,6 @@ public class AnaxHardenedInTheForge extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))), SATYR_TOKEN));
-        addEffect(EffectSlot.ON_DEATH, SATYR_TOKEN);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SATYR_TOKEN);
     }
 }

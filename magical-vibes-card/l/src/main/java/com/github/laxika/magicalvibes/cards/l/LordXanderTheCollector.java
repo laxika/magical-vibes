@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "197")
 public class LordXanderTheCollector extends Card {
@@ -28,7 +30,7 @@ public class LordXanderTheCollector extends Card {
                         new DiscardEffect(
                                 new Divided(new CardsInHand(CountScope.TARGET_PLAYER), 2),
                                 DiscardRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.ON_DEATH,
+                .addTrigger(Triggers.dies(ObjectRelation.THIS),
                         new SacrificePermanentsEffect(
                                 new Divided(new PermanentCount(nonland, CountScope.TARGET_PLAYER), 2),
                                 nonland,

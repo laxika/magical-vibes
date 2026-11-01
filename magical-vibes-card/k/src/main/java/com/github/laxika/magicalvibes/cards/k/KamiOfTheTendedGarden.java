@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class KamiOfTheTendedGarden extends Card {
                         List.of(new SacrificeSelfEffect()),
                         true));
 
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.SPIRIT),

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,6 +29,6 @@ public class OracleOfTragedy extends Card {
         ));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggeredAbility);
-        addEffect(EffectSlot.ON_DEATH, triggeredAbility);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), triggeredAbility);
     }
 }

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class ElectroAssaultingBattery extends Card {
                         new CardTypePredicate(CardType.SORCERY))),
                 List.of(new AwardManaEffect(ManaColor.RED))));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 PayXManaDealXDamageToAnyTargetEffect.reflexive("{X}", TargetPredicates.player()));
     }
 }

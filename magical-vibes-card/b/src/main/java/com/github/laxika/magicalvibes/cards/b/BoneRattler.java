@@ -5,13 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCardsInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class BoneRattler extends Card {
                 "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
                 List.of(returnAbility));
 
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS),
                 new ExileSourceCardFromGraveyardThenEffect(tokenCards));
     }
 }

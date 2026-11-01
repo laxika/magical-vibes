@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "THS", collectorNumber = "25")
 @CardRegistration(set = "A25", collectorNumber = "27")
@@ -30,6 +32,6 @@ public class OrdealOfHeliod extends Card {
                                                 CounterType.PLUS_ONE_PLUS_ONE, 3),
                                         "enchanted creature has three or more +1/+1 counters"),
                                 new SacrificeSelfEffect())))
-                .addEffect(EffectSlot.ON_DEATH, GainLifeEffect.sacrificeOnly(10));
+                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), GainLifeEffect.sacrificeOnly(10));
     }
 }

@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class JackOfHeartsVolatileHero extends Card {
 
     public JackOfHeartsVolatileHero() {
-        addEffect(EffectSlot.ON_DEATH, new MassDamageEffect(new SourcePower(), false));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MassDamageEffect(new SourcePower(), false));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

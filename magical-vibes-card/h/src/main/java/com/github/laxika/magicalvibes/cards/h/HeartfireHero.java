@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLB", collectorNumber = "138")
 public class HeartfireHero extends Card {
@@ -18,7 +20,7 @@ public class HeartfireHero extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                 new TriggeringSpellControllerConditionalEffect(new OncePerTurnTriggerEffect(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
     }
 }

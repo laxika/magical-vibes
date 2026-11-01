@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -50,7 +52,7 @@ public class PawnOfUlamog extends Card {
     public PawnOfUlamog() {
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
                 new MayEffect(SPAWN_TOKEN, "Create an Eldrazi Spawn token?"));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(SPAWN_TOKEN, "Create an Eldrazi Spawn token?"));
     }
 }

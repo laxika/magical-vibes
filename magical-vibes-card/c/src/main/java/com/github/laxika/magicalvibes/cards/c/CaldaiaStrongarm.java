@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
 @CardRegistration(set = "SNC", collectorNumber = "138")
@@ -27,7 +29,7 @@ public class CaldaiaStrongarm extends Card {
         // created as the spell resolves.
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new DrawCardEffect(1)));
     }
 }

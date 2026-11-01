@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class ArcboundFiend extends Card {
                         new MoveCounterFromTargetCreatureToSourceEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         "Move a +1/+1 counter from target creature onto this creature?"));
 
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         true,

@@ -10,7 +10,7 @@ import java.util.UUID;
  * {@code recordAsCreatedWithSource}), so the tokens are found regardless of who controls them now.
  *
  * <p>Works on {@code END_STEP_TRIGGERED} (the stack entry carries the source permanent id) and on
- * {@code ON_SELF_LEAVES_BATTLEFIELD}, where the source is already gone and the collector bakes its
+ * "when this leaves the battlefield", where the source is already gone and the collector bakes its
  * id into {@code sourcePermanentId} instead.
  *
  * @param cannotBeRegenerated       whether the destroyed tokens can be regenerated

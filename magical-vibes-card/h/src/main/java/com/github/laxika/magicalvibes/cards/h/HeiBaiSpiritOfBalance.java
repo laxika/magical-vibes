@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,8 +40,7 @@ public class HeiBaiSpiritOfBalance extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, sacrificeTrigger);
         addEffect(EffectSlot.ON_ATTACK, sacrificeTrigger);
-        target(TargetFilters.creatureYouControl()).addEffect(
-                EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new PutCountersOnTargetForEachLeavingSourceCountersEffect());
     }
 }

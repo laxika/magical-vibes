@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WTH", collectorNumber = "32")
 public class AncestralKnowledge extends Card {
@@ -18,6 +20,6 @@ public class AncestralKnowledge extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LookAtTopCardsOfTargetLibraryEffect(10, TargetLibraryAction.MAY_EXILE_ANY_NUMBER));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ShuffleLibraryEffect(false));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ShuffleLibraryEffect(false));
     }
 }

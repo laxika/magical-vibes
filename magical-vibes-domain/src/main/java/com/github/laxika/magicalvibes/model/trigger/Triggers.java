@@ -42,6 +42,14 @@ public final class Triggers {
         return new ZoneChangeTrigger(relation, Set.of(), Zone.GRAVEYARD, Set.of());
     }
 
+    /**
+     * "When this spell is put into a graveyard during its resolution", as haunt reads on an instant or sorcery
+     * (CR 702.55a). A spell countered, or one that doesn't resolve because its targets became illegal, isn't.
+     */
+    public static ZoneChangeTrigger putIntoGraveyardWhileResolving(ObjectRelation relation) {
+        return new ZoneChangeTrigger(relation, Set.of(Zone.STACK), Zone.GRAVEYARD, Set.of(ZoneChangeCause.RESOLUTION));
+    }
+
     /** "When [object] is milled": put into a graveyard from a library by a mill. */
     public static ZoneChangeTrigger milled(ObjectRelation relation) {
         return new ZoneChangeTrigger(relation, Set.of(Zone.LIBRARY), Zone.GRAVEYARD, Set.of(ZoneChangeCause.MILL));

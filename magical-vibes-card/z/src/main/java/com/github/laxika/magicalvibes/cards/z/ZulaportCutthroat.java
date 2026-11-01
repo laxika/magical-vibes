@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "126")
 @CardRegistration(set = "GNT", collectorNumber = "36")
@@ -26,7 +28,7 @@ public class ZulaportCutthroat extends Card {
         SequenceEffect deathTrigger = SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1));
-        addEffect(EffectSlot.ON_DEATH, deathTrigger);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, deathTrigger);
     }
 }

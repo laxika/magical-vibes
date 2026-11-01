@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
@@ -17,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -46,7 +49,7 @@ public class RivazOfTheClaw extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 dragonCreature,
                 List.of(new GrantTriggeredAbilityToCastSpellEffect(
-                        EffectSlot.ON_DEATH, new ExileSourceCardFromGraveyardEffect())),
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ExileSourceCardFromGraveyardEffect()))),
                 new StackEntryCastFromZonePredicate(Zone.GRAVEYARD)));
     }
 }

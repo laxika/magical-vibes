@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ import java.util.List;
 public class FlittingGuerrilla extends Card {
 
     public FlittingGuerrilla() {
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new MillEffect(2, MillRecipient.CONTROLLER),
                 new MillEffect(2, MillRecipient.EACH_OPPONENT),
                 new MayEffect(

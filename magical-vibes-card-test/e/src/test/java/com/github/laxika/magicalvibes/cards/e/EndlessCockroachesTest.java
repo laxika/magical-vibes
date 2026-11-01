@@ -65,7 +65,7 @@ class EndlessCockroachesTest extends BaseCardTest {
         Card roachesCard = roaches.getCard();
 
         // Player 1 wraths the board — the black Cockroaches dies,
-        // and its ON_DEATH trigger goes on the stack.
+        // and its dies trigger goes on the stack.
         harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Wrath resolves — Cockroaches dies, death trigger placed
         harness.passBothPriorities(); // resolve the death trigger — return to hand

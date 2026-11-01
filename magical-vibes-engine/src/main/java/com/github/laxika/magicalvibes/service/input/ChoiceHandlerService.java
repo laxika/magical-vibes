@@ -4623,8 +4623,7 @@ public class ChoiceHandlerService {
         boolean sharedTargetMode = java.util.stream.Stream.concat(
                         java.util.stream.Stream.concat(ctx.sourceCard().getCastingCostsAndSpellEffects().stream(),
                                 ctx.sourceCard().getStaticEffects().stream()),
-                        java.util.Arrays.stream(EffectSlot.values())
-                                .flatMap(slot -> ctx.sourceCard().getEffects(slot).stream()))
+                        ctx.sourceCard().getTriggeredEffects().stream())
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect modal
                         && modal.options().equals(ctx.effect().options()));
         if (sharedTargetMode) {

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,9 +31,9 @@ public class TimeLordRegeneration extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.TIME_LORD),
                 "Target must be a Time Lord you control")).addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_DEATH,
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         new RevealUntilCardPredicateRestOnBottomRandomEffect(
-                                TIME_LORD_CREATURE_CARD, LibrarySearchDestination.BATTLEFIELD),
+                                TIME_LORD_CREATURE_CARD, LibrarySearchDestination.BATTLEFIELD)),
                         false, true));
     }
 }

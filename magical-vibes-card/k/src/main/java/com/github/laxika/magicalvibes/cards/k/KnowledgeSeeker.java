@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "60")
 public class KnowledgeSeeker extends Card {
@@ -13,6 +15,6 @@ public class KnowledgeSeeker extends Card {
     public KnowledgeSeeker() {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

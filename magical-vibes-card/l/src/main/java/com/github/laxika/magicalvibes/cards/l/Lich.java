@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
@@ -11,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacem
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "2ED", collectorNumber = "114")
 @CardRegistration(set = "ME4", collectorNumber = "89")
@@ -24,6 +27,6 @@ public class Lich extends Card {
         addStaticEffect(new NefariousLichLifeGainReplacementEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, new SacrificePermanentsOrLoseGameEffect(
                 new EventValue(), new PermanentNotPredicate(new PermanentIsTokenPredicate())));
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new ControllerLosesGameEffect());
+        addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS), new ControllerLosesGameEffect());
     }
 }

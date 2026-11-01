@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +19,7 @@ public class VinereapMentor extends Card {
     public VinereapMentor() {
         CreateTokenEffect foodToken = foodToken();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken);
-        addEffect(EffectSlot.ON_DEATH, foodToken);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), foodToken);
     }
 
     private static CreateTokenEffect foodToken() {

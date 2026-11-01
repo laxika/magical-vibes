@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class AoTheDawnSky extends Card {
             new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 
     public AoTheDawnSky() {
-        addEffect(EffectSlot.ON_DEATH, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top seven cards of your library. Put any number of nonland permanent cards with total mana value 4 or less from among them onto the battlefield. Put the rest on the bottom of your library in a random order.",
                         LookAtTopCardsEffect.mayPutUpToMatchingOntoBattlefieldRestOnBottomRandomWithinTotalManaValue(

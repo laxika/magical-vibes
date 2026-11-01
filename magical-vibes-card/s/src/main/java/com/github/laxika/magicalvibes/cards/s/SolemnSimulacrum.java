@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M12", collectorNumber = "217")
 @CardRegistration(set = "CM2", collectorNumber = "218")
@@ -60,6 +62,6 @@ public class SolemnSimulacrum extends Card {
                 new MayEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a basic land card?"));
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

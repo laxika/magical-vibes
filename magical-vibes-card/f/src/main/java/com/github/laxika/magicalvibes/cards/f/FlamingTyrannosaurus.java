@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class FlamingTyrannosaurus extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new PlayFromOutsideHandTriggerEffect(paradox));
 
         // When this creature dies, it deals damage equal to its power to each opponent.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
     }
 }

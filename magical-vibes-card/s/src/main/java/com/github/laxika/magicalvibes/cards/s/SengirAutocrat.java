@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class SengirAutocrat extends Card {
                         List.of(CardSubtype.SERF), Set.of(), Set.of()));
 
         // "When this creature leaves the battlefield, exile all Serf tokens."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsTokenPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.SERF)

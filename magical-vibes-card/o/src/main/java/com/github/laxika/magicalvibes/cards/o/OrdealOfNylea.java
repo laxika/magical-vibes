@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "THS", collectorNumber = "170")
 @CardRegistration(set = "NEC", collectorNumber = "123")
@@ -33,7 +35,7 @@ public class OrdealOfNylea extends Card {
                                                 CounterType.PLUS_ONE_PLUS_ONE, 3),
                                         "enchanted creature has three or more +1/+1 counters"),
                                 new SacrificeSelfEffect())))
-                .addEffect(EffectSlot.ON_DEATH, SearchLibraryEffect.sacrificeOnly(
+                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), SearchLibraryEffect.sacrificeOnly(
                         new Fixed(2), CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }

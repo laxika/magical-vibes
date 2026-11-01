@@ -6,10 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -23,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class JaxisTheTroublemaker extends Card {
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new DrawCardEffect()));
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
@@ -58,7 +59,7 @@ public class JaxisTheTroublemaker extends Card {
                                 List.of(), Set.of(), null, null, Map.of(),
                                 true, false, true, false,
                                 false, false, null, Set.of(),
-                                false, List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, List.<CardEffect>of(new DrawCardEffect())))
+                                false, List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect()))
                         )
                 ),
                 "{R}, {T}, Discard a card: Create a token that's a copy of another target creature you control. "

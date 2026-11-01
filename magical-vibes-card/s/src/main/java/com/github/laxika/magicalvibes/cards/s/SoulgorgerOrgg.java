@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToLifeLostWhenEnteredEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllButOneLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "99")
 public class SoulgorgerOrgg extends Card {
 
     public SoulgorgerOrgg() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseAllButOneLifeEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new GainLifeEqualToLifeLostWhenEnteredEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new GainLifeEqualToLifeLostWhenEnteredEffect());
     }
 }

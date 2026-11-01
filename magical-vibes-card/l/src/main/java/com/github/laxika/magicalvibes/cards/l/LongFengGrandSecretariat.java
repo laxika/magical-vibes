@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class LongFengGrandSecretariat extends Card {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                         // "Another creature you control or a land you control": Long Feng's own death is
-                        // covered by ON_DEATH below, and only when it was a land.
+                        // covered by its dies trigger below, and only when it was a land.
                         new TriggeringCardConditionalEffect(
                                 new CardAllOfPredicate(List.of(
                                         new CardNotPredicate(new CardIsSelfPredicate()),
@@ -36,7 +38,7 @@ public class LongFengGrandSecretariat extends Card {
                                 new TriggeringPermanentControllerConditionalEffect(
                                         new PutCounterOnTargetPermanentEffect(
                                                 CounterType.PLUS_ONE_PLUS_ONE, 1))))
-                .addEffect(EffectSlot.ON_DEATH,
+                .addTrigger(Triggers.dies(ObjectRelation.THIS),
                         new TriggeringCardConditionalEffect(
                                 new CardTypePredicate(CardType.LAND),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));

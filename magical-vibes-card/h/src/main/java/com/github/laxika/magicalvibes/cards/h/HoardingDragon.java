@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -24,7 +26,7 @@ public class HoardingDragon extends Card {
                         "Search your library for an artifact card to exile?"));
 
         // When Hoarding Dragon dies, you may put the exiled card into its owner's hand.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(new PutImprintedCardIntoOwnersHandEffect(),
                         "Put the exiled card into its owner's hand?"));
     }

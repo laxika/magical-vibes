@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,9 +35,9 @@ public class ArgothianUprooting extends Card {
                         null, Set.of(),
                         GrantScope.TARGET, EffectDuration.PERMANENT))
                 .addSpellEffect(new GrantEffectToTargetEffect(
-                        EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                        new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new ConjureCardNamedOntoBattlefieldEffect(
-                                "BRO", "276", Set.of(CardType.LAND)),
+                                "BRO", "276", Set.of(CardType.LAND))),
                         EffectDuration.PERMANENT,
                         false));
     }

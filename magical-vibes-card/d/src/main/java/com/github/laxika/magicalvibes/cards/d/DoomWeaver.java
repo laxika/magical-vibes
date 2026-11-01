@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOC", collectorNumber = "34")
 @CardRegistration(set = "VOC", collectorNumber = "72")
@@ -27,7 +30,7 @@ public class DoomWeaver extends Card {
         // While paired, both creatures have "When this creature dies, draw cards equal to its power."
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
-                new GrantTriggeredAbilityEffect(EffectSlot.ON_DEATH,
-                        new DrawCardEffect(new SourcePower()), GrantScope.SELF_AND_PAIRED)));
+                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
+                        new DrawCardEffect(new SourcePower())), GrantScope.SELF_AND_PAIRED)));
     }
 }

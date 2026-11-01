@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PutRandomCardExiledWithSourceIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "164")
 @CardRegistration(set = "MIC", collectorNumber = "20")
@@ -18,6 +20,6 @@ public class GorexTheTombshell extends Card {
         PutRandomCardExiledWithSourceIntoOwnersHandEffect returnExiledCard =
                 new PutRandomCardExiledWithSourceIntoOwnersHandEffect();
         addEffect(EffectSlot.ON_ATTACK, returnExiledCard);
-        addEffect(EffectSlot.ON_DEATH, returnExiledCard);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), returnExiledCard);
     }
 }

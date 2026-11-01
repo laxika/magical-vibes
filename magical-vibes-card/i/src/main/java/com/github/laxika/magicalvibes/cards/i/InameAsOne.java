@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class InameAsOne extends Card {
 
         // The target is chosen as the trigger goes on the stack; the exile is the resolution-time
         // "you may" that gates the return.
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 ExileSourceCardFromGraveyardThenEffect.sameAbility(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

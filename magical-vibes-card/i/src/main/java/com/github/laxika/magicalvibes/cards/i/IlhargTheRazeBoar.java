@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromExileIntoLib
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "133")
 @CardRegistration(set = "SLD", collectorNumber = "318")
@@ -23,10 +25,10 @@ public class IlhargTheRazeBoar extends Card {
                         .returningToHandAtEndStep(),
                 "Put a creature card from your hand onto the battlefield tapped and attacking?"));
 
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2),
                 "Put Ilharg, the Raze-Boar into its owner's library third from the top?"));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SelfExiledFromBattlefieldEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SelfExiledFromBattlefieldEffect(
                 new MayEffect(
                         new PutSourceCardFromExileIntoLibraryNFromTopEffect(2),
                         "Put Ilharg, the Raze-Boar into its owner's library third from the top?")));

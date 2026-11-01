@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class VarchildBetrayerOfKjeldor extends Card {
                 "Survivors your opponents control can't block"));
         addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(opposingSurvivors), true));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new GainControlOfAllPermanentsMatchingEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.SURVIVOR),
                         ControlDuration.PERMANENT));

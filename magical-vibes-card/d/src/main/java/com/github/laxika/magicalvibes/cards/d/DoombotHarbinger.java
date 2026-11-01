@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "655")
 public class DoombotHarbinger extends Card {
@@ -20,7 +22,7 @@ public class DoombotHarbinger extends Card {
                 new MillEffect(4, MillRecipient.CONTROLLER),
                 "Mill four cards?"));
 
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new ExileSourceCardFromGraveyardThenEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)

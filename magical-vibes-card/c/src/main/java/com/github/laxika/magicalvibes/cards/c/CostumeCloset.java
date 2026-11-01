@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class CostumeCloset extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 com.github.laxika.magicalvibes.model.effect.ConditionalEffect.atTriggerTime(
                         new com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate(
                                 new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(

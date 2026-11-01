@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "197")
 public class MeltstriderEulogist extends Card {
@@ -16,7 +18,7 @@ public class MeltstriderEulogist extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                         new DrawCardEffect(1)));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                         new DrawCardEffect(1)));

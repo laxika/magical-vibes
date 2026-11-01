@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1625")
 @CardRegistration(set = "EOC", collectorNumber = "120")
@@ -31,6 +33,6 @@ public class KorvoldFaeCursedKing extends Card {
         addEffect(EffectSlot.ON_ATTACK, SACRIFICE_ANOTHER_PERMANENT);
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, SACRIFICE_TRIGGER);
-        addEffect(EffectSlot.ON_DEATH, new SacrificeOnlyEffect(SACRIFICE_TRIGGER));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(SACRIFICE_TRIGGER));
     }
 }

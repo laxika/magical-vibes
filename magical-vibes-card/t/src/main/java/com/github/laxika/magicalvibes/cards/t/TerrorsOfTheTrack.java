@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDFT", collectorNumber = "10")
 public class TerrorsOfTheTrack extends Card {
@@ -18,7 +20,7 @@ public class TerrorsOfTheTrack extends Card {
         var deathTrigger = new OncePerTurnTriggerEffect(SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1)));
-        addEffect(EffectSlot.ON_DEATH, deathTrigger);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, deathTrigger);
     }
 }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TSP", collectorNumber = "178")
 public class SubterraneanShambler extends Card {
@@ -18,7 +20,7 @@ public class SubterraneanShambler extends Card {
                 false,
                 false,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new MassDamageEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new MassDamageEffect(
                 1,
                 false,
                 false,

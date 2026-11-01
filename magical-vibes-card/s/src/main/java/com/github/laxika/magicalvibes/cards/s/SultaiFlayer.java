@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KTK", collectorNumber = "152")
 @CardRegistration(set = "IMA", collectorNumber = "186")
@@ -17,6 +19,6 @@ public class SultaiFlayer extends Card {
 
     public SultaiFlayer() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
-        addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
     }
 }

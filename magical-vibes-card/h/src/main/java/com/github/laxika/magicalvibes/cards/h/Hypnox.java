@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIn
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TOR", collectorNumber = "64")
 public class Hypnox extends Card {
@@ -22,7 +24,7 @@ public class Hypnox extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new CastFromZone(Zone.HAND),
                         new ExileTargetPlayerHandEffect(true)));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }
 }

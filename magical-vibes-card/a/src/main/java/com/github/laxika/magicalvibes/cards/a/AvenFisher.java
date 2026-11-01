@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "68")
 @CardRegistration(set = "9ED", collectorNumber = "61")
@@ -14,6 +15,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class AvenFisher extends Card {
 
     public AvenFisher() {
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

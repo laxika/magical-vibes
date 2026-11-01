@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HBG", collectorNumber = "203")
 public class CircleOfTheLandDruid extends Card {
@@ -17,7 +19,7 @@ public class CircleOfTheLandDruid extends Card {
     public CircleOfTheLandDruid() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new MillEffect(4, MillRecipient.CONTROLLER), "Mill four cards?"));
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.LAND))
                 .targetGraveyard(true)

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -21,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -51,9 +54,9 @@ public class BlasterCombatDJ extends Card {
 
         addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(modularEntryTarget, 1));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_DEATH,
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, true, artifactCreature),
+                        CounterType.PLUS_ONE_PLUS_ONE, true, artifactCreature)),
                 GrantScope.OWN_PERMANENTS,
                 modularTarget));
         addEffect(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT, new YouPutCounterOnControlledCreatureTriggerEffect(new TransformToBackFaceEffect()));

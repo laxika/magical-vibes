@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MID", collectorNumber = "29")
 @CardRegistration(set = "DBL", collectorNumber = "29")
@@ -14,7 +16,7 @@ public class OdricsOutrider extends Card {
     public OdricsOutrider() {
         var deathTrigger = target(TargetFilters.creatureYouControl());
         var counterEffect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        deathTrigger.addEffect(EffectSlot.ON_DEATH, counterEffect);
+        deathTrigger.addTrigger(Triggers.dies(ObjectRelation.THIS), counterEffect);
         deathTrigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, counterEffect);
     }
 }

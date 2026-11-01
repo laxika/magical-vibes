@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -29,7 +31,7 @@ public class MidnightEntourage extends Card {
 
         // Whenever this creature or another Aetherborn you control dies, you draw a card and you
         // lose 1 life.
-        addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.AETHERBORN), DEATH_TRIGGER));
     }

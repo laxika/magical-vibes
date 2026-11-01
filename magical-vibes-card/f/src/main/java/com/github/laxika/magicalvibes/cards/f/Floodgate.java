@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class Floodgate extends Card {
 
         // "When this creature leaves the battlefield, it deals damage to each nonblue creature
         // without flying equal to half the number of Islands you control, rounded down."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new MassDamageEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new MassDamageEffect(
                 new Divided(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER), 2),
                 false,

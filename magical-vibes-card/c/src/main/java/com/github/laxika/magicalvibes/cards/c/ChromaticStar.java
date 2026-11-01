@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "314")
 @CardRegistration(set = "TSP", collectorNumber = "251")
@@ -24,6 +25,6 @@ public class ChromaticStar extends Card {
                 List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()), // effects
                 "{1}, {T}, Sacrifice Chromatic Star: Add one mana of any color." // description
         ));
-        addEffect(EffectSlot.ON_DEATH, new DrawCardEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect());
     }
 }

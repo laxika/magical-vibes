@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayInvestigateEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayInvestigateOrLoseLifeThenControllerInvestigatesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "347")
 @CardRegistration(set = "SLX", collectorNumber = "8")
@@ -12,6 +14,6 @@ public class WernogRidersChaplain extends Card {
 
     public WernogRidersChaplain() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachOpponentMayInvestigateEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new EachOpponentMayInvestigateEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new EachOpponentMayInvestigateEffect());
     }
 }

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WTH", collectorNumber = "23")
 public class ReveredUnicorn extends Card {
@@ -17,7 +19,7 @@ public class ReveredUnicorn extends Card {
         // When this creature leaves the battlefield, you gain life equal to the number of age
         // counters on it. The count is frozen from the leaving permanent by the self-leaves
         // collector, since the source is gone by resolution time.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new GainLifeEffect(new CountersOnSource(CounterType.AGE)));
     }
 }

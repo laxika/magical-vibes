@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,12 +22,12 @@ public class Nevermaker extends Card {
         // Flying is auto-loaded from Scryfall keywords.
         // When this creature leaves the battlefield, put target nonland permanent on top of its
         // owner's library. The target is chosen at leaves-the-battlefield time via the
-        // ON_SELF_LEAVES_BATTLEFIELD pipeline (reuses the end-step target collector, which honours
+        // its leaves-the-battlefield trigger (reuses the end-step target collector, which honours
         // the card's PermanentPredicateTargetFilter).
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
-        )).addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new PutTargetOnTopOfLibraryEffect());
+        )).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new PutTargetOnTopOfLibraryEffect());
 
         // Evoke {3}{U}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}"))));

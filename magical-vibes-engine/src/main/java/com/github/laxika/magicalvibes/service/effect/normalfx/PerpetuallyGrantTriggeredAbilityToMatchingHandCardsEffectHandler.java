@@ -35,7 +35,7 @@ public class PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffectHandler
                 continue;
             }
 
-            grant.grantedEffects().forEach(granted -> gameData.grantPerpetualAbility(card.getId(), grant.slot(), granted));
+            grant.grantedAbilities().forEach(granted -> gameData.grantPerpetualAbility(card.getId(), granted));
         }
     }
 }

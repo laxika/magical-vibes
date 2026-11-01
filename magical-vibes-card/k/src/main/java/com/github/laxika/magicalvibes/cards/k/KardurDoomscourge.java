@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KHM", collectorNumber = "216")
 @CardRegistration(set = "KHM", collectorNumber = "324")
@@ -29,7 +31,7 @@ public class KardurDoomscourge extends Card {
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1))));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),

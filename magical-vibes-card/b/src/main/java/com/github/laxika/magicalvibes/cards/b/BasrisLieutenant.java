@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEff
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +29,7 @@ public class BasrisLieutenant extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, createsKnightIfHadPlusOnePlusOneCounter());
-        addEffect(EffectSlot.ON_DEATH, createsKnightIfHadPlusOnePlusOneCounter());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), createsKnightIfHadPlusOnePlusOneCounter());
     }
 
     private static TriggeringPermanentConditionalEffect createsKnightIfHadPlusOnePlusOneCounter() {

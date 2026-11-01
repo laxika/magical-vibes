@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "11")
 @CardRegistration(set = "MKC", collectorNumber = "322")
@@ -20,7 +22,7 @@ public class MerchantOfTruth extends Card {
 
     public MerchantOfTruth() {
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new SourceIsToken()), CreateTokenEffect.ofClueToken(1)));
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.EXALTED,

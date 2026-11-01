@@ -125,16 +125,16 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
 
     private void addPerpetualTriggeredAbility(GameData gameData, UUID cardId,
                                                PerpetuallyGrantKeywordToMatchingCardsEffect effect) {
-        if (effect.triggeredAbilitySlot() == null) {
+        if (effect.grantedAbility() == null) {
             return;
         }
-        gameData.grantPerpetualAbility(cardId, effect.triggeredAbilitySlot(), effect.triggeredAbility());
+        gameData.grantPerpetualAbility(cardId, effect.grantedAbility());
     }
 
     private void addPersistentTriggeredAbility(Permanent permanent,
                                                 PerpetuallyGrantKeywordToMatchingCardsEffect effect) {
-        if (effect.triggeredAbilitySlot() != null) {
-            permanent.addPersistentTriggeredEffect(effect.triggeredAbilitySlot(), effect.triggeredAbility());
+        if (effect.grantedAbility() != null) {
+            permanent.addPersistentAbility(effect.grantedAbility());
         }
     }
 }

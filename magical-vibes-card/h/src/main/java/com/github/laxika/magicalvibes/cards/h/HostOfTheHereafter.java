@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTarg
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "193")
 public class HostOfTheHereafter extends Card {
@@ -18,7 +20,7 @@ public class HostOfTheHereafter extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
 
         var deathTrigger = target(TargetFilters.creatureYouControl(), 0, 1);
-        deathTrigger.addEffect(EffectSlot.ON_DEATH,
+        deathTrigger.addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MoveDyingSourceCountersToTargetCreatureEffect(true));
         deathTrigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MB2", collectorNumber = "334")
 @CardRegistration(set = "MB2", collectorNumber = "571")
@@ -32,7 +34,7 @@ public class ZoneOfFlame extends Card {
         addEffect(EffectSlot.ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()), trigger, true));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ConditionalEffect(new NotCondition(new SourceIsToken()), trigger));
     }
 }

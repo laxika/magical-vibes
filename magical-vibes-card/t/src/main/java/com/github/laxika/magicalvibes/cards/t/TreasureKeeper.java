@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardWithManaValueAndCastEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AER", collectorNumber = "177")
 @CardRegistration(set = "A25", collectorNumber = "235")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardWithMan
 public class TreasureKeeper extends Card {
 
     public TreasureKeeper() {
-        addEffect(EffectSlot.ON_DEATH, new RevealUntilNonlandCardWithManaValueAndCastEffect(3));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new RevealUntilNonlandCardWithManaValueAndCastEffect(3));
     }
 }

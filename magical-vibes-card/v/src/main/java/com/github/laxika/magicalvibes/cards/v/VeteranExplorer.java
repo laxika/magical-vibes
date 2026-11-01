@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WTH", collectorNumber = "144")
 @CardRegistration(set = "2XM", collectorNumber = "186")
@@ -13,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMaySearchLibraryFor
 public class VeteranExplorer extends Card {
 
     public VeteranExplorer() {
-        addEffect(EffectSlot.ON_DEATH, new EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect(2));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect(2));
     }
 }

@@ -71,6 +71,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -293,7 +295,7 @@ public class CardChoiceHandlerService {
                     new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
             copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                     new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
-            copy.addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+            copy.addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                     new CastForAlternateCost(), new DrawCardEffect(1)));
         }
         copy.freeze();

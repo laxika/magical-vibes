@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -47,6 +49,6 @@ public class OrdealOfPurphoros extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Any target"))
-                .addEffect(EffectSlot.ON_DEATH, DealDamageToAnyTargetEffect.sacrificeOnly(3));
+                .addTrigger(Triggers.sacrificed(ObjectRelation.THIS), DealDamageToAnyTargetEffect.sacrificeOnly(3));
     }
 }

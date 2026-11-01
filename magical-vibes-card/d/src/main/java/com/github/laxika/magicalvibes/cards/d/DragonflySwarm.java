@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class DragonflySwarm extends Card {
         )), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(noncreatureNonlandCards, new Fixed(3)));
 
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON)),
                 new DrawCardEffect()));
     }

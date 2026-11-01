@@ -54,9 +54,7 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
         }
         java.util.List<CardEffect> candidates = new java.util.ArrayList<>(source.getCard().getCastingCostsAndSpellEffects());
         candidates.addAll(source.getCard().getStaticEffects());
-        for (EffectSlot slot : EffectSlot.values()) {
-            candidates.addAll(source.getCard().getEffects(slot));
-        }
+        candidates.addAll(source.getCard().getTriggeredEffects());
         for (CardEffect candidate : candidates) {
             if (candidate == boost
                     || candidate instanceof PerpetuallyBoostCardEffect other && other.card() == boost.card()) {

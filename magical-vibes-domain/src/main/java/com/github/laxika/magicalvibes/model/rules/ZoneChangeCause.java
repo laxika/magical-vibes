@@ -19,7 +19,9 @@ public enum ZoneChangeCause {
     /** Moved to the stack to be cast (CR 601.2a). */
     CAST,
     /** Exiled to pay the cost of a craft ability, as the permanent with it or as a material (CR 702.167a). */
-    CRAFT;
+    CRAFT,
+    /** A resolving instant or sorcery spell put into its owner's graveyard as the last step of its resolution. */
+    RESOLUTION;
 
     /** The zone-change cause of a battlefield departure performed for {@code cause}. */
     public static ZoneChangeCause of(DepartureCause cause) {

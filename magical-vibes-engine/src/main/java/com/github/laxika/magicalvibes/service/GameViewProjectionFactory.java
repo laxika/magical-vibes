@@ -313,8 +313,7 @@ public class GameViewProjectionFactory {
                                     java.util.stream.Stream.concat(
                                             java.util.stream.Stream.concat(p.getCard().getCastingCostsAndSpellEffects().stream(),
                                                     p.getCard().getStaticEffects().stream()),
-                                            java.util.Arrays.stream(EffectSlot.values())
-                                                    .flatMap(slot -> p.getCard().getEffects(slot).stream())),
+                                            p.getCard().getTriggeredEffects().stream()),
                                     p.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                                             .flatMap(ability -> ability.getEffects().stream()))
                             .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)

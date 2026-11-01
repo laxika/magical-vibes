@@ -124,7 +124,7 @@ combat damage step is processed.
 
 | Slot | Collector service | Pipeline |
 |---|---|---|
-| `ON_DEATH` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleDeathMayPayMana` + `handleLosesLifeEqualToPower` | Death |
+| `Triggers.dies(THIS)` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleDeathMayPayMana` + `handleLosesLifeEqualToPower` | Death |
 | `ON_HAUNTED_CREATURE_DIES` | `TriggerCollectionService.checkHauntedCreatureDeathTriggers` scans the tracked haunted-permanent relationships when a permanent enters a graveyard, then uses the death-trigger target queue for targeted effects | Death |
 | `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
 | `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
@@ -193,7 +193,7 @@ combat damage step is processed.
 | `END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (non-kicked / morbid / default) | End step |
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default; multi-target groups reuse `ETBTokenMultiTargetTrigger`) | End step |
 | `OPPONENT_END_STEP_TRIGGERED` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
-| `ON_SELF_LEAVES_BATTLEFIELD` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfTriggeredAbilityTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or admits a graveyard card — `admits(Kind.GRAVEYARD_CARD)`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfTriggeredAbilityTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
+| `Triggers.leavesBattlefield(THIS)` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfTriggeredAbilityTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or admits a graveyard card — `admits(Kind.GRAVEYARD_CARD)`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfTriggeredAbilityTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
 | `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD_WITHOUT_DYING` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureLeavesBattlefieldWithoutDyingTriggers` (and the leave-batch variant, which enqueues one trigger per other creature leaving together); per-creature counterpart of `ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING` ("one or more"). Used by Imperial Cosmographer | Non-targeting effects push directly to the stack |
 | `ON_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkCreatureExiledFromBattlefieldTriggers`; global watcher for any creature exiled from the battlefield, after the card enters exile | Non-targeting effects push directly to the stack |
@@ -410,7 +410,7 @@ Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving 
 counters before queuing; targeted effects are routed through the trigger-target interaction flow.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
-`ON_SELF_MILLED`, `ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
+`Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
 `EACH_BEGINNING_OF_COMBAT_TRIGGERED`, `OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED`,
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
@@ -584,7 +584,7 @@ the `SpellGraveyardTargetTrigger` before the resolution-time may choice, so the 
 already on the stack entry when the optional sacrifice resolves.
 
 **Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
-Ruin Rat) use the same trigger-time graveyard selection on `ON_DEATH` and `ON_ALLY_CREATURE_DIES`.
+Ruin Rat) use the same trigger-time graveyard selection on `Triggers.dies(THIS)` and `ON_ALLY_CREATURE_DIES`.
 `handleDeathDefault` and `TriggerCollectionService.checkAllyCreatureDeathTriggers` route any death
 effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` to a `DeathTriggerTarget` (alongside the
 permanent/player routing). `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
@@ -592,7 +592,7 @@ graveyard target and calls `beginDeathGraveyardTarget`, which searches the decla
 `MultiGraveyardChoice`. Optional up-to-one targets may be declined; a mandatory target with no legal
 card skips the trigger. An ally-death target may carry an excluded dying-card ID for an "other"
 restriction, so `CardNotPredicate(CardIsSelfPredicate())` is evaluated against the actual dying card.
-Use `ON_DEATH`, never `ON_SELF_LEAVES_BATTLEFIELD` (Offalsnout), for a "dies" trigger — the latter
+Use `Triggers.dies(THIS)`, never `Triggers.leavesBattlefield(THIS)` (Offalsnout), for a "dies" trigger — the latter
 also fires on exile/bounce.
 
 If the card you are implementing needs one of these slots **and** a user target choice (either player
@@ -656,7 +656,7 @@ group's filter. When a card has two differently-targeted abilities (e.g. Soulsti
 `TriggeredAbilityQueueService.processNextDeathTriggerTarget` skips that filter unless one of the death
 trigger's own effects is bound to a declared target group (checked via `Card.getEffectTargetIndex`). So
 attach the ETB filter with `target(...).addEffect(ON_ENTER_BATTLEFIELD, …)` and add the death effect via
-plain `addEffect(ON_DEATH, …)` (no `target(...)`); the ETB filter then does not leak into the death
+plain `addTrigger(Triggers.dies(ObjectRelation.THIS), …)` (no `target(...)`); the ETB filter then does not leak into the death
 trigger.
 
 ### Effect-level target predicate (`targetSpec().predicate()`)
@@ -716,11 +716,11 @@ multi-target (Karn's Temporal Sundering's bare "target player" group).
 
 ## Common pitfalls
 
-- **"My ON_DEATH trigger targets non-creatures."** Give the card an explicit
+- **"My Triggers.dies(THIS) trigger targets non-creatures."** Give the card an explicit
   `PermanentPredicateTargetFilter` — its predicate then governs and the death pipeline's default
   `creaturesOnly` narrowing is skipped (e.g. Fire Snake targeting a land). Without such a filter,
   death targets are creatures only.
-- **"My ON_DEATH trigger lets the controller pick themselves as the target."** You forgot the
+- **"My Triggers.dies(THIS) trigger lets the controller pick themselves as the target."** You forgot the
   `PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT))` on the card — or
   you wired it on a pipeline that doesn't honour it (everything outside death / attack / end-step).
 - **"My end-step trigger ignores its target predicate."** It shouldn't, unless the effect is wrapped in a
@@ -785,7 +785,7 @@ effect's own `damagedPermanentFilter` does the narrowing in `DamageTriggerCollec
 **How `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` works**: `StepTriggerService` iterates ALL permanents on ALL battlefields, checks if each has this effect slot and is attached, then finds the enchanted permanent's controller. It only fires when that controller is the active player.
 
 **Targeted graveyard-return death triggers** use `ReturnCardFromGraveyardEffect` with
-`targetGraveyard(true)` in the `ON_DEATH` slot. The death-trigger queue applies the effect's card
+`targetGraveyard(true)` in the `Triggers.dies(THIS)` ability. The death-trigger queue applies the effect's card
 predicate and `source()` scope while the trigger is put on the stack, then stores the selected card ID
 on the triggered entry for the normal return handler. An empty selection models an optional return.
 
@@ -817,9 +817,9 @@ Controller end-step effects bound to multiple declared target groups are queued 
 
 `PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED` and `ENCOUNTER_TRIGGERED` are collected by `PlanechaseService`. Single-target payloads reuse `SpellTargetTriggerAnyTarget` with a planar source snapshot; optional or multi-target groups use the slot-by-slot target walker. Never resolve a target-requiring encounter before its choice, or let phenomenon state-based actions skip that choice. See [PLANECHASE.md](PLANECHASE.md).
 
-`ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY` is collected by `GraveyardService` when the
+`Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)` is collected by `GraveyardService` when the
 source zone is the library. It includes non-mill moves such as Call of the Wild; use
-`ON_SELF_MILLED` only when the ability specifically requires milling.
+`Triggers.milled(THIS)` only when the ability specifically requires milling.
 
 Optional target groups of the slot-by-slot walker (any size, including a single "up to one
 target player" slot such as Volatile Arsonist's) use

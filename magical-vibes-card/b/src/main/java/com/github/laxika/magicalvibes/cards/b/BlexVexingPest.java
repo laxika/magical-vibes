@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SearchForBlex;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class BlexVexingPest extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.PEST, CardSubtype.BAT, CardSubtype.INSECT,
                         CardSubtype.SNAKE, CardSubtype.SPIDER))));
-        addEffect(EffectSlot.ON_DEATH, new GainLifeEffect(4));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new GainLifeEffect(4));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Blex, Vexing Pest", List.of()),
                 new ChooseOneEffect.ChooseOneOption(

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "60")
 public class WormfangTurtle extends Card {
@@ -13,7 +15,7 @@ public class WormfangTurtle extends Card {
     public WormfangTurtle() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExilePermanentYouControlAndTrackWithSourceEffect(new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceEffect());
     }
 }

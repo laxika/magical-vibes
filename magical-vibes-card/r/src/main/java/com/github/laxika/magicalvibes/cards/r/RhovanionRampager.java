@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,6 +26,6 @@ public class RhovanionRampager extends Card {
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                 )),
                 "another creature", new SacrificedPermanentPower()));
-        addEffect(EffectSlot.ON_DEATH, new AmassGoblinsEffect(new EventValue()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new AmassGoblinsEffect(new EventValue()));
     }
 }

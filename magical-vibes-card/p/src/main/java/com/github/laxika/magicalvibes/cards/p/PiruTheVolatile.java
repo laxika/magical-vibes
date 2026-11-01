@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class PiruTheVolatile extends Card {
                         true));
 
         // When Piru dies, it deals 7 damage to each nonlegendary creature.
-        addEffect(EffectSlot.ON_DEATH, new MassDamageEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MassDamageEffect(
                 7,
                 false,
                 false,

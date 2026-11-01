@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class LaquatussChampion extends Card {
     public LaquatussChampion() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RememberTargetPlayerEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(6, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new TargetPlayerGainsLifeEffect(6));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new TargetPlayerGainsLifeEffect(6));
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
                 "{B}: Regenerate Laquatus's Champion."));
     }

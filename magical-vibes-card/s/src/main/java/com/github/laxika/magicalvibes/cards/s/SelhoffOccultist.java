@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ISD", collectorNumber = "73")
 @CardRegistration(set = "SIS", collectorNumber = "21")
@@ -12,7 +14,7 @@ public class SelhoffOccultist extends Card {
 
     public SelhoffOccultist() {
         // Whenever Selhoff Occultist or another creature dies, target player mills a card.
-        addEffect(EffectSlot.ON_DEATH, new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MillEffect(1, MillRecipient.TARGET_PLAYER));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new MillEffect(1, MillRecipient.TARGET_PLAYER));
     }
 }

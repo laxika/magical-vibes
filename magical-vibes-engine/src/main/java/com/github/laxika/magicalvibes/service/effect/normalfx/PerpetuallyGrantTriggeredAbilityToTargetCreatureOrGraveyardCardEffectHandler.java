@@ -49,11 +49,10 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffe
             // CR 113.2c: each granted instance of the same ability functions independently, so repeated grants
             // are appended rather than deduplicated.
             UUID cardId = targetCard.getId();
-            gameData.grantPerpetualAbility(cardId, grant.triggeredAbilitySlot(), grant.triggeredAbility());
+            gameData.grantPerpetualAbility(cardId, grant.grantedAbility());
 
             if (targetPermanent != null) {
-                targetPermanent.addPersistentTriggeredEffect(
-                        grant.triggeredAbilitySlot(), grant.triggeredAbility());
+                targetPermanent.addPersistentAbility(grant.grantedAbility());
             }
         }
     }

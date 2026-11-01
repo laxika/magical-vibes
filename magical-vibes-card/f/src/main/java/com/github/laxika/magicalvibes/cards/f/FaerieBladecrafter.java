@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOC", collectorNumber = "14")
 @CardRegistration(set = "WOC", collectorNumber = "50")
@@ -23,7 +25,7 @@ public class FaerieBladecrafter extends Card {
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FAERIE),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), false, true));
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(new EventValue())));
     }

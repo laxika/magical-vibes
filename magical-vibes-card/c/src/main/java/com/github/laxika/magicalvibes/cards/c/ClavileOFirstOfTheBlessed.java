@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -18,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,7 +51,7 @@ public class ClavileOFirstOfTheBlessed extends Card {
                 targetPredicate, "Target must be an attacking Vampire that isn't a Demon"))
                 .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                         SequenceEffect.of(
-                                new GrantEffectToTargetEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER,
+                                new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER),
                                         EffectDuration.PERMANENT, false),
                                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.DEMON)));
     }

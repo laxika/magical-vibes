@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOW", collectorNumber = "28")
 @CardRegistration(set = "DBL", collectorNumber = "295")
@@ -17,7 +19,7 @@ public class PanickedBystander extends Card {
         setBackFaceCard(new CacklingCulprit());
 
         var deathTrigger = new GainLifeEffect(1);
-        addEffect(EffectSlot.ON_DEATH, deathTrigger);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, deathTrigger);
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new GainedLifeThisTurn(3), new TransformSelfEffect()));

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -441,6 +442,11 @@ public class CopySupport {
                     continue;
                 }
                 copy.addEffect(slot, reg.effect(), reg.triggerMode());
+            }
+        }
+        for (TriggeredAbility ability : original.getUnslottedTriggeredAbilities()) {
+            if (!withoutEpic || ability.effects().stream().noneMatch(reg -> reg.effect() instanceof EpicEffect)) {
+                copy.addTriggeredAbility(ability);
             }
         }
 

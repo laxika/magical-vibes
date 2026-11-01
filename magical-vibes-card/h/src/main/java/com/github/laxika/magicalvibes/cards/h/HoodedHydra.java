@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourc
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class HoodedHydra extends Card {
 
     public HoodedHydra() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.ON_DEATH, new CreateTokensForEachDyingSourceCounterEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokensForEachDyingSourceCounterEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.SNAKE), Set.of(), Set.of())));

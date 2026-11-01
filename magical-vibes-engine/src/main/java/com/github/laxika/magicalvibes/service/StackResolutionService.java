@@ -80,6 +80,7 @@ import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 
 @Slf4j
 @Service
@@ -1864,10 +1865,14 @@ public class StackResolutionService {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " is exiled with a dream counter."));
         } else {
-            boolean enteredGraveyard = graveyardService.addCardToGraveyardFromSpell(
-                    gameData, ownerId, physicalCard, entry.getControllerId());
-            if (enteredGraveyard) {
-                triggerCollectionService.collectSpellHauntTrigger(gameData, physicalCard, entry.getControllerId());
+            // The last step of its resolution: "when this spell is put into a graveyard during its resolution"
+            // (haunt, CR 702.55a) triggers on this move only.
+            ZoneChangeCause previousCause = gameData.rulesEvents.setCause(physicalCard.getId(),
+                    ZoneChangeCause.RESOLUTION);
+            try {
+                graveyardService.addCardToGraveyardFromSpell(gameData, ownerId, physicalCard, entry.getControllerId());
+            } finally {
+                gameData.rulesEvents.restoreCause(physicalCard.getId(), previousCause);
             }
         }
     }

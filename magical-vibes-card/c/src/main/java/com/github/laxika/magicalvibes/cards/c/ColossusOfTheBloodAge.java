@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOS", collectorNumber = "181")
 public class ColossusOfTheBloodAge extends Card {
@@ -17,7 +19,7 @@ public class ColossusOfTheBloodAge extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
 
         // When this creature dies, discard any number of cards, then draw that many cards plus one.
-        addEffect(EffectSlot.ON_DEATH, new DiscardUpToThenDrawThatManyEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DiscardUpToThenDrawThatManyEffect(
                 DiscardUpToThenDrawThatManyEffect.ANY_NUMBER, 1));
     }
 }

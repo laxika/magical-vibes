@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -47,6 +49,6 @@ public class SkirkDrillSergeant extends Card {
                 DRILL_SERGEANT_ABILITY);
         addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, noncreatureGoblinDies);
         addEffect(EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, noncreatureGoblinDies);
-        addEffect(EffectSlot.ON_DEATH, DRILL_SERGEANT_ABILITY);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DRILL_SERGEANT_ABILITY);
     }
 }

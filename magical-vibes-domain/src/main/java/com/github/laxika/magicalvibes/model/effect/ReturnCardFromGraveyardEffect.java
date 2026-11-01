@@ -278,7 +278,7 @@ import lombok.Builder;
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
  * @param grantOnDeathEffect   when non-null, the returned permanent gains this persistent
- *                             {@code ON_DEATH} ability
+ *                             "when this dies" ability
  * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
  * @param perpetualBattlefieldEffectGrants static effects perpetually granted to each returned card's
  *                                          battlefield object, reapplied whenever that physical card enters

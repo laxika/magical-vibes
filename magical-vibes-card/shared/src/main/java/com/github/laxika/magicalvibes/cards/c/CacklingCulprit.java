@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,7 +16,7 @@ public class CacklingCulprit extends Card {
 
     public CacklingCulprit() {
         var deathTrigger = new GainLifeEffect(1);
-        addEffect(EffectSlot.ON_DEATH, deathTrigger);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, deathTrigger);
         addActivatedAbility(new ActivatedAbility(
                 false,

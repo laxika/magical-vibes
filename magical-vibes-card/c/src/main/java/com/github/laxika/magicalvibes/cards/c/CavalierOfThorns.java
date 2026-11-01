@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "167")
 @CardRegistration(set = "ECC", collectorNumber = "100")
@@ -24,7 +26,7 @@ public class CavalierOfThorns extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.putOneMatchingOntoBattlefieldRestToGraveyard(
                         5, new CardTypePredicate(CardType.LAND)));
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 ConditionalEffect.unless(new SourceCardInGraveyard(), SequenceEffect.of(
                         new ExileSourceCardFromGraveyardEffect(),
                         ReturnCardFromGraveyardEffect.builder()

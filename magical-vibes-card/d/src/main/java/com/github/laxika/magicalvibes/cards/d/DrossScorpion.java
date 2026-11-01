@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class DrossScorpion extends Card {
 
         // Whenever another artifact creature dies, you may untap target artifact.
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.ON_DEATH, untapTargetArtifact)
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), untapTargetArtifact)
                 .addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

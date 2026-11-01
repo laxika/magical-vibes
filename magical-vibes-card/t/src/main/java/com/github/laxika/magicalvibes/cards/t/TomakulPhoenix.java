@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBRO", collectorNumber = "11")
 public class TomakulPhoenix extends Card {
 
     public TomakulPhoenix() {
-        addEffect(EffectSlot.ON_DEATH, new PerpetuallyBoostSourceEffect(2, 2));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PerpetuallyBoostSourceEffect(2, 2));
         addEffect(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
                 MayPayManaEffect.dynamic(
                         "{X}{R}",

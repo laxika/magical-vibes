@@ -8,16 +8,18 @@ import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromExileIntoLib
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "53")
 public class GodEternalKefnet extends Card {
 
     public GodEternalKefnet() {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new RevealFirstDrawInstantOrSorceryEffect());
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2),
                 "Put God-Eternal Kefnet into its owner's library third from the top?"));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SelfExiledFromBattlefieldEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SelfExiledFromBattlefieldEffect(
                 new MayEffect(
                         new PutSourceCardFromExileIntoLibraryNFromTopEffect(2),
                         "Put God-Eternal Kefnet into its owner's library third from the top?")));

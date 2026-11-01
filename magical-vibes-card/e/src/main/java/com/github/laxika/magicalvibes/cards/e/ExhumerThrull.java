@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GPT", collectorNumber = "50")
 public class ExhumerThrull extends Card {
@@ -19,6 +21,6 @@ public class ExhumerThrull extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnCreature);
         addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, returnCreature);
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
+        target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
     }
 }

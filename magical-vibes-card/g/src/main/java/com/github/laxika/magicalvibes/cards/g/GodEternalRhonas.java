@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromExileIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "163")
 public class GodEternalRhonas extends Card {
@@ -20,10 +22,10 @@ public class GodEternalRhonas extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
 
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2),
                 "Put God-Eternal Rhonas into its owner's library third from the top?"));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SelfExiledFromBattlefieldEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SelfExiledFromBattlefieldEffect(
                 new MayEffect(
                         new PutSourceCardFromExileIntoLibraryNFromTopEffect(2),
                         "Put God-Eternal Rhonas into its owner's library third from the top?")));

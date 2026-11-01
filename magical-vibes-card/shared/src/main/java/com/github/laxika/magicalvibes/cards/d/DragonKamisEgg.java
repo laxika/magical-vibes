@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCreatureCardsWithHatchingCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class DragonKamisEgg extends Card {
 
     public DragonKamisEgg() {
-        addEffect(EffectSlot.ON_DEATH, new MayCastExiledCreatureCardsWithHatchingCountersEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayCastExiledCreatureCardsWithHatchingCountersEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.DRAGON),
                 new MayCastExiledCreatureCardsWithHatchingCountersEffect()));

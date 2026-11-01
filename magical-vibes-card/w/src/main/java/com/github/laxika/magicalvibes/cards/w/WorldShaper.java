@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "151")
 @CardRegistration(set = "SLD", collectorNumber = "2017")
@@ -21,7 +23,7 @@ public class WorldShaper extends Card {
     public WorldShaper() {
         addEffect(EffectSlot.ON_ATTACK,
                 new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"));
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.LAND))
                 .returnAll(true)

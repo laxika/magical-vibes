@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -66,7 +67,7 @@ public class TibaltWickedTormentor extends Card {
         ));
 
         List<Ability> devilTokenEffects =
-                List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1)));
+                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
                 List.of(new CreateTokenEffect(new XValue(), "Devil", 1, 1, CardColor.RED,
                         List.of(CardSubtype.DEVIL), Set.of(), Set.of()).withTokenEffects(devilTokenEffects)),

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GPT", collectorNumber = "7")
 public class GravenDominator extends Card {
@@ -17,6 +19,6 @@ public class GravenDominator extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, setOtherCreaturesToOneOne);
         addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, setOtherCreaturesToOneOne);
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
+        target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
     }
 }

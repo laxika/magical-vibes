@@ -1544,6 +1544,14 @@ public class BattlefieldPlacementService {
                 continue;
             }
             EffectSlot slot = LegacySlots.slotOf(ability);
+            if (slot == null) {
+                long granted = grants.stream().filter(ability::equals).count();
+                long present = permanent.getPersistentTriggeredAbilities().stream().filter(ability::equals).count();
+                for (long i = present; i < granted; i++) {
+                    permanent.addPersistentAbility(ability);
+                }
+                continue;
+            }
             for (CardEffect effect : new java.util.LinkedHashSet<>(LegacySlots.effectsOf(ability))) {
                 long granted = LegacySlots.effectsIn(grants, slot).stream().filter(effect::equals).count();
                 long present = permanent.getPersistentTriggeredEffects(slot).stream()

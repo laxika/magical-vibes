@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsOrControl
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,7 @@ public class AclazotzDeepestBetrayal extends Card {
                 new CardTypePredicate(CardType.LAND),
                 new CreateTokenEffect("Bat", 1, 1, CardColor.BLACK,
                         List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of())));
-        addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect(true, true));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnSourceTransformedFromGraveyardEffect(true, true));
     }
 
     @Override

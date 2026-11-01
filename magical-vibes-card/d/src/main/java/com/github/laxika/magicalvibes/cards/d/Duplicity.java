@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileHandFaceDownThenReturnCa
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMP", collectorNumber = "60")
 public class Duplicity extends Card {
@@ -17,7 +19,7 @@ public class Duplicity extends Card {
         // When this enchantment enters, exile the top five cards of your library face down.
         // toGraveyardOnControlLoss arms the control-loss watch that implements the last ability.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(5, true, true));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect());
 
         // At the beginning of your upkeep, you may exile all cards from your hand face down. If you

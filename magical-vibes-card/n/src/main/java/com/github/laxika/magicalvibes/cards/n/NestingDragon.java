@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class NestingDragon extends Card {
                 Set.of(),
                 false,
                 false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, dragonToken())),
+                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), dragonToken())),
                 List.of(),
                 false,
                 false,

@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -43,7 +45,7 @@ public class CavalierOfFlame extends Card {
 
         CardsInGraveyard landsInGraveyard = new CardsInGraveyard(
                 new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.simultaneous(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.simultaneous(
                 new DealDamageToPlayersEffect(landsInGraveyard, DamageRecipient.EACH_OPPONENT),
                 new MassDamageEffect(landsInGraveyard, false, true,
                         new PermanentAllOfPredicate(List.of(

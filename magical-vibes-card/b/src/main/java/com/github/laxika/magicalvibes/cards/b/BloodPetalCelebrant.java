@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "144")
 @CardRegistration(set = "VOW", collectorNumber = "146")
@@ -19,6 +20,6 @@ public class BloodPetalCelebrant extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF, new PermanentIsAttackingPredicate()));
 
         // When this creature dies, create a Blood token.
-        addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.ofBloodToken(1));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), CreateTokenEffect.ofBloodToken(1));
     }
 }

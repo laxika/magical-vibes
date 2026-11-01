@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,13 +33,13 @@ public class CaldaiaGuardian extends Card {
                 List.of(CardSubtype.CITIZEN));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardMinManaValuePredicate(4), citizenTokens));
-        addEffect(EffectSlot.ON_DEATH, citizenTokens);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), citizenTokens);
 
         // Blitz (CR 702.152a): haste while the blitz cost was paid; the end-step sacrifice is
         // created as the spell resolves.
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new DrawCardEffect(1)));
     }
 }

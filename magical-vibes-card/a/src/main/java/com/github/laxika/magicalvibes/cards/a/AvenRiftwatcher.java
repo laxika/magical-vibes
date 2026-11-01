@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "1")
 @CardRegistration(set = "EMA", collectorNumber = "1")
@@ -27,6 +29,6 @@ public class AvenRiftwatcher extends Card {
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new GainLifeEffect(2));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new GainLifeEffect(2));
     }
 }

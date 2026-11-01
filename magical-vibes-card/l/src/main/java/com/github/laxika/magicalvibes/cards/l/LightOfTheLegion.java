@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class LightOfTheLegion extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.ON_DEATH, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

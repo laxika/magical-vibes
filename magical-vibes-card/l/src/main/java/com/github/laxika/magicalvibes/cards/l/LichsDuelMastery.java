@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplacementEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MB2", collectorNumber = "310")
 @CardRegistration(set = "MB2", collectorNumber = "546")
@@ -18,6 +20,6 @@ public class LichsDuelMastery extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
         addStaticEffect(new LichDuelMasteryLifeLossReplacementEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(5, true));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ControllerLosesGameOnLeavesEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerLosesGameOnLeavesEffect());
     }
 }

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class SevenTailMentor extends Card {
                 "Target must be a creature or Vehicle you control"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
-                .addEffect(EffectSlot.ON_DEATH,
+                .addTrigger(Triggers.dies(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

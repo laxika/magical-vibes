@@ -64,9 +64,8 @@ public class SeekLibraryAndPerpetuallyModifySoughtCardEffectHandler
             gameData.perpetualCardCastCostReductions.merge(
                     cardId, seek.genericCastCostReduction(), Integer::sum);
         }
-        if (seek.triggeredAbility() != null) {
-            addPerpetualTriggeredAbility(gameData, cardId,
-                    seek.triggeredAbilitySlot(), seek.triggeredAbility());
+        if (seek.grantedAbility() != null) {
+            gameData.grantPerpetualAbility(cardId, seek.grantedAbility());
         }
 
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(sought));
@@ -77,10 +76,5 @@ public class SeekLibraryAndPerpetuallyModifySoughtCardEffectHandler
         merged.addAll(existing);
         merged.addAll(added);
         return Set.copyOf(merged);
-    }
-
-    private static void addPerpetualTriggeredAbility(GameData gameData, UUID cardId,
-                                                      EffectSlot slot, CardEffect ability) {
-        gameData.grantPerpetualAbility(cardId, slot, ability);
     }
 }

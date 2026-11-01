@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOK", collectorNumber = "86")
 public class RavingOniSlave extends Card {
@@ -22,6 +24,6 @@ public class RavingOniSlave extends Card {
                 new LoseLifeEffect(3)
         );
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, lifeLoss);
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, lifeLoss);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), lifeLoss);
     }
 }

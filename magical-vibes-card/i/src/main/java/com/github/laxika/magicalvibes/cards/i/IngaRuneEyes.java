@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLea
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KHM", collectorNumber = "64")
 @CardRegistration(set = "KHM", collectorNumber = "304")
@@ -18,7 +20,7 @@ public class IngaRuneEyes extends Card {
 
     public IngaRuneEyes() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(3));
-        addEffect(EffectSlot.ON_DEATH, ConditionalEffect.unless(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ConditionalEffect.unless(
                 new CreaturesDiedThisTurnAtLeast(3), new DrawCardEffect(3)));
     }
 }

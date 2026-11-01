@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "100")
 public class SpellgorgerBarbarian extends Card {
@@ -13,6 +15,6 @@ public class SpellgorgerBarbarian extends Card {
     public SpellgorgerBarbarian() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER, true));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new DrawCardEffect(1));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DrawCardEffect(1));
     }
 }

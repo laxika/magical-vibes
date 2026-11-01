@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyMakeMatchingHandAndLibraryCardsCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -23,7 +25,7 @@ public class WildgroveSummoner extends Card {
                         4,
                         CardSubtype.TREEFOLK,
                         Set.of(Keyword.REACH, Keyword.HASTE)));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new SeekLibraryEffect(2,
                         new CardSubtypePredicate(CardSubtype.FOREST),
                         LibrarySearchDestination.BATTLEFIELD));

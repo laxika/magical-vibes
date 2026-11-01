@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class EssenceChanneler extends Card {
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.SELF)));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_DEATH,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MoveDyingSourceCountersToTargetCreatureEffect(Map.of(), true, false));
     }
 }

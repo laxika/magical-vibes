@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "90")
 public class RaffinesSilencer extends Card {
@@ -16,7 +18,7 @@ public class RaffinesSilencer extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawDiscardAndConniveEffect());
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_DEATH, new BoostTargetCreatureEffect(
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(
                         new Scaled(new SourcePower(), -1),
                         new Scaled(new SourcePower(), -1)));
     }

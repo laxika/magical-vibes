@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +40,7 @@ public class PhantasmalSphere extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new CreateTokenForTargetPlayerEffect(
+        )).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new CreateTokenForTargetPlayerEffect(
                 new CreateTokenEffect("Orb",
                         new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                         new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),

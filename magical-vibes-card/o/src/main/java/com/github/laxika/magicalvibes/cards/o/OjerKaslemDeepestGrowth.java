@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsRevealTwoTypesToHandThenRestEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "204")
 @CardRegistration(set = "LCI", collectorNumber = "318")
@@ -18,7 +20,7 @@ public class OjerKaslemDeepestGrowth extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 LookAtTopCardsRevealTwoTypesToHandThenRestEffect
                         .creatureAndLandToBattlefieldRestOnBottomRandom(new EventValue()));
-        addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect(true, true));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnSourceTransformedFromGraveyardEffect(true, true));
     }
 
     @java.lang.Override

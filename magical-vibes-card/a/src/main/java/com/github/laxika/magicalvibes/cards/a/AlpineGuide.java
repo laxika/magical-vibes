@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH1", collectorNumber = "117")
 public class AlpineGuide extends Card {
@@ -23,7 +25,7 @@ public class AlpineGuide extends Card {
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a Mountain card?"));
         addStaticEffect(new MustAttackEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(1,
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                         SacrificeRecipient.CONTROLLER));

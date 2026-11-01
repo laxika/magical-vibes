@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTokensWithSameNameAsLeav
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PCY", collectorNumber = "112")
 public class DualNature extends Card {
@@ -20,7 +22,7 @@ public class DualNature extends Card {
                         new CreateTokenCopyOfEnteringPermanentEffect(false, false, false, true, true)));
         addEffect(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD,
                 new ExileTokensWithSameNameAsLeavingCreatureEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ExileTokensCreatedWithSourceEffect());
     }
 }

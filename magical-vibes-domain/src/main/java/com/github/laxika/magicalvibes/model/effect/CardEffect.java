@@ -91,7 +91,7 @@ public interface CardEffect {
     default boolean notesManaValueOfExiledCards() { return false; }
 
     /**
-     * Returns {@code true} if this ON_DEATH effect only triggers when the permanent was
+     * Returns {@code true} if this "when this dies" effect only triggers when the permanent was
      * sacrificed ("When you sacrifice this…"), not when it dies by other means. Filtered out
      * of the normal death-trigger path and collected from the sacrifice path instead.
      */

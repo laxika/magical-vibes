@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTop
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "52")
 public class CavalierOfGales extends Card {
@@ -15,7 +17,7 @@ public class CavalierOfGales extends Card {
     public CavalierOfGales() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(3, 2, HandToLibraryPlacement.TOP));
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new ShuffleSelfFromGraveyardIntoLibraryEffect(),
                 new ScryEffect(2)));
     }

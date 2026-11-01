@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,9 +20,9 @@ public class Offalsnout extends Card {
     public Offalsnout() {
         // "When this creature leaves the battlefield, exile target card from a graveyard."
         // The graveyard target is chosen at leaves-the-battlefield time via the
-        // ON_SELF_LEAVES_BATTLEFIELD trigger pipeline (no cast-time target filter, which would
+        // its leaves-the-battlefield trigger (no cast-time target filter, which would
         // wrongly prompt when the creature is cast).
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD));
 
         // Evoke {B}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.

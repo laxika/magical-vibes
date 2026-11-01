@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -49,6 +51,6 @@ public class ThePandorica extends Card {
         ));
 
         addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new PhaseInLinkedPermanentEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new PhaseInLinkedPermanentEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new PhaseInLinkedPermanentEffect());
     }
 }

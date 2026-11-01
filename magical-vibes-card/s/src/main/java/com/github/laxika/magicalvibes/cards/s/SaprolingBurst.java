@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourc
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +40,7 @@ public class SaprolingBurst extends Card {
                 ),
                 "Remove a fade counter from this enchantment: Create a green Saproling creature token."));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new DestroyTokensCreatedWithSourceEffect(true));
     }
 }

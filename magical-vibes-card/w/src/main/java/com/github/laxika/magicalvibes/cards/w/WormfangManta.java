@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "58")
 public class WormfangManta extends Card {
 
     public WormfangManta() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SkipNextEffect(SkipKind.TURN));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ControllerExtraTurnEffect(1));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerExtraTurnEffect(1));
     }
 }

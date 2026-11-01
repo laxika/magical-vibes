@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -42,6 +44,6 @@ public class AlharuSolemnRitualist extends Card {
                                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))), spiritToken);
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, counteredCreatureDies);
-        addEffect(EffectSlot.ON_DEATH, counteredCreatureDies);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), counteredCreatureDies);
     }
 }

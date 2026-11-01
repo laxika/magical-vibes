@@ -11,13 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMT", collectorNumber = "70")
 public class ParameciaColoniex extends Card {
 
     public ParameciaColoniex() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new ExileSourceCardFromGraveyardThenEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_CONTROLLERS_LIBRARY)

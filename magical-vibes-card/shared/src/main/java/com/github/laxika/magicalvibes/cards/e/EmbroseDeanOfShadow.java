@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,6 +40,6 @@ public class EmbroseDeanOfShadow extends Card {
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect(1));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawForCounteredCreatureDeath);
-        addEffect(EffectSlot.ON_DEATH, drawForCounteredCreatureDeath);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), drawForCounteredCreatureDeath);
     }
 }

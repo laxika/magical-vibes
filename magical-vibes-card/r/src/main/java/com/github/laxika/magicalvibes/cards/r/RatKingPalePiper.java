@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class RatKingPalePiper extends Card {
             Set.of());
 
     public RatKingPalePiper() {
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, RAT_TOKEN);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), RAT_TOKEN);
         addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()), RAT_TOKEN));

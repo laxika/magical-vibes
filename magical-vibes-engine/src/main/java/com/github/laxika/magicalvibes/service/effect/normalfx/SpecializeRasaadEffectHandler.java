@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeRasaadEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -47,7 +49,7 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
         Card specialized = source.getCard().createRuntimeCopy();
         specialized.clearRulesTextAndAbilities();
         setBaseFaceCharacteristics(specialized);
-        specialized.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ReturnAllCardsExiledWithSourceEffect());
+        specialized.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ReturnAllCardsExiledWithSourceEffect());
 
         CardEffect specializedTrigger = RasaadMonkOfSelNe.specializedTrigger(specialize.color());
         switch (specialize.color()) {
@@ -67,7 +69,7 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
                 specialized.setCardText("When Rasaad, Dragon Monk dies, create two 1/1 blue Faerie Dragon creature tokens with flying.");
                 specialized.setPower(4);
                 specialized.setToughness(4);
-                specialized.addEffect(EffectSlot.ON_DEATH, specializedTrigger);
+                specialized.addTrigger(Triggers.dies(ObjectRelation.THIS), specializedTrigger);
             }
             case BLACK -> {
                 specialized.setName("Rasaad, Shadow Monk");
@@ -77,7 +79,7 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
                 specialized.setCardText("When Rasaad, Shadow Monk dies, create a 4/1 black Skeleton creature token with menace.");
                 specialized.setPower(4);
                 specialized.setToughness(4);
-                specialized.addEffect(EffectSlot.ON_DEATH, specializedTrigger);
+                specialized.addTrigger(Triggers.dies(ObjectRelation.THIS), specializedTrigger);
             }
             case RED -> {
                 specialized.setName("Rasaad, Warrior Monk");
@@ -88,7 +90,7 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
                 specialized.setCardText("When Rasaad, Warrior Monk dies, create three 1/1 white Soldier creature tokens.");
                 specialized.setPower(4);
                 specialized.setToughness(4);
-                specialized.addEffect(EffectSlot.ON_DEATH, specializedTrigger);
+                specialized.addTrigger(Triggers.dies(ObjectRelation.THIS), specializedTrigger);
             }
             case GREEN -> {
                 specialized.setName("Rasaad, Sylvan Monk");
@@ -99,7 +101,7 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
                 specialized.setCardText("When Rasaad, Sylvan Monk dies, create two 2/2 green Boar creature tokens.");
                 specialized.setPower(4);
                 specialized.setToughness(4);
-                specialized.addEffect(EffectSlot.ON_DEATH, specializedTrigger);
+                specialized.addTrigger(Triggers.dies(ObjectRelation.THIS), specializedTrigger);
             }
             default -> throw new IllegalStateException("Unsupported Rasaad specialization color: "
                     + specialize.color());

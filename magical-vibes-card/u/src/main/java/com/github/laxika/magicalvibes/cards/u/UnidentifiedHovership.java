@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class UnidentifiedHovership extends Card {
                 "Target must be a creature with toughness 5 or less"), 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentAndTrackWithSourceEffect());
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ManifestDreadEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ManifestDreadEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

@@ -4,11 +4,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,8 +64,8 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         UUID enchantmentId = linked ? sourceEnchantment.getId() : null;
         tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry, List.of(targetCreature.getCard()),
                 entry.getControllerId(), copyOptions, linked ? token -> {
-                    token.addPersistentTriggeredEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                            new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER));
+                    token.addPersistentAbility(new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                            new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER)));
                     token.setChosenPermanentId(enchantmentId);
                 } : null);
         log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id,

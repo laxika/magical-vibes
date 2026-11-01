@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class TheMasterGallifreysEnd extends Card {
                                 "Exile that creature and make an opponent face a villainous choice?")));
         // "A nontoken artifact creature you control" includes The Master itself while it is one, and the
         // ally slot only watches other creatures.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

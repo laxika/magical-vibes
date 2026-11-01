@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECC", collectorNumber = "20")
 @CardRegistration(set = "ECC", collectorNumber = "40")
@@ -28,7 +30,7 @@ public class DreadTiller extends Card {
                 new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                 new PutUpToCardsFromHandOrGraveyardOntoBattlefieldEffect(
                         new CardTypePredicate(CardType.LAND), "land", 1));
-        addEffect(EffectSlot.ON_DEATH, landOnBattlefield);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), landOnBattlefield);
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, landOnBattlefield);
     }
 }

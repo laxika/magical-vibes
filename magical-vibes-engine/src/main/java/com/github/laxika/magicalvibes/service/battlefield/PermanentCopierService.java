@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PrimalClayForm;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -232,6 +233,12 @@ public class PermanentCopierService {
                     continue;
                 }
                 copy.addEffect(slot, reg.effect(), reg.triggerMode());
+            }
+        }
+        for (TriggeredAbility ability : target.getUnslottedTriggeredAbilities()) {
+            if (!hasPTOverride || ability.effects().stream()
+                    .noneMatch(reg -> reg.effect().isPowerToughnessDefining())) {
+                copy.addTriggeredAbility(ability);
             }
         }
         for (ActivatedAbility ability : target.getActivatedAbilities(Zone.BATTLEFIELD)) {

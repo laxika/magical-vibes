@@ -47,8 +47,7 @@ public class PerpetuallyGrantTriggeredAbilityToMatchingCardsEffectHandler
             }
             UUID cardId = permanent.getOriginalCard().getId();
             addPerpetualGrant(gameData, cardId, perpetual);
-            permanent.addPersistentTriggeredEffect(
-                    perpetual.triggeredAbilitySlot(), perpetual.triggeredAbility());
+            permanent.addPersistentAbility(perpetual.grantedAbility());
         }
 
         for (Card card : gameData.playerHands.getOrDefault(entry.getControllerId(), List.of())) {
@@ -61,6 +60,6 @@ public class PerpetuallyGrantTriggeredAbilityToMatchingCardsEffectHandler
 
     private void addPerpetualGrant(GameData gameData, UUID cardId,
                                    PerpetuallyGrantTriggeredAbilityToMatchingCardsEffect effect) {
-        gameData.grantPerpetualAbility(cardId, effect.triggeredAbilitySlot(), effect.triggeredAbility());
+        gameData.grantPerpetualAbility(cardId, effect.grantedAbility());
     }
 }

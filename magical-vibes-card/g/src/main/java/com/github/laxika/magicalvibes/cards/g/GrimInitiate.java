@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class GrimInitiate extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ARMY)));
         ControlsPermanent controlsArmy = new ControlsPermanent(army);
 
-        addEffect(EffectSlot.ON_DEATH, new ConditionalReplacementEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalReplacementEffect(
                 controlsArmy,
                 SequenceEffect.of(
                         new CreateTokenEffect(

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ public class OniCultAnvil extends Card {
         addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
                 new OncePerTurnTriggerEffect(new TriggeringPermanentConditionalEffect(
                         new PermanentIsArtifactPredicate(), createConstruct)));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new OncePerTurnTriggerEffect(new ConditionalEffect(new ControllerTurn(), createConstruct)));
 
         addActivatedAbility(new ActivatedAbility(

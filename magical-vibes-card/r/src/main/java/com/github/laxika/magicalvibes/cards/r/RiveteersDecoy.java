@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "156")
 public class RiveteersDecoy extends Card {
@@ -25,7 +27,7 @@ public class RiveteersDecoy extends Card {
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new DrawCardEffect()));
     }
 }

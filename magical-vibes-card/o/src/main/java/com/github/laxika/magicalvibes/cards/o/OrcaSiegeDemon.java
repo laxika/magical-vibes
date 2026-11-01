@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DMC", collectorNumber = "37")
 @CardRegistration(set = "DMC", collectorNumber = "59")
@@ -18,7 +20,7 @@ public class OrcaSiegeDemon extends Card {
 
         // The death trigger's power is carried as the death-event value; the divided damage
         // assignments are announced through the existing death-trigger assignment path.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new DealDividedDamageEffect(new EventValue(), null, DivisionMode.CHOSEN,
                         null, 0, false, false, true));
     }

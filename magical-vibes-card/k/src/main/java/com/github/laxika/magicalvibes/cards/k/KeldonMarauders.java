@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "102")
 @CardRegistration(set = "PD2", collectorNumber = "7")
@@ -28,7 +30,7 @@ public class KeldonMarauders extends Card {
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
     }
 }

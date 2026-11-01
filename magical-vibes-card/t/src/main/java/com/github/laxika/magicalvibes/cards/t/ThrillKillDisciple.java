@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class ThrillKillDisciple extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new RepeatedAdditionalCostPaid("{1}"),
                         new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}"))));
-        addEffect(EffectSlot.ON_DEATH, junkToken());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), junkToken());
     }
 
     private static CreateTokenEffect junkToken() {

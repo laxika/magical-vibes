@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "2")
 public class AbsolvingLammasu extends Card {
@@ -17,7 +19,7 @@ public class AbsolvingLammasu extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UnsuspectAllCreaturesEffect());
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                         new GainLifeEffect(3),
                         new SuspectEffect(GrantScope.TARGET)));
     }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class GixianPuppeteer extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, SequenceEffect.onSecondControllerDraw(
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(2)));
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

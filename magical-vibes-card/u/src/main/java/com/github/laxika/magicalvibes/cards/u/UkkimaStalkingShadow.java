@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTC", collectorNumber = "247")
 @CardRegistration(set = "C20", collectorNumber = "17")
@@ -33,7 +35,7 @@ public class UkkimaStalkingShadow extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, SequenceEffect.of(
+        )).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(new SourcePower()),
                 new GainLifeEffect(new SourcePower())));
     }

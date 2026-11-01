@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "7ED", collectorNumber = "70")
 @CardRegistration(set = "ULG", collectorNumber = "30")
@@ -15,6 +17,6 @@ public class DelusionsOfMediocrity extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(10));
 
         // "When this enchantment leaves the battlefield, you lose 10 life."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new LoseLifeEffect(10));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new LoseLifeEffect(10));
     }
 }

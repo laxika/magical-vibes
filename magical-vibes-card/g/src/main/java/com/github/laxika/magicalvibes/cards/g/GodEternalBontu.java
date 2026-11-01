@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "92")
 @CardRegistration(set = "EOC", collectorNumber = "83")
@@ -22,10 +24,10 @@ public class GodEternalBontu extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect(otherPermanent));
 
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2),
                 "Put God-Eternal Bontu into its owner's library third from the top?"));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SelfExiledFromBattlefieldEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SelfExiledFromBattlefieldEffect(
                 new MayEffect(
                         new PutSourceCardFromExileIntoLibraryNFromTopEffect(2),
                         "Put God-Eternal Bontu into its owner's library third from the top?")));

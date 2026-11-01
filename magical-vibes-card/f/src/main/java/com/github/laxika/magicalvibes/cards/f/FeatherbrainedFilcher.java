@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
 public class FeatherbrainedFilcher extends Card {
 
     public FeatherbrainedFilcher() {
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, foodToken());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), foodToken());
     }
 
     private static CreateTokenEffect foodToken() {

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,6 +34,6 @@ public class RampartArchitect extends Card {
                         CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a basic land card?"));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, defenderDeathSearch);
-        addEffect(EffectSlot.ON_DEATH, defenderDeathSearch);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), defenderDeathSearch);
     }
 }

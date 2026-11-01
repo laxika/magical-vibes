@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentChoosesPermanentToExi
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "56")
 public class WormfangCrab extends Card {
@@ -17,7 +19,7 @@ public class WormfangCrab extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new OpponentChoosesPermanentToExileUntilSourceLeavesEffect(
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceEffect());
     }
 }

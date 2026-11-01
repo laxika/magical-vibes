@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class SlogurkTheOverslime extends Card {
                 "Remove three +1/+1 counters from Slogurk: Return it to its owner's hand."
         ));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(
                         new CardTypePredicate(CardType.LAND), 3));
     }

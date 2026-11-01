@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -43,6 +45,6 @@ public class ArnynDeathbloomBotanist extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, CONDITIONAL_DRAIN)
-                .addEffect(EffectSlot.ON_DEATH, CONDITIONAL_DRAIN);
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), CONDITIONAL_DRAIN);
     }
 }

@@ -26,7 +26,10 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCre
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -64,6 +67,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDa
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.SacrificeBoonWatcher;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -365,6 +369,11 @@ public class TriggerCollectionService {
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
+    }
+
+    /** {@link GrantedTriggeredAbilitySupport#grantedSelfZoneChangeAbilities}. */
+    public List<TriggeredAbility> grantedSelfZoneChangeAbilities(GameData gameData, Permanent permanent) {
+        return grantedTriggeredAbilitySupport.grantedSelfZoneChangeAbilities(gameData, permanent);
     }
 
     public void checkYouPutCountersTriggers(GameData gameData, UUID placingPlayerId, int amount) {
@@ -5157,8 +5166,7 @@ public class TriggerCollectionService {
             if (sacrificedCard != null
                     && sacrificedPermanent != null
                     && !sacrificedCard.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).isEmpty()
-                    && sacrificedCard.getEffects(EffectSlot.ON_DEATH).stream()
-                            .noneMatch(CardEffect::onlyTriggersOnSacrifice)
+                    && sacrificedCard.getTriggerEffects(Triggers.sacrificed(ObjectRelation.THIS)).isEmpty()
                     && watchers.stream().noneMatch(watcher ->
                             watcher.getCard().getId().equals(sacrificedCard.getId()))) {
                 watchers.add(sacrificedPermanent);
@@ -5204,8 +5212,6 @@ public class TriggerCollectionService {
         checkAnyCreatureSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, sacrificedCreature);
 
         checkAnyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
-        // "When you sacrifice this" — the sacrificed card's own sacrifice-only death triggers
-        collectSelfSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, castingSpell);
 
         if (gameData.simultaneousDyingPermanents.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
@@ -5219,8 +5225,7 @@ public class TriggerCollectionService {
     private boolean isSacrificedOnlyDeathWatcherOfSelf(Permanent permanent, Card sacrificedCard) {
         return sacrificedCard != null
                 && permanent.getCard().getId().equals(sacrificedCard.getId())
-                && permanent.getCard().getEffects(EffectSlot.ON_DEATH).stream()
-                        .anyMatch(CardEffect::onlyTriggersOnSacrifice);
+                && !permanent.getCard().getTriggerEffects(Triggers.sacrificed(ObjectRelation.THIS)).isEmpty();
     }
 
     /** Fires token-sacrifice triggers from face-up cards in the sacrificing player's exile zone. */
@@ -5487,32 +5492,6 @@ public class TriggerCollectionService {
                 dispatch(match, EffectSlot.ON_ANY_PERMANENT_SACRIFICED, effect, ctx);
             }
         });
-    }
-
-    /**
-     * Collects ON_DEATH effects that only trigger when the permanent was sacrificed
-     * ({@link CardEffect#onlyTriggersOnSacrifice()}). Called from the sacrifice path after
-     * the permanent has already left the battlefield.
-     */
-    private void collectSelfSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId,
-                                               Card sacrificedCard, Card castingSpell) {
-        if (sacrificedCard == null) return;
-        Permanent departed = gameData.departedPermanentSnapshots.get(sacrificedCard.getId());
-        if (departed != null && (departed.isLosesAllAbilitiesUntilEndOfTurn() || departed.isFaceDown())) return;
-        List<CardEffect> deathEffects = effectivePrintedDeathEffects(gameData, sacrificedCard);
-        if (deathEffects == null || deathEffects.isEmpty()) return;
-
-        boolean wasCreature = sacrificedCard.hasType(CardType.CREATURE);
-        var ctx = new TriggerContext.SelfDeath(sacrificedCard, sacrificingPlayerId, wasCreature, null, castingSpell);
-        Permanent perm = new Permanent(sacrificedCard);
-        for (CardEffect effect : deathEffects) {
-            if (!effect.onlyTriggersOnSacrifice()) continue;
-            CardEffect resolvedEffect = unwrapCreatureDeathConditional(effect, sacrificedCard, null, gameData, sacrificingPlayerId);
-            if (resolvedEffect == null) continue;
-            if (!passesInterveningIf(gameData, perm, sacrificingPlayerId, resolvedEffect)) continue;
-            var match = new TriggerMatchContext(gameData, perm, sacrificingPlayerId, resolvedEffect);
-            dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
-        }
     }
 
     // ── Becomes-target-of-spell triggers ───────────────────────────────
@@ -11456,53 +11435,55 @@ public class TriggerCollectionService {
 
     // ── Death / leaves-battlefield triggers ───────────────────────────
 
-    private List<CardEffect> effectivePrintedDeathEffects(GameData gameData, Card card) {
-        List<CardEffect> effects = card.getEffects(EffectSlot.ON_DEATH);
-        Set<CardEffect> removed = gameData.perpetuallyRemovedTriggeredAbilities.get(card.getId());
-        if (removed == null || removed.isEmpty()) {
-            return effects;
-        }
-        return effects.stream().filter(effect -> !removed.contains(effect)).toList();
+    /**
+     * {@code effect}, a "when this dies" or "when you sacrifice this" effect of {@code dyingCard}, with its
+     * creature-death conditional taken off, or {@code null} when that conditional keeps it from triggering. The
+     * trigger pipeline's {@code LegacyTriggerBindings} reads these abilities' wrappers through it until step 14 of
+     * effect-slot-refactor.md turns them into trigger options.
+     */
+    public CardEffect unwrapSelfDeathConditional(GameData gameData, Card dyingCard, Permanent dyingPermanent,
+                                                 UUID controllerId, boolean wasCreature, boolean wasLand,
+                                                 CardEffect effect) {
+        return unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId, null,
+                wasCreature, wasLand);
     }
 
     /**
-     * What a printed, granted or temporary "when this dies" effect puts on the stack for a death, after the
-     * trigger-only wrappers its collector reads: {@code null} when a sacrifice-only effect, a creature-death
-     * conditional, a spent once-each-turn limit or a false intervening "if" keeps it from triggering, and
-     * otherwise the effect with those wrappers taken off. {@code LegacyTriggerOptions} reads ON_DEATH abilities
-     * through it until step 14 of effect-slot-refactor.md turns the wrappers into trigger options.
+     * {@code effect}, a "when this dies" effect of {@code dyingCard}, bound to the card that died, the Auras and
+     * Equipment that were attached to it and its graveyard incarnation (CR 400.7, CR 603.10a).
      */
-    public CardEffect legacyDeathTriggerEffect(GameData gameData, Card dyingCard, Permanent dyingPermanent,
-                                               UUID controllerId, boolean wasCreature, boolean wasLand,
-                                               CardEffect effect) {
-        if (effect.onlyTriggersOnSacrifice()) {
-            return null;
+    public CardEffect bindSelfDeathEffect(GameData gameData, Card dyingCard, Permanent dyingPermanent,
+                                          DepartedAttachments attachments, CardEffect effect) {
+        UUID dyingCardId = dyingPermanent != null ? dyingPermanent.getOriginalCard().getId() : dyingCard.getId();
+        CardEffect bound = effect;
+        if (bound instanceof DyingCreatureCardAwareEffect aware) {
+            bound = bindDyingCard(gameData, aware, dyingCardId);
         }
-        CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
-        if (resolvedEffect == null) {
-            return null;
+        if (dyingPermanent != null) {
+            bound = bindDyingCreatureAttachments(bound, DyingCreatureAttachmentSnapshot.of(attachments));
         }
-        resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, dyingPermanent, resolvedEffect);
-        if (resolvedEffect == null
-                || !passesDeathInterveningIf(gameData, dyingPermanent, controllerId, resolvedEffect, wasCreature)) {
-            return null;
-        }
-        return resolvedEffect;
+        return bindSourceCardInGraveyardVersion(gameData, bound, dyingCardId);
     }
 
-    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
-        collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, null);
+    /**
+     * Whether a "when this dies" effect of {@code dyingCard} passes its death intervening "if" (CR 603.4) and, for
+     * "put into your graveyard from the battlefield", went to its controller's graveyard.
+     */
+    public boolean passesSelfDeathFilters(GameData gameData, Card dyingCard, Permanent dyingPermanent,
+                                          UUID controllerId, boolean wasCreature, CardEffect effect) {
+        UUID dyingCardId = dyingPermanent != null ? dyingPermanent.getOriginalCard().getId() : dyingCard.getId();
+        Permanent source = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
+        if (!passesDeathInterveningIf(gameData, source, controllerId, effect, wasCreature)) {
+            return false;
+        }
+        return !(effect instanceof com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect)
+                || controllerId.equals(gameQueryService.findGraveyardOwnerById(gameData, dyingCardId));
     }
 
-    public void collectSpellHauntTrigger(GameData gameData, Card spell, UUID controllerId) {
-        List<CardEffect> hauntEffects = spell.getEffects(EffectSlot.ON_DEATH).stream()
-                .filter(HauntEffect.class::isInstance)
-                .toList();
-        if (!hauntEffects.isEmpty()) {
-            gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    spell, controllerId, hauntEffects));
-        }
+    /** Whether {@code effect}'s intervening "if", if it has one, is true for {@code source}. */
+    public boolean passesSelfInterveningIf(GameData gameData, Permanent source, UUID controllerId,
+                                           CardEffect effect) {
+        return passesInterveningIf(gameData, source, controllerId, effect);
     }
 
     public void checkHauntedCreatureDeathTriggers(GameData gameData, Permanent dyingPermanent) {
@@ -11570,143 +11551,6 @@ public class TriggerCollectionService {
         }
     }
 
-    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature, Permanent dyingPermanent) {
-        collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, dyingPermanent, null);
-    }
-
-    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature,
-                                    Permanent dyingPermanent, List<CardEffect> precomputedGrantedDeathEffects) {
-        int dyingPower = dyingPermanent != null
-                ? dyingPermanent.getEffectivePower()
-                : dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0;
-        collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, dyingPermanent,
-                precomputedGrantedDeathEffects, dyingPower);
-    }
-
-    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature,
-                                    Permanent dyingPermanent, List<CardEffect> precomputedGrantedDeathEffects,
-                                    int dyingPower) {
-        collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, dyingPermanent,
-                precomputedGrantedDeathEffects, dyingPower, false);
-    }
-
-    public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature,
-                                    Permanent dyingPermanent, List<CardEffect> precomputedGrantedDeathEffects,
-                                    int dyingPower, boolean wasLand) {
-        boolean lostAbilities = dyingPermanent != null && dyingPermanent.isLosesAllAbilitiesUntilEndOfTurn();
-        List<CardEffect> deathEffects = lostAbilities || dyingPermanent != null && dyingPermanent.isFaceDown()
-                ? List.of() : effectivePrintedDeathEffects(gameData, dyingCard);
-
-        // Include temporarily granted ON_DEATH effects (e.g. from Verdant Rebirth)
-        List<CardEffect> temporaryDeathEffects = dyingPermanent != null
-                ? dyingPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH) : List.of();
-        List<CardEffect> persistentDeathEffects = new ArrayList<>();
-        if (dyingPermanent != null) {
-            persistentDeathEffects.addAll(dyingPermanent.getDelayedDeathEffects());
-            if (!lostAbilities) {
-                persistentDeathEffects.addAll(dyingPermanent.getPersistentTriggeredEffects(EffectSlot.ON_DEATH));
-            }
-        }
-
-        // Include ON_DEATH abilities granted continuously by an attached Aura/Equipment
-        // (Infernal Scarring). Read straight off the attachments, not through the layer system:
-        // the dying permanent has already left the battlefield, but its Aura is still attached
-        // (orphaned Auras only fall off in a later state-based-action pass).
-        List<CardEffect> grantedDeathEffects = lostAbilities
-                ? List.of()
-                : precomputedGrantedDeathEffects != null
-                ? new ArrayList<>(precomputedGrantedDeathEffects)
-                : dyingPermanent != null
-                ? new ArrayList<>(grantedTriggeredAbilitySupport.grantedTriggeredEffectsFromAttachments(
-                        gameData, dyingPermanent.getId(), EffectSlot.ON_DEATH))
-                : List.of();
-
-        if (deathEffects.isEmpty() && temporaryDeathEffects.isEmpty()
-                && persistentDeathEffects.isEmpty() && grantedDeathEffects.isEmpty()) return;
-
-        var ctx = new TriggerContext.SelfDeath(dyingCard, controllerId, wasCreature, dyingPermanent, dyingPower);
-        Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
-        DyingCreatureAttachmentSnapshot attachmentSnapshot = dyingPermanent == null
-                ? null : DyingCreatureAttachmentSnapshot.capture(gameData, dyingPermanent.getId());
-        UUID dyingCardId = dyingPermanent != null
-                ? dyingPermanent.getOriginalCard().getId() : dyingCard.getId();
-        for (CardEffect effect : deathEffects) {
-            // "When you sacrifice this" effects are collected from the sacrifice path instead.
-            if (effect.onlyTriggersOnSacrifice()) continue;
-            CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                    effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
-            if (resolvedEffect == null) continue;
-            CardEffect authoredEffect = resolvedEffect;
-            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
-            if (resolvedEffect == null) continue;
-            if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware && dyingCard != null) {
-                resolvedEffect = bindDyingCard(gameData, aware, dyingCardId);
-            }
-            resolvedEffect = bindDyingCreatureAttachments(resolvedEffect, attachmentSnapshot);
-            resolvedEffect = bindSourceCardInGraveyardVersion(gameData, resolvedEffect, dyingCardId);
-            if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
-            // "When this is put into your graveyard from the battlefield": a stolen card goes to its
-            // owner's graveyard, which is not the trigger controller's, so it never triggers.
-            if (resolvedEffect instanceof com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect
-                    && !controllerId.equals(gameQueryService.findGraveyardOwnerById(gameData, dyingCardId))) continue;
-            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-            }
-        }
-        for (CardEffect effect : temporaryDeathEffects) {
-            if (effect.onlyTriggersOnSacrifice()) continue;
-            CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                    effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
-            if (resolvedEffect == null) continue;
-            CardEffect authoredEffect = resolvedEffect;
-            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
-            if (resolvedEffect == null) continue;
-            if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware && dyingCard != null) {
-                resolvedEffect = bindDyingCard(gameData, aware, dyingCardId);
-            }
-            resolvedEffect = bindDyingCreatureAttachments(resolvedEffect, attachmentSnapshot);
-            if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
-            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-            }
-        }
-        for (CardEffect effect : persistentDeathEffects) {
-            if (effect.onlyTriggersOnSacrifice()) continue;
-            CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                    effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
-            if (resolvedEffect == null) continue;
-            CardEffect authoredEffect = resolvedEffect;
-            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
-            if (resolvedEffect == null) continue;
-            resolvedEffect = bindDyingCreatureAttachments(resolvedEffect, attachmentSnapshot);
-            if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
-            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-            }
-        }
-        for (CardEffect effect : grantedDeathEffects) {
-            if (effect.onlyTriggersOnSacrifice()) continue;
-            CardEffect resolvedEffect = unwrapCreatureDeathConditional(
-                    effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
-            if (resolvedEffect == null) continue;
-            CardEffect authoredEffect = resolvedEffect;
-            resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolvedEffect);
-            if (resolvedEffect == null) continue;
-            if (resolvedEffect instanceof DyingCreatureCardAwareEffect aware && dyingCard != null) {
-                resolvedEffect = bindDyingCard(gameData, aware, dyingCardId);
-            }
-            resolvedEffect = bindDyingCreatureAttachments(resolvedEffect, attachmentSnapshot);
-            if (!passesDeathInterveningIf(gameData, perm, controllerId, resolvedEffect, wasCreature)) continue;
-            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-            if (dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx)) {
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-            }
-        }
-    }
-
     /**
      * "As long as you control a [type], this permanent has 'Whenever a creature you control dies, ...'"
      * (Relic Vial) is judged just before the creature died (CR 603.10a), so a dying permanent that was
@@ -11768,7 +11612,7 @@ public class TriggerCollectionService {
 
         // A printed noncreature source that was animated (Opalescence, Dark Prophecy) is itself "a creature
         // you control" and looks back at its own death (CR 603.10a). Printed creatures keep the exclusion
-        // here because their self-inclusive wording is authored on ON_DEATH, which would double-fire.
+        // here because their self-inclusive wording is authored as a "when this dies" ability, which would double-fire.
         if (!dyingPermanent.getCard().hasType(CardType.CREATURE)) {
             sourcesById.putIfAbsent(dyingPermanent.getId(), dyingPermanent);
         }
@@ -13949,31 +13793,13 @@ public class TriggerCollectionService {
         });
     }
 
-    public void checkSelfLeavesTriggered(GameData gameData, Permanent target, UUID controllerId) {
-        checkSelfLeavesTriggered(gameData, target, controllerId, Zone.GRAVEYARD);
-    }
-
-    public void checkSelfLeavesTriggered(GameData gameData, Permanent target, UUID controllerId,
-                                         Zone destination) {
-        checkSelfLeavesTriggered(gameData, target, controllerId, destination, false);
-    }
-
-    public void checkSelfLeavesTriggered(GameData gameData, Permanent target, UUID controllerId,
-                                         Zone destination, boolean exiledWhileActivatingCraftAbility) {
-        checkSelfLeavesTriggered(gameData, target, controllerId, destination,
-                exiledWhileActivatingCraftAbility, true);
-    }
-
-    public void checkSelfLeavesTriggered(GameData gameData, Permanent target, UUID controllerId,
-                                         Zone destination, boolean exiledWhileActivatingCraftAbility,
-                                         boolean hadPrintedAbilities) {
-        checkSelfLeavesTriggered(gameData, target, controllerId, destination,
-                exiledWhileActivatingCraftAbility, hadPrintedAbilities, false);
-    }
-
-    public void checkSelfLeavesTriggered(GameData gameData, Permanent target, UUID controllerId,
-                                         Zone destination, boolean exiledWhileActivatingCraftAbility,
-                                         boolean hadPrintedAbilities, boolean causedByCreatureDeath) {
+    /**
+     * Fires the delayed "when that permanent leaves the battlefield" triggers that watch {@code target}
+     * (CR 603.7): the destination-keyed {@code DelayedZoneChangeTrigger}s and the leaves-the-battlefield
+     * abilities a resolving spell registered for it. The permanent's own leaves-the-battlefield abilities go
+     * through the trigger pipeline.
+     */
+    public void checkDelayedLeavesBattlefieldTriggers(GameData gameData, Permanent target, Zone destination) {
         for (var delayed : gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.DelayedZoneChangeTrigger.class,
                 action -> action.watchedPermanentId().equals(target.getId()))) {
@@ -13994,7 +13820,8 @@ public class TriggerCollectionService {
             gameData.enqueueTrigger(entry);
         }
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_SELF_LEAVES_BATTLEFIELD
+            if (!watcher.ability().conditions().getFirst().trigger()
+                    .equals(Triggers.leavesBattlefield(ObjectRelation.THIS))
                     || !target.getId().equals(watcher.watchedPermanentId())) {
                 continue;
             }
@@ -14009,26 +13836,6 @@ public class TriggerCollectionService {
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        }
-        List<CardEffect> cardEffects = hadPrintedAbilities
-                ? target.getCard().getEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD) : List.of();
-        List<CardEffect> effects = new ArrayList<>(cardEffects == null ? List.of() : cardEffects);
-        if (hadPrintedAbilities) {
-            effects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD));
-            effects.addAll(target.getPersistentTriggeredEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD));
-        }
-        if (effects.isEmpty()) return;
-
-        var ctx = new TriggerContext.SelfLeaves(controllerId, destination, exiledWhileActivatingCraftAbility,
-                causedByCreatureDeath);
-
-        for (CardEffect effect : effects) {
-            CardEffect dispatchEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, target, effect);
-            if (dispatchEffect == null) continue;
-            var match = new TriggerMatchContext(gameData, target, controllerId, effect);
-            if (dispatch(match, EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, dispatchEffect, ctx)) {
-                OncePerTurnTriggerSupport.markIfNeeded(gameData, target, effect);
-            }
         }
     }
 
@@ -18838,7 +18645,7 @@ public class TriggerCollectionService {
                         match.gameData(), match.controllerId(), match.permanent())
                 : 0));
         GameData.CollectingTrigger previousCollecting = match.gameData().beginCollectingTrigger(
-                new GameData.CollectingTrigger(slot, effect, match.permanent().getCard()));
+                new GameData.CollectingTrigger(slot, effect, match.sourceCard()));
         Object activeBefore = match.gameData().interaction.activeInteraction();
         try {
             boolean handled = registry.dispatch(match, slot, effect, context);
@@ -19691,7 +19498,7 @@ public class TriggerCollectionService {
     }
 
     /** Evaluates a power or toughness predicate against last-known stats, or null for any other predicate. */
-    static Boolean matchesDyingStats(PermanentPredicate predicate, int power, int toughness) {
+    public static Boolean matchesDyingStats(PermanentPredicate predicate, int power, int toughness) {
         if (predicate instanceof com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate p) {
             return toughness >= p.minToughness();
         }

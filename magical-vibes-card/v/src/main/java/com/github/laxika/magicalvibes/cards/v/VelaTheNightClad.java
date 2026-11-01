@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PC2", collectorNumber = "107")
 @CardRegistration(set = "PCA", collectorNumber = "107")
@@ -19,7 +21,7 @@ public class VelaTheNightClad extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.OWN_CREATURES));
 
         LoseLifeEffect loseLife = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, loseLife);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), loseLife);
         addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD, loseLife);
     }
 }

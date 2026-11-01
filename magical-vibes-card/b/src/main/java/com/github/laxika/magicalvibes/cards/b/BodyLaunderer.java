@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostSourcePowerPre
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class BodyLaunderer extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(returnFilter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new DrawDiscardAndConniveEffect());
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(returnFilter)
                 .targetGraveyard(true)

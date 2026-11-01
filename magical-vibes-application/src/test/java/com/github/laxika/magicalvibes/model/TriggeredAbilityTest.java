@@ -35,7 +35,7 @@ class TriggeredAbilityTest {
         EffectRegistration first = new EffectRegistration(new DrawCardEffect(1));
         EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(2), TriggerMode.NORMAL, true);
 
-        TriggeredAbility ability = new TriggeredAbility(new LegacySlotTrigger(EffectSlot.ON_DEATH),
+        TriggeredAbility ability = new TriggeredAbility(new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_UNTAPPED),
                 TriggerOptions.DEFAULT, List.of(first, simultaneous));
 
         assertThat(ability.effects()).containsExactly(first, simultaneous);
@@ -44,7 +44,7 @@ class TriggeredAbilityTest {
     @Test
     void holdsUnmodifiableCopiesOfItsConditionsAndEffects() {
         List<TriggerCondition> conditions =
-                new ArrayList<>(List.of(new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_DEATH))));
+                new ArrayList<>(List.of(new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_UNTAPPED))));
         List<EffectRegistration> effects = new ArrayList<>(ZOMBIE);
         TriggeredAbility ability = new TriggeredAbility(conditions, TriggerOptions.DEFAULT, effects);
 
@@ -58,7 +58,7 @@ class TriggeredAbilityTest {
 
     @Test
     void needsATriggerConditionAndAnEffect() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.ON_DEATH);
+        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
 
         assertThatThrownBy(() -> new TriggeredAbility(List.of(), TriggerOptions.DEFAULT, ZOMBIE))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -72,7 +72,7 @@ class TriggeredAbilityTest {
     void firstEffectCannotBeSimultaneousWithAPreviousOne() {
         EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(1), TriggerMode.NORMAL, true);
 
-        assertThatThrownBy(() -> new TriggeredAbility(new LegacySlotTrigger(EffectSlot.ON_DEATH),
+        assertThatThrownBy(() -> new TriggeredAbility(new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_UNTAPPED),
                 TriggerOptions.DEFAULT, List.of(simultaneous)))
                 .isInstanceOf(IllegalArgumentException.class);
     }

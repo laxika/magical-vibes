@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +18,7 @@ public class BantSojourners extends Card {
 
     public BantSojourners() {
         // When this creature dies, you may create a 1/1 white Soldier creature token.
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(CreateTokenEffect.whiteSoldier(1),
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(CreateTokenEffect.whiteSoldier(1),
                 "Create a 1/1 white Soldier creature token?"));
 
         // Cycling {2}{W} ({2}{W}, Discard this card: Draw a card.) — discard cost is intrinsic.

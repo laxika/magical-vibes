@@ -41,6 +41,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @Slf4j
 @Service
@@ -805,7 +807,7 @@ public class StateBasedActionService {
                 continue;
             }
 
-            if (permanent == null && watch.sourceCard().getEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+            if (permanent == null && watch.sourceCard().getTriggerEffects(Triggers.leavesBattlefield(ObjectRelation.THIS))
                     .stream().anyMatch(ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect.class::isInstance)) {
                 gameData.exiledCardsToGraveyardOnControlLossWatch.remove(permanentId);
                 continue;

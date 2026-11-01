@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "103")
 @CardRegistration(set = "PIP", collectorNumber = "631")
@@ -31,6 +33,6 @@ public class ElderOwynLyons extends Card {
                 .targetGraveyard(true)
                 .build();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnArtifact);
-        addEffect(EffectSlot.ON_DEATH, returnArtifact);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), returnArtifact);
     }
 }

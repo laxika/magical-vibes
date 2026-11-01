@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class RaybladeTrooper extends Card {
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of());
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(NONTOKEN_WITH_PLUS_ONE_COUNTER, humanSoldier));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new TriggeringPermanentConditionalEffect(NONTOKEN_WITH_PLUS_ONE_COUNTER, humanSoldier));
     }
 }

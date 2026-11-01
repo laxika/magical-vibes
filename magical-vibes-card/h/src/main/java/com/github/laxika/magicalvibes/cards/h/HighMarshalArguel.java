@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class HighMarshalArguel extends Card {
                 List.of(CardSubtype.VAMPIRE, CardSubtype.DEMON),
                 Set.of(Keyword.FLYING), Set.of());
 
-        addEffect(EffectSlot.ON_DEATH, new ConditionalReplacementEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalReplacementEffect(
                 controlsArguelsBloodFastAndTemple,
                 SequenceEffect.of(
                         new ConjureCardToBattlefieldEffect("XLN", "90"),

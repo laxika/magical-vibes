@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class MineLayer extends Card {
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, DESTROY_MINED_LAND);
         addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED, DESTROY_MINED_LAND);
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveAllCountersFromMatchingPermanentsEffect(
                         CounterType.MINE, new PermanentIsLandPredicate()));
     }

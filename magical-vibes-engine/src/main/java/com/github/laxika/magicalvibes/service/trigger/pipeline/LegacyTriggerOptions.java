@@ -2,142 +2,113 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardIfDyingSourceHadCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreateTokenCopyOfDyingSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraftAbilityEffect;
-import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
- * Reads the trigger-only wrapper effects of an ability still held in a slot, the way the slot's collector and its
- * handlers read them, so the trigger pipeline can tell what that ability would trigger. The trigger pipeline reads
- * slot abilities through this one adapter until step 14 of effect-slot-refactor.md turns these wrappers and
- * conditions into {@code TriggerOptions} and trigger filters. What it reads:
+ * Reads the trigger-only wrapper effects of a triggered ability, the way its family's old slot collector read
+ * them, until step 14 of effect-slot-refactor.md turns these wrappers into {@code TriggerOptions} and trigger
+ * filters. The trigger pipeline reads every ability's wrappers through this one adapter. What it reads, by the
+ * kind of zone change ({@link LegacyTriggerBindings.Kind}):
  *
  * <ul>
- *   <li>The creature-death conditionals and the death intervening "if", through the collector's own code.</li>
- *   <li>Intervening "if"s written as effects: "if it had a counter on it" and its relatives.</li>
- *   <li>Filters written as effects: "into your graveyard", "when this is exiled", "while you activate its craft
- *       ability".</li>
- *   <li>{@code OncePerTurnTriggerEffect} is taken off but its limit isn't checked. The pipeline matches a batch
- *       after the collectors ran for it, and a collector has already used the limit up by then.</li>
+ *   <li>"When this dies": the creature-death conditionals, {@code OncePerTurnTriggerEffect}, the death
+ *       intervening "if" (CR 603.4) and "put into your graveyard".</li>
+ *   <li>"When you sacrifice this": the creature-death conditionals and an intervening "if".</li>
+ *   <li>"When this leaves the battlefield": {@code OncePerTurnTriggerEffect}.</li>
  * </ul>
+ * Filters that a handler reads together with the event data it binds ("if it had a counter on it", "when this
+ * is exiled", "during combat") stay with the handlers in {@link LegacyTriggerBindings}.
  */
 @Service
 public class LegacyTriggerOptions {
 
-    private final TriggerCollectionService triggerCollectionService;
-    private final ConditionEvaluationService conditionEvaluationService;
+    /**
+     * An effect with its trigger-only wrappers taken off.
+     *
+     * @param effect  what the ability does
+     * @param limited the effect whose once-each-turn limit is used up when the ability triggers
+     */
+    public record Resolved(CardEffect effect, CardEffect limited) {
+    }
 
-    public LegacyTriggerOptions(@Lazy TriggerCollectionService triggerCollectionService,
-                                @Lazy ConditionEvaluationService conditionEvaluationService) {
+    private final TriggerCollectionService triggerCollectionService;
+
+    public LegacyTriggerOptions(@Lazy TriggerCollectionService triggerCollectionService) {
         this.triggerCollectionService = triggerCollectionService;
-        this.conditionEvaluationService = conditionEvaluationService;
     }
 
     /**
-     * What {@code effect}, a registration of {@code candidate}'s ability in {@code slot}, puts on the stack for
-     * {@code event}: the effect with its trigger-only wrappers taken off, or {@code null} when they keep it from
-     * triggering. {@link LegacySlotTriggers#of(EffectSlot, CardEffect)} has already matched the event.
+     * {@code effect}, the one effect of {@code candidate}'s ability, with its wrappers taken off, or {@code null}
+     * when they keep it from triggering for {@code event}.
      */
-    public CardEffect resolve(GameData gameData, EffectSlot slot, ZoneChangeEvent event, TriggerCandidate candidate,
-                              CardEffect effect) {
-        CardEffect unlimited = effect instanceof OncePerTurnTriggerEffect once ? once.wrapped() : effect;
-        return switch (slot) {
-            case ON_DEATH -> death(gameData, event, candidate, unlimited);
-            case ON_SELF_LEAVES_BATTLEFIELD -> leavesTheBattlefield(gameData, event, candidate, unlimited);
-            default -> unlimited;
+    public Resolved resolve(GameData gameData, LegacyTriggerBindings.Kind kind, ZoneChangeEvent event,
+                            TriggerCandidate candidate, CardEffect effect) {
+        return switch (kind) {
+            case DIES -> death(gameData, event, candidate, effect);
+            case SACRIFICED -> sacrifice(gameData, event, candidate, effect);
+            case LEAVES -> onceEachTurn(gameData, candidate, effect);
+            case ARRIVES -> new Resolved(effect, effect);
         };
     }
 
-    private CardEffect death(GameData gameData, ZoneChangeEvent event, TriggerCandidate candidate,
-                             CardEffect effect) {
-        if (effect.onlyTriggersOnSacrifice()) {
-            return effect;
-        }
-        CardEffect resolved = triggerCollectionService.legacyDeathTriggerEffect(gameData, candidate.sourceCard(),
-                candidate.sourceAsPermanent(), candidate.controllerId(), hasType(event, CardType.CREATURE),
-                hasType(event, CardType.LAND), effect);
-        if (resolved == null) {
+    /**
+     * Uses up the once-each-turn limit of {@code resolved}, now that its ability triggered (CR 603.2h; a limit
+     * marked on acceptance is used up when its controller takes the action).
+     */
+    public void markLimit(GameData gameData, TriggerCandidate candidate, Resolved resolved) {
+        OncePerTurnTriggerSupport.markIfNeeded(gameData, candidate.sourceAsPermanent(), resolved.limited());
+    }
+
+    /** Whether {@code effect} is limited to triggering once each turn, so nothing can make it trigger again. */
+    public static boolean triggersOnlyOnceEachTurn(CardEffect effect) {
+        return effect instanceof OncePerTurnTriggerEffect once
+                && !once.firstTokenCreation() && !once.firstLifeGain()
+                && !once.firstLandGraveyardEvent() && !once.firstLifeLoss() && !once.firstCycling();
+    }
+
+    private Resolved death(GameData gameData, ZoneChangeEvent event, TriggerCandidate candidate,
+                           CardEffect effect) {
+        Card card = candidate.sourceCard();
+        Permanent lastKnown = event.permanent();
+        boolean wasCreature = hasType(event, CardType.CREATURE);
+        CardEffect unwrapped = triggerCollectionService.unwrapSelfDeathConditional(gameData, card, lastKnown,
+                candidate.controllerId(), wasCreature, hasType(event, CardType.LAND), effect);
+        if (unwrapped == null) {
             return null;
         }
-        Permanent lastKnown = event.permanent();
-        boolean passes = switch (resolved) {
-            case DrawCardIfDyingSourceHadCounterEffect draw -> counters(lastKnown, draw.counterType()) >= 1;
-            case RegisterDelayedCreateTokenCopyOfDyingSourceEffect copy ->
-                    counters(lastKnown, CounterType.PLUS_ONE_PLUS_ONE) >= copy.minimumCounterCount();
-            case RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect returnEffect ->
-                    counters(lastKnown, returnEffect.counterType()) >= 1;
-            case MoveDyingSourceCountersToTargetCreatureEffect move ->
-                    !move.requiresCounters() || hadCounters(lastKnown);
-            case CreateTokenWithDyingSourceCountersEffect ignored -> hadCounters(lastKnown);
-            // "When this dies during combat".
-            case DealDamageToBlockedAttackersOnDeathEffect ignored -> inCombat(gameData);
-            // "When this is put into your graveyard from the battlefield": a card going to another player's
-            // graveyard doesn't trigger it.
-            case RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect ignored ->
-                    candidate.controllerId().equals(event.ownerId());
-            case ExileSourceCardFromGraveyardAndShuffleTopCardsEffect ignored ->
-                    candidate.controllerId().equals(event.ownerId());
-            default -> true;
-        };
-        return passes ? resolved : null;
+        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, candidate.sourceAsPermanent(),
+                unwrapped);
+        if (resolved == null || !triggerCollectionService.passesSelfDeathFilters(gameData, card, lastKnown,
+                candidate.controllerId(), wasCreature, resolved)) {
+            return null;
+        }
+        return new Resolved(resolved, unwrapped);
     }
 
-    private CardEffect leavesTheBattlefield(GameData gameData, ZoneChangeEvent event, TriggerCandidate candidate,
-                                            CardEffect effect) {
-        boolean passes = switch (effect) {
-            case SelfExiledFromBattlefieldEffect exiled -> event.to() == Zone.EXILE
-                    && interveningIfMet(gameData, candidate, exiled.wrapped());
-            case SelfExiledWhileActivatingCraftAbilityEffect ignored ->
-                    event.to() == Zone.EXILE && event.cause() == ZoneChangeCause.CRAFT;
-            // The leave collector checks only a trigger-time condition; an intervening "if" waits for resolution.
-            case ConditionalEffect conditional -> !conditional.triggerTimeOnly()
-                    || conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId()));
-            default -> true;
-        };
-        return passes ? effect : null;
+    private Resolved sacrifice(GameData gameData, ZoneChangeEvent event, TriggerCandidate candidate,
+                               CardEffect effect) {
+        CardEffect resolved = triggerCollectionService.unwrapSelfDeathConditional(gameData,
+                candidate.sourceCard(), event.permanent(), candidate.controllerId(),
+                hasType(event, CardType.CREATURE), hasType(event, CardType.LAND), effect);
+        if (resolved == null || !triggerCollectionService.passesSelfInterveningIf(gameData,
+                candidate.sourceAsPermanent(), candidate.controllerId(), resolved)) {
+            return null;
+        }
+        return new Resolved(resolved, resolved);
     }
 
-    private boolean interveningIfMet(GameData gameData, TriggerCandidate candidate, CardEffect effect) {
-        return conditionEvaluationService.isInterveningIfMet(gameData, effect, candidate.sourceAsPermanent(),
-                candidate.controllerId());
-    }
-
-    private static boolean hadCounters(Permanent permanent) {
-        return permanent != null && permanent.getCounters().values().stream().anyMatch(count -> count > 0);
-    }
-
-    private static boolean inCombat(GameData gameData) {
-        TurnStep step = gameData.currentStep;
-        return step != null && step.ordinal() >= TurnStep.BEGINNING_OF_COMBAT.ordinal()
-                && step.ordinal() <= TurnStep.END_OF_COMBAT.ordinal();
-    }
-
-    private static int counters(Permanent permanent, CounterType type) {
-        return permanent == null ? 0 : permanent.getCounterCount(type);
+    private static Resolved onceEachTurn(GameData gameData, TriggerCandidate candidate, CardEffect effect) {
+        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, candidate.sourceAsPermanent(),
+                effect);
+        return resolved == null ? null : new Resolved(resolved, effect);
     }
 
     /** Whether the moved object had {@code type} as it left: the last-known card holds its effective types. */

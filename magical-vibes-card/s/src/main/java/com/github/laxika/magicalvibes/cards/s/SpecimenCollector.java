@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,6 +32,6 @@ public class SpecimenCollector extends Card {
                 new PermanentIsTokenPredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
         target(new PermanentPredicateTargetFilter(tokenYouControl, "Target must be a token you control"))
-                .addEffect(EffectSlot.ON_DEATH, new CreateTokenCopyOfTargetPermanentEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

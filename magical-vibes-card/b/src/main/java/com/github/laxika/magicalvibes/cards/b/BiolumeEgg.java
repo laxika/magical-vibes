@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "54")
 @CardRegistration(set = "INR", collectorNumber = "455")
@@ -23,7 +25,7 @@ public class BiolumeEgg extends Card {
 
         // When you sacrifice this creature, return it to the battlefield transformed under its
         // owner's control at the beginning of the next end step.
-        addEffect(EffectSlot.ON_DEATH, new RegisterDelayedReturnSourceTransformedEffect(true, true));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new RegisterDelayedReturnSourceTransformedEffect(true, true));
     }
 
     @Override

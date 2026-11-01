@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DFT", collectorNumber = "201")
 public class EmbalmedAscendant extends Card {
@@ -24,6 +26,6 @@ public class EmbalmedAscendant extends Card {
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, maxSpeedDrain);
-        addEffect(EffectSlot.ON_DEATH, maxSpeedDrain);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), maxSpeedDrain);
     }
 }

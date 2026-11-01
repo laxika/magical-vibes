@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ICE", collectorNumber = "118")
 @CardRegistration(set = "ME2", collectorNumber = "83")
@@ -38,7 +40,7 @@ public class DanceOfTheDead extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
         addStaticEffect(DoesntUntapEffect.enchanted());
         // "When this Aura leaves the battlefield, that creature's controller sacrifices it."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SacrificeEnchantedCreatureOnLeaveEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SacrificeEnchantedCreatureOnLeaveEffect());
         // "At the beginning of the upkeep of enchanted creature's controller, that player may
         // pay {1}{B}. If the player does, untap that creature."
         addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,

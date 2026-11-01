@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -49,7 +51,7 @@ public class EnduringFriendship extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.OTTER),
                         new PermanentIsEnchantmentPredicate()))))));
 
-        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DyingPermanentWasCreatureConditionalEffect(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT))));
     }
 }

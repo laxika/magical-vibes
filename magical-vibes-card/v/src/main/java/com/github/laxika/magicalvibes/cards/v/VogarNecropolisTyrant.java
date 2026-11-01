@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GN3", collectorNumber = "3")
 public class VogarNecropolisTyrant extends Card {
@@ -18,7 +20,7 @@ public class VogarNecropolisTyrant extends Card {
                 new ConditionalEffect(new ControllerTurn(), new PutCountersOnSourceEffect(1, 1, 1)));
 
         // When Vogar dies, draw a card for each +1/+1 counter on it.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new DrawCardForEachDyingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

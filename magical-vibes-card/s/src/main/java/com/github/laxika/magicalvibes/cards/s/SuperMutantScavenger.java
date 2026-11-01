@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,6 +34,6 @@ public class SuperMutantScavenger extends Card {
                 .upTo(true)
                 .build();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnAuraOrEquipment);
-        addEffect(EffectSlot.ON_DEATH, returnAuraOrEquipment);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), returnAuraOrEquipment);
     }
 }

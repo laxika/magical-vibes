@@ -24,7 +24,7 @@ re-check them with a grep before acting on them.
 | 8 | Replacement effects, special actions and markers leave the enum | done |
 | 9 | Rules events for zone changes, and shadow mode | done |
 | 10a | Trigger index and the generic trigger pipeline; the pilot in shadow mode | done |
-| 10b | Switch the pilot to the pipeline, convert its cards, delete its slots | open |
+| 10b | Switch the pilot to the pipeline, convert its cards, delete its slots | done |
 | 11 | Creature-death triggers and self-inclusion | open |
 | 12 | The rest of the zone-change family | open |
 | 13 | Remaining event families (repeatable) | open |
@@ -2457,6 +2457,188 @@ What is left is recorded in `ShadowComparison`:
   `DeathTriggerCollectorServiceTest` and `PlanechaseServiceTest`. Those 11 fail the same way at HEAD with the
   change stashed: mock wiring, and a planar ability with no card.
 - The full suite was not run here.
+
+### Step 10b
+
+10b switched the pilot to the trigger pipeline. `ON_DEATH`, `ON_SELF_LEAVES_BATTLEFIELD`, the four
+`ON_SELF_PUT_INTO_GRAVEYARD_FROM_…` slots and `ON_SELF_MILLED` are gone from `EffectSlot`, with their collectors and
+handlers. Every card ability that used them has a real trigger and reaches the stack only through the pipeline.
+
+**Authoring.**
+
+- `addTrigger(Triggers.dies(ObjectRelation.THIS), effect)`, and `target(filter).addTrigger(…)` (new on `SpellTarget`).
+  A grant takes `new TriggeredAbility(trigger, effect…)` (a new convenience constructor) where it took a slot and an
+  effect. `GrantEffectToTargetEffect.toSourcePermanent(Ability)` is new.
+- `Triggers.sacrificed` for "when you sacrifice this". The old `ON_DEATH` registrations whose effect
+  `onlyTriggersOnSacrifice()` became it (14 cards). The `onlyIfSacrificed` flags and `SacrificeOnlyEffect` are now
+  redundant with the trigger; step 14 removes them.
+- `Triggers.putIntoGraveyardWhileResolving` for haunt on an instant or sorcery (CR 702.55a): a stack-to-graveyard
+  move with the new `ZoneChangeCause.RESOLUTION`, which `StackResolutionService.handleSpellDisposition` names around
+  the move of a spell that resolved. A countered spell or one that didn't resolve isn't that move. Benediction of
+  Moons, Cry of Contrition and Seize the Soul.
+- `ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` became `Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, THIS)`. That
+  trigger equals `Triggers.dies(THIS)` (CR 700.4), so those 49 abilities now go through the death handlers rather than
+  GraveyardService's old plain collector.
+- `Card.getTriggerEffects(trigger)`, `getUnslottedTriggeredAbilities()` and `getTriggeredEffects()`, and
+  `TriggeredAbility.hasTrigger(trigger)`, for code that used to read these slots.
+
+**Scripts.**
+
+- `scripts/step10b-pilot-scan.java` listed every card's registrations in the pilot slots before the step (1,085, in
+  1,163 files with the grants), marking the sacrifice-only ones and the haunt spells.
+- `scripts/step10b-pilot-triggers.py --scan` rewrote card classes and card tests per letter module: `addEffect`,
+  `LegacySlots.triggered` and grant argument pairs, `getTemporaryTriggeredEffects(ON_DEATH)` in one test, and
+  comments that named the slots. One card it couldn't convert, done by hand: Jaxis, the Troublemaker passed a
+  `List.<CardEffect>of(…)` to `LegacySlots.triggered`.
+- `scripts/step10b-docs.py` rewrote agent-docs the same way. Lines naming a sacrifice or haunt were checked by hand,
+  and the sacrifice-only ones changed to `Triggers.sacrificed`.
+
+**The pipeline after the switch.**
+
+- `TriggeredAbilityStackService` puts an ability of one effect on the stack through two adapters, each removed by a
+  later step:
+  - `LegacyTriggerOptions` (step 14) now reads the wrappers by the kind of zone change, not by slot: the
+    creature-death conditionals, `OncePerTurnTriggerEffect` (checked and used up, now that no collector runs first),
+    the death intervening "if" and "put into your graveyard" for dies; conditionals and intervening "if" for
+    sacrificed; once each turn for leaves.
+  - `LegacyTriggerBindings` (step 15, new) holds the pilot's 56 old `@CollectsTrigger` handlers and the sacrifice-only one,
+    moved from `DeathTriggerCollectorService` and reading the `ZoneChangeEvent` instead of a
+    `TriggerContext`. It dispatches by effect class as `TriggerCollectorRegistry` did (exact class, then the class a
+    `MayEffect`, `MayPayManaEffect` or `MayPayTapPermanentsEffect` wraps, then the default). The binding, routes
+    (`DeathTriggerTarget`, `SelfTriggeredAbilityTarget`, `TriggeredModalTrigger`, the emerge cost queue) and declines
+    are the handlers' own, so behaviour is unchanged. That includes 10a's "nothing to do" declines (Dance of Many,
+    Skyclave Apparition and the rest): their handlers still put nothing on the stack. CR 603.2 would have them
+    trigger and do nothing; step 15 decides that with the event data.
+- An ability of several effects is one stack object (CR 603.3), with a dies ability's effects bound to the card that
+  died. No converted card has one yet: the script kept one ability per registration, as the collectors resolved them.
+- `RulesEventPipeline` puts one event's abilities on the stack in the order the old collectors did: leaves the
+  battlefield, arrives in a zone (from anywhere, from hand or library, milled, haunt), dies, sacrificed
+  (`LegacyTriggerBindings.Kind`'s order). Worldspine Wurm's test relies on it.
+- `TriggerIndex`: the abilities printed on a departed permanent's card name that card as their source, the physical
+  card when the last-known snapshot is a copy of it (the snapshot holds a layered runtime copy, which effects that
+  move "this card" don't find). Abilities the permanent gained (persistent, temporary, granted by other permanents,
+  delayed) name the card that moved: Serra Paragon's grant on an Echoing Deeps that entered as a copy, 10a's known
+  difference, now exiles Echoing Deeps.
+- `LegacySlotTriggers` maps nothing and `ShadowComparison.CURRENT` is `NONE`: no family is in shadow mode. Step 11
+  maps the creature-death slots there first.
+
+**The departure event carries more look-back** (CR 603.10a), all captured as the permanent leaves:
+
+- `attachments` (`DepartedAttachments`): the Auras and Equipment attached to it, those leaving in the same event
+  included (`DyingCreatureAttachmentSnapshot.capture` at `emitDeparture`). This fixes 10a's two attachment known
+  differences (Gunner Conscript, Stone Haven Outfitter).
+- `costOf`: the spell it was sacrificed to pay for, named by `SpellCastingService.sacrificeForSpellCost` through the
+  new `RulesEventLog.setPayingCostOf` (copied with the log). Foul Emissary's emerge trigger reads it.
+- `grantedAbilities` are now every granted ability with a `THIS` zone-change trigger
+  (`GrantedTriggeredAbilitySupport.grantedSelfZoneChangeAbilities`), and `GameData.simultaneousDyingGrantedSelfDeathEffects`
+  became `simultaneousDyingGrantedSelfAbilities` (`List<TriggeredAbility>`, copied for simulations as before);
+  `DepartureSnapshot.grantedSelfDeathEffects` became `grantedSelfAbilities`.
+
+**Batch timing.** `DepartureService.perform` now ends a multi-permanent leave batch before it restores the
+`simultaneousDying…` maps, so the batch is matched while its look-back is still published. Kodama of the Center
+Tree ("Spirits you control" counted before any Spirit left) needed it. The batched "leave without dying" collectors
+in `endPermanentLeaveBatch` now also run before the restore; none of them reads those maps.
+
+**Engine code that walked the slots.** A real trigger is in no slot, so every place that rebuilt or scanned a card's
+triggered abilities slot by slot would have lost it. These now also walk `getUnslottedTriggeredAbilities()` or read
+`getTriggeredEffects()`: `TokenCopySupport`, `CopySupport`, `PermanentCopierService`, `MutationSupport`,
+`LayerSystemService.buildFullTextCopy`, `EachOpponentChooses…TokenCopy…`, `CreateTokenWithTriggeredAbilitiesOfExiledCards`
+(now passes `List<Ability>` to a new `PermanentControlSupport.applyCreateToken` overload), the two "gain the abilities
+of exiled cards" static handlers, `PredicateEvaluationService`'s "has abilities" checks, and five effect scans
+(`TriggeredAbilityQueueService`, `GameViewProjectionFactory`, `ChoiceHandlerService`, `CreatureControlService`,
+`PerpetuallyBoostCardEffectHandler`, `CastTargetInstantOrSorceryFromGraveyardHandler`).
+
+Perpetual and entry grants that passed `(slot, effect)` now pass the ability: the `PerpetuallyGrant…` handlers,
+`SeekLibraryAndPerpetuallyModifySoughtCardEffectHandler`, `BattlefieldPlacementService.applyPerpetualTriggeredAbilityGrants`,
+`GrantTriggeredAbilityToCastSpellEffectHandler` and Serra Paragon's cast permission (new
+`StackEntry.addPersistentAbilityOnEntry`, `GameData.grantPerpetualAbilityOnce(UUID, Ability)`). Still slot-based, with
+no card granting a pilot trigger through them: `ChooseCard(s)FromHandToPerpetuallyGrantTriggeredAbilityEffect`
+(its `PendingInteraction` carries a slot), `PerpetuallyGrantTriggeredAbilityToRandomMatchingHandCardEffect` and
+`RemovePerpetualTriggeredAbilityEffect`. Step 11 or whichever step first grants a real trigger through them converts
+them.
+
+**Removed:** the constants; `collectDeathTrigger`, `collectSelfSacrificedTriggers`, `collectSpellHauntTrigger`,
+`legacyDeathTriggerEffect`, `effectivePrintedDeathEffects` and the leave collector (its delayed-trigger part stays as
+`checkDelayedLeavesBattlefieldTriggers`: the `DelayedZoneChangeTrigger`s and the leave watchers a spell registers,
+CR 603.7); GraveyardService's four self-graveyard collectors, the self-mill collector and the
+`selfGraveyardTriggerSuppressed` parameter chain; `SacrificeOnlyTriggerCollectorService`; the pilot handlers and their
+helpers in `DeathTriggerCollectorService` (its Distribute handler keeps only the "a creature dies" branch);
+`TriggerContext.SelfDeath` and `SelfLeaves`; `GrantedTriggeredAbilitySupport.grantedTriggeredEffectsFromAttachments`.
+`DeathTriggerTarget` and `SelfTriggeredAbilityTarget` stay: other slots use them.
+
+**Rules fixes, each covered by an existing card test that now passes through the engine:**
+
+- Tatsumasa, the Dragon's Fang: "return Tatsumasa when that token dies" is a delayed trigger (CR 603.7), not an
+  ability of the token. `CreateTokenEffectHandler` now takes the placeholder ability off the token and adds the bound
+  return as the token's delayed death effect, so it triggers under Humility (10a's known difference).
+- Gunner Conscript and Stone Haven Outfitter: their attachments that left in the same event count (above).
+- Serra Paragon on a copy land: above.
+- "This ability triggers only once each turn" now also keeps a death trigger from being copied by Teysa-like effects;
+  the collector checked it only for leave triggers.
+
+**Timing** of the pilot's card test classes (`--gradle-args 10`: 1,152 classes, 8,403 tests), both runs with the
+classes already compiled, default Gradle settings:
+
+| Run | HEAD (`dc792b6fd0`, pilot shadowed) | 10b |
+|---|---|---|
+| First pair, wall | 142 s | 173 s |
+| First pair, summed class time | 3,585 s | 3,723 s |
+| Second pair (back to back, build cache off), wall | 165 s | 183 s |
+| Second pair, summed class time | 3,457 s | 3,532 s |
+
+  The machine is shared, so the wall times are noisy; summed class time rose by 2 to 4 %. HEAD's numbers include the
+  shadow recorder's comparison, which 10b no longer runs. The HEAD runs used a worktree at `dc792b6fd0` with the
+  repository's card-data cache copied in (without it, 73 tests fail to load card data).
+
+**Tests changed.**
+
+- `LegacyTriggerBindingsTest` (new, `service/trigger/pipeline`): the 31 pilot handler tests of
+  `DeathTriggerCollectorServiceTest`, moved with the handlers and driven through `LegacyTriggerBindings.trigger` with a
+  zone-change event. Five tests of a `null` dying permanent were dropped: a departure always carries one now. Three
+  moved tests already failed at HEAD and are fixed: the blocked-attackers tests now block through
+  `addBlockingTargetId` (and "not blocking" now expects the ability to trigger with no creatures to damage, as the
+  handler does), and the Vastwood Hydra distribution expects `DistributeCountersAmongControlledCreaturesEffect`.
+- `DeathTriggerCollectorServiceTest`: the moved tests removed.
+- `TriggerPipelineTest`: two new tests, a leaves trigger goes on the stack before the dies trigger of the same death,
+  and a dies trigger of two effects is one stack object.
+- `CardAbilitiesTest`, `GrantedAbilitiesTest`, `TriggeredAbilityTest`, `TriggerConditionTest`, `LegacySlotTriggerTest`
+  and `GameDataDeepCopyTest` used `ON_DEATH` as an arbitrary one-ability-per-registration slot; they use
+  `ON_SELF_BECOMES_UNTAPPED` now.
+- `PermanentRemovalServiceTest` (mock-wired, failing at HEAD): its stubs and verifies follow the removed
+  `addCardToGraveyard` parameter and `checkDelayedLeavesBattlefieldTriggers`; the `collectDeathTrigger` verify is gone.
+- `RabidAttackTest` (by the script): reads `getTemporaryTriggeredAbilities()`.
+
+**Test runs.**
+
+- Card:
+  - the pilot's card test classes (1,152 classes, 8,403 tests): 52 failures at first, all from four causes fixed in
+    this step (the perpetual grants passing a slot, the stack entry naming the snapshot's card copy, the batch matched
+    after its look-back was restored, the order of one event's triggers), then all passing;
+  - step 11's card test classes plus every card using a copy, mutate, specialize, perpetual-grant or "gain the
+    abilities of" effect, not already in the pilot (801 classes, 6,515 tests): one failure,
+    `InallaArchmageRitualistTest#eminenceWorksFromTheCommandZone`, which also fails at HEAD. It was a step 10a bug:
+    `TriggerCollectionService.dispatch` named `match.permanent().getCard()` for the observer, null for a command-zone
+    source; it names `match.sourceCard()` now, and the test passes.
+- AI: the whole module (1,620 tests), with the same 10 failures as steps 7 to 10a.
+- Application: the tests above plus `RulesEventLogTest`, `ZoneChangeRulesEventTest`, `ZoneChangeTriggerTest`,
+  `TriggerConditionTest`, `LegacySlotTriggerTest`, `TriggeredAbilityTest`, `GrantedAbilitiesTest`,
+  `CardAbilitiesTest`, `CardFreezeTest`, `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest`,
+  `GameSetupServiceAllRandomTest`, `CommanderGameTest`, `GameRegistrySessionTest`, `AuraAttachmentServiceTest`,
+  `DepartureServiceOrphanedStepBatchTest`, `GameDataExileTrackingTest` and the mock-wired
+  `PermanentRemovalServiceTest`, `BattlefieldPlacementServiceTest`, `DeathTriggerCollectorServiceTest` and
+  `PlanechaseServiceTest` (895 tests). 80 failures, every one also failing at HEAD in the same test (checked in the
+  HEAD worktree): mock wiring in the four mock-wired classes and the known one in each architecture test.
+- The full suite was not run here.
+
+**For step 11.**
+
+- Map the creature-death slots in `LegacySlotTriggers` and set `ShadowComparison.CURRENT` to them; the shadow path
+  reads their wrappers through `LegacyTriggerOptions.resolve` with the trigger's `Kind`.
+- Their handlers move into `LegacyTriggerBindings` the way the pilot's did. Its `Ctx` reads only the moving object;
+  other relations need the source permanent as well.
+- `TriggerIndex` still lists only the moving object's abilities, and `TriggerMatcher` matches only `THIS`.
+- Cards that authored "this or another" as a dies ability plus an ally slot (Archghoul of Thraben, Tributary
+  Instructor, Xathrid Necromancer and the rest named in their comments) are the self-inclusion cases step 11 merges.
 
 ## Prompt
 

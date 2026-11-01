@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetNonlandPermanentAn
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "153")
 @CardRegistration(set = "SPM", collectorNumber = "231")
@@ -14,7 +16,7 @@ public class TheSpotLivingPortal extends Card {
     public TheSpotLivingPortal() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileTargetNonlandPermanentAndCardWithSourceEffect());
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect());
     }
 }

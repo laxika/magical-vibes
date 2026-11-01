@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class ThoughtKnotSeer extends Card {
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE))
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new DrawCardForTargetPlayerEffect(1, false, true));
     }
 }

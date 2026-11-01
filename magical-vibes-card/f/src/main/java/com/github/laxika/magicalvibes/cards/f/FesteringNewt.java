@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class FesteringNewt extends Card {
                 )),
                 "Target must be a creature an opponent controls"
         ))
-                .addEffect(EffectSlot.ON_DEATH, new BoostTargetCreatureEffect(
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new BoostTargetCreatureEffect(
                         new FixedIfCondition(new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNamedPredicate(BOGBREW_WITCH)))), -4, -1),

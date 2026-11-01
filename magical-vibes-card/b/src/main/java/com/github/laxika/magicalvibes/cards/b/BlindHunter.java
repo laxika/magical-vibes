@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GPT", collectorNumber = "102")
 @CardRegistration(set = "RVR", collectorNumber = "166")
@@ -22,7 +24,7 @@ public class BlindHunter extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
+        target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
         target(anyPlayer())
                 .addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES,
                         SequenceEffect.of(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RNA", collectorNumber = "185")
 @CardRegistration(set = "2X2", collectorNumber = "234")
@@ -25,6 +27,6 @@ public class JudithTheScourgeDiva extends Card {
     public JudithTheScourgeDiva() {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, NON_TOKEN_DEATH_DAMAGE);
-        addEffect(EffectSlot.ON_DEATH, NON_TOKEN_DEATH_DAMAGE);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), NON_TOKEN_DEATH_DAMAGE);
     }
 }

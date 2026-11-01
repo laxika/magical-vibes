@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONE", collectorNumber = "124")
 public class CacophonyScamp extends Card {
@@ -17,6 +19,6 @@ public class CacophonyScamp extends Card {
                 new MayEffect(
                         new SacrificeSelfThenEffect(new ProliferateEffect()),
                         "You may sacrifice it. If you do, proliferate."));
-        addEffect(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(new SourcePower()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(new SourcePower()));
     }
 }

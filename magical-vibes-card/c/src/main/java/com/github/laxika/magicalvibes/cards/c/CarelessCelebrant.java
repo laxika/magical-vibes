@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class CarelessCelebrant extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalkerAnOpponentControls,
                 "Target must be a creature or planeswalker an opponent controls"
-        )).addEffect(EffectSlot.ON_DEATH,
+        )).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(2, creatureOrPlaneswalkerAnOpponentControls));
     }
 }

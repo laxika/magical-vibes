@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class SkyfisherSpider extends Card {
                         "another creature"),
                 "Sacrifice another creature?"));
 
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
                         new GainLifeEffect(new CardsInGraveyard(
                                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)),

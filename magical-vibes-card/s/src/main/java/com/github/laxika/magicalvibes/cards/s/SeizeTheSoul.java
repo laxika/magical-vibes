@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,7 @@ public class SeizeTheSoul extends Card {
         target(nonWhiteNonBlackCreature())
                 .addSpellEffect(new DestroyTargetPermanentEffect())
                 .addSpellEffect(CreateTokenEffect.whiteSpirit(1));
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
+        target(TargetFilters.creature()).addTrigger(Triggers.putIntoGraveyardWhileResolving(ObjectRelation.THIS), new HauntEffect());
         target(nonWhiteNonBlackCreature())
                 .addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, CreateTokenEffect.whiteSpirit(1));

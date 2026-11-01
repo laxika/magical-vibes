@@ -29,6 +29,6 @@ public class PerpetuallyGrantTriggeredAbilityToSourceCardEffectHandler implement
         var grant = (PerpetuallyGrantTriggeredAbilityToSourceCardEffect) effect;
         UUID grantedCardId = entry.getTriggeringCardId() != null
                 ? entry.getTriggeringCardId() : entry.getCard().getId();
-        gameData.grantPerpetualAbility(grantedCardId, grant.triggeredAbilitySlot(), grant.triggeredAbility());
+        gameData.grantPerpetualAbility(grantedCardId, grant.grantedAbility());
     }
 }

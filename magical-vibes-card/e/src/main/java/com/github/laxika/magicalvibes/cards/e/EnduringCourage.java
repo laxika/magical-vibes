@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -17,7 +19,7 @@ public class EnduringCourage extends Card {
     public EnduringCourage() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new BoostEnteringCreatureEffect(2, 0, Set.of(Keyword.HASTE)));
-        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DyingPermanentWasCreatureConditionalEffect(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT))));
     }
 }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchin
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "95")
 @CardRegistration(set = "INR", collectorNumber = "370")
@@ -25,9 +27,9 @@ public class ArchghoulOfThraben extends Card {
         // put the card into your hand, you may put it into your graveyard.
         //
         // Ally-death watchers are already off the battlefield when collected, so ON_ALLY alone is
-        // "another Zombie"; ON_DEATH covers this creature's own death (Arnyn Deathbloom Botanist).
+        // "another Zombie"; its dies trigger covers this creature's own death (Arnyn Deathbloom Botanist).
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), LOOK));
-        addEffect(EffectSlot.ON_DEATH, LOOK);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), LOOK);
     }
 }

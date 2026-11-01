@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -180,8 +183,18 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (!e.simultaneousTokens().isEmpty()) amount = primaryAmount;
 
         int createdFromIndex = entry.getCreatedPermanentIds().size();
+        CardEffect deathReturn = deathReturn(e, entry);
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, controllerId,
-                bindDeathReturn(e, entry), amount, entry.getCard().getSetCode(), power, toughness);
+                deathReturn == null ? e : withoutDeathReturn(e), amount, entry.getCard().getSetCode(), power,
+                toughness);
+        if (deathReturn != null) {
+            for (UUID createdId : createdIds) {
+                Permanent created = gameQueryService.findPermanentById(gameData, createdId);
+                if (created != null) {
+                    created.addDelayedDeathEffect(deathReturn);
+                }
+            }
+        }
         // The tokens' controller may differ from the one that created them (Crafty Cutpurse); only the active
         // player's tokens attack, and their controller chooses what each one attacks once creation has finished (CR 508.4).
         UUID tokenController = createdIds.isEmpty()
@@ -269,29 +282,33 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * Binds an authored "return this card from exile when the token dies" death trigger to the card
-     * that created the token (Tatsumasa, the Dragon's Fang, exiled to pay its own activation cost).
-     * The id is only knowable at resolution, so the blueprint carries a {@code null} placeholder.
+     * The delayed "return this card from exile when that token dies" trigger a blueprint authors as a death
+     * ability with a {@code null} placeholder (Tatsumasa, the Dragon's Fang, exiled to pay its own activation
+     * cost), bound to the card that created the token, or {@code null} when it has none. It is a delayed trigger
+     * (CR 603.7), not an ability of the token, so it still triggers while the token has lost its abilities.
      */
-    private static CreateTokenEffect bindDeathReturn(CreateTokenEffect token, StackEntry entry) {
-        List<Ability> tokenEffects = token.tokenEffects();
-        if (tokenEffects == null || entry.getCard() == null) {
-            return token;
+    private static CardEffect deathReturn(CreateTokenEffect token, StackEntry entry) {
+        if (token.tokenEffects() == null || entry.getCard() == null) {
+            return null;
         }
-        List<Ability> bound = new ArrayList<>(tokenEffects.size());
-        boolean changed = false;
-        for (Ability ability : tokenEffects) {
-            if (LegacySlots.slotOf(ability) == EffectSlot.ON_DEATH
-                    && LegacySlots.effectsOf(ability).getFirst()
-                    instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect returnEffect
-                    && returnEffect.exiledCardId() == null) {
-                bound.add(LegacySlots.triggered(EffectSlot.ON_DEATH,
-                        new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(entry.getCard().getId())));
-                changed = true;
-            } else {
-                bound.add(ability);
-            }
-        }
-        return changed ? token.withTokenEffects(bound) : token;
+        return token.tokenEffects().stream()
+                .filter(CreateTokenEffectHandler::isDeathReturnPlaceholder)
+                .findFirst()
+                .map(ignored -> (CardEffect) new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
+                        entry.getCard().getId()))
+                .orElse(null);
+    }
+
+    private static CreateTokenEffect withoutDeathReturn(CreateTokenEffect token) {
+        return token.withTokenEffects(token.tokenEffects().stream()
+                .filter(ability -> !isDeathReturnPlaceholder(ability))
+                .toList());
+    }
+
+    private static boolean isDeathReturnPlaceholder(Ability ability) {
+        return ability instanceof TriggeredAbility triggered && triggered.hasTrigger(Triggers.dies(ObjectRelation.THIS))
+                && LegacySlots.effectsOf(ability).getFirst()
+                instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect returnEffect
+                && returnEffect.exiledCardId() == null;
     }
 }

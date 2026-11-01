@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LRW", collectorNumber = "107")
 public class Dread extends Card {
@@ -15,7 +17,7 @@ public class Dread extends Card {
         addEffect(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
                 new DestroyDamageSourcePermanentEffect(new PermanentIsCreaturePredicate()));
         // "When Dread is put into a graveyard from anywhere, shuffle it into its owner's library."
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS),
                 new ShuffleSelfFromGraveyardIntoLibraryEffect());
     }
 }

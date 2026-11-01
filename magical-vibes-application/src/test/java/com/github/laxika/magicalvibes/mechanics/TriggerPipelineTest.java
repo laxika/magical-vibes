@@ -166,6 +166,30 @@ class TriggerPipelineTest extends BaseCardTest {
         });
     }
 
+    @Test
+    void oneDeathPutsTheLeavesTriggerOnTheStackBeforeTheDiesTrigger() {
+        Card card = new GrizzlyBears();
+        card.addTrigger(Triggers.dies(ObjectRelation.THIS), DRAW);
+        card.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), GAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, card);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+
+        assertThat(triggersOf(card)).extracting(StackEntry::getEffectsToResolve)
+                .containsExactly(List.of(GAIN), List.of(DRAW));
+    }
+
+    @Test
+    void aDiesTriggerOfSeveralEffectsIsOneStackObject() {
+        Card card = new GrizzlyBears();
+        card.addTrigger(Triggers.dies(ObjectRelation.THIS), DRAW, GAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, card);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+
+        assertThat(onlyTriggerOf(card).getEffectsToResolve()).containsExactly(DRAW, GAIN);
+    }
+
     /** Moves {@code card} straight between two of {@code player}'s zone lists, which report the move. */
     private void moveCard(Player player, Card card, Zone from, Zone to) {
         zone(player, from).remove(card);

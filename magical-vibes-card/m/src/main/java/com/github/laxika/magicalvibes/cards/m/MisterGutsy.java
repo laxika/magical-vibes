@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class MisterGutsy extends Card {
                                 new CardSubtypePredicate(CardSubtype.EQUIPMENT))),
                         List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
 
-        addEffect(EffectSlot.ON_DEATH, new CreateTokensForEachDyingSourceCounterEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokensForEachDyingSourceCounterEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, junkToken()));
     }
 

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M19", collectorNumber = "121")
 @CardRegistration(set = "SLD", collectorNumber = "853")
@@ -19,6 +21,6 @@ public class StitchersSupplier extends Card {
     public StitchersSupplier() {
         // When this creature enters or dies, mill three cards.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_DEATH, new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
     }
 }

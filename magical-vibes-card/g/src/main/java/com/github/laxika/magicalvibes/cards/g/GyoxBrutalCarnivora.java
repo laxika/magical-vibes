@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,6 +33,6 @@ public class GyoxBrutalCarnivora extends Card {
                         new PermanentHasCountersPredicate(CounterType.OIL))),
                 new ConjureDuplicatesOfDyingCreatureIntoLibraryEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, deathTrigger);
-        addEffect(EffectSlot.ON_DEATH, deathTrigger);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
     }
 }

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,9 +40,9 @@ public class VoldarenBloodcaster extends Card {
 
         // Whenever this creature or another nontoken creature you control dies, create a Blood token.
         // Ally-death watchers are already off the battlefield when collected, so ON_ALLY alone is
-        // "another"; ON_DEATH covers this creature's own death.
+        // "another"; its dies trigger covers this creature's own death.
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, CREATE_BLOOD);
-        addEffect(EffectSlot.ON_DEATH, CREATE_BLOOD);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), CREATE_BLOOD);
 
         // Whenever you create a Blood token, if you control five or more Blood tokens, transform.
         // Blood tokens are artifacts — gated via TriggeringCardConditionalEffect on ally-artifact ETB.

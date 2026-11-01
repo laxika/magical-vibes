@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +40,7 @@ public class GreedsGambit extends Card {
                         SacrificeRecipient.CONTROLLER)));
 
         var creatures = new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
                 new DiscardEffect(3, DiscardRecipient.CONTROLLER),
                 new LoseLifeEffect(6),
                 new SacrificePermanentsEffect(3, creatures, SacrificeRecipient.CONTROLLER)));

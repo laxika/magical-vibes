@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellUntilSourceLe
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "THB", collectorNumber = "43")
 @CardRegistration(set = "THB", collectorNumber = "304")
@@ -18,7 +20,7 @@ public class AshioksErasure extends Card {
                 new StackEntryTruePredicate(), "Target must be a spell."))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetSpellUntilSourceLeavesEffect())
                 .addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true))
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }
 }

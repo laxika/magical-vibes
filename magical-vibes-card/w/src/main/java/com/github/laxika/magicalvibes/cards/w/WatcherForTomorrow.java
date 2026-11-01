@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOneFromTopCardsFaceDownWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH1", collectorNumber = "76")
 public class WatcherForTomorrow extends Card {
@@ -13,7 +15,7 @@ public class WatcherForTomorrow extends Card {
     public WatcherForTomorrow() {
         addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileOneFromTopCardsFaceDownWithSourceEffect(4, true));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }
 }

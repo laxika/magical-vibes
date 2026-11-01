@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateSpiritTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnLinkedCardToOwnerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -77,7 +79,7 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
         UUID linkedCardId = graveyardCardId;
         tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(copySource), null,
                 entry.getControllerId(), copyOptions,
-                tokenCard -> tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                tokenCard -> tokenCard.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new ReturnLinkedCardToOwnerGraveyardEffect()),
                 token -> token.setChosenPermanentId(linkedCardId));
 

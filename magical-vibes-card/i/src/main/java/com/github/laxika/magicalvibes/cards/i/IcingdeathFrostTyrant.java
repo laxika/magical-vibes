@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ import java.util.Set;
 public class IcingdeathFrostTyrant extends Card {
 
     public IcingdeathFrostTyrant() {
-        addEffect(EffectSlot.ON_DEATH, frostTongueToken());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), frostTongueToken());
     }
 
     private static CreateTokenEffect frostTongueToken() {

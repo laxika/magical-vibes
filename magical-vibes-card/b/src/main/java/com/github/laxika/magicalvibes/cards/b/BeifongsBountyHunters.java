@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "209")
 public class BeifongsBountyHunters extends Card {
@@ -24,6 +26,6 @@ public class BeifongsBountyHunters extends Card {
 
     public BeifongsBountyHunters() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, ALLY_DEATH_TRIGGER);
-        addEffect(EffectSlot.ON_DEATH, SELF_DEATH_TRIGGER);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SELF_DEATH_TRIGGER);
     }
 }

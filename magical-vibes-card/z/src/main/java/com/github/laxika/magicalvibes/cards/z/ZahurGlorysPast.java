@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class ZahurGlorysPast extends Card {
         ));
 
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, MAX_SPEED_ZOMBIE);
-        addEffect(EffectSlot.ON_DEATH, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringCardConditionalEffect(
                 new CardNotPredicate(new CardIsTokenPredicate()), MAX_SPEED_ZOMBIE));
     }
 }

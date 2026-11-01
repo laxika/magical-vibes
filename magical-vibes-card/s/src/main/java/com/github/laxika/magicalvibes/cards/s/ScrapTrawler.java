@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AER", collectorNumber = "175")
 @CardRegistration(set = "KLR", collectorNumber = "267")
@@ -24,7 +26,7 @@ public class ScrapTrawler extends Card {
                 .targetGraveyard(true)
                 .dynamicMaxManaValue(new SourceManaValueMinusOne())
                 .build();
-        addEffect(EffectSlot.ON_DEATH, returnArtifact);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), returnArtifact);
         addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 TriggeringArtifactControllerConditionalEffect.another(returnArtifact));
     }

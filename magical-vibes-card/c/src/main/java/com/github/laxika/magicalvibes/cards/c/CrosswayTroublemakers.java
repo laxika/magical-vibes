@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +36,7 @@ public class CrosswayTroublemakers extends Card {
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)))));
 
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), DEATH_TRIGGER));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(

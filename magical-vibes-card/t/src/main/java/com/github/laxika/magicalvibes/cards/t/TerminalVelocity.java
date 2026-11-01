@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.Sum;
@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class TerminalVelocity extends Card {
                         SequenceEffect.of(
                                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF, GrantDuration.INDEFINITE),
                                 GrantEffectToTargetEffect.toSourcePermanent(
-                                        EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, leavesDamage),
+                                        new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS), leavesDamage)),
                                 SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep())),
                 "Put an artifact or creature card from your hand onto the battlefield?"));
     }

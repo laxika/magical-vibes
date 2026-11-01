@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourc
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +33,7 @@ public class BosssChauffeur extends Card {
                 CounterType.PLUS_ONE_PLUS_ONE, new Sum(new Fixed(1), otherCreatures)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new PutCountersOnSourceEffect(1, 1, 1));
-        addEffect(EffectSlot.ON_DEATH, new CreateTokensForEachDyingSourceCounterEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokensForEachDyingSourceCounterEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CreateTokenEffect("Citizen", 1, 1, CardColor.GREEN,
                         Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN))));

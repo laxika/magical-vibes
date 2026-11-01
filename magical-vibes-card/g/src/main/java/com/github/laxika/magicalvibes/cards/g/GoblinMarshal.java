@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "UDS", collectorNumber = "85")
 public class GoblinMarshal extends Card {
@@ -20,7 +22,7 @@ public class GoblinMarshal extends Card {
                 2, "Goblin", 1, 1, CardColor.RED,
                 List.of(CardSubtype.GOBLIN), Set.of(), Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, goblinTokens);
-        addEffect(EffectSlot.ON_DEATH, goblinTokens);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), goblinTokens);
 
         // Echo {4}{R}{R}.
         addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));

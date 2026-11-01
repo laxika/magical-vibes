@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffec
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class JudithCarnageConnoisseur extends Card {
             "Create a 2/2 red Imp creature token with \"When this token dies, it deals 2 damage to each opponent.\"";
 
     public JudithCarnageConnoisseur() {
-        List<Ability> tokenEffects = List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
+        List<Ability> tokenEffects = List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

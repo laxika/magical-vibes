@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "228")
 public class ToluzCleverConductor extends Card {
@@ -13,6 +15,6 @@ public class ToluzCleverConductor extends Card {
     public ToluzCleverConductor() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawDiscardAndConniveEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new ExileDiscardedCardFromGraveyardEffect(true));
-        addEffect(EffectSlot.ON_DEATH, new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +37,7 @@ public class DrudgeSpell extends Card {
                         + "It has \"{B}: Regenerate this token.\""));
 
         // Every Skeleton token, not just the ones this enchantment made.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsTokenPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.SKELETON))),

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -51,6 +53,6 @@ public class ChitteringDispatcher extends Card {
 
         // When this creature leaves the battlefield, create a 0/1 colorless Eldrazi Spawn creature token
         // with "Sacrifice this token: Add {C}."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, SPAWN_TOKEN);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SPAWN_TOKEN);
     }
 }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "239")
 public class SandbenderScavengers extends Card {
@@ -24,7 +26,7 @@ public class SandbenderScavengers extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new ExileSourceCardFromGraveyardThenEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

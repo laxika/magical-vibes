@@ -1210,7 +1210,12 @@ public class StackEntry {
     }
 
     public void addPersistentTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
-        persistentAbilitiesOnEntry.add(LegacySlots.ability(slot, effect));
+        addPersistentAbilityOnEntry(LegacySlots.ability(slot, effect));
+    }
+
+    /** Has the permanent this spell becomes gain {@code ability} indefinitely as it enters. */
+    public void addPersistentAbilityOnEntry(Ability ability) {
+        persistentAbilitiesOnEntry.add(ability);
     }
 
     /** The abilities the permanent this spell becomes gains indefinitely as it enters. */

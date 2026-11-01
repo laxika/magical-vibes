@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KTK", collectorNumber = "99")
 @CardRegistration(set = "MKC", collectorNumber = "147")
@@ -13,7 +15,7 @@ public class AshcloudPhoenix extends Card {
 
     public AshcloudPhoenix() {
         addMorph("{4}{R}{R}");
-        addEffect(EffectSlot.ON_DEATH, new ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect());
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_PLAYER));
     }
 }

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class KheruBloodsucker extends Card {
 
     public KheruBloodsucker() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
-        addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileUnlessDiscardCardTypeEff
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "UDS", collectorNumber = "53")
 @CardRegistration(set = "DMR", collectorNumber = "75")
@@ -18,7 +20,7 @@ public class BodySnatcher extends Card {
     public BodySnatcher() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileUnlessDiscardCardTypeEffect(CardType.CREATURE));
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new ExileSourceCardFromGraveyardEffect(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

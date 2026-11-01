@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class JTunOwlKeeper extends Card {
 
         // When this creature dies, create a 1/1 white Bird creature token with flying for each
         // age counter on it.
-        addEffect(EffectSlot.ON_DEATH, new CreateTokensForEachDyingSourceCounterEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokensForEachDyingSourceCounterEffect(
                 CounterType.AGE,
                 new CreateTokenEffect("Bird", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));

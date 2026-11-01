@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
- * {@code ON_DEATH}: "exile it if it had a [counter] on it. Otherwise, return it to the battlefield
+ * "when this dies": "exile it if it had a [counter] on it. Otherwise, return it to the battlefield
  * under your control and put a [counter] on it" (Bogardan Phoenix).
  *
  * <p>The death-trigger collector snapshots whether the dying permanent had at least one counter of

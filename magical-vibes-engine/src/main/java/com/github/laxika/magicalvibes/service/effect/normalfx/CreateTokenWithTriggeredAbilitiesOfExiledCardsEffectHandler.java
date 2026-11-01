@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithTriggeredAbili
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.ArrayList;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
@@ -69,20 +72,23 @@ public class CreateTokenWithTriggeredAbilitiesOfExiledCardsEffectHandler impleme
         ));
     }
 
-    private Map<EffectSlot, List<EffectRegistration>> triggeredAbilitiesOfExiledCards(
-            GameData gameData, UUID sourcePermanentId) {
-        Map<EffectSlot, List<EffectRegistration>> result = new EnumMap<>(EffectSlot.class);
+    private List<Ability> triggeredAbilitiesOfExiledCards(GameData gameData, UUID sourcePermanentId) {
         if (sourcePermanentId == null) {
-            return result;
+            return List.of();
         }
+        Map<EffectSlot, List<EffectRegistration>> slotted = new EnumMap<>(EffectSlot.class);
+        List<Ability> abilities = new ArrayList<>();
         for (Card card : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
             for (EffectSlot slot : EffectSlot.values()) {
                 List<EffectRegistration> registrations = card.getEffectRegistrations(slot);
                 if (!registrations.isEmpty()) {
-                    result.computeIfAbsent(slot, ignored -> new java.util.ArrayList<>()).addAll(registrations);
+                    slotted.computeIfAbsent(slot, ignored -> new ArrayList<>()).addAll(registrations);
                 }
             }
+            abilities.addAll(card.getUnslottedTriggeredAbilities());
         }
+        List<Ability> result = new ArrayList<>(LegacySlots.registrationAbilities(slotted));
+        result.addAll(abilities);
         return result;
     }
 }

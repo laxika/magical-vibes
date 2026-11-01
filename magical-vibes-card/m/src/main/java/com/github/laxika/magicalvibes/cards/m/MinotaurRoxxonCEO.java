@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,6 +24,6 @@ public class MinotaurRoxxonCEO extends Card {
         // Whenever this creature or another nontoken creature dies, create a 2/1 black Villain
         // creature token with menace.
         addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES, VILLAIN_TOKEN);
-        addEffect(EffectSlot.ON_DEATH, VILLAIN_TOKEN);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), VILLAIN_TOKEN);
     }
 }

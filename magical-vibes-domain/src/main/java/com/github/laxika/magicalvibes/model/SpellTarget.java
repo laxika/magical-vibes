@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 /**
  * Binds effects to a target group a card constructor has just declared. The group itself is a
@@ -70,6 +71,16 @@ public final class SpellTarget {
      */
     public SpellTarget addEffect(EffectSlot slot, CardEffect effect) {
         card.addEffect(slot, effect);
+        card.registerEffectTargetIndex(effect, this.index);
+        return this;
+    }
+
+    /**
+     * Adds a triggered ability with {@code trigger} and {@code effect} ({@link Card#addTrigger}) and binds the
+     * effect to this group: "when this creature dies, it deals 2 damage to target creature".
+     */
+    public SpellTarget addTrigger(Trigger trigger, CardEffect effect) {
+        card.addTrigger(trigger, effect);
         card.registerEffectTargetIndex(effect, this.index);
         return this;
     }

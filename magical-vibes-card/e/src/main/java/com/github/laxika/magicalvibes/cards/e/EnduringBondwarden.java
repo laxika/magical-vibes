@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -18,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,9 +42,9 @@ public class EnduringBondwarden extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.ON_DEATH, transferCounters)
+                        new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), transferCounters))
                 )
         ));
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_DEATH, transferCounters);
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.dies(ObjectRelation.THIS), transferCounters);
     }
 }

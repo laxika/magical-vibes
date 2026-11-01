@@ -1855,6 +1855,44 @@ public class Card {
         return triggered;
     }
 
+    /**
+     * The card's triggered abilities with a real trigger, which no slot holds and no slot view shows. Code that walks
+     * the slots to read or copy a card's triggered abilities walks these too, until {@code EffectSlot} is gone.
+     */
+    public List<TriggeredAbility> getUnslottedTriggeredAbilities() {
+        List<TriggeredAbility> unslotted = new ArrayList<>();
+        for (TriggeredAbility ability : getTriggeredAbilities()) {
+            if (slotOf(ability) == null) {
+                unslotted.add(ability);
+            }
+        }
+        return unslotted;
+    }
+
+    /** The effects of all the card's triggered abilities, those held in a slot and the others, in order. */
+    public List<CardEffect> getTriggeredEffects() {
+        List<CardEffect> effects = new ArrayList<>();
+        for (TriggeredAbility ability : getTriggeredAbilities()) {
+            ability.effects().forEach(registration -> effects.add(registration.effect()));
+        }
+        return effects;
+    }
+
+    /**
+     * The effects of this card's triggered abilities that have {@code trigger} as one of their trigger conditions,
+     * in the order the abilities were added: {@code getTriggerEffects(Triggers.dies(ObjectRelation.THIS))} for
+     * its "when this dies" effects.
+     */
+    public List<CardEffect> getTriggerEffects(Trigger trigger) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (TriggeredAbility ability : getTriggeredAbilities()) {
+            if (ability.conditions().stream().anyMatch(condition -> condition.trigger().equals(trigger))) {
+                ability.effects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
+        return effects;
+    }
+
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
     public boolean isSimultaneousWithPrevious(CardEffect effect) {
         for (EffectRegistration reg : getSpellEffectRegistrations()) {

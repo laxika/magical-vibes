@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CSP", collectorNumber = "102")
 public class ArcticNishoba extends Card {
 
     public ArcticNishoba() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{G/W}"));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new GainLifeEffect(new Scaled(new CountersOnSource(CounterType.AGE), 2)));
     }
 }

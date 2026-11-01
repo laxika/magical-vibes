@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "45")
 @CardRegistration(set = "TSR", collectorNumber = "81")
@@ -19,7 +21,7 @@ public class RealityAcid extends Card {
                 .addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)))
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME))
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new SacrificeEnchantedCreatureOnLeaveEffect());
     }
 }

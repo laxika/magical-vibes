@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ISD", collectorNumber = "191")
 @CardRegistration(set = "INR", collectorNumber = "206")
@@ -14,7 +16,7 @@ public class Lumberknot extends Card {
 
     public Lumberknot() {
         // Whenever a creature dies (including Lumberknot itself), put a +1/+1 counter on Lumberknot.
-        addEffect(EffectSlot.ON_DEATH, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCountersOnSourceEffect(1, 1, 1));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

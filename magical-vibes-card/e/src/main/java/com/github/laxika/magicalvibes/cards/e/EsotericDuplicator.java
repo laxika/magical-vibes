@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedTokenCopyEffec
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class EsotericDuplicator extends Card {
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(new PermanentIsArtifactPredicate(), delayedCopy));
-        addEffect(EffectSlot.ON_DEATH, delayedCopy);
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), delayedCopy);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

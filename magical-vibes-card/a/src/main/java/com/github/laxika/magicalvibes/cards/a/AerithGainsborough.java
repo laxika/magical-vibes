@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class AerithGainsborough extends Card {
 
     public AerithGainsborough() {
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new PutCountersOnSourceEffect(1, 1, 1));
-        addEffect(EffectSlot.ON_DEATH, new PutCounterOnEachMatchingPermanentEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                 new PermanentAllOfPredicate(List.of(

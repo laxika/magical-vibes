@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * number of creatures you control") and the fixed-total form (Jugan, the Rising Star — "five +1/+1
  * counters among any number of target creatures").
  * <p>
- * Placed on the {@code ON_DEATH} slot. The death-trigger collector resolves {@code count} (for
+ * Placed on the "when this dies" ability. The death-trigger collector resolves {@code count} (for
  * {@code countFromSourceCounters} it snapshots the dying permanent's counters, which are gone by
  * resolution), wraps the baked effect in a {@link MayEffect}, and puts it on the stack. The division
  * is chosen via {@code GameData.pendingETBDamageAssignments}, the same buffer used by Inferno Titan /

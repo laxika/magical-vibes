@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class OrzhovEuthanist extends Card {
         target(damagedCreatureTarget())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_DEATH, new HauntEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
         target(damagedCreatureTarget())
                 .addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new DestroyTargetPermanentEffect());
     }

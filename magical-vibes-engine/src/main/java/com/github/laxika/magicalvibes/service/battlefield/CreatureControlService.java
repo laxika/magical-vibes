@@ -332,8 +332,7 @@ public class CreatureControlService {
         retainsFaceDownExileAccess |= java.util.stream.Stream.concat(
                         java.util.stream.Stream.concat(permanent.getCard().getCastingCostsAndSpellEffects().stream(),
                                 permanent.getCard().getStaticEffects().stream()),
-                        java.util.Arrays.stream(EffectSlot.values())
-                                .flatMap(slot -> permanent.getCard().getEffects(slot).stream()))
+                        permanent.getCard().getTriggeredEffects().stream())
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                         .ExileTopCardsToSourceEffect exile && exile.faceDown()
                         && exile.mayLookAtFaceDownCards() && !exile.toGraveyardOnControlLoss());

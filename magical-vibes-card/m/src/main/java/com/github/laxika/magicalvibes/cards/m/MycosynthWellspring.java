@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NPH", collectorNumber = "145")
 @CardRegistration(set = "DDU", collectorNumber = "56")
@@ -21,7 +23,7 @@ public class MycosynthWellspring extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand()),
                         "Search your library for a basic land card?"));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand()),
                         "Search your library for a basic land card?"));
     }

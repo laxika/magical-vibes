@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -33,7 +32,7 @@ class RabidAttackTest extends BaseCardTest {
         for (Permanent bear : List.of(bearA, bearB)) {
             assertThat(bear.getPowerModifier()).isEqualTo(1);
             assertThat(bear.getToughnessModifier()).isZero();
-            assertThat(bear.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).hasSize(1);
+            assertThat(bear.getTemporaryTriggeredAbilities()).hasSize(1);
         }
     }
 
@@ -75,7 +74,7 @@ class RabidAttackTest extends BaseCardTest {
         harness.passBothPriorities(); // advance through cleanup
 
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).isEmpty();
+        assertThat(bear.getTemporaryTriggeredAbilities()).isEmpty();
     }
 
     @Test

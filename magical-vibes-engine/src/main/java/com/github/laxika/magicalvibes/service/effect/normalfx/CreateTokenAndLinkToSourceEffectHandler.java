@@ -8,10 +8,13 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -54,10 +57,11 @@ public class CreateTokenAndLinkToSourceEffectHandler implements NormalEffectHand
             if (token.tokenEffects() != null) {
                 // The blueprint's own leaves-the-battlefield ability is replaced, as the slot map did.
                 token.tokenEffects().stream()
-                        .filter(ability -> LegacySlots.slotOf(ability) != EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+                        .filter(ability -> !(ability instanceof TriggeredAbility triggered
+                                && triggered.hasTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS))))
                         .forEach(tokenEffects::add);
             }
-            tokenEffects.add(LegacySlots.triggered(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+            tokenEffects.add(new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
                     new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER)));
             token = token.withTokenEffects(tokenEffects);
         }

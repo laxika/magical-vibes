@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ROE", collectorNumber = "4")
 @CardRegistration(set = "MM2", collectorNumber = "3")
@@ -28,7 +30,7 @@ public class EmrakulTheAeonsTorn extends Card {
         addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
                 6, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
 
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS),
                 new ShuffleGraveyardIntoLibraryEffect(false));
     }
 }

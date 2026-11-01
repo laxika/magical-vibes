@@ -71,6 +71,7 @@ public final class RulesEventLog {
     /** Departure events not yet drained, keyed by each physical card that left with the permanent. */
     private final Map<UUID, ZoneChangeEvent> departures = new HashMap<>();
     private final Map<UUID, ZoneChangeCause> causes = new HashMap<>();
+    private Card payingCostOf;
     private final Consumer<RulesEventBatch> onClose;
 
     /** A log that tells nobody when a batch closes. */
@@ -161,6 +162,20 @@ public final class RulesEventLog {
      */
     public ZoneChangeCause setCause(UUID objectId, ZoneChangeCause cause) {
         return causes.put(objectId, cause);
+    }
+
+    /**
+     * Names {@code spell} as the spell whose cost the permanents leaving from now on are sacrificed to pay, until
+     * {@link #restorePayingCostOf} puts {@code previous}, the value this returns, back.
+     */
+    public Card setPayingCostOf(Card spell) {
+        Card previous = payingCostOf;
+        payingCostOf = spell;
+        return previous;
+    }
+
+    public void restorePayingCostOf(Card previous) {
+        payingCostOf = previous;
     }
 
     public void restoreCause(UUID objectId, ZoneChangeCause previous) {
@@ -258,22 +273,24 @@ public final class RulesEventLog {
      */
     public void departed(Permanent lastKnown, Card card, Collection<UUID> cardIds, UUID ownerId,
                          UUID controllerId, Zone intendedTo) {
-        departed(lastKnown, card, cardIds, ownerId, controllerId, intendedTo, List.of(), false);
+        departed(lastKnown, card, cardIds, ownerId, controllerId, intendedTo, List.of(), false,
+                DepartedAttachments.NONE);
     }
 
     /**
      * As {@link #departed(Permanent, Card, Collection, UUID, UUID, Zone)}, with the abilities granted to it as it
-     * left and whether its death would have caused no triggers (see {@link ZoneChangeEvent}).
+     * left, whether its death would have caused no triggers and what was attached to it (see
+     * {@link ZoneChangeEvent}).
      */
     public void departed(Permanent lastKnown, Card card, Collection<UUID> cardIds, UUID ownerId,
                          UUID controllerId, Zone intendedTo, List<Ability> grantedAbilities,
-                         boolean deathTriggersSuppressed) {
+                         boolean deathTriggersSuppressed, DepartedAttachments attachments) {
         if (suppressDepth > 0) {
             return;
         }
         ZoneChangeEvent event = new ZoneChangeEvent(card, ownerId, Zone.BATTLEFIELD, intendedTo,
                 causes.getOrDefault(lastKnown.getId(), ZoneChangeCause.OTHER), lastKnown, controllerId,
-                grantedAbilities, deathTriggersSuppressed);
+                grantedAbilities, deathTriggersSuppressed, payingCostOf, attachments);
         for (UUID cardId : cardIds) {
             departures.put(cardId, event);
             cardZones.put(cardId, intendedTo);
@@ -352,6 +369,7 @@ public final class RulesEventLog {
         cardZones.putAll(source.cardZones);
         causes.clear();
         causes.putAll(source.causes);
+        payingCostOf = source.payingCostOf;
         departures.clear();
         source.departures.forEach((cardId, event) -> departures.put(cardId,
                 (ZoneChangeEvent) copies.computeIfAbsent(event, RulesEvent::deepCopy)));

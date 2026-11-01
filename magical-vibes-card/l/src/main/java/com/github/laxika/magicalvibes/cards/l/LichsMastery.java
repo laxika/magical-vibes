@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEff
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "98")
 public class LichsMastery extends Card {
@@ -29,6 +31,6 @@ public class LichsMastery extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, new ExileForEachLifeLostEffect());
 
         // "When Lich's Mastery leaves the battlefield, you lose the game."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ControllerLosesGameOnLeavesEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerLosesGameOnLeavesEffect());
     }
 }

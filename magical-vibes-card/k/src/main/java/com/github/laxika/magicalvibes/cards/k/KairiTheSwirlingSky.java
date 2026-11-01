@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +35,7 @@ public class KairiTheSwirlingSky extends Card {
                 ReturnTargetPermanentsWithinTotalManaValueEffect.withinTotalManaValue(
                         nonlandPermanent, 6);
 
-        addEffect(EffectSlot.ON_DEATH, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return any number of target nonland permanents with total mana value 6 or less to their owners' hands",
                         List.of(returnPermanents), TargetFilters.nonlandPermanent(), null, 0, 99, false, null),

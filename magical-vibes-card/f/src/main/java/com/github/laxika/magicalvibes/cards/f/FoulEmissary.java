@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class FoulEmissary extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(
                         4, new CardTypePredicate(CardType.CREATURE)));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS),
                 new CreateTokenForEmergeSacrificeEffect(new CreateTokenEffect(
                         1, "Eldrazi Horror", 3, 2, null,
                         List.of(CardSubtype.ELDRAZI, CardSubtype.HORROR), false)));

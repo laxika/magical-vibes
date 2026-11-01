@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardTypeToMatchingHandCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,6 +27,6 @@ public class KamiOfTransmutation extends Card {
                         new PerpetuallyGrantCardTypeToMatchingHandCardsEffect(
                                 CardType.ENCHANTMENT, new CardIsPermanentPredicate())))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, choice);
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, choice);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), choice);
     }
 }

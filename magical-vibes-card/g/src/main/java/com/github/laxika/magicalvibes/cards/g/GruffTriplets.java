@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class GruffTriplets extends Card {
                 new NotCondition(new SourceIsToken()),
                 new CreateTokenCopyOfSourceEffect(false, 2)));
 
-        addEffect(EffectSlot.ON_DEATH, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new SourcePower(),
                 new PermanentAllOfPredicate(List.of(

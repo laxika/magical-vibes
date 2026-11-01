@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BRO", collectorNumber = "20")
 public class PowerstoneEngineer extends Card {
 
     public PowerstoneEngineer() {
-        addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.ofPowerstoneToken(new Fixed(1)));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), CreateTokenEffect.ofPowerstoneToken(new Fixed(1)));
     }
 }

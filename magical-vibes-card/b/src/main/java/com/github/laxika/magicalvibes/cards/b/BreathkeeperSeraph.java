@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -11,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1345")
 @CardRegistration(set = "VOC", collectorNumber = "31")
@@ -26,10 +29,10 @@ public class BreathkeeperSeraph extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_DEATH,
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         new MayEffect(
                                 RegisterDelayedSelfReturnFromGraveyardEffect.returningAtControllersNextUpkeep(),
-                                "Return this creature to the battlefield at the beginning of your next upkeep?"),
+                                "Return this creature to the battlefield at the beginning of your next upkeep?")),
                         GrantScope.SELF_AND_PAIRED)));
     }
 }

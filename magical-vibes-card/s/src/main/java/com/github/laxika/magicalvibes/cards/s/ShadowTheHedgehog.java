@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantSplitSecondToControllerS
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +18,7 @@ import java.util.List;
 public class ShadowTheHedgehog extends Card {
 
     public ShadowTheHedgehog() {
-        addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(
                         new CardAnyOfPredicate(List.of(

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.LegacySlots;
  * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryTriggeredEffect(EffectSlot, CardEffect)}
  * and cleared at the cleanup step by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
  *
- * <p>Example: Verdant Rebirth grants {@link EffectSlot#ON_DEATH} +
+ * <p>Example: Verdant Rebirth grants "when this dies" +
  * {@link ReturnSourceCardFromGraveyardToOwnerHandEffect} until end of turn.
  *
  * @param grantedAbility the granted ability

@@ -441,7 +441,7 @@ public class Permanent {
      */
     private final Set<UUID> cantPhaseOutUntilUpkeepsOf = new HashSet<>();
     /** Abilities temporarily granted by one-shot effects until end of turn (e.g. Verdant Rebirth
-     *  granting an {@code ON_DEATH} ability with ReturnSourceCardFromGraveyardToOwnerHandEffect), mostly
+     *  granting an "when this dies" ability with ReturnSourceCardFromGraveyardToOwnerHandEffect), mostly
      *  triggered and sometimes static. Cleared every turn by {@link #resetModifiers()}. */
     @Getter(AccessLevel.NONE)
     private final List<Ability> temporaryAbilities = new ArrayList<>();

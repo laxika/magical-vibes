@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreateTokenAtN
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +35,7 @@ public class HazezonTamar extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new RegisterDelayedCreateTokenAtNextUpkeepEffect(sandWarrior));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ExileAllPermanentsEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ExileAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.SAND),
                         new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))));

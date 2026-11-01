@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeAuraReanimateFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VIS", collectorNumber = "64")
 @CardRegistration(set = "AA3", collectorNumber = "9")
@@ -20,6 +22,6 @@ public class Necromancy extends Card {
         // under your control, and attach this to it (intervening-if: still on the battlefield).
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeAuraReanimateFromGraveyardEffect());
         // When this leaves the battlefield, that creature's controller sacrifices it.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SacrificeEnchantedCreatureOnLeaveEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SacrificeEnchantedCreatureOnLeaveEffect());
     }
 }

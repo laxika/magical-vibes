@@ -32,7 +32,7 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
         var e = (RegisterDelayedReturnCardFromGraveyardToHandEffect) effect;
 
         // Explicit cardId (Tiana bakes the dying Aura/Equipment). Null = source card on the
-        // stack entry (ON_DEATH self-return, e.g. The Locust God).
+        // stack entry ("when this dies" self-return, e.g. The Locust God).
         UUID cardId = e.cardId() != null ? e.cardId() : entry.getCard().getId();
         if (cardId == null) return;
 

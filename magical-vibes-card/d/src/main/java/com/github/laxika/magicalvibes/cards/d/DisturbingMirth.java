@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class DisturbingMirth extends Card {
                         false,
                         false),
                 "Sacrifice another enchantment or creature?"));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS),
                 new SacrificeOnlyEffect(ManifestDreadEffect.forController()));
     }
 }

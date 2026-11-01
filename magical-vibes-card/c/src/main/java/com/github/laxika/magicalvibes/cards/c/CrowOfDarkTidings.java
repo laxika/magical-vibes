@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOI", collectorNumber = "105")
 @CardRegistration(set = "SIR", collectorNumber = "104")
@@ -15,6 +17,6 @@ public class CrowOfDarkTidings extends Card {
 
     public CrowOfDarkTidings() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_DEATH, new MillEffect(2, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER));
     }
 }

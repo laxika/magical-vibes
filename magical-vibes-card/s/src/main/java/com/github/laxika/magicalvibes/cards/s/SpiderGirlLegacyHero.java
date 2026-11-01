@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +26,7 @@ public class SpiderGirlLegacyHero extends Card {
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         // When Spider-Girl leaves the battlefield, create a 1/1 green and white Human Citizen creature token.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new CreateTokenEffect(
                 1, "Human Citizen", 1, 1, CardColor.GREEN,
                 Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.HUMAN, CardSubtype.CITIZEN)));

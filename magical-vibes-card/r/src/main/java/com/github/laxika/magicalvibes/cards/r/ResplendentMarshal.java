@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KHM", collectorNumber = "22")
 @CardRegistration(set = "KHM", collectorNumber = "337")
@@ -22,6 +24,6 @@ public class ResplendentMarshal extends Card {
                         "creature card"),
                 "Exile another creature card from your graveyard?");
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ability);
-        addEffect(EffectSlot.ON_DEATH, ability);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ability);
     }
 }

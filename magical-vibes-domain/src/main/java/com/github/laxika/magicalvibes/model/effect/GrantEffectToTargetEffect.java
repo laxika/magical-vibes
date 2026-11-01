@@ -76,6 +76,11 @@ public record GrantEffectToTargetEffect(
                 GrantScope.SELF);
     }
 
+    /** Indefinite grant of {@code grantedAbility} to the source permanent. */
+    public static GrantEffectToTargetEffect toSourcePermanent(Ability grantedAbility) {
+        return new GrantEffectToTargetEffect(grantedAbility, EffectDuration.PERMANENT, true, GrantScope.SELF);
+    }
+
     /** Grant to the permanent the source Aura enchants, for the given duration (Genju cycle). */
     public static GrantEffectToTargetEffect toEnchantedPermanent(EffectSlot slot, CardEffect grantedEffect,
                                                                  EffectDuration duration) {

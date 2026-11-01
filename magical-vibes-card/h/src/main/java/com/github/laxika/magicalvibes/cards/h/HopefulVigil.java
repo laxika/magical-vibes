@@ -7,9 +7,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +24,7 @@ public class HopefulVigil extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 "Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of()));
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new ScryEffect(2));
+        addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS), new ScryEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

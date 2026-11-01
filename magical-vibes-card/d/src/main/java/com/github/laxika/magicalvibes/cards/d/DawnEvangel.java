@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,6 +31,6 @@ public class DawnEvangel extends Card {
                         .targetGraveyard(true)
                         .build());
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, returnEligibleCreature);
-        addEffect(EffectSlot.ON_DEATH, returnEligibleCreature);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), returnEligibleCreature);
     }
 }

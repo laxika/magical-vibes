@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyThenDestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "127")
 @CardRegistration(set = "PIP", collectorNumber = "655")
@@ -16,7 +18,7 @@ public class BehemothOfVault0 extends Card {
     public BehemothOfVault0() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(4));
 
-        target(TargetFilters.nonlandPermanent()).addEffect(EffectSlot.ON_DEATH,
+        target(TargetFilters.nonlandPermanent()).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(
                         new PayEnergyThenDestroyTargetPermanentEffect(new TargetManaValue()),
                         "Pay energy equal to that permanent's mana value to destroy it?"));

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfDefendingPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "65")
 public class SalvageDrone extends Card {
@@ -16,7 +18,7 @@ public class SalvageDrone extends Card {
     public SalvageDrone() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)

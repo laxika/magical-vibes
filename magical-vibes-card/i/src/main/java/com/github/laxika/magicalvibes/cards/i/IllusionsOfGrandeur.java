@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ICE", collectorNumber = "79")
 @CardRegistration(set = "ME1", collectorNumber = "40")
@@ -19,6 +21,6 @@ public class IllusionsOfGrandeur extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(20));
 
         // When this enchantment leaves the battlefield, you lose 20 life.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new LoseLifeEffect(20));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new LoseLifeEffect(20));
     }
 }

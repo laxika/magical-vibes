@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class DeathTyrant extends Card {
     public DeathTyrant() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(), CreateTokenEffect.blackZombie(1)));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(), CreateTokenEffect.blackZombie(1)));
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentIsBlockingPredicate(), CreateTokenEffect.blackZombie(1)));

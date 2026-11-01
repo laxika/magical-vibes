@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class TitaniaNaturesForce extends Card {
                         new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER),
                                 "Mill three cards?")));
         // Titania is an Elemental herself, so her own death also offers the mill.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"));
     }
 }

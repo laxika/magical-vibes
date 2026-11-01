@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class SkyclaveShadowcat extends Card {
         var drawIfCountered = new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect());
-        addEffect(EffectSlot.ON_DEATH, drawIfCountered);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), drawIfCountered);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawIfCountered);
     }
 }

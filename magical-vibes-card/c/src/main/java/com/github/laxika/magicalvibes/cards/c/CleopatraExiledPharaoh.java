@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -43,7 +45,7 @@ public class CleopatraExiledPharaoh extends Card {
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 legendaryCreatureWithCounters,
                 new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2))));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 legendaryCreatureWithCounters,
                 new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2))));
     }

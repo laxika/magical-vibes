@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class LocthwainLancer extends Card {
 
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.KNIGHT), deathEffect));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new TriggeringCardConditionalEffect(new CardAllOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.KNIGHT),
                         new CardNotPredicate(new CardIsTokenPredicate()))), deathEffect));

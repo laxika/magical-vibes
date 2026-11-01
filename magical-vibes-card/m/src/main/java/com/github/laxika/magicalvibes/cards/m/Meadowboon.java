@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,9 +18,9 @@ public class Meadowboon extends Card {
 
     public Meadowboon() {
         // "When this creature leaves the battlefield, put a +1/+1 counter on each creature target player controls."
-        // The target player is chosen at leaves-the-battlefield time via the ON_SELF_LEAVES_BATTLEFIELD trigger
+        // The target player is chosen at leaves-the-battlefield time via the its leaves-the-battlefield trigger
         // pipeline — no cast-time target filter (that would wrongly prompt when the creature is cast).
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect());
 
         // Evoke {3}{W}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.

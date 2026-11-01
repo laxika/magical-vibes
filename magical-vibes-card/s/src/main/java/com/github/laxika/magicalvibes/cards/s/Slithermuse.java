@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class Slithermuse extends Card {
         // draw (opponent hand - your hand). A non-positive difference draws 0 (applyDrawCards no-ops on
         // <= 0), matching the "if that player has more cards" intervening check. Non-targeting choice,
         // so it pushes straight to the stack from the leaves-the-battlefield slot.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new DrawCardEffect(new Sum(
                         new CardsInHand(CountScope.OPPONENTS),
                         new Scaled(new CardsInHand(CountScope.CONTROLLER), -1))));

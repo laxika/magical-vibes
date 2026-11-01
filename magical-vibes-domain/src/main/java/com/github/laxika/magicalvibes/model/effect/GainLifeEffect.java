@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
  * this only establishes the target so a {@code CountScope.TARGET_PLAYER} amount can read it — e.g.
  * Renewing Dawn's "gain 2 life for each Mountain target opponent controls".
  *
- * <p>{@code onlyIfSacrificed} marks an {@code ON_DEATH} effect as triggering only when its source
+ * <p>{@code onlyIfSacrificed} marks an "when this dies" effect as triggering only when its source
  * was sacrificed. Use {@link #sacrificeOnly(int)} or {@link #sacrificeOnly(DynamicAmount)} for that
  * form.
  */

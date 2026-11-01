@@ -17,18 +17,19 @@ final class TriggerMatcher {
     }
 
     /**
-     * Whether one of the ability's trigger conditions is met by {@code event}. A condition is met when its trigger
-     * is a zone change of this kind, the moving object relates to the source as the trigger says, and the source
-     * is in a zone the condition functions from (CR 113.6). Only {@code THIS} is matched until step 11.
+     * The first of the ability's trigger conditions that {@code event} meets, or {@code null}. A condition is met
+     * when its trigger is a zone change of this kind, the moving object relates to the source as the trigger says,
+     * and the source is in a zone the condition functions from (CR 113.6). Only {@code THIS} is matched until
+     * step 11.
      */
-    static boolean matches(TriggerCandidate candidate, ZoneChangeEvent event) {
+    static ZoneChangeTrigger matchedTrigger(TriggerCandidate candidate, ZoneChangeEvent event) {
         for (TriggerCondition condition : candidate.ability().conditions()) {
             if (condition.trigger() instanceof ZoneChangeTrigger trigger
                     && matches(trigger, condition.zones().functionsIn(candidate.zone()), event)) {
-                return true;
+                return trigger;
             }
         }
-        return false;
+        return null;
     }
 
     /**

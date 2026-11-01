@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YMKM", collectorNumber = "9")
 public class CacklingObserver extends Card {
@@ -25,7 +27,7 @@ public class CacklingObserver extends Card {
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         new TrackChosenCardExiledWithSourceEffect(), false));
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new SeekLibraryForOwnerOfCardExiledWithSourceBelowManaValueEffect());
     }
 }

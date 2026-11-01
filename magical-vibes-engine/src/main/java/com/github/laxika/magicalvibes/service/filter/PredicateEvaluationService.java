@@ -4603,13 +4603,8 @@ public class PredicateEvaluationService {
         if (!permanent.getPersistentStaticEffects().isEmpty() || !permanent.getTemporaryStaticEffects().isEmpty()) {
             return true;
         }
-        for (EffectSlot slot : EffectSlot.values()) {
-            if (!permanent.getPersistentTriggeredEffects(slot).isEmpty()
-                    || !permanent.getTemporaryTriggeredEffects(slot).isEmpty()) {
-                return true;
-            }
-        }
-        return false;
+        return !permanent.getPersistentTriggeredAbilities().isEmpty()
+                || !permanent.getTemporaryTriggeredAbilities().isEmpty();
     }
 
     /**
@@ -4680,8 +4675,7 @@ public class PredicateEvaluationService {
         if (card.getActivatedAbilities().stream().anyMatch(ability -> !ability.functionsIn(Zone.BATTLEFIELD))) {
             return true;
         }
-        return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
-                .anyMatch(slot -> !card.getEffects(slot).isEmpty());
+        return !card.getStaticEffects().isEmpty() || !card.getTriggeredAbilities().isEmpty();
     }
 
     private static boolean hasAnyPrintedNonKeywordAbility(Permanent permanent) {
@@ -4693,8 +4687,7 @@ public class PredicateEvaluationService {
                 || !card.getActivatedAbilities().isEmpty()) {
             return true;
         }
-        return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
-                .anyMatch(slot -> !card.getEffects(slot).isEmpty());
+        return !card.getStaticEffects().isEmpty() || !card.getTriggeredAbilities().isEmpty();
     }
 
     private static boolean hasAnyPrintedNonKeywordAbility(Card card) {
@@ -4702,8 +4695,7 @@ public class PredicateEvaluationService {
                 || !card.getActivatedAbilities().isEmpty()) {
             return true;
         }
-        return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
-                .anyMatch(slot -> !card.getEffects(slot).isEmpty());
+        return !card.getStaticEffects().isEmpty() || !card.getTriggeredAbilities().isEmpty();
     }
 
     private static boolean hasPrintedNonKeywordText(Card card) {

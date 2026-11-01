@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,13 +22,13 @@ import java.util.Set;
 public class XathridNecromancer extends Card {
 
     public XathridNecromancer() {
-        // Ally-death alone is "another" (the source is already gone); ON_DEATH covers this creature itself,
+        // Ally-death alone is "another" (the source is already gone); its dies trigger covers this creature itself,
         // which is a Human and so always qualifies.
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN),
                 tappedZombie()
         ));
-        addEffect(EffectSlot.ON_DEATH, tappedZombie());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), tappedZombie());
     }
 
     private static CreateTokenEffect tappedZombie() {

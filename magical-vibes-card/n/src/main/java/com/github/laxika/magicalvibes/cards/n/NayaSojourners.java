@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "122")
 public class NayaSojourners extends Card {
 
     public NayaSojourners() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_DEATH, new MayEffect(
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         "Put a +1/+1 counter on target creature?"));
 

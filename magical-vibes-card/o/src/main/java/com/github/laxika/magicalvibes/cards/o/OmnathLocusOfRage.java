@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,6 +32,6 @@ public class OmnathLocusOfRage extends Card {
                 List.of(CardSubtype.ELEMENTAL)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.ELEMENTAL), DEATH_DAMAGE));
-        addEffect(EffectSlot.ON_DEATH, DEATH_DAMAGE);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_DAMAGE);
     }
 }

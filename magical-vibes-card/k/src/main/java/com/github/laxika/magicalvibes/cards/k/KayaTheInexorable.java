@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
@@ -34,6 +34,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -67,10 +69,10 @@ public class KayaTheInexorable extends Card {
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.GHOSTFORM),
                         new GrantEffectToTargetEffect(
-                                EffectSlot.ON_DEATH, returnFromGraveyard, EffectDuration.PERMANENT, false),
+                                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnFromGraveyard), EffectDuration.PERMANENT, false),
                         new GrantEffectToTargetEffect(
-                                EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                                new SelfExiledFromBattlefieldEffect(returnFromExile),
+                                new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                                new SelfExiledFromBattlefieldEffect(returnFromExile)),
                                 EffectDuration.PERMANENT,
                                 false)),
                 "+1: Put a ghostform counter on up to one target nontoken creature. It gains \"When this creature dies "

@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UnspecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -79,7 +81,7 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
             default -> throw new IllegalStateException("Unsupported Lukamina specialization color: "
                     + specialize.color());
         }
-        specialized.addEffect(EffectSlot.ON_DEATH, new UnspecializeLukaminaEffect());
+        specialized.addTrigger(Triggers.dies(ObjectRelation.THIS), new UnspecializeLukaminaEffect());
 
         source.exchangeCard(specialized);
         if (!specializationTrigger.isEmpty()) {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefi
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CHK", collectorNumber = "265")
 public class OathkeeperTakenosDaisho extends Card {
@@ -27,7 +29,7 @@ public class OathkeeperTakenosDaisho extends Card {
         ));
 
         // When Oathkeeper is put into a graveyard from the battlefield, exile equipped creature.
-        addEffect(EffectSlot.ON_DEATH, new ExileEquippedCreatureEffect());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ExileEquippedCreatureEffect());
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

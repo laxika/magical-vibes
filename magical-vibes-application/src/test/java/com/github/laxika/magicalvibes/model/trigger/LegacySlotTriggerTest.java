@@ -29,7 +29,7 @@ class LegacySlotTriggerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "ON_DEATH, BATTLEFIELD",
+            "ON_SELF_BECOMES_UNTAPPED, BATTLEFIELD",
             "GRAVEYARD_UPKEEP_TRIGGERED, GRAVEYARD",
             "COMMAND_ZONE_UPKEEP_TRIGGERED, COMMAND",
             "EXILE_ON_CONTROLLER_CASTS_SPELL, EXILE",

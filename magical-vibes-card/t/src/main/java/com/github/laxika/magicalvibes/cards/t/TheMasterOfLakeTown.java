@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.GraveyardsAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOB", collectorNumber = "77")
 public class TheMasterOfLakeTown extends Card {
@@ -14,6 +16,6 @@ public class TheMasterOfLakeTown extends Card {
         MillOpponentOnLifeLossEffect millOnLifeLoss = new MillOpponentOnLifeLossEffect();
         addEffect(EffectSlot.ON_OPPONENT_LOSES_LIFE, millOnLifeLoss);
         addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, millOnLifeLoss);
-        addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(new GraveyardsAtLeast(7)));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(new GraveyardsAtLeast(7)));
     }
 }

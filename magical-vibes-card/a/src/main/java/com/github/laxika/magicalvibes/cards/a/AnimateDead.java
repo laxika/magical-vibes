@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCar
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "140")
 @CardRegistration(set = "4ED", collectorNumber = "118")
@@ -47,6 +49,6 @@ public class AnimateDead extends Card {
         // "Enchanted creature gets -1/-0."
         addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ENCHANTED_CREATURE));
         // "When this Aura leaves the battlefield, that creature's controller sacrifices it."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SacrificeEnchantedCreatureOnLeaveEffect());
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SacrificeEnchantedCreatureOnLeaveEffect());
     }
 }

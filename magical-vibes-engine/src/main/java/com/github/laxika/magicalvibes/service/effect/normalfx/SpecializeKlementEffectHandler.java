@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateBoonEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekThreeNonlandPermanentAndChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeKlementEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -105,7 +107,7 @@ public class SpecializeKlementEffectHandler implements NormalEffectHandlerBean {
                 specialized.setCardText("When Klement, Nature Acolyte leaves the battlefield, create a 4/4 green Ox creature token.");
                 specialized.setPower(4);
                 specialized.setToughness(4);
-                specialized.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                specialized.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new CreateTokenEffect(CardType.CREATURE, 1, "Ox", 4, 4, CardColor.GREEN, null,
                                 List.of(CardSubtype.OX), Set.of(), Set.of(), false, false, List.of(),
                                 List.of(), false, false, false, 0, Set.of()));

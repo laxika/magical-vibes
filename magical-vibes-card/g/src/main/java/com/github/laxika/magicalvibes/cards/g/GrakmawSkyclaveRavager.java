@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +33,7 @@ public class GrakmawSkyclaveRavager extends Card {
         CreateTokenEffect hydraToken = new CreateTokenEffect(
                 "Hydra", 0, 0, CardColor.BLACK,
                 Set.of(CardColor.BLACK, CardColor.GREEN), List.of(CardSubtype.HYDRA));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new CreateTokenWithDyingSourceCounterPTEffect(hydraToken, CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

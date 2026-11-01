@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPred
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class ProtectiveParents extends Card {
 
     public ProtectiveParents() {
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.ON_DEATH,
+                .addTrigger(Triggers.dies(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(youngHeroRoleToken()));
     }
 

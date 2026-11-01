@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "2369")
 @CardRegistration(set = "C20", collectorNumber = "47")
@@ -19,7 +21,7 @@ public class SpeciesSpecialist extends Card {
         var deathTrigger = new TriggeringPermanentConditionalEffect(
                 new PermanentHasSourceChosenSubtypePredicate(),
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
-        addEffect(EffectSlot.ON_DEATH, deathTrigger);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, deathTrigger);
     }
 }

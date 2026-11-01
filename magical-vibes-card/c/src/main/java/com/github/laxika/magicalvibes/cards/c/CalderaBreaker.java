@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class CalderaBreaker extends Card {
                         new CardSubtypePredicate(CardSubtype.MOUNTAIN),
                         new DealDamageToTargetCreatureOrPlaneswalkerEffect(
                                 new EventValue(), creatureOrPlaneswalkerAnOpponentControls)));
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new ReturnAllCardsExiledWithSourceEffect(),
                 new ConjureCardNamedIntoLibraryEffect("MIR", "202", 4)));
     }

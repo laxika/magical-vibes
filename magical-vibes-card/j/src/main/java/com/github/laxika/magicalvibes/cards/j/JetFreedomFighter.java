@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "229")
 public class JetFreedomFighter extends Card {
@@ -21,7 +23,7 @@ public class JetFreedomFighter extends Card {
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
 
         target(TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.ON_DEATH,
+                .addTrigger(Triggers.dies(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

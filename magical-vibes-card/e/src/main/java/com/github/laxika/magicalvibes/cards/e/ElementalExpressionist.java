@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,8 +36,8 @@ public class ElementalExpressionist extends Card {
         List<CardEffect> magecraft = List.of(
                 new GrantExileIfLeavesBattlefieldUntilEndOfTurnEffect(),
                 new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                        new SelfExiledFromBattlefieldEffect(elemental)));
+                        new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                        new SelfExiledFromBattlefieldEffect(elemental))));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(instantOrSorcery, magecraft, null, TargetFilters.creatureYouControl()));

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardLoseLifeEqualToMa
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOM", collectorNumber = "228")
 @CardRegistration(set = "MOM", collectorNumber = "309")
@@ -22,7 +24,7 @@ public class HidetsuguAndKairi extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_DEATH,
+        )).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new ExileTopCardLoseLifeEqualToManaValueAndMayCastInstantOrSorceryEffect());
     }
 }

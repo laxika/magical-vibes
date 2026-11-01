@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,6 +63,20 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /** An ability with one trigger condition, which functions from {@code trigger}'s default zones. */
     public TriggeredAbility(Trigger trigger, TriggerOptions options, List<EffectRegistration> effects) {
         this(List.of(new TriggerCondition(trigger)), options, effects);
+    }
+
+    /**
+     * An ability with one trigger condition, which functions from {@code trigger}'s default zones, and no
+     * options: "when this creature dies, draw a card" is {@code new TriggeredAbility(Triggers.dies(THIS),
+     * new DrawCardEffect(1))}. The effects are one ability, in the order they resolve.
+     */
+    public TriggeredAbility(Trigger trigger, CardEffect... effects) {
+        this(trigger, TriggerOptions.DEFAULT, Arrays.stream(effects).map(EffectRegistration::new).toList());
+    }
+
+    /** Whether {@code trigger} is one of this ability's trigger conditions. */
+    public boolean hasTrigger(Trigger trigger) {
+        return conditions.stream().anyMatch(condition -> condition.trigger().equals(trigger));
     }
 
     /** This ability with {@code effects} in place of its effects. */

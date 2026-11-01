@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,6 +37,6 @@ public class SlurrkAllIngesting extends Card {
     public SlurrkAllIngesting() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, COUNTERED_CREATURE_DIES);
-        addEffect(EffectSlot.ON_DEATH, COUNTERED_CREATURE_DIES);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), COUNTERED_CREATURE_DIES);
     }
 }

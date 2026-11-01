@@ -11,7 +11,7 @@ import java.util.Map;
  * for each {@code counterType} counter on this creature" (e.g. Grief Tyrant, which enters with four
  * -1/-1 counters and hands them out on death).
  * <p>
- * Placed on the {@code ON_DEATH} slot. The death-trigger collector snapshots the dying permanent's
+ * Placed on the "when this dies" ability. The death-trigger collector snapshots the dying permanent's
  * count of {@code counterType} at the moment of death into {@code count} (the source is off the
  * battlefield by the time this resolves), queues a targeted death trigger, and resolution places
  * {@code count} counters of {@code counterType} on the chosen creature.

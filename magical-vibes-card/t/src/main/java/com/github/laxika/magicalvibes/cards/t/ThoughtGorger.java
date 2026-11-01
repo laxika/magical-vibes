@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ROE", collectorNumber = "129")
 public class ThoughtGorger extends Card {
@@ -24,7 +26,7 @@ public class ThoughtGorger extends Card {
                         new CardsInHand(CountScope.CONTROLLER)),
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(new SourceIsOnBattlefield(), new DiscardHandEffect()))));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new DrawCardEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

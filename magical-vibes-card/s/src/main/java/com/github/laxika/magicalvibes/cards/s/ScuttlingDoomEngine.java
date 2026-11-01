@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M15", collectorNumber = "229")
 @CardRegistration(set = "DDU", collectorNumber = "61")
@@ -28,6 +29,6 @@ public class ScuttlingDoomEngine extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
-        )).addEffect(EffectSlot.ON_DEATH, new DealDamageToTargetPlayerOrPlaneswalkerEffect(6, PlayerRelation.OPPONENT));
+        )).addTrigger(Triggers.dies(ObjectRelation.THIS), new DealDamageToTargetPlayerOrPlaneswalkerEffect(6, PlayerRelation.OPPONENT));
     }
 }

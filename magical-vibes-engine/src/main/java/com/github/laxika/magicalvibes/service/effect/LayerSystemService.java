@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
@@ -643,6 +644,11 @@ public class LayerSystemService {
                 if (!alreadyPresent) {
                     copy.addEffect(slot, registration.effect(), registration.triggerMode());
                 }
+            }
+        }
+        for (TriggeredAbility ability : original.getUnslottedTriggeredAbilities()) {
+            if (!copy.getUnslottedTriggeredAbilities().contains(ability)) {
+                copy.addTriggeredAbility(ability);
             }
         }
         for (var ability : original.getActivatedAbilities(Zone.BATTLEFIELD)) {

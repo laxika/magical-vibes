@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "89")
 public class NightClubber extends Card {
@@ -28,7 +30,7 @@ public class NightClubber extends Card {
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new DrawCardEffect(1)));
     }
 }

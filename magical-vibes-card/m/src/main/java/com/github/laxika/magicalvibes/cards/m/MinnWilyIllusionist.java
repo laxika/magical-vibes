@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class MinnWilyIllusionist extends Card {
                         .boundedByEventValue());
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, illusionDies);
         // Minn itself is an Illusion when it has every creature type (Maskwood Nexus); a printed creature's
-        // own death is only collected from ON_DEATH.
-        addEffect(EffectSlot.ON_DEATH, illusionDies);
+        // own death is only collected by its dies trigger.
+        addTrigger(Triggers.dies(ObjectRelation.THIS), illusionDies);
     }
 }

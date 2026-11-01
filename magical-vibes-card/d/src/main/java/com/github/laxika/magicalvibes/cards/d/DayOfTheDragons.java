@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -42,7 +44,7 @@ public class DayOfTheDragons extends Card {
         PermanentPredicate dragonsYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentControlledBySourceControllerPredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), SequenceEffect.of(
                 new SacrificePermanentsEffect(
                         new PermanentCount(dragonsYouControl, CountScope.CONTROLLER),
                         dragonsYouControl, SacrificeRecipient.CONTROLLER),

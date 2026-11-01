@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "202")
 public class AresGodOfWar extends Card {
@@ -18,7 +20,7 @@ public class AresGodOfWar extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(), new ReturnTriggeringCardToOwnerHandEffect()));
 
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(), new ReturnSourceCardFromGraveyardToOwnerHandEffect()));
     }
 }

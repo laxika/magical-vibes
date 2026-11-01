@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBRO", collectorNumber = "19")
 public class GreatDesertHellion extends Card {
@@ -22,7 +24,7 @@ public class GreatDesertHellion extends Card {
 
         // When this creature leaves the battlefield, you may discard your hand. If you do, draw
         // cards equal to its intensity.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new MayEffect(
                 new DiscardOwnHandThenDrawEffect(new SourceIntensity()),
                 "Discard your hand and draw cards equal to Great Desert Hellion's intensity?"));
     }

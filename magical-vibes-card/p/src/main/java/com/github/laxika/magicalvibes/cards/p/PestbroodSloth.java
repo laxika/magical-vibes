@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +19,7 @@ import java.util.Set;
 public class PestbroodSloth extends Card {
 
     public PestbroodSloth() {
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.CREATURE, 2, "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(),

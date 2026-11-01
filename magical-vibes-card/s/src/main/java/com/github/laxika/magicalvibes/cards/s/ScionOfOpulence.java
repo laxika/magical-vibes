@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class ScionOfOpulence extends Card {
     private static final CardEffect CREATE_TREASURE = CreateTokenEffect.ofTreasureToken(1);
 
     public ScionOfOpulence() {
-        addEffect(EffectSlot.ON_DEATH, CREATE_TREASURE);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), CREATE_TREASURE);
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.VAMPIRE), CREATE_TREASURE));

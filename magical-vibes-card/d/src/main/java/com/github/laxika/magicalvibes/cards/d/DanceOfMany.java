@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class DanceOfMany extends Card {
                 // triggers below); with a token doubler, "the token" refers to all of them.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenCopyAndLinkToSourceEffect())
                 // "When this enchantment leaves the battlefield, exile the token."
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ExileTokensCreatedWithSourceEffect())
+                .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ExileTokensCreatedWithSourceEffect())
                 // "At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}{U}."
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new ForcedCostOrElseEffect(

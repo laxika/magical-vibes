@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KHC", collectorNumber = "51")
 public class MiaraThornOfTheGlade extends Card {
@@ -18,6 +20,6 @@ public class MiaraThornOfTheGlade extends Card {
     public MiaraThornOfTheGlade() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.ELF), DRAW_FOR_MANA_AND_LIFE));
-        addEffect(EffectSlot.ON_DEATH, DRAW_FOR_MANA_AND_LIFE);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DRAW_FOR_MANA_AND_LIFE);
     }
 }

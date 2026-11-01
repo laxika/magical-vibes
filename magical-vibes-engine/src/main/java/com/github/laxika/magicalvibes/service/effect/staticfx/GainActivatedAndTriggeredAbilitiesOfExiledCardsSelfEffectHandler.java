@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -41,6 +42,12 @@ public class GainActivatedAndTriggeredAbilitiesOfExiledCardsSelfEffectHandler
                     accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(
                             slot, triggeredEffect, GrantScope.SELF));
                 }
+            }
+
+            for (TriggeredAbility ability : card.getUnslottedTriggeredAbilities()) {
+
+                accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(ability, GrantScope.SELF));
+
             }
         }
     }

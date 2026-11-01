@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VMA", collectorNumber = "256")
 @CardRegistration(set = "SLD", collectorNumber = "1452")
@@ -31,7 +33,7 @@ public class MarchesaTheBlackRose extends Card {
                                 false, null, 0, null, null)));
 
         // Marchesa herself is also a creature you control for the death trigger.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                         new RegisterDelayedReturnDyingCreatureUnderControlEffect(

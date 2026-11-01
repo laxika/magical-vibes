@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,6 +41,6 @@ public class DeadwoodTreefolk extends Card {
                 .targetGraveyard(true)
                 .build();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnAnotherCreature);
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, returnAnotherCreature);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), returnAnotherCreature);
     }
 }

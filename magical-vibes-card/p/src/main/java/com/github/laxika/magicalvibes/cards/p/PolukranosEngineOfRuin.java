@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -47,6 +49,6 @@ public class PolukranosEngineOfRuin extends Card {
                                 new CardSubtypePredicate(CardSubtype.HYDRA),
                                 new CardNotPredicate(new CardIsTokenPredicate()))),
                         CREATE_HYDRAS));
-        addEffect(EffectSlot.ON_DEATH, CREATE_HYDRAS);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), CREATE_HYDRAS);
     }
 }

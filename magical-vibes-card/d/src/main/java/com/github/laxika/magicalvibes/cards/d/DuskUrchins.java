@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SHM", collectorNumber = "65")
 @CardRegistration(set = "ECC", collectorNumber = "73")
@@ -18,7 +20,7 @@ public class DuskUrchins extends Card {
         addEffect(EffectSlot.ON_BLOCK, new PutCountersOnSourceEffect(-1, -1, 1), TriggerMode.ONCE_PER_BLOCK);
 
         // When this creature dies, draw a card for each -1/-1 counter on it.
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new DrawCardForEachDyingSourceCounterEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

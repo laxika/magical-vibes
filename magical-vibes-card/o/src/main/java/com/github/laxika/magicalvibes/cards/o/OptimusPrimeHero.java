@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOT", collectorNumber = "13")
 @CardRegistration(set = "BOT", collectorNumber = "27")
@@ -16,7 +18,7 @@ public class OptimusPrimeHero extends Card {
         addCastingOption(AlternateHandCast.moreThanMeetsTheEye("{2}{U}{R}{W}"));
 
         addEffect(EffectSlot.END_STEP_TRIGGERED, new BolsterEffect(1));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new ReturnSourceTransformedFromGraveyardEffect(false, true));
     }
 

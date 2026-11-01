@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "116")
 public class JundSojourners extends Card {
 
     public JundSojourners() {
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(new DealDamageToAnyTargetEffect(1),
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(new DealDamageToAnyTargetEffect(1),
                 "Have Jund Sojourners deal 1 damage to any target?"));
 
         addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(new DealDamageToAnyTargetEffect(1),

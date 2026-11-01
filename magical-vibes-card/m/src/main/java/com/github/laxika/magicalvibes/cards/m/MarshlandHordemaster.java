@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBLB", collectorNumber = "27")
 public class MarshlandHordemaster extends Card {
@@ -35,7 +37,7 @@ public class MarshlandHordemaster extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        deathTrigger.addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
+        deathTrigger.addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
         deathTrigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.LIZARD), DEATH_TRIGGER));

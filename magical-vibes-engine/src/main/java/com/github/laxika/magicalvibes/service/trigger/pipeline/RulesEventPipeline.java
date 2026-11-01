@@ -4,14 +4,16 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,10 @@ import java.util.UUID;
  * {@link TriggerIndex} for each event's candidate abilities, matches them ({@link TriggerMatcher}) and puts every
  * ability that triggers on the stack through {@link TriggeredAbilityStackService}. An ability with
  * {@link TriggerMultiplicity#EACH} triggers once for each event of the batch that matches it, and one with
- * {@link TriggerMultiplicity#ONE_OR_MORE} once for the batch (CR 603.2c).
+ * {@link TriggerMultiplicity#ONE_OR_MORE} once for the batch (CR 603.2c). The abilities one event triggers are put on
+ * the stack in the order the old slot collectors put them there, which is the order of
+ * {@link LegacyTriggerBindings.Kind}: leaves the battlefield, arrives in a zone, dies, sacrificed. Their controller
+ * orders them later all the same (CR 603.3b).
  *
  * <p>Abilities still held in an {@code EffectSlot} are the slot collectors' business. For the slots a test puts in
  * shadow mode ({@link RulesObserver#shadowedSlots()}), the pipeline also works out what those abilities would
@@ -52,18 +57,24 @@ public class RulesEventPipeline {
             if (!(event instanceof ZoneChangeEvent zoneChange)) {
                 continue;
             }
+            List<Match> matches = new ArrayList<>();
             for (TriggerCandidate candidate : triggerIndex.movingObjectCandidates(gameData, zoneChange)) {
                 EffectSlot slot = TriggerMatcher.legacySlot(candidate);
                 if (slot == null) {
-                    if (TriggerMatcher.matches(candidate, zoneChange)
-                            && !TriggerMatcher.suppressed(candidate.ability(), zoneChange)
-                            && (candidate.ability().options().multiplicity() == TriggerMultiplicity.EACH
-                            || triggeredForBatch.add(new OneOrMoreKey(candidate.sourceObjectId(),
-                                    candidate.ability())))) {
-                        stackService.trigger(gameData, candidate, zoneChange);
+                    ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(candidate, zoneChange);
+                    if (trigger != null && !TriggerMatcher.suppressed(candidate.ability(), zoneChange)) {
+                        matches.add(new Match(candidate, trigger));
                     }
                 } else if (shadowedSlots.contains(slot)) {
                     reportWouldTrigger(gameData, observer, slot, candidate, zoneChange);
+                }
+            }
+            matches.sort(Comparator.comparing(match -> LegacyTriggerBindings.kindOf(match.trigger())));
+            for (Match match : matches) {
+                TriggerCandidate candidate = match.candidate();
+                if (candidate.ability().options().multiplicity() == TriggerMultiplicity.EACH
+                        || triggeredForBatch.add(new OneOrMoreKey(candidate.sourceObjectId(), candidate.ability()))) {
+                    stackService.trigger(gameData, candidate, zoneChange, match.trigger());
                 }
             }
         }
@@ -77,13 +88,19 @@ public class RulesEventPipeline {
                     || TriggerMatcher.suppressedAsMoved(slot, registration.effect(), event)) {
                 continue;
             }
-            CardEffect effect = legacyTriggerOptions.resolve(gameData, slot, event, candidate, registration.effect());
-            if (effect != null) {
-                observer.wouldTrigger(slot, candidate.sourceCard(), List.of(effect));
+            LegacyTriggerOptions.Resolved resolved = legacyTriggerOptions.resolve(gameData,
+                    LegacyTriggerBindings.kindOf(LegacySlotTriggers.of(slot, registration.effect())), event,
+                    candidate, registration.effect());
+            if (resolved != null) {
+                observer.wouldTrigger(slot, candidate.sourceCard(), List.of(resolved.effect()));
             }
         }
     }
 
     private record OneOrMoreKey(UUID sourceId, TriggeredAbility ability) {
+    }
+
+    /** A candidate whose ability's trigger condition {@code trigger} an event met. */
+    private record Match(TriggerCandidate candidate, ZoneChangeTrigger trigger) {
     }
 }

@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.t.TempleOfCivilization;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "26")
 @CardRegistration(set = "LCI", collectorNumber = "314")
@@ -15,7 +16,7 @@ public class OjerTaqDeepestFoundation extends Card {
         setBackFaceCard(new TempleOfCivilization());
 
         addStaticEffect(new MultiplyTokenCreationEffect(3, true));
-        addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect(true, true));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnSourceTransformedFromGraveyardEffect(true, true));
     }
 
     @java.lang.Override

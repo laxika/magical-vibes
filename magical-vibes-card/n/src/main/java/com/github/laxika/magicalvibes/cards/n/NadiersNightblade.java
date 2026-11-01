@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "175")
 @CardRegistration(set = "CMM", collectorNumber = "641")
@@ -27,7 +29,7 @@ public class NadiersNightblade extends Card {
                         new PermanentIsTokenPredicate(), drainOpponentAndGainLife));
         // "a token you control leaves the battlefield" includes this token itself: a leaves-the-battlefield
         // ability looks back in time (CR 603.10a).
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 ConditionalEffect.atTriggerTime(new SourceIsToken(), drainOpponentAndGainLife));
     }
 }

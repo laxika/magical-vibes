@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLC", collectorNumber = "224")
 public class GrothamaAllDevouring extends Card {
@@ -24,7 +26,7 @@ public class GrothamaAllDevouring extends Card {
                                 "Have it fight Grothama, All-Devouring?",
                                 null,
                                 MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new EachPlayerDrawsCardEffect(new DamageDealtToSourceByControllerThisTurn()));
     }
 }

@@ -3,16 +3,17 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NEO", collectorNumber = "248")
 public class IronApprentice extends Card {
 
     public IronApprentice() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
-        addEffect(EffectSlot.ON_DEATH, new MoveDyingSourceCountersToTargetCreatureEffect(true));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MoveDyingSourceCountersToTargetCreatureEffect(true));
     }
 }

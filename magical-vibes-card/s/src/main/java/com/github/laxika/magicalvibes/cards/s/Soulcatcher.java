@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ODY", collectorNumber = "47")
 @CardRegistration(set = "EMA", collectorNumber = "30")
@@ -18,6 +20,6 @@ public class Soulcatcher extends Card {
                 new PutCountersOnSourceEffect(1, 1, 1)
         );
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, flyingCreatureDies);
-        addEffect(EffectSlot.ON_DEATH, flyingCreatureDies);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), flyingCreatureDies);
     }
 }

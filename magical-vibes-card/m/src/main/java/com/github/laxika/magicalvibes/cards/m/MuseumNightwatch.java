@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ public class MuseumNightwatch extends Card {
         addMorph("{1}{W}");
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 1,
                 "Detective",
                 2,

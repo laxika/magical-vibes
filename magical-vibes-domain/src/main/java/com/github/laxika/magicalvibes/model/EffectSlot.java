@@ -139,7 +139,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      */
     ON_OPPONENT_PLAYS_LAND,
     ON_OPPONENT_CASTS_SPELL,
-    ON_DEATH,
     ON_HAUNTED_CREATURE_DIES,
     ON_ALLY_CREATURE_DIES,
     /** Triggers once when one or more artifacts and/or creatures controlled by the source controller are put into a graveyard from the battlefield as one event. */
@@ -766,25 +765,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_NONLAND_CARDS_MILLED,
     ON_OPPONENT_CREATURE_CARD_MILLED,
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
-    /** Triggers when this card is put into its owner's graveyard from their library (milled).
-     *  Checked per-card inside {@code GraveyardService.resolveMillPlayer}. */
-    ON_SELF_MILLED,
-    ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
-    /** Triggers when this card is put into a graveyard from anywhere (battlefield, hand, library,
-     *  stack, exile). Checked for every card entering a graveyard in
-     *  {@code GraveyardService.addCardToGraveyard}, which is the single choke point for all
-     *  zone→graveyard transitions. Fires as a triggered ability (the card enters the graveyard
-     *  first). Used by Purity ("shuffle it into its owner's library"). */
-    ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
-    /** Triggers when this card is put into a graveyard specifically from the battlefield (i.e. "dies"
-     *  for a permanent). Checked in {@code GraveyardService.addCardToGraveyard} only when the source
-     *  zone is {@code Zone.BATTLEFIELD}. Fires as a triggered ability (the card enters the graveyard
-     *  first). Used by Spreading Algae ("return it to its owner's hand"). */
-    ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
-    /** Triggers when this card is put into a graveyard from its owner's hand. Checked in
-     *  {@code GraveyardService.addCardToGraveyard} only when the source zone is {@code Zone.HAND}.
-     *  Fires as a triggered ability after the card enters the graveyard. */
-    ON_SELF_PUT_INTO_GRAVEYARD_FROM_HAND,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
@@ -939,9 +919,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_PAYS_LIFE,
     /** Triggers whenever an opponent pays a mana tax imposed by a spell or permanent controlled by this permanent. */
     ON_OPPONENT_PAYS_TAX,
-    /** Triggers when this permanent leaves the battlefield by any means (destruction, exile,
-     *  bounce, sacrifice, tuck). Checked in PermanentRemovalService after removal. */
-    ON_SELF_LEAVES_BATTLEFIELD,
     /** Triggers whenever another permanent leaves the battlefield by any means. */
     ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
     /** Triggers whenever another creature (any player's) leaves the battlefield by any means

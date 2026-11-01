@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class VeneratedStormsinger extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
         addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());
-        addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
     }
 }

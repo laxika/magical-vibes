@@ -10,13 +10,15 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GPT", collectorNumber = "46")
 public class CryOfContrition extends Card {
 
     public CryOfContrition() {
         target(anyPlayer()).addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_DEATH, new HauntEffect());
+        target(TargetFilters.creature()).addTrigger(Triggers.putIntoGraveyardWhileResolving(ObjectRelation.THIS), new HauntEffect());
         target(anyPlayer()).addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
     }

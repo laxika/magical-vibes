@@ -5,7 +5,7 @@ import java.util.UUID;
 /**
  * Removes the permanent linked to the source via {@link com.github.laxika.magicalvibes.model.Permanent#getChosenPermanentId()}.
  *
- * <p>Placed in {@code ON_SELF_LEAVES_BATTLEFIELD} and/or {@code ON_SELF_BECOMES_UNTAPPED} (Coffin
+ * <p>Placed in "when this leaves the battlefield" and/or {@code ON_SELF_BECOMES_UNTAPPED} (Coffin
  * Queen exiles the creature it reanimated on both). The dedicated trigger collector reads the leaving
  * permanent's {@code chosenPermanentId} and bakes it into {@link #linkedPermanentId()}; the handler
  * then removes that linked permanent according to {@link Mode} (exile or sacrifice). The id is carried

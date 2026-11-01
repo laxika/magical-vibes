@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({LiegeOfTheHollows.class, WrathOfGod.class, WoodlandChampion.class, MindStone.class})
 class LiegeOfTheHollowsTest extends BaseCardTest {
 
-    /** Wraths the board so Liege of the Hollows dies and its ON_DEATH trigger goes on the stack. */
+    /** Wraths the board so Liege of the Hollows dies and its dies trigger goes on the stack. */
     private void killLiege() {
         harness.addToBattlefield(player1, new LiegeOfTheHollows());
         harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class MillicentRestlessRevenant extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )), SPIRIT_TOKEN));
 
-        addEffect(EffectSlot.ON_DEATH, SPIRIT_TOKEN);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), SPIRIT_TOKEN);
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SPIRIT), SPIRIT_TOKEN));
     }

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "76")
 @CardRegistration(set = "FDN", collectorNumber = "325")
@@ -20,7 +22,7 @@ public class VengefulBloodwitch extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        drainTarget.addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        drainTarget.addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
                 new GainLifeEffect(1)));
         drainTarget.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, SequenceEffect.of(

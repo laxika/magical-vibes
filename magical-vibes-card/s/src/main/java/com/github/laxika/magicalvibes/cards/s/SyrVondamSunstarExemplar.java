@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "231")
 public class SyrVondamSunstarExemplar extends Card {
@@ -27,8 +29,8 @@ public class SyrVondamSunstarExemplar extends Card {
         ConditionalEffect destroyIfPowerAtLeast = new ConditionalEffect(
                 new SourcePowerAtLeast(4), new DestroyTargetPermanentEffect());
         target(TargetFilters.nonlandPermanent(), 0, 1)
-                .addEffect(EffectSlot.ON_DEATH, destroyIfPowerAtLeast)
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), destroyIfPowerAtLeast)
+                .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new SelfExiledFromBattlefieldEffect(destroyIfPowerAtLeast));
     }
 }

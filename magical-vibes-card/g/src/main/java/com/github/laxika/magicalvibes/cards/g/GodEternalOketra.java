@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardInt
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,10 +32,10 @@ public class GodEternalOketra extends Card {
                         Set.of(Keyword.VIGILANCE), Set.of()))
         ));
 
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2),
                 "Put God-Eternal Oketra into its owner's library third from the top?"));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SelfExiledFromBattlefieldEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SelfExiledFromBattlefieldEffect(
                 new MayEffect(
                         new PutSourceCardFromExileIntoLibraryNFromTopEffect(2),
                         "Put God-Eternal Oketra into its owner's library third from the top?")));

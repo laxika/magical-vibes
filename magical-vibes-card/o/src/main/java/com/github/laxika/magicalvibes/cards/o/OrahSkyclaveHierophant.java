@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "233")
 public class OrahSkyclaveHierophant extends Card {
@@ -23,6 +25,6 @@ public class OrahSkyclaveHierophant extends Card {
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.CLERIC), returnCleric));
-        addEffect(EffectSlot.ON_DEATH, returnCleric);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), returnCleric);
     }
 }

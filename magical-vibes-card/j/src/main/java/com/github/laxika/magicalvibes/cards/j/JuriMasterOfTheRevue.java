@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MUL", collectorNumber = "46")
 @CardRegistration(set = "MUL", collectorNumber = "111")
@@ -16,7 +18,7 @@ public class JuriMasterOfTheRevue extends Card {
     public JuriMasterOfTheRevue() {
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new PutCountersOnSourceEffect(1, 1, 1));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new DealDamageToAnyTargetEffect(new SourcePower()));
     }
 }

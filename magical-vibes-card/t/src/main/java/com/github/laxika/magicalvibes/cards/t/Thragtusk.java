@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class Thragtusk extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(5));
 
         // When this creature leaves the battlefield, create a 3/3 green Beast creature token.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new CreateTokenEffect(
                 1, "Beast", 3, 3, CardColor.GREEN, List.of(CardSubtype.BEAST),
                 Set.of(), Set.of()
         ));

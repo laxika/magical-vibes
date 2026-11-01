@@ -277,7 +277,7 @@ public class GraveyardService {
                 boolean entered;
                 try {
                     entered = addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY,
-                            true, null, null, null, false, false, false, null, true);
+                            true, null, null, null, false, false, null, true);
                 } finally {
                     gameData.rulesEvents.restoreCause(card.getId(), previousCause);
                 }
@@ -352,22 +352,6 @@ public class GraveyardService {
             }
         }
 
-        // Fire self-mill triggers after the cards have entered the graveyard.
-        for (Card card : cardsEnteredGraveyard) {
-            for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_MILLED)) {
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        targetPlayerId,
-                        card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        (UUID) null
-                ));
-                gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                log.info("Game {} - {} triggers on being milled", gameData.id, card.getName());
-            }
-        }
         if (includeAllMilledCards) {
             return new MillResult(milledCards, nonlandCardsEntered);
         }
@@ -423,7 +407,7 @@ public class GraveyardService {
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
         for (Card card : movedCards) {
             if (addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY,
-                    true, null, null, null, false, true, false)) {
+                    true, null, null, null, true, false)) {
                 cardsEnteredGraveyard.add(card);
             }
         }
@@ -583,14 +567,14 @@ public class GraveyardService {
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                null, null, null, false, false, false);
+                null, null, null, false, false);
     }
 
     /** Moves a spell card to its owner's graveyard while preserving the spell controller. */
     public boolean addCardToGraveyardFromSpell(GameData gameData, UUID ownerId, Card card,
                                                UUID controllerId) {
         return addCardToGraveyard(gameData, ownerId, card, Zone.STACK, false,
-                null, null, null, false, false, false, controllerId);
+                null, null, null, false, false, controllerId);
     }
 
     /**
@@ -600,7 +584,7 @@ public class GraveyardService {
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, null, null, false, false, false);
+                battlefieldControllerId, null, null, false, false);
     }
 
     /**
@@ -610,15 +594,7 @@ public class GraveyardService {
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId, UUID battlefieldPermanentId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, battlefieldPermanentId, null, false, false, false);
-    }
-
-    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
-                                      UUID battlefieldControllerId, UUID battlefieldPermanentId,
-                                      boolean selfGraveyardTriggerSuppressed) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, battlefieldPermanentId, null,
-                selfGraveyardTriggerSuppressed, false, false);
+                battlefieldControllerId, battlefieldPermanentId, null, false, false);
     }
 
     /**
@@ -629,77 +605,65 @@ public class GraveyardService {
                                       UUID battlefieldControllerId, Permanent battlefieldSnapshot) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
                 battlefieldControllerId, battlefieldSnapshot == null ? null : battlefieldSnapshot.getId(),
-                battlefieldSnapshot, false, false, false);
+                battlefieldSnapshot, false, false);
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                       UUID battlefieldControllerId, Permanent battlefieldSnapshot,
-                                      boolean selfGraveyardTriggerSuppressed) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
-                battlefieldControllerId, battlefieldSnapshot == null ? null : battlefieldSnapshot.getId(),
-                battlefieldSnapshot, selfGraveyardTriggerSuppressed, false, false);
-    }
-
-    public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
-                                      UUID battlefieldControllerId, Permanent battlefieldSnapshot,
-                                      boolean selfGraveyardTriggerSuppressed,
                                       boolean creatureDeathTriggersSuppressed) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, false,
                 battlefieldControllerId, battlefieldSnapshot == null ? null : battlefieldSnapshot.getId(),
-                battlefieldSnapshot, selfGraveyardTriggerSuppressed, false, creatureDeathTriggersSuppressed);
+                battlefieldSnapshot, false, creatureDeathTriggersSuppressed);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryBatchTriggers) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryBatchTriggers, null, null, null, false, false, false);
+                suppressLibraryBatchTriggers, null, null, null, false, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryBatchTriggers, battlefieldControllerId, null, null, false, false, false);
+                suppressLibraryBatchTriggers, battlefieldControllerId, null, null, false, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
-                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed) {
+                                       Permanent battlefieldSnapshot) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryBatchTriggers,
-                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot,
-                selfGraveyardTriggerSuppressed, false, false);
+                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot, false, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
-                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
+                                       Permanent battlefieldSnapshot,
                                        boolean suppressLibraryMillTriggers,
                                        boolean creatureDeathTriggersSuppressed) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryBatchTriggers,
-                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot,
-                selfGraveyardTriggerSuppressed, suppressLibraryMillTriggers,
+                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot, suppressLibraryMillTriggers,
                 creatureDeathTriggersSuppressed, null);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
-                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
+                                       Permanent battlefieldSnapshot,
                                        boolean suppressLibraryMillTriggers,
                                        boolean creatureDeathTriggersSuppressed,
                                        UUID cardControllerId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryBatchTriggers,
-                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot,
-                selfGraveyardTriggerSuppressed, suppressLibraryMillTriggers,
+                battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot, suppressLibraryMillTriggers,
                 creatureDeathTriggersSuppressed, cardControllerId, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
                                        boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
-                                       Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
+                                       Permanent battlefieldSnapshot,
                                        boolean suppressLibraryMillTriggers,
                                        boolean creatureDeathTriggersSuppressed,
                                        UUID cardControllerId, boolean suppressOncePerBatchLandTriggers) {
@@ -942,55 +906,9 @@ public class GraveyardService {
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone,
                     battlefieldSnapshot, creatureDeathTriggersSuppressed);
             updateFromAnywhereThisTurnTracking(gameData, ownerId, card, sourceZone);
-            if (!creatureDeathTriggersSuppressed) {
-                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
-                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, null, card));
-                try {
-                    collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-                } finally {
-                    gameData.endCollectingTrigger(previousCollecting);
-                }
-            }
             collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
             if (!isToken(gameData, card) && !creatureDeathTriggersSuppressed) {
                 collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
-            }
-            if (sourceZone == Zone.HAND) {
-                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
-                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_HAND, null, card));
-                try {
-                    collectPutIntoGraveyardFromHandTriggers(gameData, ownerId, card);
-                } finally {
-                    gameData.endCollectingTrigger(previousCollecting);
-                }
-            }
-            if (sourceZone == Zone.LIBRARY && !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
-                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
-                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY, null, card));
-                try {
-                    for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY)) {
-                        StackEntry selfTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
-                                card.getName() + "'s ability", new ArrayList<>(List.of(effect)), null, (UUID) null);
-                        selfTrigger.setTriggeringCardId(card.getId());
-                        selfTrigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                        gameData.enqueueTrigger(selfTrigger);
-                        gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                    }
-                } finally {
-                    gameData.endCollectingTrigger(previousCollecting);
-                }
-            }
-            if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed
-                    && !creatureDeathTriggersSuppressed) {
-                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
-                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, null, card));
-                try {
-                    collectPutIntoGraveyardFromBattlefieldTriggers(
-                            gameData, battlefieldControllerId != null ? battlefieldControllerId : ownerId,
-                            card, battlefieldPermanentId, battlefieldSnapshot);
-                } finally {
-                    gameData.endCollectingTrigger(previousCollecting);
-                }
             }
             if (gameData.deferOncePerBatchGraveyardTriggers && !isToken(gameData, card)) {
                 suppressOncePerBatchLandTriggers = true;
@@ -1158,29 +1076,6 @@ public class GraveyardService {
     }
 
     /**
-     * Fires "when this card is put into a graveyard from anywhere" triggered abilities
-     * (EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, e.g. Purity). The card has already
-     * entered the graveyard, and the ability is checked there, so graveyard ability loss (Yixlid Jailer)
-     * suppresses it (CR 603.6c). The trigger goes on the stack under its owner's control.
-     */
-    private void collectPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID ownerId, Card card) {
-        for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                gameData, card, EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    ownerId,
-                    card.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    (UUID) null
-            ));
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            log.info("Game {} - {} triggers (put into graveyard from anywhere)", gameData.id, card.getName());
-        }
-    }
-
-    /**
      * Fires emblem-borne "whenever a card is put into your graveyard from anywhere, you may return it
      * to your hand" triggers (Tamiyo, the Moon Sage's emblem). The trigger goes on the stack under the
      * graveyard owner's control with the newly-arrived card as its source, so the resolution-time
@@ -1246,72 +1141,6 @@ public class GraveyardService {
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers (card put into an opponent's graveyard)",
                     gameData.id, watcher.sourceCard().getName());
-        }
-    }
-
-    /**
-     * Fires "when this card is put into a graveyard from the battlefield" triggered abilities
-     * (EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, e.g. Spreading Algae). Only called when
-     * the source zone is the battlefield. The card has already entered the graveyard; the trigger goes
-     * on the stack under its owner's control.
-     */
-    private void collectPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID ownerId, Card card,
-                                                                 UUID battlefieldPermanentId,
-                                                                 Permanent battlefieldSnapshot) {
-        List<CardEffect> effects = new ArrayList<>(
-                card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD));
-        if (battlefieldSnapshot != null) {
-            effects.addAll(battlefieldSnapshot.getPersistentTriggeredEffects(
-                    EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD));
-        }
-        for (CardEffect effect : effects) {
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-                // The departed permanent stays the damage source (lifelink, deathtouch) by its last known information.
-                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        card, ownerId, new ArrayList<>(List.of(effect)), "leaves-the-battlefield",
-                        battlefieldPermanentId,
-                        battlefieldSnapshot == null ? null : new Permanent(battlefieldSnapshot), null));
-                continue;
-            }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    ownerId,
-                    card.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    battlefieldPermanentId
-            );
-            if (battlefieldSnapshot != null) {
-                entry.setSourcePermanentSnapshot(new Permanent(battlefieldSnapshot));
-            }
-            entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-            gameData.stack.add(entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());
-        }
-    }
-
-    /**
-     * Fires "when this card is put into a graveyard from its owner's hand" triggered abilities.
-     * The card has already entered the graveyard; the trigger goes on the stack under its owner's
-     * control.
-     */
-    private void collectPutIntoGraveyardFromHandTriggers(GameData gameData, UUID ownerId, Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_HAND)) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    ownerId,
-                    card.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    (UUID) null
-            ));
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            log.info("Game {} - {} triggers (put into graveyard from hand)", gameData.id, card.getName());
         }
     }
 

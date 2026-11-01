@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class HuntedBonebrute extends Card {
                 new CreateTokenEffect(2, "Dog", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.DOG), Set.of(), Set.of())
         ));
-        addEffect(EffectSlot.ON_DEATH, new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
         addMorph("{1}{B}");
     }
 }

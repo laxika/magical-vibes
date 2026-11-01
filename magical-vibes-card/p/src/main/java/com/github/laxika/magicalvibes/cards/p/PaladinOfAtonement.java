@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeLastTurn
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "16")
 public class PaladinOfAtonement extends Card {
@@ -16,6 +18,6 @@ public class PaladinOfAtonement extends Card {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ControllerLostLifeLastTurn(),
                 new PutCountersOnSourceEffect(1, 1, 1)));
-        addEffect(EffectSlot.ON_DEATH, new GainLifeEffect(new SourceToughness()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new GainLifeEffect(new SourceToughness()));
     }
 }

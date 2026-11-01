@@ -3,14 +3,14 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -30,8 +30,8 @@ import java.util.UUID;
  *       leaves, and those other objects' static abilities granted it, all on the event's snapshot. A permanent
  *       that had lost all its abilities has none of those, and a face-down one has none of its card's. Abilities
  *       granted until end of turn count either way, as the slot collectors count them. Its delayed "when this
- *       dies" triggers aren't abilities of it, so they count either way too; until their family moves they ride
- *       on the snapshot as ON_DEATH effects.</li>
+ *       dies" triggers aren't abilities of it, so they count either way too; until delayed triggers move they
+ *       ride on the snapshot as effects, matched as "when this dies" abilities.</li>
  *   <li>Every moved card, a departed permanent's included, also triggers as it exists after the move, in the
  *       zone it went to (CR 603.10): its card's abilities and its perpetual grants. That is where "when this is
  *       put into a graveyard from anywhere" triggers from, even for a move from the battlefield (CR 603.6c).
@@ -82,22 +82,30 @@ public class TriggerIndex {
             return;
         }
         Card card = lastKnown.getCard();
-        List<TriggeredAbility> abilities = new ArrayList<>();
+        // The snapshot's card is a copy with the characteristics it left with. The abilities printed on it name the
+        // card the permanent was (the copied card for a copy), found by identity when it is the moved card itself;
+        // the abilities the permanent gained name the card that moved.
+        Card printedSource = event.card().getId().equals(card.getId()) ? event.card() : card;
+        List<TriggeredAbility> printed = new ArrayList<>();
+        List<TriggeredAbility> gained = new ArrayList<>();
         if (!lastKnown.isLosesAllAbilitiesUntilEndOfTurn()) {
             if (!lastKnown.isFaceDown()) {
-                abilities.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
+                printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
             }
-            abilities.addAll(lastKnown.getPersistentTriggeredAbilities());
-            triggered(event.grantedAbilities(), abilities);
+            gained.addAll(lastKnown.getPersistentTriggeredAbilities());
+            triggered(event.grantedAbilities(), gained);
         }
         // An ability granted until end of turn has a later timestamp than most "loses all abilities" effects
         // (Infuse with Vitality after Humble), so, as the slot collectors do, it stays.
-        abilities.addAll(lastKnown.getTemporaryTriggeredAbilities());
+        gained.addAll(lastKnown.getTemporaryTriggeredAbilities());
         for (CardEffect delayed : lastKnown.getDelayedDeathEffects()) {
-            abilities.add((TriggeredAbility) LegacySlots.ability(EffectSlot.ON_DEATH, delayed));
+            gained.add(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), delayed));
         }
-        for (TriggeredAbility ability : abilities) {
-            into.add(new TriggerCandidate(card, lastKnown, event.controllerId(), Zone.BATTLEFIELD, ability));
+        for (TriggeredAbility ability : printed) {
+            into.add(new TriggerCandidate(printedSource, lastKnown, event.controllerId(), Zone.BATTLEFIELD, ability));
+        }
+        for (TriggeredAbility ability : gained) {
+            into.add(new TriggerCandidate(event.card(), lastKnown, event.controllerId(), Zone.BATTLEFIELD, ability));
         }
     }
 

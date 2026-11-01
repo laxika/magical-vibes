@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -17,6 +19,6 @@ public class DrossHarvester extends Card {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new LoseLifeEffect(4));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new GainLifeEffect(2));
-        addEffect(EffectSlot.ON_DEATH, new GainLifeEffect(2));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new GainLifeEffect(2));
     }
 }

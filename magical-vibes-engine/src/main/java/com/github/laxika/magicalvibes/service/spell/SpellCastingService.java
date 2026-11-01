@@ -222,6 +222,8 @@ import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -4222,7 +4224,7 @@ public class SpellCastingService {
             // (applied by the stack entry as the permanent enters), never from enters triggers.
             if (!printedBlitzCast) {
                 preparedCard = preparedCard.createRuntimeCopy();
-                preparedCard.addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+                preparedCard.addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                         new CastForAlternateCost(), new DrawCardEffect(1)));
                 hand.set(cardIndex, preparedCard);
             }
@@ -9498,6 +9500,20 @@ public class SpellCastingService {
         }
         Map<UUID, Card> triggerCards = new HashMap<>();
         permanents.forEach(permanent -> triggerCards.put(permanent.getId(), sacrificedCard.apply(permanent)));
+        // "When you sacrifice this to pay an emerge cost" (Foul Emissary) reads the spell from its departure.
+        Card previousSpell = gameData.rulesEvents.setPayingCostOf(sourceCard);
+        try {
+            departNowForSpellCost(gameData, player, sourceCard, permanents, purpose, triggerWithSourceCard,
+                    removed, triggerCards);
+        } finally {
+            gameData.rulesEvents.restorePayingCostOf(previousSpell);
+        }
+        return removed;
+    }
+
+    private void departNowForSpellCost(GameData gameData, Player player, Card sourceCard, List<Permanent> permanents,
+                                       String purpose, boolean triggerWithSourceCard, Set<UUID> removed,
+                                       Map<UUID, Card> triggerCards) {
         departureService.departNow(gameData,
                 DepartureBatch.of(permanents.stream().map(p -> DepartureIntent.sacrifice(p.getId())).toList()),
                 DepartureService.Hooks.afterEach((intent, permanent, snapshot, left) -> {
@@ -9521,7 +9537,6 @@ public class SpellCastingService {
                                 gameData, player.getId(), triggerCard);
                     }
                 }));
-        return removed;
     }
 
     /** {@link #sacrificeForSpellCost} for one permanent, the plain "P sacrifices X for S." payment. */
@@ -11579,7 +11594,7 @@ public class SpellCastingService {
                         && permission.entryTriggeredAbilityGrant() != null
                         && perpetuallyChangedSpell == null) {
                     var grant = permission.entryTriggeredAbilityGrant();
-                    stackEntry.addPersistentTriggeredEffectOnEntry(grant.slot(), grant.grantedEffect());
+                    stackEntry.addPersistentAbilityOnEntry(grant.grantedAbility());
                 }
                 if (castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND
                         && permission.exileIfLeavesBattlefield()) {

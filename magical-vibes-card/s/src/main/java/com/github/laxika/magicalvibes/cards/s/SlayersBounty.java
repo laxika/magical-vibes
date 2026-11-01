@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -54,7 +56,7 @@ public class SlayersBounty extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                         draftFromSpellbook()));
-        addEffect(EffectSlot.ON_DEATH, new SacrificeOnlyEffect(draftFromSpellbook()));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(draftFromSpellbook()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

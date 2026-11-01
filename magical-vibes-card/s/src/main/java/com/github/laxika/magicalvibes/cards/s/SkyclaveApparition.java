@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class SkyclaveApparition extends Card {
         ), 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileTargetPermanentAndTrackWithSourceEffect());
 
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new CreateTokensForExiledCardsWithSourceEffect(new CreateTokenEffect(
                         "Illusion", 0, 0, CardColor.BLUE,
                         List.of(CardSubtype.ILLUSION), Set.of(), Set.of())));

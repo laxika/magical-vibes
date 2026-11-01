@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,6 +29,6 @@ public class Spitebellows extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());
 
         // When this creature leaves the battlefield, it deals 6 damage to target creature.
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new DealDamageToTargetCreatureEffect(6));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(6));
     }
 }

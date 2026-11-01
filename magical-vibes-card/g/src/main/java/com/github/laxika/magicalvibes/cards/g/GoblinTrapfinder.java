@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndPerpetuallyModifySoughtCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +19,7 @@ import java.util.Set;
 public class GoblinTrapfinder extends Card {
 
     public GoblinTrapfinder() {
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new SeekLibraryAndPerpetuallyModifySoughtCardEffect(
                         new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.CREATURE))),
                         3,

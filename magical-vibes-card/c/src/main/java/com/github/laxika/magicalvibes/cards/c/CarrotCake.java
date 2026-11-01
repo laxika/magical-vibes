@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +23,7 @@ public class CarrotCake extends Card {
 
     public CarrotCake() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, rabbitAndScry());
-        addEffect(EffectSlot.ON_DEATH, new SacrificeOnlyEffect(rabbitAndScry()));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(rabbitAndScry()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

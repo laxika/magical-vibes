@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IntensifyNamedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HBG", collectorNumber = "74")
 public class MintharaOfTheAbsolute extends Card {
@@ -19,7 +21,7 @@ public class MintharaOfTheAbsolute extends Card {
         OncePerTurnTriggerEffect intensify =
                 new OncePerTurnTriggerEffect(new IntensifyNamedCardsEffect(CARD_NAME));
         addStaticEffect(new DynamicStaticBoostEffect(new SourceIntensity(), new Fixed(0), GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, intensify);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), intensify);
         addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD, intensify);
     }
 }

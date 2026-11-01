@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "188")
 @CardRegistration(set = "LCC", collectorNumber = "267")
@@ -17,7 +19,7 @@ public class CruelCelebrant extends Card {
             new GainLifeEffect(1));
 
     public CruelCelebrant() {
-        addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
         addEffect(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES, DEATH_TRIGGER);
     }
 }

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasCreatureCond
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -19,7 +21,7 @@ public class EnduringInnocence extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMaxPowerConditionalEffect(2,
                         new OncePerTurnTriggerEffect(new DrawCardEffect(1))));
-        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new DyingPermanentWasCreatureConditionalEffect(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT))));
     }
 }

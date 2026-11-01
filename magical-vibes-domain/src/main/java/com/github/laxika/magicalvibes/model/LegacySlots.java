@@ -113,12 +113,14 @@ public final class LegacySlots {
 
     /**
      * {@code ability} with {@code effect} as its only effect: a static ability keeps its zones and a
-     * triggered ability its slot. Grants use it to grant an ability whose effect they adjusted.
+     * triggered ability its slot, or its trigger conditions and options when it has a real trigger. Grants use it to grant an ability whose effect they adjusted.
      */
     public static Ability withEffect(Ability ability, CardEffect effect) {
         return switch (ability) {
             case StaticAbility statik -> new StaticAbility(List.of(effect), statik.zones());
-            case TriggeredAbility triggered -> triggered(slotOf(triggered), effect);
+            case TriggeredAbility triggered -> slotOf(triggered) == null
+                    ? triggered.withEffects(List.of(new EffectRegistration(effect)))
+                    : triggered(slotOf(triggered), effect);
             case SpellAbility spell -> throw new IllegalArgumentException("A spell ability isn't granted");
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities are granted as activated abilities");
@@ -170,14 +172,14 @@ public final class LegacySlots {
     }
 
     /**
-     * A name for the kind of {@code ability}, for logs: its legacy slot, or {@code STATIC} or
-     * {@code SPELL}.
+     * A name for the kind of {@code ability}, for logs: its legacy slot, {@code TRIGGERED} for a triggered
+     * ability with a real trigger, or {@code STATIC} or {@code SPELL}.
      */
     public static String label(Ability ability) {
         return switch (ability) {
             case SpellAbility spell -> "SPELL";
             case StaticAbility statik -> "STATIC";
-            case TriggeredAbility triggered -> slotOf(triggered).name();
+            case TriggeredAbility triggered -> slotOf(triggered) == null ? "TRIGGERED" : slotOf(triggered).name();
             case ActivatedAbility activated -> "ACTIVATED";
         };
     }

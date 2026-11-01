@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "145")
 @CardRegistration(set = "C15", collectorNumber = "17")
@@ -30,7 +31,7 @@ public class CorpseAugur extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        )).addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 DrawCardEffect.rememberingAmount(new CardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.TARGET_PLAYER)),
                 new LoseLifeEffect(new EventValue(),

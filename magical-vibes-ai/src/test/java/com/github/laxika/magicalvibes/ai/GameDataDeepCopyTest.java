@@ -122,7 +122,7 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesGrantedAbilitiesIndependently() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
-        origPerm.addTemporaryTriggeredEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1));
+        origPerm.addTemporaryTriggeredEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new DrawCardEffect(1));
         origPerm.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(2));
         origPerm.addUntilNextUpkeepTriggeredEffect(player1.getId(), EffectSlot.ON_ATTACK, new DrawCardEffect(3));
 
@@ -131,7 +131,7 @@ class GameDataDeepCopyTest {
         copyPerm.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(4));
         copyPerm.clearUntilNextUpkeepTriggeredEffects(player1.getId());
 
-        assertThat(copyPerm.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).containsExactly(new DrawCardEffect(1));
+        assertThat(copyPerm.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)).containsExactly(new DrawCardEffect(1));
         assertThat(copyPerm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
                 .containsExactly(new DrawCardEffect(2), new DrawCardEffect(4));
         assertThat(origPerm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))

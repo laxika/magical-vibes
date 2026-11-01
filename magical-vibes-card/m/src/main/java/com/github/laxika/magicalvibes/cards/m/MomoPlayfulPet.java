@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ import java.util.List;
 public class MomoPlayfulPet extends Card {
 
     public MomoPlayfulPet() {
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("Create a Food token.", foodToken()),
                         new ChooseOneEffect.ChooseOneOption(

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class SplinterAgingChampion extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be another player"
-        )).addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        )).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 SequenceEffect.of(new DrawCardEffect(1),
                         new DrawCardForTargetPlayerEffect(1, false, true)));
     }

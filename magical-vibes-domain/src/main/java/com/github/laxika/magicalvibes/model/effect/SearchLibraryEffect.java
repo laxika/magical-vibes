@@ -43,7 +43,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@code topLibraryFractionDenominator} restricts the search to the top ceiling(size / denominator)
  * cards of the library when positive.
  *
- * @param onlyIfSacrificed when true, an {@code ON_DEATH} trigger only fires when its source was
+ * @param onlyIfSacrificed when true, an "when this dies" trigger only fires when its source was
  *                         sacrificed
  *
  * <p>Replaced the {@code SearchLibraryFor*} family (to-hand tutors, by-name searches, to-top,

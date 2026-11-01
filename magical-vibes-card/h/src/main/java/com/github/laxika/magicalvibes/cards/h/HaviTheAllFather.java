@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,7 +41,7 @@ public class HaviTheAllFather extends Card {
                 .enterTapped(true)
                 .build();
 
-        addEffect(EffectSlot.ON_DEATH, returnLegendaryCreature);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), returnLegendaryCreature);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSupertypePredicate(CardSupertype.LEGENDARY), returnLegendaryCreature));
     }

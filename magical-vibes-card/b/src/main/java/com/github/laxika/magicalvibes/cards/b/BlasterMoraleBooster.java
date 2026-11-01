@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -23,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class BlasterMoraleBooster extends Card {
                         new PermanentIsSourcePermanentPredicate())));
 
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
-        addEffect(EffectSlot.ON_DEATH, new PutCounterOnTargetForEachDyingSourceCounterEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCounterOnTargetForEachDyingSourceCounterEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, true,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

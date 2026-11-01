@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,6 +36,6 @@ public class TombstoneStairwell extends Card {
                 true));
 
         addEffect(EffectSlot.END_STEP_TRIGGERED, new DestroyTokensCreatedWithSourceEffect(true));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new DestroyTokensCreatedWithSourceEffect(true));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DestroyTokensCreatedWithSourceEffect(true));
     }
 }

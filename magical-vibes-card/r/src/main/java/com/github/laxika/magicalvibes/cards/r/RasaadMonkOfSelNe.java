@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,7 @@ public class RasaadMonkOfSelNe extends Card {
     public RasaadMonkOfSelNe() {
         target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new SourceIsOnBattlefield(), new ExileTargetPermanentAndTrackWithSourceEffect()));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceEffect());
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);

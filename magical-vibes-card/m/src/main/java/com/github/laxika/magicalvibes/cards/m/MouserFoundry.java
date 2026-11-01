@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +23,7 @@ public class MouserFoundry extends Card {
         var robotToken = new CreateTokenEffect(
                 1, "Robot", 1, 1, null, List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, robotToken);
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, robotToken);
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), robotToken);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

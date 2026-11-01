@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,6 @@ public class OriginSpellbomb extends Card {
         ));
 
         // When Origin Spellbomb is put into a graveyard from the battlefield, you may pay {W}. If you do, draw a card.
-        addEffect(EffectSlot.ON_DEATH, new MayPayManaEffect("{W}", new DrawCardEffect(1), "Pay {W} to draw a card?"));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayPayManaEffect("{W}", new DrawCardEffect(1), "Pay {W} to draw a card?"));
     }
 }

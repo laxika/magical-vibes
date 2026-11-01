@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class TotentanzSwarmPiper extends Card {
 
     public TotentanzSwarmPiper() {
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, ratToken());
-        addEffect(EffectSlot.ON_DEATH, ratToken());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ratToken());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

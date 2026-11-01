@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1049")
 public class ToothyImaginaryFriend extends Card {
@@ -24,7 +26,7 @@ public class ToothyImaginaryFriend extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new DrawCardEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

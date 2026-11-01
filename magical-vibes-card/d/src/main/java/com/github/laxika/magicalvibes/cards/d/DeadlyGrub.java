@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class DeadlyGrub extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.TIME)),
                 new CreateTokenEffect("Insect", 6, 1, CardColor.GREEN,
                         List.of(CardSubtype.INSECT), Set.of(Keyword.SHROUD), Set.of())));

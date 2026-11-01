@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M12", collectorNumber = "136")
 @CardRegistration(set = "M13", collectorNumber = "134")
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GoblinArsonist extends Card {
 
     public GoblinArsonist() {
-        addEffect(EffectSlot.ON_DEATH, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                 new DealDamageToAnyTargetEffect(1),
                 "Have Goblin Arsonist deal 1 damage to any target?"));
     }

@@ -21,7 +21,7 @@ class UndyingBeastTest extends BaseCardTest {
         Permanent beast = harness.addToBattlefieldAndReturn(player1, new UndyingBeast());
         Card beastCard = beast.getCard();
 
-        // Player 1 wraths the board — Undying Beast dies and its ON_DEATH trigger goes on the stack.
+        // Player 1 wraths the board — Undying Beast dies and its dies trigger goes on the stack.
         harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Wrath resolves — Beast dies, death trigger placed
         harness.passBothPriorities(); // resolve the death trigger — tuck on top of library

@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param stopAfterDiscardingPredicate matching card predicate that makes the remaining discard
  *                                     optional; {@code null} when using a card type or for an
  *                                     ordinary discard
- * @param onlyIfSacrificed       when {@code true}, an {@code ON_DEATH} effect only triggers when
+ * @param onlyIfSacrificed       when {@code true}, an "when this dies" effect only triggers when
  *                                its source was sacrificed
  * @param onlyCardsDrawnThisResolution when {@code true}, choices are restricted to cards drawn
  *                                earlier while resolving the same stack entry

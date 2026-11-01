@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Triggered-ability effect: "shuffle it into its owner's library." Resolves the source card
  * from its owner's graveyard back into their library. Used together with the
- * {@code ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE} slot for cards like Purity
+ * "when this is put into a graveyard from anywhere" ability for cards like Purity
  * ("When Purity is put into a graveyard from anywhere, shuffle it into its owner's library.").
  *
  * <p>Distinct from {@code ShuffleIntoLibraryReplacementEffect}: this is a triggered ability —

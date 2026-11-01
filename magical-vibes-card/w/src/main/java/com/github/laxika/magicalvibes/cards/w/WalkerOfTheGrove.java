@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class WalkerOfTheGrove extends Card {
 
     public WalkerOfTheGrove() {
         // "When this creature leaves the battlefield, create a 4/4 green Elemental creature token."
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new CreateTokenEffect("Elemental", 4, 4, CardColor.GREEN,
                         List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of()));
 

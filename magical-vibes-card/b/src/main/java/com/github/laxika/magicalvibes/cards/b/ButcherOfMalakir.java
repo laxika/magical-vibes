@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WWK", collectorNumber = "53")
 @CardRegistration(set = "DDK", collectorNumber = "18")
@@ -25,6 +27,6 @@ public class ButcherOfMalakir extends Card {
         SacrificePermanentsEffect effect = new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, effect);
-        addEffect(EffectSlot.ON_DEATH, effect);
+        addTrigger(Triggers.dies(ObjectRelation.THIS), effect);
     }
 }

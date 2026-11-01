@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "107")
 public class EsperSojourners extends Card {
@@ -14,7 +16,7 @@ public class EsperSojourners extends Card {
         // When this creature dies, you may tap or untap target permanent. The explicit any-permanent
         // filter overrides the death pipeline's creatures-only default so lands/artifacts stay legal.
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.ON_DEATH, new MayEffect(
+                .addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(
                         new TapOrUntapTargetPermanentEffect(),
                         "Tap or untap target permanent?"));
 

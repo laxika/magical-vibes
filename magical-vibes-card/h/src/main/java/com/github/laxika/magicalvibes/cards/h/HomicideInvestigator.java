@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "86")
 @CardRegistration(set = "MKM", collectorNumber = "343")
@@ -15,7 +17,7 @@ public class HomicideInvestigator extends Card {
         // the once-per-turn wrapper keeps simultaneous deaths to a single investigate.
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
                 new OncePerTurnTriggerEffect(CreateTokenEffect.ofClueToken(1)));
-        addEffect(EffectSlot.ON_DEATH,
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new OncePerTurnTriggerEffect(CreateTokenEffect.ofClueToken(1)));
     }
 }

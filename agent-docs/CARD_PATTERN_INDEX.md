@@ -16,7 +16,7 @@
 | end-step payment then perpetual artifact-card modification and second-from-top placement | `r/RichlauHeadmaster.java` + `MayPayManaEffect` + `QueueReflexiveAbilityEffect` + `PerpetuallyReduceTargetArtifactCardCostAndBoostCreatureOrVehicleEffect` |
 | controller-end-step perpetual -1/-1 to a chosen opponent creature with least toughness, plus a state-triggered sacrifice when opponents control no creatures | `p/PenregonBesieged.java` + `ChooseOpponentCreatureAndPerpetuallyBoostEffect(-1, -1, PermanentHasLeastToughnessAmongOpponentCreaturesPredicate)` + `StateTriggerEffect.whenBattlefieldHasAtMost(0, opponent creature filter)` |
 | destroy target nonland permanent and, if a Dragon was beheld, perpetually boost its card | `t/TerritorialStrike.java` + `BeholdCost.optional(DRAGON)` + `ConditionalReplacementEffect` + `DestroyTargetPermanentThenPerpetuallyBoostEffect` |
-| self-reanimating creature that enters tapped and perpetually loses its death trigger on return | `r/RunebladeRaiser.java` + `STATIC EntersTappedEffect` + `ON_DEATH ReturnSourceCardFromGraveyardToBattlefieldEffect(false, false, true)` |
+| self-reanimating creature that enters tapped and perpetually loses its death trigger on return | `r/RunebladeRaiser.java` + `STATIC EntersTappedEffect` + `Triggers.dies(THIS) ReturnSourceCardFromGraveyardToBattlefieldEffect(false, false, true)` |
 | batched attacking-death reanimation | `r/RinoaAngelWing.java` + `ON_ALLY_CREATURE_DIES OncePerTurnTriggerEffect(OneOrMoreCreatureDeathTriggerEffect(..., PermanentIsAttackingPredicate))` + `ReturnCardFromGraveyardEffect.eventCardIdsOnly(true)` with an enter-tapped flying counter |
 | ETB secretly chooses a graveyard card to duplicate into hand, granting flash to nonland duplicates | `n/NashiIllusionGadgeteer.java` + `ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffect` |
 | saddled attack trigger deals damage to any target, then perpetually grants can't-block and damage-persistence static effects to creatures actually damaged | `s/SwitchgrassGrazer.java` + `ConditionalEffect(SourceIsSaddled, DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffect)` |
@@ -318,7 +318,7 @@
 | end step draws and creates Treasures for opponents meeting independent turn thresholds | `s/SmugglersShare.java` |
 | upkeep reveals a fresh top card for each opponent, who may pay its mana value in life to exile it | `p/ProtectionRacket.java` + `ProtectionRacketEffect` |
 
-- Lich (2ED 114): static `LoseLifeEqualToLifeTotalAsEntersEffect`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `ON_DEATH`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
+- Lich (2ED 114): static `LoseLifeEqualToLifeTotalAsEntersEffect`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `Triggers.dies(THIS)`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
 
 Purpose: quickly find a reference card for the pattern you're implementing. One or two examples per archetype. All paths relative to `cards/`.
 

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class ReluctantRoleModel extends Card {
                 )))));
 
         var deathTrigger = target(TargetFilters.creature(), 0, 1);
-        deathTrigger.addEffect(EffectSlot.ON_DEATH,
+        deathTrigger.addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MoveDyingSourceCountersToTargetCreatureEffect());
         deathTrigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(

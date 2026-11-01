@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NEM", collectorNumber = "62")
 public class ParallaxDementia extends Card {
@@ -21,7 +23,7 @@ public class ParallaxDementia extends Card {
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE))
                 .addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new DestroyEnchantedCreatureOnLeaveEffect());
     }
 }

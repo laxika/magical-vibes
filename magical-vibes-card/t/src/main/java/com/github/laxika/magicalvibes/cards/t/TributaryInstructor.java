@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,11 +33,11 @@ public class TributaryInstructor extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // Whenever a creature you control with a +1/+1 counter on it dies, draw a card.
-        // ON_DEATH covers this creature's own death; ON_ALLY_CREATURE_DIES covers the others.
+        // its dies trigger covers this creature's own death; ON_ALLY_CREATURE_DIES covers the others.
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect()));
-        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect()));
     }

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class CavalierOfDawn extends Card {
                         new CreateTokenEffect("Golem", 3, 3, null,
                                 List.of(CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT))));
 
-        addEffect(EffectSlot.ON_DEATH, ReturnTargetCardsFromGraveyardToHandEffect.exactlyOneForTriggeredAbility(
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnTargetCardsFromGraveyardToHandEffect.exactlyOneForTriggeredAbility(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.ENCHANTMENT)))));

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,7 +41,7 @@ public class LegionReconsecrator extends Card {
                 new CardNotPredicate(new CardIsSelfPredicate()),
                 powerOrToughnessOne));
 
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(returnFilter)
                 .targetGraveyard(true)

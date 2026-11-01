@@ -8,36 +8,22 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
@@ -45,31 +31,22 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffe
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -78,9 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -152,21 +127,6 @@ class DeathTriggerCollectorServiceTest {
         return card;
     }
 
-    @Test
-    @DisplayName("Uses the dying creature's power snapshot for incubate-by-power triggers")
-    void usesDyingPowerSnapshotForIncubate() {
-        Card card = createCreature("Furnace Gremlin", 1, 2);
-        Permanent perm = new Permanent(card);
-        var effect = new CreateTokenWithDyingSourcePowerCountersEffect(null);
-        var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm, 2);
-
-        assertThat(svc.handleCreateTokenWithDyingSourcePowerCounters(
-                match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(2);
-    }
-
     private Card createEnchantment(String name) {
         Card card = new Card();
         card.setName(name);
@@ -224,459 +184,17 @@ class DeathTriggerCollectorServiceTest {
                 org.mockito.ArgumentMatchers.any(com.github.laxika.magicalvibes.model.filter.FilterContext.class));
     }
 
-    // ── ON_DEATH handlers ──────────────────────────────────────────────
+    // ── "when this dies" handlers ──────────────────────────────────────────────
 
-    @Nested
-    @DisplayName("handleDealDamageToBlockedAttackers")
-    class DealDamageToBlockedAttackers {
 
-        @Test
-        @DisplayName("Triggers during combat when creature was blocking")
-        void triggersDuringCombat() {
-            Card card = createCreature("Blocker", 1, 1);
-            var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-            Permanent perm = new Permanent(card);
-            UUID attackerId = UUID.randomUUID();
-            perm.getBlockingTargetIds().add(attackerId);
-            gd.currentStep = TurnStep.COMBAT_DAMAGE;
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 
-            boolean result = svc.handleDealDamageToBlockedAttackers(match(perm, PLAYER1_ID, deathDmg), deathDmg, ctx);
 
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getTargetIds()).containsExactly(attackerId);
-        }
 
-        @Test
-        @DisplayName("Does not trigger outside combat")
-        void doesNotTriggerOutsideCombat() {
-            Card card = createCreature("Blocker", 1, 1);
-            var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-            Permanent perm = new Permanent(card);
-            perm.getBlockingTargetIds().add(UUID.randomUUID());
-            gd.currentStep = TurnStep.PRECOMBAT_MAIN;
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 
-            boolean result = svc.handleDealDamageToBlockedAttackers(match(perm, PLAYER1_ID, deathDmg), deathDmg, ctx);
 
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
 
-        @Test
-        @DisplayName("Does not trigger when not blocking")
-        void doesNotTriggerWhenNotBlocking() {
-            Card card = createCreature("NonBlocker", 1, 1);
-            var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-            Permanent perm = new Permanent(card);
-            gd.currentStep = TurnStep.COMBAT_DAMAGE;
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 
-            assertThat(svc.handleDealDamageToBlockedAttackers(match(perm, PLAYER1_ID, deathDmg), deathDmg, ctx)).isFalse();
-        }
 
-        @Test
-        @DisplayName("Does not trigger when dyingPermanent is null")
-        void doesNotTriggerWhenPermanentNull() {
-            Card card = createCreature("Ghost", 1, 1);
-            var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-            Permanent perm = new Permanent(card);
-            gd.currentStep = TurnStep.COMBAT_DAMAGE;
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
-
-            assertThat(svc.handleDealDamageToBlockedAttackers(match(perm, PLAYER1_ID, deathDmg), deathDmg, ctx)).isFalse();
-        }
-
-        @Test
-        @DisplayName("Does not trigger when step is null")
-        void doesNotTriggerWhenStepNull() {
-            Card card = createCreature("Blocker", 1, 1);
-            var deathDmg = new DealDamageToBlockedAttackersOnDeathEffect(2);
-            Permanent perm = new Permanent(card);
-            perm.getBlockingTargetIds().add(UUID.randomUUID());
-            gd.currentStep = null;
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            assertThat(svc.handleDealDamageToBlockedAttackers(match(perm, PLAYER1_ID, deathDmg), deathDmg, ctx)).isFalse();
-        }
-    }
-
-    @Nested
-    @DisplayName("handleDistributeCountersAmongCreaturesOnDeath")
-    class DistributeCountersAmongCreaturesOnDeath {
-
-        @Test
-        @DisplayName("Snapshots counter count and stacks a MayEffect")
-        void snapshotsAndStacksMay() {
-            Card card = createCreature("Hydra", 0, 0);
-            var effect = DistributeCountersAmongCreaturesOnDeathEffect
-                    .fromDyingSourceCountersAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE);
-            Permanent perm = new Permanent(card);
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            assertThat(svc.handleDistributeCountersAmongCreaturesOnDeath(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            MayEffect may = (MayEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            var baked = (DistributeCountersAmongCreaturesOnDeathEffect) may.wrapped();
-            assertThat(baked.count()).isEqualTo(3);
-            assertThat(baked.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        }
-
-        @Test
-        @DisplayName("Does not trigger when dying permanent is null")
-        void noPermanent() {
-            Card card = createCreature("Hydra", 0, 0);
-            var effect = DistributeCountersAmongCreaturesOnDeathEffect
-                    .fromDyingSourceCountersAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE);
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
-
-            assertThat(svc.handleDistributeCountersAmongCreaturesOnDeath(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("handlePutCounterOnTargetForEachDyingSourceCounter")
-    class PutCounterOnTargetForEachDyingSourceCounter {
-
-        @Test
-        @DisplayName("Snapshots counters and preserves the target predicate")
-        void snapshotsCountersAndPreservesTargetPredicate() {
-            Card card = createCreature("Arcbound Bruiser", 0, 0);
-            Permanent perm = new Permanent(card);
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-            var targetPredicate = new PermanentAllOfPredicate(List.of(
-                    new PermanentIsArtifactPredicate(),
-                    new PermanentIsCreaturePredicate()
-            ));
-            var effect = new PutCounterOnTargetForEachDyingSourceCounterEffect(
-                    CounterType.PLUS_ONE_PLUS_ONE, true, targetPredicate);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            assertThat(svc.handlePutCounterOnTargetForEachDyingSourceCounter(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
-
-            MayEffect may = (MayEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)
-                    .effects().getFirst();
-            var baked = (PutCounterOnTargetForEachDyingSourceCounterEffect) may.wrapped();
-            assertThat(baked.count()).isEqualTo(3);
-            assertThat(baked.targetPredicate()).isEqualTo(targetPredicate);
-        }
-    }
-
-    @Nested
-    @DisplayName("handlePutCountersOnTargetForEachDyingSourcePower")
-    class PutCountersOnTargetForEachDyingSourcePower {
-
-        @Test
-        @DisplayName("Snapshots the dying creature's effective power")
-        void snapshotsPower() {
-            Card card = createCreature("Galuf's target", 3, 2);
-            Permanent perm = new Permanent(card);
-            var effect = new PutCountersOnTargetForEachDyingSourcePowerEffect();
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            assertThat(svc.handlePutCountersOnTargetForEachDyingSourcePower(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
-
-            var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-            var baked = (PutCountersOnTargetForEachDyingSourcePowerEffect) pending.effects().getFirst();
-            assertThat(baked.count()).isEqualTo(3);
-        }
-
-        @Test
-        @DisplayName("Does not trigger when the dying permanent is unavailable")
-        void noPermanent() {
-            Card card = createCreature("Galuf's target", 3, 2);
-            Permanent perm = new Permanent(card);
-            var effect = new PutCountersOnTargetForEachDyingSourcePowerEffect();
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
-
-            assertThat(svc.handlePutCountersOnTargetForEachDyingSourcePower(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
-            assertThat(gd.pendingInteractions).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("handleDeathMayPayMana")
-    class DeathMayPayMana {
-
-        @Test
-        @DisplayName("Queues may ability with mana cost")
-        void queuesMayAbility() {
-            Card card = createCreature("Mana Dude", 2, 2);
-            var mayPay = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay 2?");
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            assertThat(svc.handleDeathMayPayMana(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("handleDeathMayPayLife")
-    class DeathMayPayLife {
-
-        @Test
-        @DisplayName("Adds the optional life payment to the stack")
-        void addsLifePaymentToStack() {
-            Card card = createCreature("Life Watcher", 2, 2);
-            var mayPay = new MayPayLifeEffect(2, new DrawCardEffect(1), "Pay 2?");
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            assertThat(svc.handleDeathMayPayLife(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isEqualTo(mayPay);
-        }
-    }
-
-    @Nested
-    @DisplayName("handleDeathModalAtTriggerTime")
-    class DeathModalAtTriggerTime {
-
-        @Test
-        @DisplayName("Queues a triggered modal choice")
-        void queuesTriggeredModalChoice() {
-            Card card = createCreature("Shambling Ghast", 1, 1);
-            Permanent perm = new Permanent(card);
-            var choice = new ChooseOneEffect(List.of(
-                    new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)),
-                    new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1))));
-            var effect = new ChooseOneAtTriggerTimeEffect(choice);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            assertThat(svc.handleDeathModalAtTriggerTime(match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
-
-            var pending = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
-            assertThat(pending.sourceCard()).isEqualTo(card);
-            assertThat(pending.controllerId()).isEqualTo(PLAYER1_ID);
-            assertThat(pending.effect()).isEqualTo(choice);
-            assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
-            assertThat(gd.stack).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("handleLosesLifeEqualToPower")
-    class LosesLifeEqualToPower {
-
-        @Test
-        @DisplayName("Bakes effective power from permanent")
-        void bakesPowerFromPermanent() {
-            Card card = createCreature("Vengeful", 4, 3);
-            var effect = new TargetPlayerLosesLifeEqualToPowerEffect();
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(new Fixed(4));
-        }
-
-        @Test
-        @DisplayName("Falls back to card power when no permanent")
-        void fallsBackToCardPower() {
-            Card card = createCreature("Ghost", 3, 2);
-            var effect = new TargetPlayerLosesLifeEqualToPowerEffect();
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
-
-            svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(new Fixed(3));
-        }
-
-        @Test
-        @DisplayName("Clamps negative power to 0")
-        void clampsNegativePower() {
-            Card card = createCreature("Weakened", 2, 2);
-            var effect = new TargetPlayerLosesLifeEqualToPowerEffect();
-            Permanent perm = new Permanent(card);
-            perm.setPowerModifier(-5);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(new Fixed(0));
-        }
-
-        @Test
-        @DisplayName("Falls back to 0 when card power is null and no permanent")
-        void nullCardPowerResolvesToZero() {
-            Card card = createCreature("Powerless", 0, 2);
-            card.setPower(null);
-            var effect = new TargetPlayerLosesLifeEqualToPowerEffect();
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, null);
-
-            svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(new Fixed(0));
-        }
-    }
-
-    @Nested
-    @DisplayName("handleDeathMayEffect")
-    class DeathMayEffect {
-
-        @Test
-        @DisplayName("Non-targeting MayEffect queues may ability")
-        void nonTargetingQueuesMayAbility() {
-            Card card = createCreature("Optional", 1, 1);
-            var may = new MayEffect(new DrawCardEffect(1), "Draw?");
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleDeathMayEffect(match(perm, PLAYER1_ID, may), may, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayEffect.class);
-        }
-
-        @Test
-        @DisplayName("Targeting MayEffect queues a DeathTriggerTarget interaction (CR 603.3d)")
-        void targetingGoesToPendingTargets() {
-            Card card = createCreature("Targeted May", 2, 2);
-            var may = new MayEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), "Drain?");
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleDeathMayEffect(match(perm, PLAYER1_ID, may), may, ctx);
-
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
-            assertThat(gd.stack).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("handleDeathDefault")
-    class DeathDefault {
-
-        @Test
-        @DisplayName("Non-targeting effect adds to stack")
-        void nonTargetingAddsToStack() {
-            Card card = createCreature("Dying Dude", 2, 2);
-            var effect = new DrawCardEffect(1);
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            StackEntry entry = gd.stack.get(0);
-            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
-            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
-            assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
-        }
-
-        @Test
-        void transformedDeathBindsThePhysicalCardId() {
-            Card front = createCreature("Front", 2, 2);
-            Card back = createCreature("Back", 4, 4);
-            Permanent permanent = new Permanent(front);
-            permanent.setCard(back);
-            permanent.setTransformed(true);
-            var effect = new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect();
-            var context = new TriggerContext.SelfDeath(back, PLAYER1_ID, true, permanent);
-
-            svc.handleDeathDefault(match(permanent, PLAYER1_ID, effect), effect, context);
-
-            assertThat(gd.stack.getFirst().getEffectsToResolve())
-                    .containsExactly(new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect(front.getId()));
-        }
-
-        @Test
-        void unchangedDeathSequencePreservesItsTargetBinding() {
-            Card card = createCreature("Optional death trigger", 2, 2);
-            CardEffect effect = SequenceEffect.of(
-                    new MayEffect(new DrawCardEffect(1), "Draw?"),
-                    new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
-            card.target(0, 1).addEffect(com.github.laxika.magicalvibes.model.EffectSlot.ON_DEATH, effect);
-            Permanent permanent = new Permanent(card);
-
-            svc.handleDeathDefault(match(permanent, PLAYER1_ID, effect), effect,
-                    new TriggerContext.SelfDeath(card, PLAYER1_ID, true, permanent));
-
-            var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-            assertThat(pending).isNotNull();
-            assertThat(pending.dyingCard().isEffectBoundToTargetGroup(pending.effects().getFirst(), 0)).isTrue();
-        }
-
-        @Test
-        @DisplayName("Preserves alternate-cost state for a conditional death trigger")
-        void preservesAlternateCostState() {
-            Card card = createCreature("Blitz Creature", 2, 2);
-            var effect = new ConditionalEffect(new CastForAlternateCost(), new DrawCardEffect(1));
-            Permanent perm = new Permanent(card);
-            perm.setAlternateCost(true);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().isAlternateCost()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Targeting effect queues DeathTriggerTarget")
-        void targetingQueuesDeathTriggerTarget() {
-            Card card = createCreature("Targeting Dude", 3, 3);
-            var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("Graveyard-targeting effect queues DeathTriggerTarget (Ruin Rat)")
-        void graveyardTargetingQueuesDeathTriggerTarget() {
-            Card card = createCreature("Ruin Rat", 1, 1);
-            var effect = new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD);
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-
-            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("Multi-target graveyard return queues DeathTriggerTarget")
-        void multiTargetGraveyardReturnQueuesDeathTriggerTarget() {
-            Card card = createCreature("Forked-Branch Garami", 4, 4);
-            var effect = new ReturnTargetCardsFromGraveyardToHandEffect(null, 2);
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
-            when(graveyardTargetingSupport.findTarget(List.of(effect))).thenReturn(
-                    new com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.Target(
-                            null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to your hand", 2));
-
-            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
-        }
-    }
 
     // ── ON_ALLY_CREATURE_DIES handlers ─────────────────────────────────
 
@@ -876,39 +394,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("handleExileEquippedCreature")
-    class ExileEquippedCreature {
-
-        @Test
-        @DisplayName("Binds the Equipment's last-known attachment")
-        void bindsLastKnownAttachment() {
-            Card equipment = createEquipment("Oathkeeper");
-            Permanent perm = new Permanent(equipment);
-            UUID equippedId = UUID.randomUUID();
-            perm.setAttachedTo(equippedId);
-            var effect = new ExileEquippedCreatureEffect();
-            var ctx = new TriggerContext.SelfDeath(equipment, PLAYER1_ID, false, perm);
-
-            svc.handleExileEquippedCreature(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            var bound = (ExileEquippedCreatureEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(bound.equippedCreatureId()).isEqualTo(equippedId);
-        }
-
-        @Test
-        @DisplayName("Does not fire when the Equipment was unattached")
-        void unattachedDoesNotFire() {
-            Card equipment = createEquipment("Oathkeeper");
-            Permanent perm = new Permanent(equipment);
-            var effect = new ExileEquippedCreatureEffect();
-            var ctx = new TriggerContext.SelfDeath(equipment, PLAYER1_ID, false, perm);
-
-            assertThat(svc.handleExileEquippedCreature(match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-    }
 
     // ── ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD handlers ─────────────
 
@@ -1783,121 +1268,8 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    // ── ON_SELF_LEAVES_BATTLEFIELD handlers ────────────────────────────
+    // ── "when this leaves the battlefield" handlers ────────────────────────────
 
-    @Nested
-    @DisplayName("Self leaves battlefield handlers")
-    class SelfLeavesHandlers {
-
-        @Test
-        @DisplayName("ControllerLosesGameOnLeavesEffect converts to TargetPlayerLosesGameEffect")
-        void controllerLosesGameConverts() {
-            Card card = createCreature("Pact Creature", 5, 5);
-            var effect = new ControllerLosesGameOnLeavesEffect();
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
-
-            svc.handleControllerLosesGameOnLeaves(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            var resolved = (TargetPlayerLosesGameEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(resolved.playerId()).isEqualTo(PLAYER1_ID);
-        }
-
-        @Test
-        @DisplayName("Generic effect adds to stack")
-        void genericEffectAddsToStack() {
-            Card card = createCreature("Leaving Dude", 2, 2);
-            var effect = new DrawCardEffect(1);
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
-
-            svc.handleSelfLeavesDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
-        }
-
-        @Test
-        @DisplayName("Leaving-source counter trigger snapshots its count and queues target selection")
-        void leavingSourceCounterTriggerSnapshotsCount() {
-            Card card = createCreature("Counter Captain", 1, 1);
-            Permanent perm = new Permanent(card);
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-            var effect = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
-                    CounterType.PLUS_ONE_PLUS_ONE);
-            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
-
-            assertThat(svc.handlePutCounterOnTargetForEachLeavingSourceCounter(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
-
-            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
-            var baked = (PutCounterOnTargetForEachLeavingSourceCounterEffect) pending.effects().getFirst();
-            assertThat(baked.count()).isEqualTo(2);
-        }
-
-        @Test
-        @DisplayName("Leaving-source counter trigger is retained when the source has no counters")
-        void leavingSourceCounterTriggerRetainsZeroCount() {
-            Card card = createCreature("Counterless Captain", 1, 1);
-            Permanent perm = new Permanent(card);
-            var effect = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
-                    CounterType.PLUS_ONE_PLUS_ONE);
-            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
-
-            assertThat(svc.handlePutCounterOnTargetForEachLeavingSourceCounter(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
-
-            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
-            var baked = (PutCounterOnTargetForEachLeavingSourceCounterEffect) pending.effects().getFirst();
-            assertThat(baked.count()).isZero();
-        }
-
-        @Test
-        @DisplayName("DestroyEnchantedCreatureOnLeaveEffect captures the attached permanent ID")
-        void destroyEnchantedCreatureCapturesAttachedPermanent() {
-            Permanent aura = new Permanent(createEnchantment("Leaving Aura"));
-            Permanent creature = new Permanent(createCreature("Enchanted Creature", 2, 2));
-            aura.setAttachedTo(creature.getId());
-            var effect = new DestroyEnchantedCreatureOnLeaveEffect();
-            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
-
-            svc.handleDestroyEnchantedCreatureOnLeave(match(aura, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            var captured = (DestroyEnchantedCreatureOnLeaveEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(captured.enchantedPermanentId()).isEqualTo(creature.getId());
-            assertThat(captured.cannotBeRegenerated()).isTrue();
-        }
-
-        @Test
-        @DisplayName("ReturnAllCardsExiledWithSourceEffect preserves the leaving permanent ID")
-        void returnAllCardsExiledWithSourcePreservesSourceId() {
-            Permanent perm = new Permanent(createCreature("Leaving Angel", 6, 6));
-            var effect = new ReturnAllCardsExiledWithSourceEffect();
-            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
-
-            svc.handleReturnAllCardsExiledWithSourceOnLeave(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            StackEntry entry = gd.stack.get(0);
-            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-        }
-
-        @Test
-        @DisplayName("Logs trigger message")
-        void logsMessage() {
-            Card card = createCreature("Logged Leaver", 2, 2);
-            var effect = new DrawCardEffect(1);
-            Permanent perm = new Permanent(card);
-            var ctx = new TriggerContext.SelfLeaves(PLAYER1_ID);
-
-            svc.handleSelfLeavesDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Logged Leaver") && logEntry.plainText().contains("left the battlefield")));
-        }
-    }
 
     // ── ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD handler ──
 
