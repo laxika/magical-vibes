@@ -2,13 +2,18 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,14 +26,13 @@ class FearOfChangeTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         castFearOfChange();
+        declineConjuredCreatureCopyChoice();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(bear.getCard().getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> !permanent.getCard().getName().equals("Fear of Change")
-                        && permanent.getCard().hasType(CardType.CREATURE)
-                        && permanent.getCard().getManaValue() == 4);
+        assertThat(conjuredCards())
+                .anyMatch(card -> card.hasType(CardType.CREATURE) && card.getManaValue() == 4);
     }
 
     @Test
@@ -40,13 +44,13 @@ class FearOfChangeTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, fear));
         harness.passBothPriorities();
+        declineConjuredCreatureCopyChoice();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(fear.getCard());
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(bear.getCard().getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().hasType(CardType.CREATURE)
-                        && permanent.getCard().getManaValue() == 4);
+        assertThat(conjuredCards())
+                .anyMatch(card -> card.hasType(CardType.CREATURE) && card.getManaValue() == 4);
     }
 
     @Test
@@ -119,6 +123,24 @@ class FearOfChangeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(first.getCard().getId()));
     }
+    /**
+     * The conjured creature is random. A Clone or Phyrexian Metamorph asks whether to enter as a copy before it is on
+     * the battlefield; declining lets it enter as itself, a 0/0 that state-based actions put into the graveyard.
+     */
+    private void declineConjuredCreatureCopyChoice() {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+    }
+
+    /** The conjured cards on player1's battlefield or in their graveyard (see {@link #declineConjuredCreatureCopyChoice}). */
+    private List<Card> conjuredCards() {
+        return Stream.concat(gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getCard),
+                        gd.playerGraveyards.get(player1.getId()).stream())
+                .filter(Card::isConjured)
+                .toList();
+    }
+
     private void castFearOfChange() {
         harness.castFromHand(player1, new FearOfChange(), "{G}{U}");
         harness.passBothPriorities();
@@ -133,9 +155,14 @@ class FearOfChangeTest extends BaseCardTest {
 
         castFearOfChange();
         harness.handlePermanentChosen(player1, bear.getId());
-        resolveAllTriggers();
 
+        // The conjured creature is random, and its own enters ability may be asking a question first, so check
+        // that the conjure ability triggered rather than resolving it.
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
-        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getCard()).isSameAs(evokers.getCard());
+            assertThat(entry.getEffectsToResolve()).containsExactlyElementsOf(
+                    evokers.getCard().getEffects(EffectSlot.ON_CONTROLLER_CONJURES));
+        });
     }
 }

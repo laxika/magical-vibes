@@ -49,6 +49,8 @@ class SeedlingCharmTest extends BaseCardTest {
             Permanent host = harness.addToBattlefieldAndReturn(player2, new MtendaLion());
             Permanent aura = addAuraAttachedTo(player2, host);
             gd.stolenCreatures.put(aura.getId(), player1.getId());
+            // The random opening hand can hold a Pacifism, which the hand assertions would see.
+            harness.setHand(player2, List.of());
             harness.setHand(player1, List.of(new SeedlingCharm()));
             harness.addMana(player1, ManaColor.GREEN, 1);
 
