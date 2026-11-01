@@ -33,7 +33,7 @@ public class OrzhovPontiff extends Card {
         ));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(modes));
-        addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new ChooseOneAtTriggerTimeEffect(modes));
+        addTrigger(Triggers.dies(ObjectRelation.HAUNTED), new ChooseOneAtTriggerTimeEffect(modes));
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class PashalikMons extends Card {
 
     public PashalikMons() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN),
                 new DealDamageToAnyTargetEffect(1)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1));

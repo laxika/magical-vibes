@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONE", collectorNumber = "82")
 public class ArchfiendOfTheDross extends Card {
@@ -27,7 +29,7 @@ public class ArchfiendOfTheDross extends Card {
                         new NotCondition(new SourceCounterThreshold(1, CounterType.OIL)),
                         new ControllerLosesGameEffect())));
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }

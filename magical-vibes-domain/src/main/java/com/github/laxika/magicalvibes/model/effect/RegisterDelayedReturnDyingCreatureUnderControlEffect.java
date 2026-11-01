@@ -9,10 +9,10 @@ import java.util.UUID;
 
 /**
  * Death-trigger effect for "put that card onto the battlefield under your control at the beginning
- * of the next end step": Seraph ({@code ON_DAMAGED_CREATURE_DIES}), Grave Betrayal
- * ({@code ON_OPPONENT_CREATURE_DIES}) and Shirei, Shizo's Caretaker
- * ({@code ON_ALLY_CREATURE_DIES}, wrapped in a {@code MayEffect}), plus Lifeline's owner-control
- * return from {@code ON_ANY_CREATURE_DIES}.
+ * of the next end step": Seraph ({@code Triggers.creatureDies(DAMAGED_BY_THIS)}), Grave Betrayal
+ * ({@code Triggers.creatureDies(OPPONENT_CONTROLS)}) and Shirei, Shizo's Caretaker
+ * ({@code Triggers.creatureDies(YOU_CONTROL)}, wrapped in a {@code MayEffect}), plus Lifeline's owner-control
+ * return from {@code Triggers.creatureDies(ANY)}.
  *
  * <p>On resolution the handler reads the dying creature's card id from {@code dyingCardId} when the
  * collector bound one (the {@code MayEffect} flow does not carry the stack entry's triggering-card

@@ -27,8 +27,7 @@ public record ShadowComparison(Set<EffectSlot> slots, Set<Class<?>> nothingToDoD
 
     /**
      * The comparison every card test runs (see {@code BaseCardTest}). None: effect-slot-refactor.md step 10b moved
-     * the pilot, the source's own zone changes, to the trigger pipeline, and step 11 shadows the creature-death
-     * slots next.
+     * the pilot, the source's own zone changes, to the trigger pipeline, and step 11 the creature-death slots.
      */
     public static final ShadowComparison CURRENT = NONE;
 

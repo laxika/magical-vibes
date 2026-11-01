@@ -43,7 +43,6 @@ public class AlharuSolemnRitualist extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))), spiritToken);
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, counteredCreatureDies);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), counteredCreatureDies);
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), counteredCreatureDies);
     }
 }

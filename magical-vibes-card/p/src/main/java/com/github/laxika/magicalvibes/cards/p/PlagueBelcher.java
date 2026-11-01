@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "104")
 @CardRegistration(set = "DRC", collectorNumber = "97")
@@ -23,10 +25,8 @@ public class PlagueBelcher extends Card {
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 2));
 
-        // Whenever another Zombie you control dies, each opponent loses 1 life. The source has
-        // already left the battlefield when ally-death triggers are collected, so this never fires
-        // for Plague Belcher's own death (the "another" clause).
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        // Whenever another Zombie you control dies, each opponent loses 1 life.
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ZOMBIE),
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));

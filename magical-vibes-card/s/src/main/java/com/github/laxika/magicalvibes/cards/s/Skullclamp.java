@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DST", collectorNumber = "140")
 @CardRegistration(set = "V09", collectorNumber = "12")
@@ -38,7 +39,7 @@ public class Skullclamp extends Card {
 
     public Skullclamp() {
         addStaticEffect(new StaticBoostEffect(1, -1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new DrawCardEffect(2));
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new DrawCardEffect(2));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

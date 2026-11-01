@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "214")
 @CardRegistration(set = "CMM", collectorNumber = "384")
@@ -23,7 +24,7 @@ public class ForebearsBlade extends Card {
 
         // Whenever equipped creature dies, attach this Equipment to target creature you control
         setCastTimeTargetFilter(TargetFilters.creatureYouControl());
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new AttachSourceEquipmentToTargetCreatureEffect());
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

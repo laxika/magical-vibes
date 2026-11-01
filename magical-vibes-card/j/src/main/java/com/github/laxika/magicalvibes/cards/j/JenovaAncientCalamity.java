@@ -48,7 +48,6 @@ public class JenovaAncientCalamity extends Card {
         TriggeringPermanentConditionalEffect drawForDyingMutant = new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.MUTANT),
                 new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(new EventValue())));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawForDyingMutant);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), drawForDyingMutant);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drawForDyingMutant);
     }
 }

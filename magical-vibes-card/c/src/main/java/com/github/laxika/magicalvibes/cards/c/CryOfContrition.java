@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
@@ -18,8 +17,9 @@ public class CryOfContrition extends Card {
 
     public CryOfContrition() {
         target(anyPlayer()).addSpellEffect(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
-        target(TargetFilters.creature()).addTrigger(Triggers.putIntoGraveyardWhileResolving(ObjectRelation.THIS), new HauntEffect());
-        target(anyPlayer()).addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES,
+        target(TargetFilters.creature()).addTrigger(Triggers.putIntoGraveyardWhileResolving(ObjectRelation.THIS),
+                new HauntEffect());
+        target(anyPlayer()).addTrigger(Triggers.dies(ObjectRelation.HAUNTED),
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
     }
 

@@ -20,6 +20,9 @@ public record TriggerOptions(Condition interveningIf, TriggerLimit limit, Trigge
     /** No intervening "if" and no limit; triggers once for each matching occurrence. */
     public static final TriggerOptions DEFAULT = new TriggerOptions(null, TriggerLimit.NONE, TriggerMultiplicity.EACH);
 
+    /** No intervening "if" and no limit; triggers once for an event however many of its occurrences match. */
+    public static final TriggerOptions ONE_OR_MORE = DEFAULT.withMultiplicity(TriggerMultiplicity.ONE_OR_MORE);
+
     public TriggerOptions {
         Objects.requireNonNull(limit, "limit");
         Objects.requireNonNull(multiplicity, "multiplicity");

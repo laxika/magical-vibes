@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M15", collectorNumber = "212")
 public class AvariceAmulet extends Card {
@@ -33,7 +35,8 @@ public class AvariceAmulet extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new TargetPlayerGainsControlOfSourceCreatureEffect());
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
+                new TargetPlayerGainsControlOfSourceCreatureEffect());
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

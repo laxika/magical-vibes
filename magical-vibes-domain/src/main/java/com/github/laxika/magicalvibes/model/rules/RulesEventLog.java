@@ -274,23 +274,23 @@ public final class RulesEventLog {
     public void departed(Permanent lastKnown, Card card, Collection<UUID> cardIds, UUID ownerId,
                          UUID controllerId, Zone intendedTo) {
         departed(lastKnown, card, cardIds, ownerId, controllerId, intendedTo, List.of(), false,
-                DepartedAttachments.NONE);
+                DepartedAttachments.NONE, List.of());
     }
 
     /**
      * As {@link #departed(Permanent, Card, Collection, UUID, UUID, Zone)}, with the abilities granted to it as it
-     * left, whether its death would have caused no triggers and what was attached to it (see
-     * {@link ZoneChangeEvent}).
+     * left, whether its death would have caused no triggers, what was attached to it and which cards haunted it
+     * (see {@link ZoneChangeEvent}).
      */
     public void departed(Permanent lastKnown, Card card, Collection<UUID> cardIds, UUID ownerId,
                          UUID controllerId, Zone intendedTo, List<Ability> grantedAbilities,
-                         boolean deathTriggersSuppressed, DepartedAttachments attachments) {
+                         boolean deathTriggersSuppressed, DepartedAttachments attachments, List<UUID> hauntedBy) {
         if (suppressDepth > 0) {
             return;
         }
         ZoneChangeEvent event = new ZoneChangeEvent(card, ownerId, Zone.BATTLEFIELD, intendedTo,
                 causes.getOrDefault(lastKnown.getId(), ZoneChangeCause.OTHER), lastKnown, controllerId,
-                grantedAbilities, deathTriggersSuppressed, payingCostOf, attachments);
+                grantedAbilities, deathTriggersSuppressed, payingCostOf, attachments, hauntedBy);
         for (UUID cardId : cardIds) {
             departures.put(cardId, event);
             cardZones.put(cardId, intendedTo);

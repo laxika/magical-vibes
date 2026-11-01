@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,20 +13,17 @@ import java.util.UUID;
  * @param controllerId                its controller immediately before it left
  * @param creature                    whether it was a creature immediately before it left
  * @param triggerKeywordInstances     its persist and undying instance counts, for creatures
- * @param grantedCreatureDeathEffects continuously granted "whenever a creature dies" abilities, for creatures
- * @param grantedSelfAbilities        continuously granted abilities that trigger on its own zone change ("when this
- *                                    dies")
+ * @param grantedZoneChangeAbilities  continuously granted abilities that trigger on a zone change, its own ("when
+ *                                    this dies") or another object's ("whenever a creature dies")
  */
 public record DepartureSnapshot(Permanent permanent, UUID controllerId, boolean creature,
                                 Map<Keyword, Integer> triggerKeywordInstances,
-                                List<CardEffect> grantedCreatureDeathEffects,
-                                List<TriggeredAbility> grantedSelfAbilities) {
+                                List<TriggeredAbility> grantedZoneChangeAbilities) {
 
     public DepartureSnapshot {
         Objects.requireNonNull(permanent, "permanent");
         triggerKeywordInstances = Map.copyOf(triggerKeywordInstances);
-        grantedCreatureDeathEffects = List.copyOf(grantedCreatureDeathEffects);
-        grantedSelfAbilities = List.copyOf(grantedSelfAbilities);
+        grantedZoneChangeAbilities = List.copyOf(grantedZoneChangeAbilities);
     }
 
     public UUID permanentId() {
@@ -38,6 +33,6 @@ public record DepartureSnapshot(Permanent permanent, UUID controllerId, boolean 
     /** Copies the mutable last-known permanent; everything else is immutable. */
     public DepartureSnapshot deepCopy() {
         return new DepartureSnapshot(new Permanent(permanent), controllerId, creature, triggerKeywordInstances,
-                grantedCreatureDeathEffects, grantedSelfAbilities);
+                grantedZoneChangeAbilities);
     }
 }

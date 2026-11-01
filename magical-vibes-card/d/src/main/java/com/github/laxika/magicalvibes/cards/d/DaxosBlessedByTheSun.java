@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControll
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "THB", collectorNumber = "9")
 @CardRegistration(set = "THB", collectorNumber = "258")
@@ -20,6 +22,6 @@ public class DaxosBlessedByTheSun extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new Fixed(2), new ColorManaSymbolsAmongControlledPermanents(ManaColor.WHITE)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new GainLifeEffect(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new GainLifeEffect(1));
     }
 }

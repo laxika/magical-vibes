@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class BoggartMischief extends Card {
                         Set.of(CardColor.BLACK, CardColor.RED), List.of(CardSubtype.GOBLIN))),
                 "Blight 1?"));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN),
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),

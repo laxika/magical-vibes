@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -59,10 +59,12 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
 
         // "except it has this ability" — re-grant the source's own death-copy trigger onto the copy.
         Card copiedCard = source.getCard();
-        for (EffectRegistration reg : source.getOriginalCard().getEffectRegistrations(EffectSlot.ON_ANY_CREATURE_DIES)) {
-            if (copiedCard.getEffectRegistrations(EffectSlot.ON_ANY_CREATURE_DIES).stream()
-                    .noneMatch(existing -> existing.effect().equals(reg.effect()))) {
-                copiedCard.addEffect(EffectSlot.ON_ANY_CREATURE_DIES, reg.effect(), reg.triggerMode());
+        for (TriggeredAbility ability : source.getOriginalCard().getTriggeredAbilities()) {
+            if (ability.effects().stream().anyMatch(reg -> reg.effect() instanceof BecomeCopyOfDyingCreatureEffect
+                    || reg.effect() instanceof MayPayManaEffect mayPay
+                    && mayPay.wrapped() instanceof BecomeCopyOfDyingCreatureEffect)
+                    && !copiedCard.getTriggeredAbilities().contains(ability)) {
+                copiedCard.addTriggeredAbility(ability);
             }
         }
 

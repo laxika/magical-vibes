@@ -15,7 +15,7 @@ import java.util.Map;
  * On "when this dies", the death-trigger collector snapshots the dying permanent's counters into
  * {@code counters}. When {@code requiresCounters} is true, an empty snapshot suppresses the
  * trigger; otherwise the trigger still requires a target and simply places no counters. On
- * {@code ON_ALLY_CREATURE_DIES}, the ally-death pipeline binds the same snapshot through
+ * {@code Triggers.creatureDies(YOU_CONTROL)}, the ally-death pipeline binds the same snapshot through
  * {@link DyingCreatureCountersAwareEffect}. Resolution places each counter on the chosen creature.
  *
  * @param counters snapshot of the dying creature's counters, keyed by type (empty on the marker

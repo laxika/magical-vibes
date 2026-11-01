@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,8 +13,7 @@ public class Lifeline extends Card {
         RegisterDelayedReturnDyingCreatureUnderControlEffect returnDyingCreature =
                 new RegisterDelayedReturnDyingCreatureUnderControlEffect(
                         false, null, 0, null, null, false, true, true);
-        // Other creatures dying, and Lifeline itself when it is an animated creature that dies.
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, returnDyingCreature);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), returnDyingCreature);
+        // Lifeline itself counts when it is an animated creature that dies.
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), returnDyingCreature);
     }
 }

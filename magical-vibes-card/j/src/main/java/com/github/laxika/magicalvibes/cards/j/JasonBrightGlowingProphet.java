@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -37,8 +36,7 @@ public class JasonBrightGlowingProphet extends Card {
         TriggeringPermanentConditionalEffect drawTrigger = new TriggeringPermanentConditionalEffect(
                 modifiedZombieOrMutant, new DrawCardEffect(1));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawTrigger);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), drawTrigger);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drawTrigger);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

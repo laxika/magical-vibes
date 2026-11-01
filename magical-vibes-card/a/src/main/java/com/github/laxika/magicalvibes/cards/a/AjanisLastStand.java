@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class AjanisLastStand extends Card {
     public AjanisLastStand() {
         // Whenever a creature or planeswalker you control dies, you may sacrifice this
         // enchantment. If you do, create a 4/4 white Avatar creature token with flying.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES,
+        addTrigger(Triggers.dies(Triggers.CREATURE_OR_PLANESWALKER, ObjectRelation.YOU_CONTROL),
                 new MayEffect(new SacrificeSelfThenEffect(avatarToken()),
                         "Sacrifice Ajani's Last Stand to create a 4/4 white Avatar with flying?"));
 

@@ -8,8 +8,8 @@ import java.util.Map;
  * Death trigger for "When this creature dies, create N of the given token for each counter on it"
  * (e.g. Kinsbaile Borderguard: a 1/1 white Kithkin Soldier for each counter on it).
  * <p>
- * Placed on the "when this dies" or {@code ON_ANY_CREATURE_DIES} slot. It can also be used on
- * {@code ON_ALLY_CREATURE_DIES}; that collector binds the dying permanent's counter snapshot before
+ * Placed on the "when this dies" or {@code Triggers.creatureDies(ANY)} ability. It can also be used on
+ * {@code Triggers.creatureDies(YOU_CONTROL)}; that collector binds the dying permanent's counter snapshot before
  * the effect is put on the stack.
  * The death-trigger collector
  * snapshots the dying permanent's counter count and resolves into a copy of {@code tokenTemplate}

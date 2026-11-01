@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -26,9 +25,7 @@ public class AkkiEmberKeeper extends Card {
                 new PermanentIsModifiedPredicate(),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringPermanentConditionalEffect(modifiedNontoken, spiritToken));
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(modifiedNontoken, spiritToken));
     }
 }

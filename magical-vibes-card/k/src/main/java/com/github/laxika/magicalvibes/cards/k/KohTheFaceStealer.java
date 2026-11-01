@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class KohTheFaceStealer extends Card {
                 "Target must be another creature"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentAndTrackWithSourceEffect());
-        addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER),
                 new MayEffect(new ExileTriggeringCreatureAndTrackWithSourceEffect(),
                         "Exile that creature with Koh?"));
         addActivatedAbility(new ActivatedAbility(

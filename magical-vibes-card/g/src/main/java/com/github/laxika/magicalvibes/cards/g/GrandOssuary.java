@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -11,6 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreatu
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesAndCreateTokensEqualToTotalPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +25,8 @@ import java.util.Set;
 public class GrandOssuary extends Card {
 
     public GrandOssuary() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
+        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY), AbilityZones.COMMAND),
+                TriggerOptions.DEFAULT,
                 DistributeCountersAmongCreaturesOnDeathEffect
                         .fromDyingSourcePowerAmongControlledCreatures(CounterType.PLUS_ONE_PLUS_ONE));
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(

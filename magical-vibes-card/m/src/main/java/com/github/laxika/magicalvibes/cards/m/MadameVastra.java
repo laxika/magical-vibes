@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "142")
 @CardRegistration(set = "WHO", collectorNumber = "425")
@@ -32,7 +34,7 @@ public class MadameVastra extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
 
         addStaticEffect(new MustBeBlockedIfAbleEffect());
-        addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES, SequenceEffect.of(
+        addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS), SequenceEffect.of(
                 CreateTokenEffect.ofClueToken(1),
                 CreateTokenEffect.ofFoodToken(1)));
     }

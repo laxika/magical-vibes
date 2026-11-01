@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ public class CrowdedCrypt extends Card {
     public CrowdedCrypt() {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new PutCountersOnSelfEffect(CounterType.CORPSE));
 
         addActivatedAbility(new ActivatedAbility(

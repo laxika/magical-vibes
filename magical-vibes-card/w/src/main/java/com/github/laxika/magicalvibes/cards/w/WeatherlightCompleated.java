@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class WeatherlightCompleated extends Card {
                 )
         ));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, SequenceEffect.of(
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PHYRESIS),
                 new ConditionalReplacementEffect(
                         new SourceCounterThreshold(7, CounterType.PHYRESIS),

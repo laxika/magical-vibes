@@ -78,7 +78,7 @@ high-churn or needs a design call and is optional.
 | 8 | Phase-out + attached-counter placement | 6 | LOW | **DONE** — premise held for all six handlers; the optional 8b fold was taken, so 6 records + 6 handlers went. The audit missed that `@CollectsTrigger` is class-keyed: two collector annotations had to be re-keyed. Zero behavior change beyond one redundant guard dropped |
 | 9 | Destroy-referenced-permanent | 4 | LOW | **DONE** — premise held for all four handlers; `ENCHANTED` became `PermanentReference.ATTACHED` as the note directed and the enum gained `SOURCE`. One correction: the Ajani half needed no player target filter but **did** need `DestroyAllPermanentsEffect.targetSpec()`, which the two sibling scoped effects already had and it was silently missing |
 | 10 | Search-target-library + sacrifice costs | 5 | LOW | **DONE** — 10a's premise held in shape but not in detail (the audit's "only `.destination()` varies" is wrong on four other axes) and the audit undercounted: a fourth sibling, the play-permission form, folds in as two destinations, so 5 records + 5 handlers went. The reconcile picked `checkSearchRestriction` — `isSearchPrevented` shuffled the *searcher's* library, not the searched one. The 10b stretch was not taken (reason in the step body) |
-| 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. Two corrections: the `ON_ANY_CREATURE_DIES` collector for 11a was already occupied by an identical `UntapPermanentsEffect` one (a deletion, not a re-key), and 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
+| 11 | Tap / untap scopes and costs | 3 | LOW | **DONE** — all three premises held. Two corrections: the `Triggers.creatureDies(ANY)` collector for 11a was already occupied by an identical `UntapPermanentsEffect` one (a deletion, not a re-key), and 11c's `DynamicAmount` count cannot be evaluated inside the handler (`requiredCount()` takes no game state), so a new `TapCostSupport` resolves it at construction and `toPermanentChoiceCostHandler` gained a `GameData` parameter. The MED stretch was not taken |
 | 12 | `Grant*` low-risk batch | 6 | LOW | **DONE** — all five premises held; the audit's net count is one high (5, not 6 — the sixth would have been folding away the `SpellCastingAbilityGrantingEffect` capability interface, which is deliberately kept). One correction: the hand-size row is a rename, not an extension — `GrantPermanentNoMaxHandSizeEffect` would have lied once `UNTIL_NEXT_TURN` was folded in |
 | 13 | Cost-modification batch | 6 | LOW | **DONE** — all four premises held; the audit's net count is two low (6 records + 3 handlers, not 4). One correction: the tax scope reuses the existing `CostModificationScope`, not a new `CostTaxScope`. Two rules fixes shipped, both from `getType()` → `hasType` (CR 205.2b) |
 | 14 | Remove-counter batch | 4 | LOW–MED | **DONE** — all four premises held; the audit's count is two low (6 records + 5 handlers, not 4). Two corrections: both `fromTarget` booleans became a shared `CounterRemovalSubject` enum, and the two "identical" gain-life handlers were not identical (one rendered the counter name, the other the enum constant). The flagged decision went **for** adding `sourceCountersRemoved()` to the survivor — rationale in the step body |
@@ -549,7 +549,7 @@ in, hence `PutCounterOnReferencedPermanentEffect`.
 **What the audit missed — `@CollectsTrigger` is class-keyed.** `TriggerCollectorRegistry` keys on
 the exact `(EffectSlot, effect.getClass())` pair, so two collector annotations had to be re-keyed to
 the merged class: `MiscTriggerCollectorService:238` (`ON_ENCHANTED_PERMANENT_TAPPED`, Spirit Shackle)
-and `DeathTriggerCollectorService:1149` (`ON_ANY_CREATURE_DIES`, Sadistic Glee). Both stay
+and `DeathTriggerCollectorService:1149` (`Triggers.creatureDies(ANY)`, Sadistic Glee). Both stay
 slot-scoped, and no card puts a `TRIGGERING` reference in either slot, so the re-key is inert; had it
 been missed, both cards' triggers would have silently stopped firing. Neither trigger-collection
 lookup nor `UPKEEP_TRIGGERED` (which is generic) needed anything else.
@@ -582,7 +582,7 @@ misread is observable: `CrystalGolemTest.phasesOutOnlyItself` (SOURCE must not r
 permanents), `ShimmeringEfreetTest.phasesInPresentsTargetChoice` gains "the Efreet stays" (TARGET
 must not read `sourcePermanentId` — the strongest case, since that card's source *is* on the
 battlefield), `SadisticGleeTest.counterLandsOnlyOnTheEnchantedCreature` (ATTACHED must not become
-TRIGGERING: `ON_ANY_CREATURE_DIES` is exactly where a merged handler could reach for the dying
+TRIGGERING: `Triggers.creatureDies(ANY)` is exactly where a merged handler could reach for the dying
 creature) and `FreyalisesWindsTest.windCounterLandsOnlyOnTheTappedPermanent` (the mirror).
 Vanishing's existing `isPhasedOutIndirectly()` assertions already pin ATTACHED against a SOURCE
 misread, and the Ring tests already pin the `condition` branch both ways.
@@ -617,7 +617,7 @@ dead code.
 **What the audit missed — `@CollectsTrigger` is class-keyed, three times.** As in Step 8, the
 collector annotations key on the exact `(EffectSlot, effect.getClass())` pair, so three had to be
 re-keyed to the merged class: `MiscTriggerCollectorService:199` (`ON_ENCHANTED_PERMANENT_TAPPED`),
-`DeathTriggerCollectorService:1133` (`ON_ANY_CREATURE_DIES`) and `DamageTriggerCollectorService:295`
+`DeathTriggerCollectorService:1133` (`Triggers.creatureDies(ANY)`) and `DamageTriggerCollectorService:295`
 (`ON_ENCHANTED_CREATURE_DEALT_DAMAGE`). Two of those slots now hold **two** merged-class collectors
 each — Step 8's `PutCounterOnReferencedPermanentEffect` and this one — which is fine because the
 registry key includes the class. Each re-key widens the key from "the enchanted-destroy record" to
@@ -850,7 +850,7 @@ mean the same thing.
   character-identical across the two cost handlers.
 
 **What the audit missed**
-- **The `ON_ANY_CREATURE_DIES` collector was already occupied.** Steps 8 and 9 both had to *re-key* a
+- **The `Triggers.creatureDies(ANY)` collector was already occupied.** Steps 8 and 9 both had to *re-key* a
   class-keyed `@CollectsTrigger` onto the merged class; here `DeathTriggerCollectorService` already
   carried an `UntapPermanentsEffect` collector on that slot for Galvanic Juggernaut's `SELF` untap,
   and it is character-identical to the Equipment one (same `StackEntry`, same

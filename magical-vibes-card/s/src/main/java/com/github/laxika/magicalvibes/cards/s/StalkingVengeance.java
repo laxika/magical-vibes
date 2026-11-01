@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DIS", collectorNumber = "73")
 @CardRegistration(set = "RVR", collectorNumber = "126")
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 public class StalkingVengeance extends Card {
 
     public StalkingVengeance() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 DealDamageToTargetPlayerOrPlaneswalkerEffect.byTriggeringCreature(new EventValue()));
     }
 }

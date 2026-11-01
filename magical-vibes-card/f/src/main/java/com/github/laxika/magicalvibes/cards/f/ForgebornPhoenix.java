@@ -45,7 +45,7 @@ public class ForgebornPhoenix extends Card {
                 EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                 returnTrigger);
         addTrigger(Triggers.dies(ObjectRelation.THIS), perpetualGrant);
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, perpetualGrant);
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), perpetualGrant);
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

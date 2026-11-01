@@ -4143,14 +4143,12 @@ public class GameData {
     /** Last-known persist / undying instance counts of creatures in the current simultaneous death event. */
     public final Map<UUID, Map<Keyword, Integer>> simultaneousDyingTriggerKeywordInstances =
             new ConcurrentHashMap<>();
-    /** Last-known continuously granted ON_ANY_CREATURE_DIES effects for the current death event. */
-    public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedCreatureDeathEffects =
-            new ConcurrentHashMap<>();
     /**
-     * Continuously granted abilities that trigger on the permanent's own zone change ("when this dies"), as they
-     * were before any permanent left a simultaneous death event.
+     * Continuously granted abilities that trigger on a zone change, the permanent's own ("when this dies") or
+     * another object's ("whenever a creature dies"), as they were before any permanent left a simultaneous death
+     * event.
      */
-    public final Map<UUID, List<TriggeredAbility>> simultaneousDyingGrantedSelfAbilities =
+    public final Map<UUID, List<TriggeredAbility>> simultaneousDyingGrantedZoneChangeAbilities =
             new ConcurrentHashMap<>();
 
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
@@ -10477,11 +10475,8 @@ public class GameData {
         copy.simultaneousDyingPermanentControllers.putAll(this.simultaneousDyingPermanentControllers);
         copy.simultaneousDyingPowers.putAll(this.simultaneousDyingPowers);
         copy.simultaneousDyingTriggerKeywordInstances.putAll(this.simultaneousDyingTriggerKeywordInstances);
-        this.simultaneousDyingGrantedCreatureDeathEffects.forEach((permanentId, effects) ->
-                copy.simultaneousDyingGrantedCreatureDeathEffects.put(
-                        permanentId, List.copyOf(effects)));
-        this.simultaneousDyingGrantedSelfAbilities.forEach((permanentId, abilities) ->
-                copy.simultaneousDyingGrantedSelfAbilities.put(permanentId, List.copyOf(abilities)));
+        this.simultaneousDyingGrantedZoneChangeAbilities.forEach((permanentId, abilities) ->
+                copy.simultaneousDyingGrantedZoneChangeAbilities.put(permanentId, List.copyOf(abilities)));
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourceNamesThisTurn.putAll(this.combatDamageSourceNamesThisTurn);

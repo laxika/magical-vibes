@@ -19,7 +19,7 @@ public class ExhumerThrull extends Card {
                 ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(
                         new CardTypePredicate(CardType.CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnCreature);
-        addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, returnCreature);
+        addTrigger(Triggers.dies(ObjectRelation.HAUNTED), returnCreature);
 
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
     }

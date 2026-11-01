@@ -30,7 +30,7 @@ public class OmnathLocusOfRage extends Card {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new CreateTokenEffect(
                 "Elemental", 5, 5, CardColor.RED, Set.of(CardColor.RED, CardColor.GREEN),
                 List.of(CardSubtype.ELEMENTAL)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.ELEMENTAL), DEATH_DAMAGE));
         addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_DAMAGE);
     }

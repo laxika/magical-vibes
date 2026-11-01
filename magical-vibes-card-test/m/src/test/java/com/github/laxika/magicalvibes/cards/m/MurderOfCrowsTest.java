@@ -39,7 +39,7 @@ class MurderOfCrowsTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castSorcery(player1, 0, player2.getId());
-        // Pass 1: resolve Cruel Edict → creature dies → ON_ANY_CREATURE_DIES trigger fires
+        // Pass 1: resolve Cruel Edict → creature dies → Triggers.creatureDies(ANY) trigger fires
         harness.passBothPriorities();
         // Pass 2: resolve triggered ability → MayEffect prompts player
         harness.passBothPriorities();
@@ -103,7 +103,7 @@ class MurderOfCrowsTest extends BaseCardTest {
         harness.castSorcery(player2, 0, player1.getId());
         harness.passBothPriorities(); // resolve Cruel Edict → Murder of Crows dies
 
-        // No may ability prompt — Murder of Crows died, it uses ON_ANY_CREATURE_DIES
+        // No may ability prompt — Murder of Crows died, it uses Triggers.creatureDies(ANY)
         // which only fires for permanents still on the battlefield
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
@@ -132,7 +132,7 @@ class MurderOfCrowsTest extends BaseCardTest {
         Permanent grizzlyBears = findPermanent(player1, "Grizzly Bears");
         harness.handlePermanentChosen(player1, grizzlyBears.getId());
 
-        // ON_ANY_CREATURE_DIES fires → MayEffect trigger goes on stack
+        // Triggers.creatureDies(ANY) fires → MayEffect trigger goes on stack
         harness.passBothPriorities();
 
         // May ability prompt for Murder of Crows' controller

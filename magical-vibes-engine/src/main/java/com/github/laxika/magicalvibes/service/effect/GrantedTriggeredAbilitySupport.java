@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantingPermanentAwareEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -64,16 +63,15 @@ public class GrantedTriggeredAbilitySupport {
     }
 
     /**
-     * The abilities other permanents' static abilities grant {@code permanent} that trigger on its own zone
-     * change ("when this dies", "when this leaves the battlefield"), as it is now. A departure records them
-     * before the permanent leaves, so its look-back triggers see them (CR 603.10a).
+     * The abilities other permanents' static abilities grant {@code permanent} that trigger on a zone change, its
+     * own ("when this dies") or another object's ("whenever a creature dies"), as it is now. A departure records
+     * them before the permanent leaves, so its look-back triggers see them (CR 603.10a).
      */
-    public List<TriggeredAbility> grantedSelfZoneChangeAbilities(GameData gameData, Permanent permanent) {
+    public List<TriggeredAbility> grantedZoneChangeAbilities(GameData gameData, Permanent permanent) {
         return grantedTriggeredAbilities(gameData, permanent,
                 gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null),
                 ability -> ability.conditions().stream().anyMatch(condition ->
-                        condition.trigger() instanceof ZoneChangeTrigger trigger
-                                && trigger.relation() == ObjectRelation.THIS));
+                        condition.trigger() instanceof ZoneChangeTrigger));
     }
 
     private List<TriggeredAbility> grantedTriggeredAbilities(GameData gameData, Permanent permanent,

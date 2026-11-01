@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECC", collectorNumber = "9")
 @CardRegistration(set = "ECC", collectorNumber = "29")
@@ -31,7 +33,7 @@ public class GraveVenerations extends Card {
                         .upTo(true)
                         .build()));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, SequenceEffect.of(
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1)));
     }

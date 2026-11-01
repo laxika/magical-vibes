@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ public class DrizztDoUrden extends Card {
                         CardColor.GREEN, null, List.of(CardSubtype.CAT), Set.of(Keyword.TRAMPLE), Set.of(),
                         false, false, List.of(), List.of(), false, false, true, 0, Set.of()));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentPowerAtMostSourcePowerPredicate()),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new Max(
                         new Fixed(0), new Sum(new EventValue(), new Scaled(new SourcePower(true), -1))))));

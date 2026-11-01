@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "448")
 public class EdeaPossessedSorceress extends Card {
@@ -28,7 +30,7 @@ public class EdeaPossessedSorceress extends Card {
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate()),
                         SequenceEffect.of(

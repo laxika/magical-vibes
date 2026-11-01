@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * Unscythe, Killer of Kings: "you may exile that card. If you do, create a 2/2 black Zombie creature
- * token." Placed (wrapped in a {@link MayEffect}) in the {@code ON_DAMAGED_CREATURE_DIES} slot.
+ * token." Placed (wrapped in a {@link MayEffect}) in the {@code Triggers.creatureDies(DAMAGED_BY_THIS)} ability.
  *
  * <p>The dying creature's card id is bound at trigger-collection time; the {@code token} blueprint is
  * supplied by the card. Resolution exiles the dying card from its owner's graveyard only if it is

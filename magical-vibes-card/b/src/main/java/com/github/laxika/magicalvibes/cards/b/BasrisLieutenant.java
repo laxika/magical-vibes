@@ -28,8 +28,8 @@ public class BasrisLieutenant extends Card {
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, createsKnightIfHadPlusOnePlusOneCounter());
-        addTrigger(Triggers.dies(ObjectRelation.THIS), createsKnightIfHadPlusOnePlusOneCounter());
+        addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                createsKnightIfHadPlusOnePlusOneCounter());
     }
 
     private static TriggeringPermanentConditionalEffect createsKnightIfHadPlusOnePlusOneCounter() {

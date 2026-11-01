@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class DemonOfDarkSchemes extends Card {
                 new BoostAllCreaturesEffect(-2, -2,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new EnergyCountersEffect(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new EnergyCountersEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,21 +7,23 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OneOrMoreCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDFT", collectorNumber = "8")
 public class SpectacleOfDestruction extends Card {
 
     public SpectacleOfDestruction() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
-                new OneOrMoreCreatureDeathTriggerEffect(
-                        new PutCountersOnSelfEffect(CounterType.WRECK)));
+        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY)), TriggerOptions.ONE_OR_MORE,
+                new PutCountersOnSelfEffect(CounterType.WRECK));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConditionalEffect(

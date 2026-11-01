@@ -41,8 +41,7 @@ public class Sporogenesis extends Card {
                 CounterType.FUNGUS,
                 new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, saprolingsForFungusCounters);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), saprolingsForFungusCounters);
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), saprolingsForFungusCounters);
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveAllCountersFromMatchingPermanentsEffect(

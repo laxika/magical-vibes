@@ -22,8 +22,7 @@ public class ReyhanLastOfTheAbzan extends Card {
                         new PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         "Put that many +1/+1 counters on target creature?"));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, counterTransfer);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), counterTransfer);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), counterTransfer);
         addEffect(EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE,
                 new MayEffect(
                         new PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE),

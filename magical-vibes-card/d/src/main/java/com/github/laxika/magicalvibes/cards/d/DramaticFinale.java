@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ public class DramaticFinale extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsTokenPredicate()));
 
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
                 new OncePerTurnTriggerEffect(new CreateTokenEffect(1, "Inkling", 2, 1,
                         CardColor.WHITE, Set.of(CardColor.WHITE, CardColor.BLACK),
                         List.of(CardSubtype.INKLING), Set.of(Keyword.FLYING), Set.of())));

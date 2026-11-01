@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class WilheltTheRotcleaver extends Card {
     public WilheltTheRotcleaver() {
         // Whenever another Zombie you control dies, if it didn't have decayed, create a 2/2 black
         // Zombie creature token with decayed.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.ZOMBIE),

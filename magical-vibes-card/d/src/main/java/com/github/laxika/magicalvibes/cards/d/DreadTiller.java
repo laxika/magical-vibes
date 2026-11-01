@@ -30,7 +30,6 @@ public class DreadTiller extends Card {
                 new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                 new PutUpToCardsFromHandOrGraveyardOntoBattlefieldEffect(
                         new CardTypePredicate(CardType.LAND), "land", 1));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), landOnBattlefield);
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, landOnBattlefield);
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), landOnBattlefield);
     }
 }

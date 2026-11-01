@@ -41,7 +41,7 @@ public class MillicentRestlessRevenant extends Card {
                 )), SPIRIT_TOKEN));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), SPIRIT_TOKEN);
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SPIRIT), SPIRIT_TOKEN));
     }
 }

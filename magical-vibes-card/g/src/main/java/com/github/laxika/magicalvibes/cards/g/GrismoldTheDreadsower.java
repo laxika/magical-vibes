@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class GrismoldTheDreadsower extends Card {
                         List.of(CardSubtype.PLANT), Set.of(), Set.of())));
 
         // Whenever a creature token dies, put a +1/+1 counter on Grismold.
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new TriggeringCardConditionalEffect(
                 new CardIsTokenPredicate(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -29,14 +28,9 @@ public class Slimefoot extends Card {
     public Slimefoot() {
         // Whenever a Saproling you control dies, Slimefoot, the Stowaway deals 1 damage to each
         // opponent and you gain 1 life. This is one triggered ability, so both steps share one stack
-        // entry. A Saproling Slimefoot is itself a Saproling you control as it dies, so the its dies trigger
-        // copy covers its own death (CR 603.10a look-back).
+        // entry. A Slimefoot that is a Saproling as it dies sees its own death (CR 603.10a look-back).
         CardSubtypePredicate saproling = new CardSubtypePredicate(CardSubtype.SAPROLING);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringCardConditionalEffect(saproling, SequenceEffect.of(
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(1))));
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(saproling, SequenceEffect.of(
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1))));

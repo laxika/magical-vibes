@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -45,7 +47,7 @@ public class HungryLynx extends Card {
                         List.of(CardSubtype.RAT), Set.of(Keyword.DEATHTOUCH), Set.of()),
                 PlayerRelation.OPPONENT));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.RAT),
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,

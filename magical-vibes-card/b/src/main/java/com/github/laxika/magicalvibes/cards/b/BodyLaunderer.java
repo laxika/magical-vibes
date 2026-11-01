@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
@@ -33,7 +32,8 @@ public class BodyLaunderer extends Card {
         ));
 
         target(new GraveyardCardPredicateTargetFilter(returnFilter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new DrawDiscardAndConniveEffect());
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DrawDiscardAndConniveEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(returnFilter)

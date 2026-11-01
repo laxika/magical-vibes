@@ -10,13 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLC", collectorNumber = "19")
 @CardRegistration(set = "BLC", collectorNumber = "54")
 public class MoonstoneEulogist extends Card {
 
     public MoonstoneEulogist() {
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, CreateTokenEffect.ofBloodToken(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), CreateTokenEffect.ofBloodToken(1));
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(

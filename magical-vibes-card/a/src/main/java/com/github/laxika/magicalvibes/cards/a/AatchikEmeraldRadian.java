@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -37,7 +39,7 @@ public class AatchikEmeraldRadian extends Card {
 
         // Whenever another Insect you control dies, put a +1/+1 counter on Aatchik. Each opponent loses 1 life.
         // One triggered ability with two instructions, so both share one stack entry.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.INSECT),
                 SequenceEffect.of(
                         new PutCountersOnSourceEffect(1, 1, 1),

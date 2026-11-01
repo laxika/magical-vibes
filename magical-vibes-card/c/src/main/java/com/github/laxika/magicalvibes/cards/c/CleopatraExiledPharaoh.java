@@ -42,10 +42,7 @@ public class CleopatraExiledPharaoh extends Card {
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                 new PermanentHasCountersPredicate(CounterType.ANY)
         ));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
-                legendaryCreatureWithCounters,
-                new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2))));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new TriggeringPermanentConditionalEffect(
                 legendaryCreatureWithCounters,
                 new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2))));
     }

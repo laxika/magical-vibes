@@ -28,7 +28,7 @@ public class DiabolicServitude extends Card {
                 .targetGraveyard(true)
                 .linkToSource(true)
                 .build());
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new ExileTriggeringCreatureAndReturnSourceToHandEffect());
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new ExileTriggeringCreatureAndReturnSourceToHandEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
     }

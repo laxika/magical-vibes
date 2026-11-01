@@ -27,11 +27,14 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -352,15 +355,15 @@ class GameDataDeepCopyTest {
     @DisplayName("Deep copy preserves simultaneous-death granted-trigger snapshots independently")
     void deepCopyPreservesSimultaneousDeathGrantedTriggerSnapshots() {
         UUID permanentId = UUID.randomUUID();
-        PutCountersOnSelfEffect effect = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE);
-        gd.simultaneousDyingGrantedCreatureDeathEffects.put(permanentId, List.of(effect));
+        TriggeredAbility ability = new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        gd.simultaneousDyingGrantedZoneChangeAbilities.put(permanentId, List.of(ability));
 
         GameData copy = gd.simulationCopy();
 
-        assertThat(copy.simultaneousDyingGrantedCreatureDeathEffects.get(permanentId))
-                .containsExactly(effect);
-        copy.simultaneousDyingGrantedCreatureDeathEffects.clear();
-        assertThat(gd.simultaneousDyingGrantedCreatureDeathEffects).containsKey(permanentId);
+        assertThat(copy.simultaneousDyingGrantedZoneChangeAbilities.get(permanentId)).containsExactly(ability);
+        copy.simultaneousDyingGrantedZoneChangeAbilities.clear();
+        assertThat(gd.simultaneousDyingGrantedZoneChangeAbilities).containsKey(permanentId);
     }
 
     @Test
@@ -496,7 +499,7 @@ class GameDataDeepCopyTest {
                 .withDestructionAnswer(bears.getId(), "INTRINSIC")
                 .withStage(DepartureStage.CHOOSE)
                 .withSnapshot(new DepartureSnapshot(bearsSnapshot, player1.getId(), true,
-                        Map.of(Keyword.PERSIST, 0, Keyword.UNDYING, 0), List.of(), List.of()))
+                        Map.of(Keyword.PERSIST, 0, Keyword.UNDYING, 0), List.of()))
                 .withReplacementAnswer(bears.getId(), toHand)
                 .awaitingAnswer(angel.getId())
                 .ownedBy(ownerStackEntryId);

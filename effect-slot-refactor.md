@@ -25,7 +25,7 @@ re-check them with a grep before acting on them.
 | 9 | Rules events for zone changes, and shadow mode | done |
 | 10a | Trigger index and the generic trigger pipeline; the pilot in shadow mode | done |
 | 10b | Switch the pilot to the pipeline, convert its cards, delete its slots | done |
-| 11 | Creature-death triggers and self-inclusion | open |
+| 11 | Creature-death triggers and self-inclusion | done |
 | 12 | The rest of the zone-change family | open |
 | 13 | Remaining event families (repeatable) | open |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
@@ -2639,6 +2639,160 @@ classes already compiled, default Gradle settings:
 - `TriggerIndex` still lists only the moving object's abilities, and `TriggerMatcher` matches only `THIS`.
 - Cards that authored "this or another" as a dies ability plus an ally slot (Archghoul of Thraben, Tributary
   Instructor, Xathrid Necromancer and the rest named in their comments) are the self-inclusion cases step 11 merges.
+
+### Step 11
+
+Step 11 moved the thirteen creature-death slots to the trigger pipeline in one go (the user chose not to split it
+the way step 10 was split): `ON_ALLY_CREATURE_DIES`, `ON_ANY_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
+`ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES`,
+`ON_ALLY_CREATURE_OR_PLANESWALKER_DIES`, `ON_ALLY_ARTIFACT_OR_CREATURE_DIES`, `ON_EQUIPPED_CREATURE_DIES`,
+`ON_DAMAGED_CREATURE_DIES`, `ON_HAUNTED_CREATURE_DIES`, `GRAVEYARD_ON_ALLY_CREATURE_DIES` and
+`GRAVEYARD_ON_OPPONENT_CREATURE_DIES` are gone, with their `check…` collectors, the batched collectors, the printed-type
+self-inclusion heuristic and their `@CollectsTrigger` registrations. `refactors-to-do.md` entry 2 is removed.
+
+**Authoring.**
+
+- `ObjectRelation` gains `ENCHANTED_PLAYER_CONTROLS`, `HAUNTED` (functions from exile, CR 702.55c), `DAMAGED_BY_THIS`
+  and `DAMAGED_BY_ATTACHED`, plus `youControl()` and `thisAlwaysMatches()`. `includesThis()` keeps its meaning.
+- `ZoneChangeTrigger` gains a `PermanentPredicate filter` (`null` for any object). `Triggers.dies(filter, relation)`,
+  `creatureDies(relation)`, `creatureDies(filter, relation)`, `nontokenCreatureDies(…)` and the constants `CREATURE`,
+  `NONTOKEN_CREATURE`, `ARTIFACT_OR_CREATURE`, `CREATURE_OR_PLANESWALKER`.
+- `TriggerOptions.ONE_OR_MORE` for "whenever one or more … die" (CR 603.2c); `OneOrMoreCreatureDeathTriggerEffect`,
+  `OneOrMoreArtifactOrCreatureDeathTriggerEffect`, `BatchedCreatureDeathTriggerEffect` and
+  `BatchedArtifactOrCreatureDeathTriggerEffect` are deleted.
+- `TriggeredAbility(TriggerCondition, CardEffect...)` for a grant that functions from another zone (Kami of Mourning's
+  graveyard ability); `SpellTarget.addTrigger` takes several effects (one ability).
+- The relation follows the Oracle wording: "a creature you control" `YOU_CONTROL` includes the source, "another"
+  never does, "this creature or another" always does. A card no longer adds a `Triggers.dies(THIS)` copy of the
+  ability for its own death. The `implement-card` and `review-card` skills say so.
+
+**The pipeline.**
+
+- `TriggerIndex.observerCandidates(gameData, event, batch)` lists the abilities of the other objects that may see a
+  permanent leave, as they were just before the event (CR 603.10a): the battlefield (printed abilities unless lost or
+  face down, `lostPrintedAbilityWatcherIdsBeforeLeave` included; persistent, granted and temporary ones; Relic Vial's
+  "as long as you control a Cleric" grant judged with the departed permanents), the permanents that left in the same
+  batch (their departure events: last-known copy, granted abilities, controller), graveyard cards that didn't move in
+  the batch, and the exiled cards that haunted it.
+- **Look-back comes from the batch's own events, not the `simultaneousDying…` maps.** Several departure paths restore
+  those maps before the batch closes (Barter in Blood's each-player sacrifice), so a watcher that died alongside never
+  saw the others. `PermanentRemovalService.performSimultaneousRemovals` now also opens one rules batch.
+- `TriggerMatcher.matchedTrigger(…, movingObject)` checks each relation. The moving object's own abilities match
+  `THIS` and, while it left the battlefield, the relations that include the source (with the filter, except for
+  "this or another"). The filter is judged on the departed copy without the game: its card holds the types, subtypes,
+  colors and keywords it left with, and a layered query would read the game after the departure (Athreos stops being
+  a creature once its own devotion is gone).
+- `RulesEventPipeline` triggers observers first (each, then "one or more" once per batch), then the moving objects'
+  own abilities as before. That keeps the old order (observer collectors queued during the removal, before 10b's
+  batch-close self triggers), but observers now queue at batch close, after the old-path triggers of the same death
+  (undying, persist, delayed effects); the controller still orders them (CR 603.3b).
+- `TriggeredAbilityStackService.triggerOnce` checks options as for any ability, then calls
+  `TriggerCollectionService.triggerCreatureDeath` / `triggerCreatureDeaths`: the old collectors' per-watcher bodies,
+  ported unchanged and picked by the new `CreatureDeathWatch` (the old slot, derived from relation, filter base and
+  zone). Their handlers stay in `DeathTriggerCollectorService`, off `@CollectsTrigger` and in an explicit registry
+  keyed by watch and effect class (`dispatchCreatureDeath`, same resolution order as the registry); 64 were re-keyed by
+  `scripts/step11-rekey-death-handlers.py`. Step 15 replaces both, step 14 the wrappers they read.
+- The departure event gains `hauntedBy` (`handleExileReturnOnLeave` ends the haunt link before the batch closes), and
+  the last-known copy now merges the per-source damage tracker (`creatureCardsDamagedThisTurnBySourcePermanent`) into
+  `permanentIdsThatDealtDamageThisTurn`, which `DAMAGED_BY_THIS` / `DAMAGED_BY_ATTACHED` read; `GraveyardService` keeps
+  only the Krovikan Vampire bookkeeping and the delayed damaged-creature watchers.
+- `processAlreadyRemovedToGraveyard` gives its departure the effective last-known card and toughness, like the other
+  leave path.
+- Granted zone-change abilities are captured whole now: `grantedSelf…` became `grantedZoneChangeAbilities`
+  (`GrantedTriggeredAbilitySupport`, `GameData.simultaneousDyingGrantedZoneChangeAbilities`, `DepartureSnapshot`), and
+  `simultaneousDyingGrantedCreatureDeathEffects` / `DepartureSnapshot.grantedCreatureDeathEffects` are gone.
+- **Still collected at the choke point** (`checkCreatureDeathRegisteredTriggers`, keyed by the ability's trigger, not a
+  slot): global abilities a spell registered until end of turn (Warhost's Frenzy, Gnawing Crescendo, Shriveling Rot,
+  Consumed by History, Infested Thrinax), Desperate Measures' delayed "when it dies" (now `dies(THIS)` on the watched
+  creature), emblems, the delayed death watchers and face-up planes (Agyrem, Grand Ossuary, CR 901.7). They aren't
+  objects the index lists; a later step moves them with delayed triggers.
+- `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler` keeps the granted ability instead of rebuilding a slot
+  ability; `BecomeCopyOfDyingCreatureEffectHandler` re-grants Cemetery Puca's ability as an ability; the AI's
+  `SpellEvaluator` looks for a "you control" / "any" dies trigger.
+
+**Shadow mode was not run.** The old ally, opponent, graveyard, equipped, damaged and haunted collectors put most
+abilities on the stack directly, outside `dispatch`, so the recorder couldn't key them. The step ported each
+collector's per-watcher body unchanged instead, so only the choice of watchers is new code, and the card tests check
+that (below).
+
+**Cards.**
+
+- `scripts/step11-death-scan.py` lists every slot user with its Oracle sentences from the server's card-data cache;
+  `scripts/step11-death-classify.py` turns the wording into a relation (`scripts/step11-death-classification.tsv`,
+  442 registrations). The nine cards without a registration of their own (back faces) and the twelve the classifier
+  couldn't read were checked by hand, the back faces with the Scryfall MCP; 47 relations are corrected in the script.
+- `scripts/step11-death-triggers.py` converted 413 card classes per letter module, `scripts/step11-death-manual.py` the
+  rest by exact replacement: the "one or more" cards, Soul Shredder (one ability that functions from the battlefield
+  and the graveyard), the planes (command zone), Kami of Mourning's graveyard grant, Desperate Measures, chained target
+  groups. 437 card files changed.
+- 82 duplicate `Triggers.dies(THIS)` registrations were dropped: the ability now includes its source. Nine cards'
+  consecutive plain registrations became one ability, as the old ally collector stacked them (Dark Prophecy, Bastion of
+  Remembrance, Vindictive Vampire, …), and Seize the Soul's haunt ability.
+- **32 "this creature or another [restricted] creature" cards stay split**, `Triggers.dies(THIS)` plus
+  `ANOTHER_YOU_CONTROL` / `ANOTHER` with the effect's conditional wrapper: the restriction ("another Zombie", "with
+  power 5 or greater", "colorless", "with flash or haste") is still a wrapper, which would reject the source itself
+  once it lost the characteristic (Azlask under Painter's Servant, an Amoeboid Changeling that lost its types). One
+  event can't meet both halves, so they behave as the one Oracle ability. Step 14 merges them when the wrappers become
+  filters judged on the last-known copy. Archghoul of Thraben, Xathrid Necromancer, Kalastria Highborn, Mycoid
+  Shepherd, Dragon-Kami's Egg and the rest are listed in the script's `RELATION` table.
+
+**Rules fixes**, each covered by a card test that resolves it:
+
+- The cards in entry 2 trigger on their own death with one ability, not a copy (Indebted Samurai, Titania, Skyclave
+  Shadowcat, Meltstrider Eulogist, Tributary Instructor, Shadow Urchin, Kheru Bloodsucker, Yarus, Blowfly
+  Infestation). Knucklebone Witch is on `ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`, step 12's.
+- "A creature" abilities with no copy before now include their source: Cemetery Puca's copied ability triggers for
+  the copy's own death, Moonlit Wake animated by Opalescence sees itself die, Genestealer Patriarch's and Lifeline's
+  copies are gone.
+- Abilities other objects grant are separate abilities (CR 603.3), no longer folded into the printed ally ability's
+  stack object.
+- An optional ally ability that triggers for its source's own death asks its question (CR 603.5) where the old copy
+  skipped it (Indebted Samurai).
+
+**For later steps.**
+
+- Step 12: the remaining zone-change slots, including `ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` and
+  the other "put into a graveyard from the battlefield" families, can reuse `observerCandidates` and the relation
+  matching. Their collectors still run at the choke point. `CreatureDeath` and `CreatureDeathWatch` are the pattern for
+  porting a family's collectors before step 15.
+- Step 14: `CreatureDeathWatch`'s collectors read the wrappers (`TriggeringCard/PermanentConditionalEffect`,
+  `OncePerTurnTriggerEffect`, intervening-if `ConditionalEffect`); the 32 split cards merge then. The once-each-turn
+  "one or more" cards (Morbid Opportunist, Xander's Wake, Homicide Investigator, …) keep `EACH` with
+  `OncePerTurnTriggerEffect` and could become `ONE_OR_MORE` with a limit.
+- Step 15: the death handlers still take `TriggerMatchContext` / `TriggerContext.CreatureDeath`, built from the event.
+- Registered global, delayed, emblem and planar death triggers are still collected at the choke point (above).
+
+**Tests changed.**
+
+- `TriggerPipelineTest`: four new tests through the engine: a "creature you control" ability triggers for its own
+  source's death; Moonlit Wake animated by Opalescence triggers for its own death; an "another creature" ability
+  doesn't; CR 603.10a's example, Planar Cleansing destroying Moonlit Wake with two creatures, triggers it twice.
+- `CemeteryPucaTest#copiesCopiableCharacteristicsOfCreatureThatWasAlreadyACopy`: the first Puca's copied ability now
+  also triggers for its own death; the test declines that prompt and accepts the second Puca's.
+- `IndebtedSamuraiTest#ownDeathTriggersAbility`: the merged ability asks its "may" question on its own death.
+- `GameDataDeepCopyTest`: the granted-death-effects copy test now copies `simultaneousDyingGrantedZoneChangeAbilities`;
+  a `DepartureSnapshot` lost an argument. `TurnCleanupServiceTest` registers a different slot for its cleanup check.
+  `PermanentRemovalServiceTest` (mock-wired) verifies `checkCreatureDeathRegisteredTriggers`.
+- Comments in `DeathTriggerCollectorServiceTest`, `ThrabenSentryTest`, `RotWolfTest` and `MurderOfCrowsTest` name the
+  triggers.
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that constructs one (666 classes): all passing
+  after the fixes above. The first run of the converted cards' classes had 85 failures, from the global-registration
+  handler, haunt links, look-back from the maps, the restrictions on "this or another" cards and the three
+  self-inclusion changes above; the wider run then caught Amoeboid Changeling losing its types under a filter.
+- AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 10b.
+- Application: `TriggerPipelineTest`, `ZoneChangeRulesEventTest`, `LegacyTriggerBindingsTest`, `RulesEventLogTest`,
+  `ZoneChangeTriggerTest`, `TriggerConditionTest`, `LegacySlotTriggerTest`, `TriggeredAbilityTest`,
+  `GrantedAbilitiesTest`, `CardAbilitiesTest`, `CardFreezeTest`, `CardImmutabilityArchTest`,
+  `SimulationCopyCompletenessTest`, `GameSetupServiceAllRandomTest`, `CommanderGameTest`, `GameRegistrySessionTest`,
+  `AuraAttachmentServiceTest`, `DepartureServiceOrphanedStepBatchTest`, `GameDataExileTrackingTest`,
+  `TurnCleanupServiceTest`, `EnterTriggerCollectorServiceTest` and the mock-wired `PermanentRemovalServiceTest`,
+  `BattlefieldPlacementServiceTest`, `DeathTriggerCollectorServiceTest`, `PlanechaseServiceTest`. 93 failures, the same
+  tests as at HEAD (checked in a HEAD worktree): mock wiring, the two architecture tests' known ones, and
+  `TurnCleanupServiceTest` / `EnterTriggerCollectorServiceTest`, which fail there too.
+- The full suite was not run here.
 
 ## Prompt
 

@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTra
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "445")
 public class ChaosShrinesBlackCrystal extends Card {
 
     public ChaosShrinesBlackCrystal() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
                 new ExileTriggeringCreatureAndTrackWithSourceEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new MayEffect(

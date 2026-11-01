@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ import java.util.List;
 public class SyrKonradTheGrim extends Card {
 
     public SyrKonradTheGrim() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));

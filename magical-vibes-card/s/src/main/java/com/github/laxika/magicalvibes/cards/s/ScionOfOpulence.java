@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -25,7 +24,7 @@ public class ScionOfOpulence extends Card {
 
     public ScionOfOpulence() {
         addTrigger(Triggers.dies(ObjectRelation.THIS), CREATE_TREASURE);
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.VAMPIRE), CREATE_TREASURE));
 

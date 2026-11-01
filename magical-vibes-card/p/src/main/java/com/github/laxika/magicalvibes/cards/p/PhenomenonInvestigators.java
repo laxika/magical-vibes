@@ -35,8 +35,7 @@ public class PhenomenonInvestigators extends Card {
         var believeHorror = new ConditionalEffect(new SourceHasChosenMode(BELIEVE),
                 new CreateTokenEffect(1, "Horror", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT)));
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, believeHorror);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), believeHorror);
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), believeHorror);
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new SourceHasChosenMode(DOUBT),

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "144")
 @CardRegistration(set = "OM1", collectorNumber = "131")
@@ -22,7 +24,7 @@ public class ShriekTreblemaker extends Card {
                         "a card"),
                 "Discard a card to have target creature unable to block this turn?"));
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

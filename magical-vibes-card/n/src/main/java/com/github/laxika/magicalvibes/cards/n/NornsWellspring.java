@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,8 +17,8 @@ import java.util.List;
 public class NornsWellspring extends Card {
 
     public NornsWellspring() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new ScryEffect(1));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new PutCountersOnSelfEffect(CounterType.OIL));
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new ScryEffect(1),
+                new PutCountersOnSelfEffect(CounterType.OIL));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

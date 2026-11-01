@@ -33,7 +33,6 @@ public class RampartArchitect extends Card {
                 new MayEffect(new SearchLibraryEffect(
                         CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a basic land card?"));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, defenderDeathSearch);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), defenderDeathSearch);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), defenderDeathSearch);
     }
 }

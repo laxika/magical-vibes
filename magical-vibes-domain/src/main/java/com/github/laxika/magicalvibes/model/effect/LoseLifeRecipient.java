@@ -19,7 +19,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *       its own target. Used by "destroy target creature; ... its controller loses N life"
  *       (Soul Reap). Resolve before any accompanying destroy so the permanent is still present.</li>
  *   <li>{@link #DYING_CREATURE_CONTROLLER} — the last-known controller of the creature that died,
- *       for {@code ON_DAMAGED_CREATURE_DIES} triggers such as "whenever a creature dealt damage by
+ *       for {@code Triggers.creatureDies(DAMAGED_BY_THIS)} triggers such as "whenever a creature dealt damage by
  *       that creature dies this turn, its controller loses 2 life" (Touch of Moonglove). The
  *       graveyard pipeline binds that player onto the trigger's {@code targetId} when the ability is
  *       put on the stack; the effect chooses no target.</li>

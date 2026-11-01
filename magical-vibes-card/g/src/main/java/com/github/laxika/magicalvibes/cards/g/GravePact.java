@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "144")
 @CardRegistration(set = "9ED", collectorNumber = "135")
@@ -23,7 +24,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class GravePact extends Card {
 
     public GravePact() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new SacrificePermanentsEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
     }
 }

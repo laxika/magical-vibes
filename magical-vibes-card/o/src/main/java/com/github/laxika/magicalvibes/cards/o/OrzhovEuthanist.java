@@ -25,7 +25,7 @@ public class OrzhovEuthanist extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
         target(damagedCreatureTarget())
-                .addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new DestroyTargetPermanentEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.HAUNTED), new DestroyTargetPermanentEffect());
     }
 
     private static PermanentPredicateTargetFilter damagedCreatureTarget() {

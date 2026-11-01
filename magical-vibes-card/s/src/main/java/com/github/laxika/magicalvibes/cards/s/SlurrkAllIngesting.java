@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -36,7 +35,6 @@ public class SlurrkAllIngesting extends Card {
 
     public SlurrkAllIngesting() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, COUNTERED_CREATURE_DIES);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), COUNTERED_CREATURE_DIES);
+        addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), COUNTERED_CREATURE_DIES);
     }
 }

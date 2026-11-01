@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ORI", collectorNumber = "106")
 @CardRegistration(set = "V17", collectorNumber = "14")
@@ -20,7 +21,7 @@ public class LilianaHereticalHealer extends Card {
         // 2/2 black Zombie creature token.
         // The token rides the transform as an "if you do" payload: if Liliana has already left the
         // battlefield when the trigger resolves, nothing is exiled and no Zombie is created.
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new ExileSelfAndReturnTransformedEffect(CreateTokenEffect.blackZombie(1)));
     }
 

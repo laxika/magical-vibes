@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class BaneclawMarauder extends Card {
 
     public BaneclawMarauder() {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED,
                 new BoostAllCreaturesEffect(-1, -1, new PermanentBlockingSourcePredicate()));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentBlockingSourcePredicate(),
                         new LoseLifeEffect(1, LoseLifeRecipient.DYING_CREATURE_CONTROLLER)));

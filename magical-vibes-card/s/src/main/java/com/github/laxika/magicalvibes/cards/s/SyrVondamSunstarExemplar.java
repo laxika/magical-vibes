@@ -23,7 +23,7 @@ public class SyrVondamSunstarExemplar extends Card {
         CardEffect counterAndLife = SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GainLifeEffect(1));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, counterAndLife);
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), counterAndLife);
         addEffect(EffectSlot.ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD, counterAndLife);
 
         ConditionalEffect destroyIfPowerAtLeast = new ConditionalEffect(

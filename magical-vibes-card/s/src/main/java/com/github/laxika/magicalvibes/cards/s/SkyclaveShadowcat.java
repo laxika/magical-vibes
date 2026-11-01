@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -32,7 +31,6 @@ public class SkyclaveShadowcat extends Card {
         var drawIfCountered = new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect());
-        addTrigger(Triggers.dies(ObjectRelation.THIS), drawIfCountered);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawIfCountered);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drawIfCountered);
     }
 }

@@ -17,7 +17,7 @@ public class GravenDominator extends Card {
         SetBasePowerToughnessEffect setOtherCreaturesToOneOne =
                 new SetBasePowerToughnessEffect(1, 1, GrantScope.ALL_CREATURES);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, setOtherCreaturesToOneOne);
-        addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, setOtherCreaturesToOneOne);
+        addTrigger(Triggers.dies(ObjectRelation.HAUNTED), setOtherCreaturesToOneOne);
 
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
     }

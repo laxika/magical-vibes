@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -25,7 +24,6 @@ public class LuminousBroodmoth extends Card {
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)),
                 new ReturnDyingCreatureToOwnerBattlefieldEffect(
                         CounterType.FLYING, 1, null, Set.of()));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, returnWithoutFlying);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), returnWithoutFlying);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), returnWithoutFlying);
     }
 }

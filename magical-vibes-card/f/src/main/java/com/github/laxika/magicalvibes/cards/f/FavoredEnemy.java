@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HBG", collectorNumber = "66")
 public class FavoredEnemy extends Card {
@@ -22,7 +24,7 @@ public class FavoredEnemy extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new FightTargetsEffect());
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+                .addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                         new TriggeringCardConditionalEffect(
                                 new CardHasSourceChosenSubtypePredicate(),
                                 new PutCounterOnTargetPermanentEffect(

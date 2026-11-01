@@ -32,7 +32,7 @@ import java.util.Set;
 public class AzlaskTheSwellingScourge extends Card {
 
     public AzlaskTheSwellingScourge() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringPermanentConditionalEffect(
                 new PermanentIsColorlessPredicate(), new ExperienceCountersEffect(1)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new ExperienceCountersEffect(1));
 

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
 /**
- * {@code ON_DAMAGED_CREATURE_DIES} effect for Dread Slaver: immediately return the creature that
+ * {@code Triggers.creatureDies(DAMAGED_BY_THIS)} effect for Dread Slaver: immediately return the creature that
  * died to the battlefield under the ability controller's control, optionally granting it a colour
  * and a subtype "in addition to its other colors and types" (persistent grants, so they survive
  * turn resets). Unlike Seraph's delayed return there is no control-loss sacrifice linkage — Dread

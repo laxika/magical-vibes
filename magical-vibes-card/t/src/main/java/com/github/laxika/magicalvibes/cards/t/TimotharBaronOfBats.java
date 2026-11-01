@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,8 @@ public class TimotharBaronOfBats extends Card {
 
     public TimotharBaronOfBats() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessDiscardsEffect());
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
+                new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.VAMPIRE),
                 new MayPayManaEffect("{1}",
                         new ExileDyingCreatureCardAndCreateTokenEffect(batToken()),

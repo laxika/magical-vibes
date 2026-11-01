@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,8 +22,8 @@ public class InfestedThrinax extends Card {
     public InfestedThrinax() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                        EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+                        new TriggeredAbility(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
                         new CreateTokenEffect(new EventValue(), "Saproling", 1, 1,
-                                CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of())));
+                                CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of()))));
     }
 }

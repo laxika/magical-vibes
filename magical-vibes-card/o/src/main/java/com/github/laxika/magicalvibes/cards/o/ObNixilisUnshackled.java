@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M15", collectorNumber = "110")
 @CardRegistration(set = "2X2", collectorNumber = "84")
@@ -24,6 +26,6 @@ public class ObNixilisUnshackled extends Card {
                 new LoseLifeEffect(10, LoseLifeRecipient.TARGET_PLAYER));
 
         // Whenever another creature dies, put a +1/+1 counter on Ob Nixilis.
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

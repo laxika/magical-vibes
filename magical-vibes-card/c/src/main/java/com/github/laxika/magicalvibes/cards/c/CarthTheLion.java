@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH2", collectorNumber = "189")
 public class CarthTheLion extends Card {
@@ -17,7 +19,7 @@ public class CarthTheLion extends Card {
         LookAtTopCardsEffect search = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                 7, new CardTypePredicate(CardType.PLANESWALKER));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, search);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES,
+        addTrigger(Triggers.dies(Triggers.CREATURE_OR_PLANESWALKER, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsPlaneswalkerPredicate(), search));
         addStaticEffect(new IncreaseLoyaltyAbilityCostEffect(new PermanentIsPlaneswalkerPredicate(), 1));

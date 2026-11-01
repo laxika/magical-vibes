@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefi
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "108")
 public class MeathookMassacreII extends Card {
@@ -22,11 +24,11 @@ public class MeathookMassacreII extends Card {
 
         ReturnDyingCreatureToBattlefieldEffect returnCreature = new ReturnDyingCreatureToBattlefieldEffect(
                 false, CounterType.FINALITY, 1);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new MayPayLifeEffect(3, returnCreature,
                         "Pay 3 life to return that card to the battlefield under your control?"));
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new MayPayLifeEffect(3, null,
                         "Pay 3 life to keep that card in its graveyard?",
                         MayPayPayer.TRIGGERING_PLAYER, returnCreature));

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +43,7 @@ public class BladeholdCleaver extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect(
                         "Rebel", 2, 2, CardColor.RED, List.of(CardSubtype.REBEL), Set.of(), Set.of())));
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
                 new DraftCardFromSpellbookEffect(SPELLBOOK));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

@@ -31,7 +31,7 @@ public class AlBhedSalvagers extends Card {
         ));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), DRAIN);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()), DRAIN));
         addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,

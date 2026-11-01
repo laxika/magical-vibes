@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -26,7 +25,6 @@ public class JudithTheScourgeDiva extends Card {
 
     public JudithTheScourgeDiva() {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, NON_TOKEN_DEATH_DAMAGE);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), NON_TOKEN_DEATH_DAMAGE);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), NON_TOKEN_DEATH_DAMAGE);
     }
 }

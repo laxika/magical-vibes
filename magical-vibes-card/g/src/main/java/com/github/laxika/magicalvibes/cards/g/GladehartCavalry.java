@@ -36,7 +36,6 @@ public class GladehartCavalry extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), DEATH_TRIGGER);
     }
 }

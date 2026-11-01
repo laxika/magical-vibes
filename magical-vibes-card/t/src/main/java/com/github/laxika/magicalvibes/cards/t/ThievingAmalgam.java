@@ -22,12 +22,10 @@ public class ThievingAmalgam extends Card {
                 new ManifestTopCardOfDamagedPlayerLibraryEffect());
 
         // "A creature you control but don't own" includes this card itself while an opponent owns it
-        // (it can be controlled by another player's Control Magic effect), and ON_ALLY_CREATURE_DIES
-        // never looks at the watcher's own death, so that case is authored by its dies trigger.
+        // (it can be controlled by another player's Control Magic effect).
         var drainOwner = new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate()),
                 new DrainLifeFromDyingCreatureOwnerEffect(2));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drainOwner);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), drainOwner);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drainOwner);
     }
 }

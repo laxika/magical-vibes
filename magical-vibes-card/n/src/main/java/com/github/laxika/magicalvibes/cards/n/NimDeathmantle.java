@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOM", collectorNumber = "188")
 @CardRegistration(set = "2X2", collectorNumber = "309")
@@ -32,7 +33,7 @@ public class NimDeathmantle extends Card {
         // Whenever a nontoken creature is put into your graveyard from the battlefield,
         // you may pay {4}. If you do, return that card to the battlefield and attach
         // Nim Deathmantle to it.
-        addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANY),
                 new MayPayManaEffect("{4}",
                         new ReturnDyingCreatureToBattlefieldEffect(true),
                         "Pay {4} to return this creature to the battlefield?"));

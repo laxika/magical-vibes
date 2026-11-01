@@ -35,13 +35,10 @@ public class TitaniaNaturesForce extends Card {
                                 CardColor.GREEN, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(), Set.of())));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
                         new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER),
                                 "Mill three cards?")));
-        // Titania is an Elemental herself, so her own death also offers the mill.
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"));
     }
 }

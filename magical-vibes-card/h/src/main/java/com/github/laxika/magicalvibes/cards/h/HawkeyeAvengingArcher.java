@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class HawkeyeAvengingArcher extends Card {
     public HawkeyeAvengingArcher() {
         // Whenever a creature an opponent controls dies, if Hawkeye dealt damage to it this turn,
         // draw a card.
-        addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                         new DrawCardEffect()));

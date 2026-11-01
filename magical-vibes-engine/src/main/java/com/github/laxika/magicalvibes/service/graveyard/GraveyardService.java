@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -29,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAndTakeExtraTurnReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInstantSorceryCardsInsteadOfGraveyardEffect;
@@ -37,8 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplac
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MadnessMayCastEffect;
@@ -50,10 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalColorGraveyardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -2294,7 +2287,7 @@ public class GraveyardService {
             if ((card.hasType(CardType.CREATURE)
                     || battlefieldSnapshot != null && gameQueryService.isCreature(gameData, battlefieldSnapshot))
                     && !creatureDeathTriggersSuppressed) {
-                triggerDamagedCreatureDiesAbilities(gameData, card, ownerId, battlefieldSnapshot);
+                triggerDamagedCreatureDiesAbilities(gameData, card, ownerId);
             }
         } else {
             tracked.remove(card.getId());
@@ -2302,21 +2295,18 @@ public class GraveyardService {
         }
     }
 
-    private void triggerDamagedCreatureDiesAbilities(GameData gameData, Card dyingCreatureCard, UUID ownerId,
-                                                     Permanent battlefieldSnapshot) {
+    /**
+     * A creature card damaged this turn just died: records it for "a creature dealt damage by this creature this
+     * turn died" (Krovikan Vampire) and fires the delayed triggers registered for the creatures a source damaged.
+     * The damaging permanents' own "whenever a creature dealt damage by this creature this turn dies" abilities
+     * trigger through the rules event pipeline, which reads the damage from the dying creature's last-known copy.
+     */
+    private void triggerDamagedCreatureDiesAbilities(GameData gameData, Card dyingCreatureCard, UUID ownerId) {
         if (dyingCreatureCard == null) {
             return;
         }
 
         UUID dyingCreatureCardId = dyingCreatureCard.getId();
-        Permanent dyingPermanent = battlefieldSnapshot;
-        if (dyingPermanent == null) {
-            dyingPermanent = gameData.simultaneousDyingCreatures.values().stream()
-                    .filter(permanent -> permanent.getCard() != null
-                            && dyingCreatureCardId.equals(permanent.getCard().getId()))
-                    .findFirst()
-                    .orElse(null);
-        }
         UUID dyingControllerId = findLastKnownController(gameData, dyingCreatureCardId, ownerId);
 
         triggerCollectionService.triggerDelayedDamagedCreatureDeathTriggers(
@@ -2324,67 +2314,15 @@ public class GraveyardService {
 
         for (Map.Entry<UUID, Set<UUID>> entry : gameData.creatureCardsDamagedThisTurnBySourcePermanent.entrySet()) {
             UUID sourcePermanentId = entry.getKey();
-            Set<UUID> damagedCreatureIds = entry.getValue();
-            if (!damagedCreatureIds.contains(dyingCreatureCardId)) {
+            if (!entry.getValue().contains(dyingCreatureCardId)) {
                 continue;
             }
-
-            // Krovikan Vampire end-step intervening-if / return tracking (survives ON_DAMAGED_CREATURE_DIES
-            // cleanup below). Returnable card ids are pruned when the card leaves a graveyard.
+            // Krovikan Vampire end-step intervening-if / return tracking (survives the cleanup below).
+            // Returnable card ids are pruned when the card leaves a graveyard.
             gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.add(sourcePermanentId);
             gameData.creatureCardsDamagedBySourceThatDiedThisTurn
                     .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                     .add(dyingCreatureCardId);
-
-            Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-            if (source == null) {
-                source = gameData.simultaneousDyingCreatures.get(sourcePermanentId);
-            }
-            if (source == null) {
-                continue;
-            }
-
-            UUID controllerId = findPermanentController(gameData, sourcePermanentId);
-            if (controllerId == null) {
-                controllerId = gameData.simultaneousDyingControllers.get(sourcePermanentId);
-            }
-            if (controllerId != null) {
-                // The damaging permanent's own ON_DAMAGED_CREATURE_DIES abilities (e.g. Seraph, Vein Drinker).
-                enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, source,
-                        controllerId, sourcePermanentId, dyingPermanent);
-            }
-
-            // Equipment attached to the damaging creature carries the ability keyed off the creature it
-            // is CURRENTLY attached to (e.g. Unscythe, Killer of Kings). Per the rulings, only the
-            // currently-equipped creature is checked â€” even if the Equipment wasn't attached when the
-            // damage was dealt â€” so we look at what is attached to the source right now. The Equipment's
-            // own controller (not the creature's) is "you", since an Equipment may be attached to a
-            // creature another player controls.
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield == null) {
-                    continue;
-                }
-                for (Permanent equipment : battlefield) {
-                    if (!equipment.isAttached() || !sourcePermanentId.equals(equipment.getAttachedTo())) {
-                        continue;
-                    }
-                    enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, equipment,
-                            playerId, equipment.getId(), dyingPermanent);
-                }
-            }
-            // Equipment that leaves at the same time as the damaged creature still triggers from its
-            // last known state (CR 603.10a), so it is checked against the simultaneous-death snapshots.
-            for (Map.Entry<UUID, Permanent> dyingEquipment : gameData.simultaneousDyingPermanents.entrySet()) {
-                Permanent equipment = dyingEquipment.getValue();
-                UUID equipmentControllerId = gameData.simultaneousDyingPermanentControllers.get(dyingEquipment.getKey());
-                if (equipmentControllerId == null || !equipment.isAttached()
-                        || !sourcePermanentId.equals(equipment.getAttachedTo())) {
-                    continue;
-                }
-                enqueueDamagedCreatureDiesTriggers(gameData, dyingCreatureCard, dyingControllerId, equipment,
-                        equipmentControllerId, equipment.getId(), dyingPermanent);
-            }
         }
 
         for (Set<UUID> damagedCreatureIds : gameData.creatureCardsDamagedThisTurnBySourcePermanent.values()) {
@@ -2393,107 +2331,6 @@ public class GraveyardService {
         for (Set<UUID> damagedCreatureIds : gameData.creatureCardsDamagedThisTurnBySource.values()) {
             damagedCreatureIds.remove(dyingCreatureCardId);
         }
-    }
-
-    /**
-     * Puts each {@code ON_DAMAGED_CREATURE_DIES} ability of {@code sourcePermanent} onto the stack for
-     * the given controller, materialising any last-known-information the effect needs about the dying
-     * creature (its toughness, its card id for a "may exile that card" ability, or its controller for
-     * "its controller loses 2 life"). Abilities granted only until end of turn (Touch of Moonglove)
-     * live on the permanent, not the card, so both sources are collected.
-     */
-    private void enqueueDamagedCreatureDiesTriggers(GameData gameData, Card dyingCreatureCard,
-                                                    UUID dyingControllerId, Permanent sourcePermanent,
-                                                    UUID controllerId, UUID sourcePermanentId,
-                                                    Permanent dyingPermanent) {
-        if (sourcePermanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
-            return;
-        }
-        Card sourceCard = sourcePermanent.getCard();
-        List<CardEffect> cardEffects = sourceCard.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES);
-        List<CardEffect> effects = new ArrayList<>(cardEffects == null ? List.of() : cardEffects);
-        effects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES));
-        effects.addAll(triggerCollectionService.grantedTriggeredEffects(
-                gameData, sourcePermanent, EffectSlot.ON_DAMAGED_CREATURE_DIES));
-        if (effects.isEmpty()) {
-            return;
-        }
-        UUID dyingCreatureCardId = dyingCreatureCard.getId();
-        for (CardEffect effect : effects) {
-            if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-                if (dyingPermanent == null || !predicateEvaluationService.matchesPermanentPredicate(
-                        dyingPermanent,
-                        conditional.predicate(),
-                        FilterContext.of(gameData)
-                                .withSourceCardId(sourceCard.getId())
-                                .withSourceControllerId(controllerId)
-                                .withSourcePermanentId(sourcePermanentId)
-                                .withSourcePermanentSnapshot(sourcePermanent)
-                                .withTriggeringPermanentId(dyingPermanent == null ? null : dyingPermanent.getId())
-                                .withTriggeringPermanentControllerId(dyingControllerId))) {
-                    continue;
-                }
-                effect = conditional.wrapped();
-            }
-            CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingCreatureCard,
-                    dyingPermanent);
-            if (materializedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || materializedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || materializedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        sourceCard, controllerId, List.of(materializedEffect),
-                        "damaged creature dies", sourcePermanentId));
-                continue;
-            }
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    controllerId,
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(materializedEffect)),
-                    null,
-                    sourcePermanentId
-            );
-            // The dying creature's card id as last-known information, for effects that act on it
-            // (e.g. Seraph returns "that card" at the next end step).
-            triggerEntry.setTriggeringCardId(dyingCreatureCardId);
-            // The graveyard visit this trigger refers to (CR 400.7): a later effect that acts on "that card"
-            // must not act on the same card after it has left and returned to a graveyard again.
-            triggerEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dyingCreatureCardId));
-            // "its controller loses N life" reads the dying creature's last-known controller from
-            // the entry's targetId; the ability itself chooses no target. Other abilities in this
-            // slot use targetId for their own purposes, so it is only bound for that recipient.
-            if (materializedEffect instanceof LoseLifeEffect lose
-                    && lose.recipient() == LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
-                triggerEntry.setTargetId(dyingControllerId);
-            }
-            gameData.stack.add(triggerEntry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, sourceCard.getName());
-        }
-    }
-
-    /**
-     * Binds the dying creature's last-known information into effects that need it. The "you may exile
-     * that card" ability (Unscythe) loses the stack entry's triggering-card id once wrapped as a may
-     * ability, so the dying card id is bound onto the wrapped effect here instead.
-     */
-    private CardEffect materializeDamagedCreatureDiesEffect(CardEffect effect, Card dyingCreatureCard,
-                                                            Permanent dyingPermanent) {
-        if (effect instanceof GainLifeEqualToToughnessEffect) {
-            int toughness = dyingPermanent != null && dyingPermanent.getLastKnownToughness() != null
-                    ? dyingPermanent.getLastKnownToughness()
-                    : dyingPermanent != null ? dyingPermanent.getEffectiveToughness()
-                    : dyingCreatureCard.getToughness() != null ? dyingCreatureCard.getToughness() : 0;
-            return new GainLifeEffect(Math.max(0, toughness));
-        }
-        if (effect instanceof MayEffect may && may.wrapped() instanceof DyingCreatureCardAwareEffect aware) {
-            return new MayEffect(aware.boundToDyingCard(dyingCreatureCard.getId()), may.prompt());
-        }
-        if (effect instanceof DyingCreatureCardAwareEffect aware) {
-            return aware.boundToDyingCard(dyingCreatureCard.getId());
-        }
-        return effect;
     }
 
     /**
@@ -2512,19 +2349,6 @@ public class GraveyardService {
             }
         }
         return ownerId;
-    }
-
-    private UUID findPermanentController(GameData gameData, UUID permanentId) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (p.getId().equals(permanentId)) {
-                    return playerId;
-                }
-            }
-        }
-        return null;
     }
 
     /**

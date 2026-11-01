@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -27,7 +26,6 @@ public class TheSwarmlord extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY),
                         new DrawCardEffect());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawForCounterBearer);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), drawForCounterBearer);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drawForCounterBearer);
     }
 }

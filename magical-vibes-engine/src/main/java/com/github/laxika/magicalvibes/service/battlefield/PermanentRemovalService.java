@@ -269,9 +269,11 @@ public class PermanentRemovalService {
         Map<UUID, Permanent> oldCreatures = new java.util.HashMap<>(gameData.simultaneousDyingCreatures);
         Map<UUID, UUID> oldCreatureControllers = new java.util.HashMap<>(gameData.simultaneousDyingControllers);
         Map<UUID, Integer> oldPowers = new java.util.HashMap<>(gameData.simultaneousDyingPowers);
-        Map<UUID, List<CardEffect>> oldGranted = new java.util.HashMap<>(gameData.simultaneousDyingGrantedCreatureDeathEffects);
-        Map<UUID, List<TriggeredAbility>> oldGrantedSelfAbilities = new java.util.HashMap<>(gameData.simultaneousDyingGrantedSelfAbilities);
+        Map<UUID, List<TriggeredAbility>> oldGrantedZoneChangeAbilities = new java.util.HashMap<>(gameData.simultaneousDyingGrantedZoneChangeAbilities);
         beginDeathReplacementChoiceBatch(gameData);
+        // One occurrence (CR 603.2c): its zone changes are matched against triggers as it ends, while the snapshots
+        // below still show what left together (CR 603.10a).
+        gameData.rulesEvents.beginBatch();
         try {
             for (Permanent permanent : permanents) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -285,20 +287,16 @@ public class PermanentRemovalService {
                 snapshotEffectiveSubtypes(gameData, snapshot);
                 gameData.simultaneousDyingPermanents.put(permanent.getId(), snapshot);
                 gameData.simultaneousDyingPermanentControllers.put(permanent.getId(), controllerId);
-                gameData.simultaneousDyingGrantedSelfAbilities.put(permanent.getId(),
-                        List.copyOf(triggerCollectionService.grantedSelfZoneChangeAbilities(gameData, permanent)));
+                gameData.simultaneousDyingGrantedZoneChangeAbilities.put(permanent.getId(),
+                        List.copyOf(triggerCollectionService.grantedZoneChangeAbilities(gameData, permanent)));
                 if (!gameQueryService.isCreature(gameData, permanent)) continue;
                 gameData.simultaneousDyingCreatures.put(permanent.getId(), snapshot);
                 gameData.simultaneousDyingControllers.put(permanent.getId(), controllerId);
                 gameData.simultaneousDyingPowers.put(permanent.getId(), snapshot.getLastKnownPower());
-                gameData.simultaneousDyingGrantedCreatureDeathEffects.put(permanent.getId(),
-                        List.copyOf(triggerCollectionService.grantedTriggeredEffects(
-                                gameData, permanent, EffectSlot.ON_ANY_CREATURE_DIES)));
             }
             removal.run();
-            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
-            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
+            gameData.rulesEvents.endBatch();
             gameData.simultaneousDyingPermanents.clear();
             gameData.simultaneousDyingPermanents.putAll(oldPermanents);
             gameData.simultaneousDyingPermanentControllers.clear();
@@ -309,10 +307,8 @@ public class PermanentRemovalService {
             gameData.simultaneousDyingControllers.putAll(oldCreatureControllers);
             gameData.simultaneousDyingPowers.clear();
             gameData.simultaneousDyingPowers.putAll(oldPowers);
-            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
-            gameData.simultaneousDyingGrantedCreatureDeathEffects.putAll(oldGranted);
-            gameData.simultaneousDyingGrantedSelfAbilities.clear();
-            gameData.simultaneousDyingGrantedSelfAbilities.putAll(oldGrantedSelfAbilities);
+            gameData.simultaneousDyingGrantedZoneChangeAbilities.clear();
+            gameData.simultaneousDyingGrantedZoneChangeAbilities.putAll(oldGrantedZoneChangeAbilities);
             endDeathReplacementChoiceBatch(gameData);
         }
     }
@@ -565,7 +561,7 @@ public class PermanentRemovalService {
             boolean wasLand = lookBack.wasLand();
             int dyingPowerAtDeath = lookBack.power();
             int dyingToughnessAtDeath = lookBack.toughness();
-            List<TriggeredAbility> grantedSelfAbilities = lookBack.grantedSelfAbilities();
+            List<TriggeredAbility> grantedZoneChangeAbilities = lookBack.grantedZoneChangeAbilities();
             boolean wasArtifact = lookBack.wasArtifact();
             boolean wasEnchantment = lookBack.wasEnchantment();
             Set<CardSubtype> creatureSubtypesAtDeath = lookBack.creatureSubtypes();
@@ -616,7 +612,7 @@ public class PermanentRemovalService {
      * battlefield.
      */
     private record DeathLookBack(boolean wasCreature, boolean modified, boolean wasLand, int power, int toughness,
-                                 List<TriggeredAbility> grantedSelfAbilities, boolean wasArtifact, boolean wasEnchantment,
+                                 List<TriggeredAbility> grantedZoneChangeAbilities, boolean wasArtifact, boolean wasEnchantment,
                                  Set<CardSubtype> creatureSubtypes, int undyingInstances, int persistInstances,
                                  boolean creatureDeathTriggersSuppressed) {
     }
@@ -641,7 +637,7 @@ public class PermanentRemovalService {
                 ? dyingSnapshot != null && dyingSnapshot.getLastKnownToughness() != null
                 ? dyingSnapshot.getLastKnownToughness() : gameQueryService.getEffectiveToughness(gameData, target)
                 : 0;
-        List<TriggeredAbility> grantedSelfAbilities = grantedSelfAbilities(gameData, target);
+        List<TriggeredAbility> grantedZoneChangeAbilities = grantedZoneChangeAbilities(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(gameData, target);
         boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
         Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
@@ -652,7 +648,7 @@ public class PermanentRemovalService {
         boolean creatureDeathTriggersSuppressed = gameQueryService.areCreatureDeathTriggersSuppressed(gameData, target);
         snapshotEffectiveSubtypes(gameData, target);
         return new DeathLookBack(wasCreature, modifiedAtDeath, wasLand, dyingPowerAtDeath, dyingToughnessAtDeath,
-                grantedSelfAbilities, wasArtifact, wasEnchantment, creatureSubtypesAtDeath, undyingInstances,
+                grantedZoneChangeAbilities, wasArtifact, wasEnchantment, creatureSubtypesAtDeath, undyingInstances,
                 persistInstances, creatureDeathTriggersSuppressed);
     }
 
@@ -1069,10 +1065,10 @@ public class PermanentRemovalService {
      * The abilities other permanents grant {@code permanent} that trigger on its own zone change, as they were
      * before the first member of a simultaneous event left the battlefield.
      */
-    private List<TriggeredAbility> grantedSelfAbilities(GameData gameData, Permanent permanent) {
-        List<TriggeredAbility> snapshot = gameData.simultaneousDyingGrantedSelfAbilities.get(permanent.getId());
+    private List<TriggeredAbility> grantedZoneChangeAbilities(GameData gameData, Permanent permanent) {
+        List<TriggeredAbility> snapshot = gameData.simultaneousDyingGrantedZoneChangeAbilities.get(permanent.getId());
         return snapshot != null ? snapshot
-                : triggerCollectionService.grantedSelfZoneChangeAbilities(gameData, permanent);
+                : triggerCollectionService.grantedZoneChangeAbilities(gameData, permanent);
     }
 
     private Set<CardSubtype> effectiveCreatureSubtypesAtDeath(GameData gameData, Permanent permanent) {
@@ -1221,7 +1217,7 @@ public class PermanentRemovalService {
             boolean wasLand = gameQueryService.isLand(gameData, target);
             int dyingPowerAtDeath = wasCreature ? gameQueryService.getEffectivePower(gameData, target) : 0;
             int dyingToughnessAtDeath = wasCreature ? gameQueryService.getEffectiveToughness(gameData, target) : 0;
-            List<TriggeredAbility> grantedSelfAbilities = grantedSelfAbilities(gameData, target);
+            List<TriggeredAbility> grantedZoneChangeAbilities = grantedZoneChangeAbilities(gameData, target);
             boolean wasArtifact = gameQueryService.isArtifact(gameData, target);
             boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
             Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
@@ -1230,10 +1226,15 @@ public class PermanentRemovalService {
             int undyingInstances = wasCreature ? countUndyingInstances(gameData, target) : 0;
             int persistInstances = wasCreature ? countPersistInstances(gameData, target) : 0;
             boolean creatureDeathTriggersSuppressed = gameQueryService.areCreatureDeathTriggersSuppressed(gameData, target);
+            // The departure's last-known information (CR 603.10a): the card as it was, with the types it had, and
+            // its toughness, for "whenever a creature dies" abilities that read them.
+            Permanent batchSnapshot = gameData.simultaneousDyingPermanents.get(target.getId());
+            Card lastKnownCard = batchSnapshot != null ? batchSnapshot.getCard()
+                    : snapshotEffectivePermanentCard(gameData, target);
+            target.setLastKnownToughness(dyingToughnessAtDeath);
             RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId, wasCreature, wasLand,
-                    hadPrintedAbilitiesBeforeRemoval(gameData, target),
-                    gameData.simultaneousDyingPermanents.getOrDefault(target.getId(), target).getCard(),
-                    wasCreature ? dyingPowerAtDeath : null, Zone.GRAVEYARD, grantedSelfAbilities,
+                    hadPrintedAbilitiesBeforeRemoval(gameData, target), lastKnownCard,
+                    wasCreature ? dyingPowerAtDeath : null, Zone.GRAVEYARD, grantedZoneChangeAbilities,
                     creatureDeathTriggersSuppressed);
 
             if (!creatureDeathTriggersSuppressed) {
@@ -2728,13 +2729,13 @@ public class PermanentRemovalService {
                     }
                 }
                 Integer powerAtDeparture = wasCreature ? gameQueryService.getEffectivePower(gameData, target) : null;
-                List<TriggeredAbility> grantedSelfAbilities = grantedSelfAbilities(gameData, target);
+                List<TriggeredAbility> grantedZoneChangeAbilities = grantedZoneChangeAbilities(gameData, target);
                 boolean deathTriggersSuppressed = gameQueryService.areCreatureDeathTriggersSuppressed(gameData, target);
                 battlefield.remove(target);
                 ZoneChangeCounterSupport.preserve(gameData, target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature, wasLand,
-                        hadPrintedAbilities, lastKnownCard, powerAtDeparture, destination, grantedSelfAbilities,
+                        hadPrintedAbilities, lastKnownCard, powerAtDeparture, destination, grantedZoneChangeAbilities,
                         deathTriggersSuppressed));
             }
         }
@@ -2803,13 +2804,13 @@ public class PermanentRemovalService {
     private RemovedPermanentInfo processRemovalCleanup(
             GameData gameData, Permanent target, UUID controllerId, boolean wasCreature, boolean wasLand,
             boolean hadPrintedAbilities, Card lastKnownCard, Integer powerAtDeparture, Zone destination,
-            List<TriggeredAbility> grantedSelfAbilities, boolean deathTriggersSuppressed) {
+            List<TriggeredAbility> grantedZoneChangeAbilities, boolean deathTriggersSuppressed) {
         Permanent departureSnapshot = new Permanent(target);
         departureSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilities);
         departureSnapshot.setLastKnownPower(powerAtDeparture);
         departureSnapshot.setLastKnownSupertypes(Set.copyOf(lastKnownCard.getSupertypes()));
         emitDeparture(gameData, target, departureSnapshot, lastKnownCard, controllerId, destination,
-                grantedSelfAbilities, deathTriggersSuppressed);
+                grantedZoneChangeAbilities, deathTriggersSuppressed);
         gameData.departedPermanentSnapshots.put(target.getCard().getId(), departureSnapshot);
         gameData.departedPermanentSnapshots.put(target.getOriginalCard().getId(), departureSnapshot);
         gameData.departedPermanentControllerIds.put(target.getCard().getId(), controllerId);
@@ -2861,12 +2862,12 @@ public class PermanentRemovalService {
     /**
      * Emits the zone change of {@code target} leaving the battlefield for {@code destination}. Its snapshot is the
      * one {@link DepartureService} took before a simultaneous batch left, when there is one (CR 603.10a), and
-     * otherwise {@code departureSnapshot} with the effective card it left as. {@code grantedSelfAbilities} are the
+     * otherwise {@code departureSnapshot} with the effective card it left as. {@code grantedZoneChangeAbilities} are the
      * "when this dies" abilities other permanents granted it just before it left, and
      * {@code deathTriggersSuppressed} whether a Hushbringer-like effect kept its death from causing triggers.
      */
     private void emitDeparture(GameData gameData, Permanent target, Permanent departureSnapshot, Card lastKnownCard,
-                               UUID controllerId, Zone destination, List<TriggeredAbility> grantedSelfAbilities,
+                               UUID controllerId, Zone destination, List<TriggeredAbility> grantedZoneChangeAbilities,
                                boolean deathTriggersSuppressed) {
         Permanent batchSnapshot = gameData.simultaneousDyingPermanents.get(target.getId());
         Permanent lastKnown;
@@ -2876,14 +2877,33 @@ public class PermanentRemovalService {
             lastKnown = new Permanent(departureSnapshot);
             lastKnown.setCard(lastKnownCard);
         }
+        // The permanents that dealt it damage this turn, as recorded per damaging permanent too, for "whenever a
+        // creature dealt damage by this creature this turn dies" (CR 603.10a).
+        gameData.creatureCardsDamagedThisTurnBySourcePermanent.forEach((sourceId, damagedCardIds) -> {
+            if (damagedCardIds.contains(target.getCard().getId())) {
+                lastKnown.recordDamageDealtByPermanent(sourceId);
+            }
+        });
         Set<UUID> cardIds = new LinkedHashSet<>();
         cardIds.add(target.getOriginalCard().getId());
         cardIds.add(target.getCard().getId());
         target.cardsLeavingBattlefield().forEach(card -> cardIds.add(card.getId()));
         gameData.rulesEvents.departed(lastKnown, target.getOriginalCard(), cardIds,
                 resolvePermanentOwner(gameData, target, controllerId), controllerId, destination,
-                List.copyOf(grantedSelfAbilities), deathTriggersSuppressed,
-                DyingCreatureAttachmentSnapshot.capture(gameData, target.getId()).toDepartedAttachments());
+                List.copyOf(grantedZoneChangeAbilities), deathTriggersSuppressed,
+                DyingCreatureAttachmentSnapshot.capture(gameData, target.getId()).toDepartedAttachments(),
+                hauntingCardIds(gameData, target.getId()));
+    }
+
+    /** The cards in exile that haunt the permanent {@code permanentId} (CR 702.55b). */
+    private static List<UUID> hauntingCardIds(GameData gameData, UUID permanentId) {
+        List<UUID> cardIds = new ArrayList<>();
+        gameData.hauntingCardToPermanentId.forEach((cardId, hauntedId) -> {
+            if (permanentId.equals(hauntedId)) {
+                cardIds.add(cardId);
+            }
+        });
+        return cardIds;
     }
 
     private void notifyPermanentLeftBattlefield(GameData gameData, Permanent leavingPermanent,
@@ -3419,7 +3439,6 @@ public class PermanentRemovalService {
             target.setLastKnownToughness(dyingToughnessAtDeath);
         }
         if (wentToGraveyard) {
-            triggerCollectionService.checkHauntedCreatureDeathTriggers(gameData, target);
             if (target.getCounterCount(CounterType.OIL) > 0) {
                 gameData.recordPermanentWithOilCounterPutIntoGraveyard();
             }
@@ -3433,13 +3452,6 @@ public class PermanentRemovalService {
                 if (!creatureDeathTriggersSuppressed) {
                     triggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(
                             gameData, target, controllerId, ownerId);
-                }
-                // "Whenever a creature or planeswalker you control dies" — fires once even when the
-                // dying permanent is both (Ajani's Last Stand).
-                if ((wasCreature && !creatureDeathTriggersSuppressed)
-                        || target.getCard().hasType(CardType.PLANESWALKER)) {
-                    triggerCollectionService.checkAllyCreatureOrPlaneswalkerDeathTriggers(
-                            gameData, controllerId, target, wasCreature);
                 }
                 // Any permanent at all is put into a graveyard (Yomiji, Who Bars the Way).
                 // Retain types granted by battlefield effects for graveyard-event filters.
@@ -3488,26 +3500,11 @@ public class PermanentRemovalService {
                     } finally {
                         gameData.graveyardLookBackExcludedCardIds.clear();
                     }
-                    collectTriggersInScope(gameData, () -> {
-                        triggerCollectionService.checkAllyCreatureDeathTriggers(
-                                gameData, controllerId, target, dyingPowerAtDeath, dyingToughnessAtDeath);
-                        triggerCollectionService.checkGraveyardAllyCreatureDeathTriggers(gameData, controllerId, target);
-                        triggerCollectionService.checkGraveyardOpponentCreatureDeathTriggers(
-                                gameData, controllerId, target);
-                        triggerCollectionService.checkAnyCreatureDeathTriggers(
-                                gameData, controllerId, target, dyingPowerAtDeath, dyingToughnessAtDeath);
-                        triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(
-                                gameData, controllerId, target, dyingPowerAtDeath);
-                        triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(
-                                gameData, target.getCard(), ownerId);
-                        triggerCollectionService.checkEnchantedPlayerNontokenCreatureDeathTriggers(
-                                gameData, controllerId, target, dyingPowerAtDeath);
-                        triggerCollectionService.checkOpponentCreatureDeathTriggers(
-                                gameData, controllerId, target, dyingPowerAtDeath, dyingToughnessAtDeath);
-                        triggerCollectionService.checkEquippedCreatureDeathTriggers(
-                                gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath,
-                                target, creatureSubtypesAtDeath);
-                    });
+                    // "Whenever a creature dies" abilities of objects trigger through the rules event pipeline as the
+                    // death's event ends; these are the registered ones no object has.
+                    collectTriggersInScope(gameData, () -> triggerCollectionService
+                            .checkCreatureDeathRegisteredTriggers(gameData, controllerId, target,
+                                    dyingPowerAtDeath, dyingToughnessAtDeath));
                     triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                     collectUndyingTrigger(gameData, target, controllerId, undyingInstances);
                     collectPersistTriggers(gameData, target, controllerId, persistInstances);

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -23,7 +22,6 @@ public class WaywardDisciple extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        trigger.addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
-        trigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
+        trigger.addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), DEATH_TRIGGER);
     }
 }

@@ -5,16 +5,19 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.OneOrMoreCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,11 +25,11 @@ import java.util.List;
 public class SoulShredder extends Card {
 
     public SoulShredder() {
-        OneOrMoreCreatureDeathTriggerEffect deathTrigger = new OneOrMoreCreatureDeathTriggerEffect(
-                new PerpetuallyBoostSourceEffect(1, 1));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, deathTrigger);
-        addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_DIES, deathTrigger);
-        addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_CREATURE_DIES, deathTrigger);
+        // Whenever one or more other creatures die, Soul Shredder perpetually gets +1/+1. This ability also
+        // triggers if Soul Shredder is in your graveyard.
+        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANOTHER),
+                        AbilityZones.of(Zone.BATTLEFIELD, Zone.GRAVEYARD)),
+                TriggerOptions.ONE_OR_MORE, new PerpetuallyBoostSourceEffect(1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

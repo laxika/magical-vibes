@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ReaperOfTheWilds extends Card {
 
     public ReaperOfTheWilds() {
         // Whenever another creature dies, scry 1.
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new ScryEffect(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new ScryEffect(1));
 
         // {B}: This creature gains deathtouch until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{B}",

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class ShayCormac extends Card {
 
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY,
                 new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY, 1));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.BOUNTY),
                         new PutCountersOnSourceEffect(1, 1, 2)));

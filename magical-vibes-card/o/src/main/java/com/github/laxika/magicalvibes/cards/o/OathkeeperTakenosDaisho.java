@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,7 +22,7 @@ public class OathkeeperTakenosDaisho extends Card {
 
         // Whenever equipped creature dies, return that card to the battlefield under your control
         // if it's a Samurai card.
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.SAMURAI),
                 new ReturnDyingCreatureToBattlefieldEffect(false)
         ));

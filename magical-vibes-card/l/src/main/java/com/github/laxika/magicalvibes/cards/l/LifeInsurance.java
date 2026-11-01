@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class LifeInsurance extends Card {
                 "Pay {W/B} to extort?"
         ));
 
-        addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANY),
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER),
                         CreateTokenEffect.ofTreasureToken(1)));

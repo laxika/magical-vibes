@@ -34,9 +34,8 @@ public class ReluctantRoleModel extends Card {
                 )))));
 
         var deathTrigger = target(TargetFilters.creature(), 0, 1);
-        deathTrigger.addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new MoveDyingSourceCountersToTargetCreatureEffect());
-        deathTrigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        // Whenever this creature or another creature you control dies, if it had counters on it, ...
+        deathTrigger.addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY),
                         new MoveDyingSourceCountersToTargetCreatureEffect()));

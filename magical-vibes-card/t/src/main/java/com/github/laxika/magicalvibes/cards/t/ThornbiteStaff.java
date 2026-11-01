@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -15,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,8 +40,8 @@ public class ThornbiteStaff extends Card {
         // Equipped creature has "Whenever a creature dies, untap this creature." The granted trigger
         // belongs to the equipped creature, so its controller controls it and it untaps that creature.
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ANY_CREATURE_DIES,
-                new UntapPermanentsEffect(TapUntapScope.SELF),
+                new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
+                new UntapPermanentsEffect(TapUntapScope.SELF)),
                 GrantScope.EQUIPPED_CREATURE
         ));
 

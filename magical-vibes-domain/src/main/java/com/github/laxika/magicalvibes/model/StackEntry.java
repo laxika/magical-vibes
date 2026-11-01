@@ -517,7 +517,7 @@ public class StackEntry {
     /**
      * Last-known card id of the event that produced this triggered ability, when an effect needs to
      * act on "that card" rather than a chosen target — e.g. the creature that died for Seraph's
-     * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
+     * {@code Triggers.creatureDies(DAMAGED_BY_THIS)} return. Not a target: it is never validated or fizzled.
     */
     @Setter private UUID triggeringCardId;
     @Setter private boolean triggerOrderChosen;

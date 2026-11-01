@@ -40,7 +40,6 @@ public class GenestealerPatriarch extends Card {
                 new CreateTokenCopyOfDyingCreatureEffect(
                         new CreateTokenCopyOfTargetPermanentEffect(
                                 List.of(CardSubtype.TYRANID), Set.of(), null, null, Map.of())));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), childrenOfTheCult);
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, childrenOfTheCult);
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), childrenOfTheCult);
     }
 }

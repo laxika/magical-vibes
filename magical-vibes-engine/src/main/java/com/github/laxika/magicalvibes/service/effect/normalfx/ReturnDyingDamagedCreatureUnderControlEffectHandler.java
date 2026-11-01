@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Resolves Dread Slaver's {@code ON_DAMAGED_CREATURE_DIES} trigger: the creature that died returns
+ * Resolves Dread Slaver's {@code Triggers.creatureDies(DAMAGED_BY_THIS)} trigger: the creature that died returns
  * from its owner's graveyard straight to the battlefield under the ability controller's control,
  * with the effect's colour/subtype grants applied on top of its own.
  */

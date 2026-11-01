@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class UlvenwaldMysteries extends Card {
 
     public UlvenwaldMysteries() {
         // Whenever a nontoken creature you control dies, investigate.
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, CreateTokenEffect.ofClueToken(1));
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), CreateTokenEffect.ofClueToken(1));
 
         // Whenever you sacrifice a Clue, create a 1/1 white Human Soldier creature token.
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,

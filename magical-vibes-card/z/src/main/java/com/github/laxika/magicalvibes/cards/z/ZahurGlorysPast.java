@@ -5,16 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,8 +36,6 @@ public class ZahurGlorysPast extends Card {
                 1
         ));
 
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, MAX_SPEED_ZOMBIE);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringCardConditionalEffect(
-                new CardNotPredicate(new CardIsTokenPredicate()), MAX_SPEED_ZOMBIE));
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), MAX_SPEED_ZOMBIE);
     }
 }

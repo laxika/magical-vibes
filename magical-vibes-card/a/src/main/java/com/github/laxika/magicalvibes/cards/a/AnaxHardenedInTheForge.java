@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
@@ -38,7 +37,7 @@ public class AnaxHardenedInTheForge extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED), new Fixed(3)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))), SATYR_TOKEN));
         addTrigger(Triggers.dies(ObjectRelation.THIS), SATYR_TOKEN);

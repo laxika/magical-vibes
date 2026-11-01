@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardByExperienceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureFromGraveyardToBattlefieldOrHandByManaValueEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "52")
 @CardRegistration(set = "CMM", collectorNumber = "346")
@@ -18,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureFromGrave
 public class MerenOfClanNelToth extends Card {
 
     public MerenOfClanNelToth() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new ExperienceCountersEffect(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new ExperienceCountersEffect(1));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ReturnTargetCreatureFromGraveyardToBattlefieldOrHandByManaValueEffect(
                         new ControllerExperienceCounters()));

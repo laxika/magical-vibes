@@ -19,8 +19,7 @@ public class PanickedBystander extends Card {
         setBackFaceCard(new CacklingCulprit());
 
         var deathTrigger = new GainLifeEffect(1);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, deathTrigger);
+        addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), deathTrigger);
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new GainedLifeThisTurn(3), new TransformSelfEffect()));
     }

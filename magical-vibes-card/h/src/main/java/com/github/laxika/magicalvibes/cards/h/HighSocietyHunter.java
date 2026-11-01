@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,6 +27,6 @@ public class HighSocietyHunter extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "another creature"));
-        addEffect(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES, new DrawCardEffect());
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER), new DrawCardEffect());
     }
 }

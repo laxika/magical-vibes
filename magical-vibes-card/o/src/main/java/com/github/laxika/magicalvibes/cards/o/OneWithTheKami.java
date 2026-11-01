@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPr
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class OneWithTheKami extends Card {
         var anotherModifiedCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsModifiedPredicate(),
                 new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate())));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(anotherModifiedCreature, spiritToken));
     }
 }

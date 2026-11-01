@@ -196,7 +196,6 @@ class DeathTriggerCollectorServiceTest {
 
 
 
-    // ── ON_ALLY_CREATURE_DIES handlers ─────────────────────────────────
 
     @Nested
     @DisplayName("handleAllyCreatureMayPay")
@@ -255,7 +254,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    // ── ON_EQUIPPED_CREATURE_DIES handler ──────────────────────────────
 
     @Nested
     @DisplayName("handleEquippedCreatureDeathDefault")
@@ -907,7 +905,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    // ── ON_ANY_CREATURE_DIES handlers ──────────────────────────────────
 
     @Nested
     @DisplayName("Any creature death handlers")
@@ -1096,7 +1093,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    // ── ON_ALLY_NONTOKEN_CREATURE_DIES handlers ────────────────────────
 
     @Nested
     @DisplayName("Ally nontoken creature death handlers")
@@ -1150,7 +1146,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    // ── ON_ANY_NONTOKEN_CREATURE_DIES handlers ─────────────────────────
 
     @Nested
     @DisplayName("Any nontoken creature death handlers")
@@ -1218,7 +1213,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    // ── ON_OPPONENT_CREATURE_DIES handlers ─────────────────────────────
 
     @Nested
     @DisplayName("Opponent creature death handlers")

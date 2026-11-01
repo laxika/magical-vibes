@@ -23,6 +23,6 @@ public class AbsolverThrull extends Card {
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsEnchantmentPredicate(), "Target must be an enchantment"))
-                .addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, new DestroyTargetPermanentEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.HAUNTED), new DestroyTargetPermanentEffect());
     }
 }

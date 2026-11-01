@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,6 +50,6 @@ public class CatacombSifter extends Card {
 
     public CatacombSifter() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ELDRAZI_SCION);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new ScryEffect(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new ScryEffect(1));
     }
 }

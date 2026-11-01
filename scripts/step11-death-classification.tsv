@@ -1,0 +1,442 @@
+ZahurGlorysPast	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Max speed — Whenever a nontoken creature you control dies, create a tapped 2/2 black Zombie creature token.
+ZulaportCutthroat	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life.
+ZurgoHelmsmasher	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by Zurgo this turn dies, put a +1/+1 counter on Zurgo.
+YahenniUndyingPartisan	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+YarusRoarOfTheOldGods	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a face-down creature you control dies, return it to the battlefield face down under its owner's control if it's a permanent card, then turn it face up.
+YedoraGraveGardener	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, you may return it to the battlefield face down under its owner's control.
+YokeOfTheDamned	ON_ANY_CREATURE_DIES	ANY	When a creature dies, destroy enchanted creature.
+XandersWake	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever one or more creatures you control die, draft a card from Xander's Wake's spellbook.
+XathridNecromancer	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another Human creature you control dies, create a tapped 2/2 black Zombie creature token.
+WaltzOfRage	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Until end of turn, whenever a creature you control dies, exile the top card of your library.
+WarhostsFrenzy	ON_ALLY_CREATURE_DIES	YOU_CONTROL	If this spell was kicked, whenever a creature you control dies this turn, draw a card.
+WarteyeWitch	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, scry 1.
+WeatherlightCompleated	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, put a phyresis counter on Weatherlight Compleated.
+WeddingCrasher	ON_ALLY_CREATURE_DIES	?	
+Wight	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Life Drain — Whenever a creature dealt damage by this creature this turn dies, create a tapped 2/2 black Zombie creature token and exile that card.
+WilheltTheRotcleaver	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Zombie you control dies, if it didn't have decayed, create a 2/2 black Zombie creature token with decayed.
+ValkyriesCall	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken, non-Angel creature you control dies, return that card to the battlefield under its owner's control with a +1/+1 counter on it.
+VampiricDragon	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+VampiricEmbrace	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_ATTACHED	Whenever a creature dealt damage by enchanted creature this turn dies, put a +1/+1 counter on that creature.
+VampiricSliver	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	All Sliver creatures have "Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+VeinDrinker	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+VeinRipper	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, target opponent loses 2 life and you gain 2 life.
+VeneratedStormsinger	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life.
+VengefulBloodwitch	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, target opponent loses 1 life and you gain 1 life.
+VengefulDead	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another Zombie dies, each opponent loses 1 life.
+VengefulTownsfolk	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever one or more other creatures you control die, put a +1/+1 counter on this creature.
+VenomEddieBrock	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, put a +1/+1 counter on Venom.
+Venomcrawler	ON_ANY_CREATURE_DIES	ANOTHER	Devourer of Souls — Whenever another creature dies, put a +1/+1 counter on this creature.
+VerdantSuccession	ON_ANY_CREATURE_DIES	ANY	Whenever a green nontoken creature dies, that creature's controller may search their library for a card with the same name as that creature, put it onto the battlefield, then shuffle.
+ViciousShadows	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you may have this enchantment deal damage to target player equal to the number of cards in that player's hand.
+VigilForTheLost	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, you may pay {X}.
+VillageCannibals	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another Human creature dies, put a +1/+1 counter on this creature.
+VillagePillagers	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+VindictiveVampire	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, this creature deals 1 damage to each opponent and you gain 1 life.
+VogarNecropolisTyrant	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies during your turn, put a +1/+1 counter on Vogar. | When Vogar dies, draw a card for each +1/+1 counter on it.
+VoldarenBloodcaster	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another nontoken creature you control dies, create a Blood token.
+VoraciousVermin	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on this creature.
+VraanExecutionerThane	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever one or more other creatures you control die, each opponent loses 2 life and you gain 2 life.
+VraskaTheSilencer	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+UlvenwaldMysteries	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, investigate.
+UlvenwaldObserver	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with toughness 4 or greater dies, draw a card.
+UndeadAugur	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another Zombie you control dies, you draw a card and lose 1 life.
+UnrulyMob	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on this creature.
+UnscytheKillerOfKings	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_ATTACHED	Whenever a creature dealt damage by equipped creature this turn dies, you may exile that card.
+TaboraxHopesDemise	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, put a +1/+1 counter on Taborax.
+TegwyllDukeOfSplendor	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Faerie you control dies, you draw a card and you lose 1 life.
+TerrorsOfTheTrack	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another creature dies, each opponent loses 1 life and you gain 1 life.
+TeysaOrzhovScion	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another black creature you control dies, create a 1/1 white Spirit creature token with flying.
+ThanosDeathsConsort	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, put a +1/+1 counter on Thanos.
+TheCauldronOfEternity	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, put it on the bottom of its owner's library.
+TheGhoulGunslinger	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever The Ghoul or another nontoken Zombie or Mutant you control dies, target player gets two rad counters.
+TheGreatGoblin	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Goblin, Orc, or Army you control dies, exile the top card of your library.
+TheMasterGallifreysEnd	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Make Them Pay — Whenever a nontoken artifact creature you control dies, you may exile it.
+TheMeathookMassacre	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, each opponent loses 1 life. | Whenever a creature an opponent controls dies, you gain 1 life.
+TheMeathookMassacre	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+TheReaperKingNoMore	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+TheScorpionGod	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with a -1/-1 counter on it dies, draw a card. | When The Scorpion God dies, return it to its owner's hand at the beginning of the next end step.
+TheSerpentSociety	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control with deathtouch dies, each opponent sacrifices a nontoken creature of their choice.
+TheSkullsporeNexus	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever one or more nontoken creatures you control die, create a green Fungus Dinosaur creature token with base power and toughness each equal to the total power of those creatures.
+TheSwarmlord	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Xenos Cunning — Whenever a creature you control with a counter on it dies, draw a card.
+ThievingAmalgam	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control but don't own dies, its owner loses 2 life and you gain 2 life.
+ThijarianWitness	ON_ANY_CREATURE_DIES	ANOTHER	Bear Witness — Whenever another creature dies, if it was attacking or blocking alone, exile it and investigate.
+ThopterShop	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever one or more artifact creatures you control die, draw a card.
+ThornbiteStaff	ON_ANY_CREATURE_DIES	ANY	Equipped creature has "{2}, {T}: This creature deals 1 damage to any target" and "Whenever a creature dies, untap this creature.
+ThrabenSentry	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, you may transform this creature.
+ThunderboltsConspiracy	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Villain you control dies, return it to the battlefield under its owner's control with a finality counter on it. | (If a creature with a finality counter on it would die, exile it instead.
+TimotharBaronOfBats	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken Vampire you control dies, you may pay {1} and exile it.
+TitaniaNaturesForce	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an Elemental you control dies, you may mill three cards.
+ToshiroUmezawa	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+TotentanzSwarmPiper	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Totentanz or another nontoken creature you control dies, create a 1/1 black Rat creature token with "This token can't block.
+ToxrillTheCorrosive	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+TransmograntsCrown	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+TributaryInstructor	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with a +1/+1 counter on it dies, draw a card.
+TrophyHunter	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature with flying dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+WaywardDisciple	ON_ALLY_CREATURE_DIES	?	
+VincentValentine	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+SwordOfTheRealms	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+GrandmotherRaviSengir	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+EmbroseDeanOfShadow	ON_ALLY_CREATURE_DIES	?	
+DragonKamisEgg	ON_ALLY_CREATURE_DIES	?	
+CacklingCulprit	ON_ALLY_CREATURE_DIES	?	
+SadisticGlee	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, put a +1/+1 counter on enchanted creature.
+SalvagingStation	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you may untap this artifact.
+Sangromancer	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+SanguinaryPriest	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Blood Chalice — Whenever another creature you control dies, this creature deals 1 damage to any target.
+ScavengerDrake	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may put a +1/+1 counter on this creature.
+ScavengersTalent	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever one or more creatures you control die, create a Food token.
+ScionOfOpulence	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another nontoken Vampire you control dies, create a Treasure token.
+ScytheOfTheWretched	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_ATTACHED	Whenever a creature dealt damage by equipped creature this turn dies, return that card to the battlefield under your control.
+SeerOfStolenSight	ON_ALLY_ARTIFACT_OR_CREATURE_DIES	YOU_CONTROL	Whenever one or more artifacts and/or creatures you control are put into a graveyard from the battlefield, surveil 1.
+SeizeTheSoul	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+SekKuarDeathkeeper	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, create a 3/1 black and red Graveborn creature token with haste.
+SelhoffOccultist	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another creature dies, target player mills a card.
+SengirBats	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+SengirConnoisseur	ON_ANY_CREATURE_DIES	ANOTHER	Whenever one or more other creatures die, put a +1/+1 counter on this creature.
+SengirVampire	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+SephirothFabledSoldier	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, target opponent loses 1 life and you gain 1 life. | Super Nova — As this creature transforms into Sephiroth, One-Winged Angel, you get an emblem with "Whenever a creature dies, target opponent loses 1 life and you gain 1 life.
+SephirothPlanetsHeir	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+Seraph	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put that card onto the battlefield under your control at the beginning of the next end step.
+SerpentsSoulJar	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever an Elf you control dies, exile it.
+ShadewingLaureate	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control with flying dies, put a +1/+1 counter on target creature you control.
+ShadowTheHedgehog	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Shadow the Hedgehog or another creature you control with flash or haste dies, draw a card.
+ShadowUrchin	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with one or more counters on it dies, exile that many cards from the top of your library.
+ShadowsOfThePast	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, scry 1.
+ShayCormac	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with a bounty counter on it dies, put two +1/+1 counters on Shay Cormac.
+ShelobDreadWeaver	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+ShriekTreblemaker	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+ShrivelingRot	ON_ANY_CREATURE_DIES	ANY	• Until end of turn, whenever a creature dies, that creature's controller loses life equal to its toughness.
+SiegeVeteran	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken Soldier you control dies, create a 1/1 colorless Soldier artifact creature token.
+SifterOfSkulls	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, create a 1/1 colorless Eldrazi Scion creature token.
+SilumgarScavenger	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on this creature.
+SkemfarAvenger	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken Elf or Berserker you control dies, you draw a card and you lose 1 life.
+SkirkDrillSergeant	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another Goblin dies, you may pay {2}{R}.
+Skullclamp	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+SkyclaveShadowcat	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with a +1/+1 counter on it dies, draw a card.
+SlaughterSpecialist	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+SlayersPlate	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+Slimefoot	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Saproling you control dies, Slimefoot deals 1 damage to each opponent and you gain 1 life.
+SlurrkAllIngesting	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Slurrk or another creature you control dies, if it had a +1/+1 counter on it, put a +1/+1 counter on each creature you control that has a +1/+1 counter on it.
+SnarlfangVermin	GRAVEYARD_ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+SotheraTheSupervoid	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, each opponent chooses a creature they control and exiles it.
+SoulCollector	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, return that card to the battlefield under your control.
+SoulNet	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you may pay {1}.
+SoulShredder	ON_ANY_CREATURE_DIES	ANOTHER	Whenever one or more other creatures die, Soul Shredder perpetually gets +1/+1.
+SoulShredder	GRAVEYARD_ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever one or more other creatures die, Soul Shredder perpetually gets +1/+1.
+SoulShredder	GRAVEYARD_ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+Soulcatcher	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with flying dies, put a +1/+1 counter on this creature.
+SouthWindAvatar	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, you gain life equal to its toughness.
+SpeciesSpecialist	ON_ANY_CREATURE_DIES	ANY	Whenever a creature of the chosen type dies, you may draw a card.
+SpectacleOfDestruction	ON_ANY_CREATURE_DIES	ANY	Whenever one or more creatures die, put a wreck counter on this enchantment.
+SpinnerOfSouls	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, you may reveal cards from the top of your library until you reveal a creature card.
+SpitefulPrankster	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, this creature deals 1 damage to target player or planeswalker.
+Sporogenesis	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with a fungus counter on it dies, create a 1/1 green Saproling creature token for each fungus counter on that creature.
+SquirrelSanctuary	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, you may pay {1}.
+StalkingVengeance	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, it deals damage equal to its power to target player or planeswalker.
+StoneHavenOutfitter	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an equipped creature you control dies, draw a card.
+SultaiFlayer	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with toughness 4 or greater dies, you gain 4 life.
+SusurianVoidborn	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature or artifact you control dies, target opponent loses 1 life and you gain 1 life.
+SwarmOfBloodflies	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, put a +1/+1 counter on this creature.
+SylvokLifestaff	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+SyrKonradTheGrim	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, or a creature card is put into a graveyard from anywhere other than the battlefield, or a creature card leaves your graveyard, Syr Konrad deals 1 damage to each opponent.
+SyrVondamSunstarExemplar	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies or is put into exile, put a +1/+1 counter on Syr Vondam and you gain 1 life. | When Syr Vondam dies or is put into exile while its power is 4 or greater, destroy up to one target nonland permanent.
+SyrixCarrierOfTheFlame	GRAVEYARD_ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Phoenix you control dies, you may cast this card from your graveyard.
+RageThrower	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, this creature deals 2 damage to target player or planeswalker.
+RakdosJoinsUp	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a legendary creature you control dies, Rakdos Joins Up deals damage equal to that creature's power to target opponent.
+RakishCrew	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an outlaw you control dies, each opponent loses 1 life and you gain 1 life.
+RampageOfTheValkyries	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever an Angel you control dies, each other player sacrifices a creature of their choice.
+RampartArchitect	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with defender dies, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.
+RatadrabikOfUrborg	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another legendary creature you control dies, create a token that's a copy of that creature, except it's not legendary and it's a 2/2 black Zombie in addition to its other colors and types.
+RaybladeTrooper	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control with a +1/+1 counter on it dies, create a 1/1 white Human Soldier creature token.
+ReaperOfTheWilds	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, scry 1.
+RelicVial	ON_ALLY_CREATURE_DIES	YOU_CONTROL	As long as you control a Cleric, this artifact has "Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
+ReluctantRoleModel	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, if it had counters on it, put those counters on up to one target creature.
+Remembrance	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, you may search your library for a card with the same name as that creature, reveal it, put it into your hand, then shuffle.
+RepentantVampire	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+RequiemAngel	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another non-Spirit creature you control dies, create a 1/1 white Spirit creature token with flying.
+ResurrectionOrb	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+RevelInRiches	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+ReyhanLastOfTheAbzan	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies or is put into the command zone, if it had one or more +1/+1 counters on it, you may put that many +1/+1 counters on target creature.
+RienneAngelOfRebirth	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another multicolored creature you control dies, return it to its owner's hand at the beginning of the next end step.
+RinoaAngelWing	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever one or more attacking creatures you control die, you may return one of them to the battlefield tapped under its owner's control with a flying counter on it.
+RisingPopulace	ON_ALLY_CREATURE_OR_PLANESWALKER_DIES	ANOTHER_YOU_CONTROL	Whenever another creature or planeswalker you control dies, put a +1/+1 counter on this creature.
+RockslideElemental	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may put a +1/+1 counter on this creature.
+RotShambler	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on this creature.
+RotWolf	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by Rot Wolf this turn dies, you may draw a card.
+RotlungReanimator	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another Cleric dies, create a 2/2 black Zombie creature token.
+RundveltHordemaster	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another Goblin you control dies, exile the top card of your library.
+QuestForTheGravelord	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you may put a quest counter on this enchantment.
+PanickedBystander	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, you gain 1 life. | // Whenever this creature or another creature you control dies, you gain 1 life.
+PartInFriendship	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, reveal cards from the top of your library until you reveal a creature card.
+PashalikMons	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Pashalik Mons or another Goblin you control dies, Pashalik Mons deals 1 damage to any target.
+PatronOfTheVein	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+PawnOfUlamog	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another nontoken creature you control dies, you may create a 0/1 colorless Eldrazi Spawn creature token.
+PeltCollector	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control enters or dies, if that creature's power is greater than this creature's, put a +1/+1 counter on this creature.
+PhenomenonInvestigators	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	• Believe — Whenever a nontoken creature you control dies, create a 2/2 black Horror enchantment creature token.
+PhyrexianVivisector	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, scry 1.
+PitilessPlunderer	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, create a Treasure token.
+PlagueBelcher	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Zombie you control dies, each opponent loses 1 life.
+PoisonTipArcher	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, each opponent loses 1 life.
+PolukranosEngineOfRuin	ON_ALLY_CREATURE_DIES	?	
+PredatorOoze	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+PromiseOfBunrei	ON_ALLY_CREATURE_DIES	YOU_CONTROL	When a creature you control dies, sacrifice this enchantment.
+ProperBurial	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, you gain life equal to that creature's toughness.
+PucasCovenant	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever a creature you control with a counter on it dies, you may return another target permanent card with mana value less than or equal to the number of counters on that creature from your graveyard to your hand.
+Purgatory	ON_ANY_NONTOKEN_CREATURE_DIES	?	
+OathkeeperTakenosDaisho	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+ObNixilisUnshackled	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, put a +1/+1 counter on Ob Nixilis.
+OdricsOutrider	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, put a +1/+1 counter on target creature you control.
+OgreSlumlord	ON_ANY_NONTOKEN_CREATURE_DIES	ANOTHER	Whenever another nontoken creature dies, you may create a 1/1 black Rat creature token.
+OmnathLocusOfRage	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Omnath or another Elemental you control dies, Omnath deals 3 damage to any target.
+OneWithTheKami	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever enchanted creature or another modified creature you control dies, create X 1/1 colorless Spirit creature tokens, where X is that creature's power.
+OpenTheGraves	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, create a 2/2 black Zombie creature token.
+OrahSkyclaveHierophant	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Orah or another Cleric you control dies, return target Cleric card with lesser mana value from your graveyard to the battlefield.
+OrcaSiegeDemon	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, put a +1/+1 counter on Orca. | When Orca dies, it deals damage equal to its power divided as you choose among any number of targets.
+OrzhovEuthanist	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+OrzhovPontiff	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+OvergrowthElemental	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, you gain 1 life.
+OverseerOfTheDamned	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+Necroskitter	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+Necrosynthesis	ON_ANY_CREATURE_DIES	ANOTHER	Enchanted creature has "Whenever another creature dies, put a +1/+1 counter on this creature. | When enchanted creature dies, look at the top X cards of your library, where X is its power.
+NickValentinePrivateEye	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Nick Valentine or another artifact creature you control dies, you may investigate.
+NightmareShepherd	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, you may exile it.
+NimDeathmantle	ON_ANY_NONTOKEN_CREATURE_DIES	?	
+NornsWellspring	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, scry 1 and put an oil counter on this artifact.
+MadameVastra	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by Madame Vastra this turn dies, create a Clue token and a Food token.
+MalakirCullblade	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+MaleficScythe	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+MarchesaTheBlackRose	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with a +1/+1 counter on it dies, return that card to the battlefield under your control at the beginning of the next end step.
+MariTheKillingQuill	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+MarkovEnforcer	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, create a Blood token.
+MarshlandHordemaster	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another Lizard you control dies, target opponent loses 1 life and you gain 1 life.
+MaskOfGriselbrand	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+MassacreGirlKnownKiller	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+MassacreWurm	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+MausoleumHarpy	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, if you have the city's blessing, put a +1/+1 counter on this creature.
+MeathookMassacreII	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, you may pay 3 life. | Whenever a creature an opponent controls dies, they may pay 3 life.
+MeathookMassacreII	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+MeltstriderEulogist	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with a +1/+1 counter on it dies, draw a card.
+MerchantOfTruth	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, investigate.
+MerenOfClanNelToth	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, you get an experience counter.
+MiaraThornOfTheGlade	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Miara or another Elf you control dies, you may pay {1} and 1 life.
+MidnightEntourage	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another Aetherborn you control dies, you draw a card and you lose 1 life.
+MidnightReaper	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, this creature deals 1 damage to you and you draw a card.
+MillicentRestlessRevenant	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Millicent or another nontoken Spirit you control dies or deals combat damage to a player, create a 1/1 white Spirit creature token with flying.
+MimicVat	ON_ANY_NONTOKEN_CREATURE_DIES	ANY	Imprint — Whenever a nontoken creature dies, you may exile that card.
+MinnWilyIllusionist	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an Illusion you control dies, you may put a permanent card with mana value less than or equal to that creature's power from your hand onto the battlefield.
+MinotaurRoxxonCEO	ON_ANY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER	Whenever Minotaur, Roxxon CEO or another nontoken creature dies, you create a 2/1 black Villain creature token with menace.
+Missy	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another nonartifact creature dies, return it to the battlefield under your control face down and tapped.
+MoldervineReclamation	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, you gain 1 life and draw a card.
+MoonlitWake	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you gain 1 life.
+MoonstoneEulogist	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+MorbidOpportunist	ON_ANY_CREATURE_DIES	ANOTHER	Whenever one or more other creatures die, draw a card.
+MurderOfCrows	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may draw a card.
+MycoidShepherd	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control with power 5 or greater dies, you may gain 5 life.
+LaidToRest	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Human you control dies, draw a card. | Whenever a creature you control with a +1/+1 counter on it dies, you gain 2 life.
+LazotepSliver	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken Sliver you control dies, amass Slivers 2.
+LeadPipe	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+LiesaForgottenArchangel	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, return that card to its owner's hand at the beginning of the next end step. | If a creature an opponent controls would die, exile it instead.
+LifeInsurance	ON_ANY_NONTOKEN_CREATURE_DIES	ANY	Whenever a nontoken creature dies, you lose 1 life and create a Treasure token.
+Lifeline	ON_ANY_CREATURE_DIES	ANOTHER	Whenever a creature dies, if another creature is on the battlefield, return the first card to the battlefield under its owner's control at the beginning of the next end step.
+LightningCoils	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, put a charge counter on this artifact.
+LilianaDreadhordeGeneral	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, draw a card.
+LilianaHereticalHealer	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, exile Liliana, Heretical Healer, then return her to the battlefield transformed under her owner's control. | −8: You get an emblem with "Whenever a creature dies, return it to the battlefield under your control at the beginning of the next end step.
+LimDLTheNecromancer	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+LocthwainLancer	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken Knight you control dies, each opponent loses 1 life and you draw a card.
+LolthSpiderQueen	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, put a loyalty counter on Lolth.
+Lumberknot	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, put a +1/+1 counter on this creature.
+LuminousBroodmoth	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control without flying dies, return it to the battlefield under its owner's control with a flying counter on it.
+KalastriaHighborn	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another Vampire you control dies, you may pay {B}.
+KamberThePlunderer	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+KamiOfMourning	GRAVEYARD_ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever this creature enters, target creature you control or creature card in your graveyard perpetually gains "Whenever a creature you control with greater mana value than this card dies, return this card from your graveyard to the battlefield tapped.
+KardurDoomscourge	ON_ANY_CREATURE_DIES	ANY	Whenever an attacking creature dies, each opponent loses 1 life and you gain 1 life.
+KheruBloodsucker	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with toughness 4 or greater dies, each opponent loses 2 life and you gain 2 life.
+KohTheFaceStealer	ON_ANY_NONTOKEN_CREATURE_DIES	ANOTHER	Whenever another nontoken creature dies, you may exile it.
+KollTheForgemaster	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, if it was enchanted or equipped, return it to its owner's hand.
+KratosStoicFather	ON_ANY_CREATURE_DIES	ANY	Whenever you attack with one or more Gods and whenever a God dies, you get an experience counter.
+KravenTheHunter	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+KreshTheBloodbraided	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may put X +1/+1 counters on Kresh, where X is that creature's power.
+JackdawSavior	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control with flying dies, return another target creature card with lesser mana value from your graveyard to the battlefield.
+JarOfEyeballs	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, put two eyeball counters on this artifact.
+JasonBrightGlowingProphet	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Zombie or Mutant you control dies, if its power was different from its base power, draw a card.
+JenovaAncientCalamity	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Mutant you control dies during your turn, you draw cards equal to its power.
+Jerren	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Jerren enters or another nontoken Human you control dies, you lose 1 life and create a 1/1 white Human creature token.
+JoelResoluteSurvivor	ON_ANY_CREATURE_DIES	ANY	Whenever a creature token dies, put a +1/+1 counter on Joel and draw a card.
+JudithTheScourgeDiva	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, Judith deals 1 damage to any target.
+IllicitMasquerade	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with an impostor counter on it dies, exile it.
+IndebtedSamurai	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Samurai you control dies, you may put a +1/+1 counter on this creature.
+InfestedThrinax	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	When this creature enters, until end of turn, whenever a nontoken creature you control dies, create a number of 1/1 green Saproling creature tokens equal to that creature's power.
+Inheritance	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you may pay {3}.
+HanskSlayerZealot	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+Haruspex	ON_ANY_CREATURE_DIES	ANOTHER	Rapacious Hunger — Whenever another creature dies, put a +1/+1 counter on this creature.
+HarvesterOfSouls	ON_ANY_NONTOKEN_CREATURE_DIES	ANOTHER	Whenever another nontoken creature dies, you may draw a card.
+HatefulEidolon	ON_ANY_CREATURE_DIES	ANY	Whenever an enchanted creature dies, draw a card for each Aura you controlled that was attached to it.
+HauntedLibrary	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+HavengulVampire	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, put a +1/+1 counter on this creature.
+HaviTheAllFather	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Sage Project — Whenever Havi or another legendary creature you control dies, return target legendary creature card with lesser mana value from your graveyard to the battlefield tapped.
+HawkeyeAvengingArcher	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature an opponent controls dies, if Hawkeye dealt damage to it this turn, draw a card.
+HeadlessRider	ON_ALLY_NONTOKEN_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another nontoken Zombie you control dies, create a 2/2 black Zombie creature token.
+HeirloomAuntie	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, surveil 1, then remove a -1/-1 counter from this creature.
+HeirloomBlade	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+HighSocietyHunter	ON_ANY_NONTOKEN_CREATURE_DIES	ANOTHER	Whenever another nontoken creature dies, draw a card.
+HissingIguanar	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may have this creature deal 1 damage to target player or planeswalker.
+HofriGhostforge	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, exile it.
+HomicideInvestigator	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever one or more nontoken creatures you control die, investigate.
+HostOfTheHereafter	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, if it had counters on it, put its counters on up to one target creature you control.
+HungryLynx	ON_ANY_CREATURE_DIES	ANY	Whenever a Rat dies, put a +1/+1 counter on each Cat you control.
+GalvanicJuggernaut	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, untap this creature.
+GardensOfTranquilRepose	ON_ANY_CREATURE_DIES	ANY	Suspended Animation — Whenever a creature dies, exile it.
+GarnaBloodfistOfKeld	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, draw a card if it was attacking.
+GarzaZolPlagueQueen	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by Garza Zol this turn dies, put a +1/+1 counter on Garza Zol.
+GateToTheAfterlife	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, you gain 1 life.
+GavonyUnhallowed	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on this creature.
+GenestealerPatriarch	ON_ANY_CREATURE_DIES	ANOTHER	Children of the Cult — Whenever a creature with an infection counter on it dies, you create a token that's a copy of that creature, except it's a Tyranid in addition to its other types.
+GhostLantern	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, put a +1/+1 counter on equipped creature.
+GhoulishProcession	ON_ANY_NONTOKEN_CREATURE_DIES	ANY	Whenever one or more nontoken creatures die, create a 2/2 black Zombie creature token with decayed.
+GiftOfCompleation	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Phyrexian you control dies, surveil 1.
+GladehartCavalry	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with a +1/+1 counter on it dies, you gain 2 life.
+GlissaTheTraitor	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+GnawingCrescendo	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies this turn, create a 1/1 black Rat creature token with "This token can't block.
+GoblinSharpshooter	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, untap this creature.
+GolgariGermination	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, create a 1/1 green Saproling creature token.
+GormaTheGullet	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on Gorma.
+GrakmawSkyclaveRavager	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, if it had a +1/+1 counter on it, put a +1/+1 counter on Grakmaw. | When Grakmaw dies, create an X/X black and green Hydra creature token, where X is the number of +1/+1 counters on Grakmaw.
+GrandOssuary	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, its controller distributes a number of +1/+1 counters equal to its power among any number of target creatures they control.
+GraveBetrayal	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+GravePact	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever a creature you control dies, each other player sacrifices a creature of their choice.
+GraveVenerations	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
+GravenDominator	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+GreatFierceBee	ON_ANY_CREATURE_DIES	ANOTHER	Whenever one or more other creatures die, scry 1.
+GrimHaruspex	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, draw a card.
+GrismoldTheDreadsower	ON_ANY_CREATURE_DIES	ANY	Whenever a creature token dies, put a +1/+1 counter on Grismold.
+GristleGrinner	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, this creature gets +2/+2 until end of turn.
+GuardianKirin	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on this creature.
+GutterGrime	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, put a slime counter on this enchantment, then create a green Ooze creature token with "This token's power and toughness are each equal to the number of slime counters on Gutter Grime.
+GyoxBrutalCarnivora	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control with one or more oil counters on it dies, conjure X duplicates of it into exile, where X is the number of oil counters on it.
+FacesOfThePast	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, tap all untapped creatures that share a creature type with it or untap all tapped creatures that share a creature type with it.
+FalkenrathNoble	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life.
+FavoredEnemy	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+Fecundity	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, that creature's controller may draw a card.
+FelisaFangOfSilverquill	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, if it had counters on it, create X tapped 2/1 white and black Inkling creature tokens with flying, where X is the number of counters it had on it.
+FeralGhoul	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on this creature. | When this creature dies, each opponent gets a number of rad counters equal to its power.
+FireNationSentinels	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+FleshmadSteed	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, tap this creature.
+ForebearsBlade	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+ForgebornPhoenix	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+Foster	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, you may pay {1}.
+FuneralRoomAwakeningHall	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life. | ) // Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
+FuriousForebear	GRAVEYARD_ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies while this card is in your graveyard, you may pay {1}{W}.
+Earthlink	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, that creature's controller sacrifices a land of their choice.
+EaterOfVirtue	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+EdeaPossessedSorceress	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control but don't own dies, return it to the battlefield under its owner's control and you draw a card.
+ElasIlKorSadisticPilgrim	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, each opponent loses 1 life.
+ElderfangVenom	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an Elf you control dies, each opponent loses 1 life and you gain 1 life.
+ElendaTheDuskRose	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, put a +1/+1 counter on Elenda. | When Elenda dies, create X 1/1 white Vampire creature tokens with lifelink, where X is Elenda's power.
+EloiseNephaliaSleuth	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, investigate.
+EmbalmedAscendant	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Max speed — Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
+ErebosBleakHearted	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, you may pay 2 life.
+EternalThirst	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+ExhumerThrull	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+ExplorersCache	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with a +1/+1 counter on it dies, put a +1/+1 counter on this artifact.
+DancingSword	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+DarkProphecy	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, you draw a card and you lose 1 life.
+DauthiGhoul	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with shadow dies, put a +1/+1 counter on this creature.
+DawnEvangel	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, if an Aura you controlled was attached to it, return target creature card with mana value 2 or less from your graveyard to your hand.
+DaxosBlessedByTheSun	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control enters or dies, you gain 1 life.
+DeathTyrant	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Negative Energy Cone — Whenever an attacking creature you control or a blocking creature an opponent controls dies, create a 2/2 black Zombie creature token.
+DeathTyrant	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+DeathbringerThoctar	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may put a +1/+1 counter on this creature.
+Deathgreeter	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may gain 1 life.
+Deathrender	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+DeathsOasis	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, mill two cards.
+DeathsPresence	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, put X +1/+1 counters on target creature you control, where X is the power of the creature that died.
+DemonOfDarkSchemes	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you get {E} (an energy counter).
+DesperateFarmer	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	When another creature you control dies, transform this creature.
+DesperateMeasures	ON_ANY_CREATURE_DIES	?	When it dies under your control this turn, draw two cards.
+DiabolicServitude	ON_ANY_CREATURE_DIES	?	When the creature put onto the battlefield with this enchantment dies, exile it and return this enchantment to its owner's hand.
+DictateOfErebos	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, each opponent sacrifices a creature of their choice.
+DingusStaff	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, this artifact deals 2 damage to that creature's controller.
+DiregrafCaptain	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Zombie you control dies, target opponent loses 1 life.
+DramaticFinale	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever one or more nontoken creatures you control die, create a 2/1 white and black Inkling creature token with flying.
+DreadSlaver	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, return it to the battlefield under your control.
+DreadTiller	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with a -1/-1 counter on it dies, you may put a land card from your hand or graveyard onto the battlefield tapped.
+Dreadhound	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies or a creature card is put into a graveyard from a library, each opponent loses 1 life.
+DrizztDoUrden	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, if it had power greater than Drizzt's power, put a number of +1/+1 counters on Drizzt equal to the difference.
+DrossHarvester	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you gain 2 life.
+DrossScorpion	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another artifact creature dies, you may untap target artifact.
+CaldaiaGuardian	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control with mana value 4 or greater dies, create two 1/1 green and white Citizen creature tokens. | Blitz {2}{G} (If you cast this spell for its blitz cost, it gains haste and "When this creature dies, draw a card.
+CarthTheLion	ON_ALLY_CREATURE_OR_PLANESWALKER_DIES	?	Whenever Carth enters or a planeswalker you control dies, look at the top seven cards of your library.
+CassHandOfVengeance	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Cass or another creature you control dies, if it was enchanted or equipped, return any number of Aura cards that were attached to it from your graveyard to the battlefield attached to target creature, then attach any number of Equipment that were attached to it to that creature.
+CatacombSifter	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, scry 1.
+CauldronOfEssence	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
+CemeteryPuca	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you may pay {1}.
+Chainsaw	ON_ANY_CREATURE_DIES	ANY	Whenever one or more creatures die, put a rev counter on this Equipment.
+ChaosShrinesBlackCrystal	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, exile it.
+CleopatraExiledPharaoh	ON_ANY_CREATURE_DIES	ANY	Betrayal — Whenever a legendary creature with counters on it dies, draw a card for each counter on it.
+ConsumedByHistory	ON_ANY_NONTOKEN_CREATURE_DIES	ANY	Until end of turn, whenever a nontoken creature dies, it perpetually gains unearth {5}.
+CordialVampire	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another creature dies, put a +1/+1 counter on each Vampire you control.
+CriminalEnterprise	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Villain you control dies, this enchantment deals 1 damage to each opponent and you gain 1 life.
+CrosswayTroublemakers	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Vampire you control dies, you may pay 2 life.
+CrowdedCrypt	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, put a corpse counter on this artifact.
+CruelCelebrant	ON_ALLY_CREATURE_OR_PLANESWALKER_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature or planeswalker you control dies, each opponent loses 1 life and you gain 1 life.
+CryOfContrition	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+CrypticPursuit	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a face-down creature you control dies, exile it if it's an instant or sorcery card.
+CurseOfClingingWebs	ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES	ENCHANTED_PLAYER_CONTROLS	
+BaneclawMarauder	ON_ANY_CREATURE_DIES	?	
+BaronSengir	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by Baron Sengir this turn dies, put a +2/+2 counter on Baron Sengir.
+BasrisLieutenant	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, if it had a +1/+1 counter on it, create a 2/2 white Knight creature token with vigilance.
+BastionOfRemembrance	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control dies, each opponent loses 1 life and you gain 1 life.
+BattleOfHooverDam	ON_ALLY_CREATURE_DIES	YOU_CONTROL	• Legion — Whenever a creature you control dies, put two +1/+1 counters on target creature you control.
+BeifongsBountyHunters	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a nonland creature you control dies, earthbend X, where X is that creature's power. | When it dies or is exiled, return it to the battlefield tapped.
+BelfrySpirit	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+BenedictionOfMoons	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+BereavedSurvivor	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	When another creature you control dies, transform this creature.
+Bereavement	ON_ANY_CREATURE_DIES	ANY	Whenever a green creature dies, its controller discards a card.
+BishopOfWings	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an Angel you control dies, create a 1/1 white Spirit creature token with flying.
+BlackMarket	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, put a charge counter on this enchantment.
+BladeOfTheBloodchief	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, put a +1/+1 counter on equipped creature.
+BladeholdCleaver	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+BlightMound	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, create a 1/1 black and green Pest creature token with "When this token dies, you gain 1 life.
+BlindHunter	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+BloodArtist	ON_ANY_CREATURE_DIES	THIS_OR_ANOTHER	Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life.
+BloodCultist	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, put a +1/+1 counter on this creature.
+BloodSpatterAnalysis	ON_ANY_CREATURE_DIES	ANY	Whenever one or more creatures die, mill a card and put a bloodstain counter on this enchantment.
+BlowflyInfestation	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, if it had a -1/-1 counter on it, put a -1/-1 counter on target creature.
+BodyLaunderer	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, this creature connives. | When this creature dies, return another target non-Rogue creature card with equal or lesser power from your graveyard to the battlefield.
+BoggartCursecrafter	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Goblin you control dies, this creature deals 1 damage to each opponent.
+BoggartMischief	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Goblin creature you control dies, each opponent loses 1 life and you gain 1 life.
+BoneyardScourge	GRAVEYARD_ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a Dragon you control dies while this card is in your graveyard, you may pay {1}{B}.
+BountyBoard	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with a bounty counter on it dies, each of its controller's opponents draws a card and gains 2 life.
+BrenardGingerSculptor	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, you may exile it.
+BurningSands	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, that creature's controller sacrifices a land of their choice.
+BushiTenderfoot	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	When a creature dealt damage by this creature this turn dies, flip this creature.
+ButcherOfMalakir	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature you control dies, each opponent sacrifices a creature of their choice.
+BuzzardWaspColony	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, if it had counters on it, put its counters on this creature.
+AangALotToLearn	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another creature you control dies, put a +1/+1 counter on Aang.
+AatchikEmeraldRadian	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another Insect you control dies, put a +1/+1 counter on Aatchik.
+AbattoirGhoul	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by this creature this turn dies, you gain life equal to that creature's toughness.
+AbsolverThrull	ON_HAUNTED_CREATURE_DIES	HAUNTED	
+AbzanAscendancy	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control dies, create a 1/1 white Spirit creature token with flying.
+AgentVenom	ON_ALLY_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, you draw a card and lose 1 life.
+Agyrem	ON_ANY_CREATURE_DIES	ANY	Whenever a white creature dies, return it to the battlefield under its owner's control at the beginning of the next end step. | Whenever a nonwhite creature dies, return it to its owner's hand at the beginning of the next end step.
+AjanisLastStand	ON_ALLY_CREATURE_OR_PLANESWALKER_DIES	YOU_CONTROL	Whenever a creature or planeswalker you control dies, you may sacrifice this enchantment.
+AkkiEmberKeeper	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken modified creature you control dies, create a 1/1 colorless Spirit creature token.
+AlBhedSalvagers	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another creature or artifact you control dies, target opponent loses 1 life and you gain 1 life.
+AlgaeGharial	ON_ANY_CREATURE_DIES	ANOTHER	Whenever another creature dies, you may put a +1/+1 counter on this creature.
+AlharuSolemnRitualist	ON_ALLY_NONTOKEN_CREATURE_DIES	YOU_CONTROL	Whenever a nontoken creature you control with a +1/+1 counter on it dies, create a 1/1 white Spirit creature token with flying.
+AltacBloodseeker	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+AnafenzaUnyieldingLineage	ON_ALLY_NONTOKEN_CREATURE_DIES	ANOTHER_YOU_CONTROL	Whenever another nontoken creature you control dies, Anafenza endures 2.
+AnaxHardenedInTheForge	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Anax or another nontoken creature you control dies, create a 1/1 red Satyr creature token with "This token can't block.
+ArchangelAvacyn	ON_ALLY_CREATURE_DIES	YOU_CONTROL	When a non-Angel creature you control dies, transform Archangel Avacyn at the beginning of the next upkeep.
+ArchfiendOfTheDross	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+ArchghoulOfThraben	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever this creature or another Zombie you control dies, look at the top card of your library.
+AresGodOfWar	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an attacking creature you control dies, return that card to its owner's hand.
+ArnynDeathbloomBotanist	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever a creature you control with power or toughness 1 or less dies, target opponent loses 2 life and you gain 2 life.
+AshesOfTheAbhorrent	ON_ANY_CREATURE_DIES	ANY	Whenever a creature dies, you gain 1 life.
+AssaultIntercessor	ON_OPPONENT_CREATURE_DIES	OPPONENT_CONTROLS	
+AthreosShroudVeiled	ON_ANY_CREATURE_DIES	ANY	Whenever a creature with a coin counter on it dies or is put into exile, return that card to the battlefield under your control.
+AtlaPalaniNestTender	ON_ALLY_CREATURE_DIES	YOU_CONTROL	Whenever an Egg you control dies, reveal cards from the top of your library until you reveal a creature card.
+AvacynsCollar	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+AvariceAmulet	ON_EQUIPPED_CREATURE_DIES	EQUIPPED	
+AxelrodGunnarson	ON_DAMAGED_CREATURE_DIES	DAMAGED_BY_THIS	Whenever a creature dealt damage by Axelrod Gunnarson this turn dies, you gain 1 life and Axelrod Gunnarson deals 1 damage to target player or planeswalker.
+AzlaskTheSwellingScourge	ON_ALLY_CREATURE_DIES	THIS_OR_ANOTHER_YOU_CONTROL	Whenever Azlask or another colorless creature you control dies, you get an experience counter.

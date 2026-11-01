@@ -125,22 +125,22 @@ combat damage step is processed.
 | Slot | Collector service | Pipeline |
 |---|---|---|
 | `Triggers.dies(THIS)` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleDeathMayPayMana` + `handleLosesLifeEqualToPower` | Death |
-| `ON_HAUNTED_CREATURE_DIES` | `TriggerCollectionService.checkHauntedCreatureDeathTriggers` scans the tracked haunted-permanent relationships when a permanent enters a graveyard, then uses the death-trigger target queue for targeted effects | Death |
-| `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
+| `Triggers.dies(HAUNTED)` | The trigger pipeline matches the cards in exile that haunted the departed permanent (`ZoneChangeEvent.hauntedBy`); `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.HAUNTED`) then uses the death-trigger target queue for targeted effects | Death |
+| `Triggers.creatureDies(EQUIPPED)` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
 | `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
 | `ON_ENCHANTED_PLAYER_DEALT_DAMAGE` | `TriggerCollectionService.checkEnchantedPlayerDealtDamageTriggers` + `DamageTriggerCollectorService.handleEnchantedPlayerDealtDamage` | Damage (non-targeting) |
 | `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_EQUIPMENT_ATTACHED_TO_CREATURE` | `TriggerCollectionService.checkEquipmentAttachedTriggers` (non-targeting; called by `EquipSupport.attachEquipment` and for permanents entering already attached) | Attachment |
 | `ON_ALLY_PERMANENT_TRANSFORMS` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
-| `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
+| `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) | Death |
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
 | `POSTCOMBAT_MAIN_TRIGGERED` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
-| `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` (non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
+| `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`; non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
 | `ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkEnchantedPlayerLandEntersTriggers` scans player-enchanting Curses attached to the entering land's controller | Non-targeting |
-| `ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES` | `TriggerCollectionService.checkEnchantedPlayerNontokenCreatureDeathTriggers` scans player-enchanting Curses attached to the dying creature's controller | Non-targeting |
+| `Triggers.nontokenCreatureDies(ENCHANTED_PLAYER_CONTROLS)` | The trigger pipeline matches player-enchanting Curses attached to the dying creature's controller; `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ENCHANTED_PLAYER_NONTOKEN`) | Non-targeting |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ALLY_CREATURES_ATTACK` (targeting variants) | `CombatAttackService.declareAttackers` queues `AttackTriggerTarget`; non-targeting variants keep the direct stack-entry path. The target collector sees the attacking battlefield state, so restrictions such as "target attacking Goblin you control" are enforced | Attack |
 | `COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK` | `CombatAttackService.declareAttackers` scans face-up cards in the attacking player's command zone and queues `AttackTriggerTarget` with `sourcePermanentId = null`; targeted effects reuse `TriggerTargetCollector.Options.ATTACK` and the card's target filter | Attack |
@@ -255,7 +255,7 @@ combat damage step is processed.
 | `ON_EXPLOIT` | `TriggerCollectionService.checkExploitTriggers` | Exploit; player-targeting effects use `ExploitPlayerTriggerTarget`, permanent-targeting effects use `ExploitPermanentTriggerTarget`, and stack-targeting effects use `ExploitTriggerTarget` |
 | `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
-| `ON_DAMAGED_CREATURE_DIES` (targeting effects) | `GraveyardService.enqueueDamagedCreatureDiesTriggers` → `SelfTriggeredAbilityTarget`; the target is chosen as the trigger is put on the stack. Non-targeting effects are pushed directly. | Damaged-creature death (reuses `Options.END_STEP`) |
+| `Triggers.creatureDies(DAMAGED_BY_THIS)` (targeting effects) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.DAMAGED`) → `SelfTriggeredAbilityTarget`; the target is chosen as the trigger is put on the stack. Non-targeting effects are pushed directly. | Damaged-creature death (reuses `Options.END_STEP`) |
 | Planeswalker ultimate emblems | `DrawService` / `TriggerCollectionService` (including land-entry emblem markers) | Emblem |
 | `SAGA_CHAPTER_I` / `SAGA_CHAPTER_II` / `SAGA_CHAPTER_III` / `SAGA_CHAPTER_IV` | `StepTriggerService.processSagaChapters` / `StackResolutionService` | Saga chapter |
 
@@ -264,8 +264,8 @@ The controller-draw slots are an exception when an effect declares a target: any
 `DrawTriggerAnyTarget`, and permanent-target effects use `DrawTriggerPermanentTarget` as described above.
 `ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS`, `ON_BLOCK` (only the non-targeting "that creature" flavour; the targeting variant is routed through the Attack pipeline — see the mapping table above),
 `GRAVEYARD_UPKEEP_TRIGGERED`, `EACH_UPKEEP_TRIGGERED`, `SUSPENDED_EACH_UPKEEP_TRIGGERED`, `EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED`, `EXILED_UPKEEP_TRIGGERED`, `OPPONENT_UPKEEP_TRIGGERED`,
-`ON_ANY_CREATURE_DIES`,
-`ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
+`Triggers.creatureDies(ANY)`,
+`Triggers.nontokenCreatureDies(YOU_CONTROL)`, `Triggers.nontokenCreatureDies(ANY)`, `Triggers.creatureDies(OPPONENT_CONTROLS)`,
 `ON_COMBAT_DAMAGE_TO_PLAYER` (when no target is declared), `ON_COMBAT_DAMAGE_TO_CREATURE`, `ON_DAMAGE_TO_PLAYER`,
 `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, `ON_EQUIPMENT_ATTACHED_TO_CREATURE`,
 `ON_SELF_DEALS_DAMAGE`, `ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE`, `ON_BECOMES_BLOCKED` (only the non-targeting flavour; a
@@ -584,8 +584,8 @@ the `SpellGraveyardTargetTrigger` before the resolution-time may choice, so the 
 already on the stack entry when the optional sacrifice resolves.
 
 **Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
-Ruin Rat) use the same trigger-time graveyard selection on `Triggers.dies(THIS)` and `ON_ALLY_CREATURE_DIES`.
-`handleDeathDefault` and `TriggerCollectionService.checkAllyCreatureDeathTriggers` route any death
+Ruin Rat) use the same trigger-time graveyard selection on `Triggers.dies(THIS)` and `Triggers.creatureDies(YOU_CONTROL)`.
+`handleDeathDefault` and `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) route any death
 effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` to a `DeathTriggerTarget` (alongside the
 permanent/player routing). `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
 graveyard target and calls `beginDeathGraveyardTarget`, which searches the declared scope and prompts a
@@ -638,7 +638,7 @@ permanents are legal (e.g. Fire Snake's "destroy target land"). A death trigger 
 filter (or a `ControlledPermanentPredicateTargetFilter`) still narrows to creatures. End-step has no
 such restriction.
 
-**Death-event value (`ON_ALLY_CREATURE_DIES`):** a targeted ally-death trigger is queued with the dying
+**Death-event value (`Triggers.creatureDies(YOU_CONTROL)`):** a targeted ally-death trigger is queued with the dying
 creature's last-known effective power (clamped at 0) in `PermanentChoiceContext.DeathTriggerTarget.eventValue`;
 `PermanentChoiceTriggerHandlerService.handleDeathTrigger` copies it onto the stack entry. An effect whose
 amount is `new EventValue()` therefore resolves to that power — Death's Presence, "put X +1/+1 counters on

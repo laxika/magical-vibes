@@ -76,12 +76,14 @@ public final class SpellTarget {
     }
 
     /**
-     * Adds a triggered ability with {@code trigger} and {@code effect} ({@link Card#addTrigger}) and binds the
-     * effect to this group: "when this creature dies, it deals 2 damage to target creature".
+     * Adds a triggered ability with {@code trigger} and {@code effects} ({@link Card#addTrigger}) and binds the
+     * effects to this group: "when this creature dies, it deals 2 damage to target creature".
      */
-    public SpellTarget addTrigger(Trigger trigger, CardEffect effect) {
-        card.addTrigger(trigger, effect);
-        card.registerEffectTargetIndex(effect, this.index);
+    public SpellTarget addTrigger(Trigger trigger, CardEffect... effects) {
+        card.addTrigger(trigger, effects);
+        for (CardEffect effect : effects) {
+            card.registerEffectTargetIndex(effect, this.index);
+        }
         return this;
     }
 

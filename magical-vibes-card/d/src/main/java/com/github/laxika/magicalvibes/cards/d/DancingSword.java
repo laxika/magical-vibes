@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffe
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class DancingSword extends Card {
     public DancingSword() {
         addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
 
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new MayEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new MayEffect(
                 SequenceEffect.of(new BecomeCreatureEffect(2, 1, List.of(CardSubtype.CONSTRUCT),
                         Set.of(Keyword.FLYING), Set.of(), Set.of(CardType.ARTIFACT)),
                         new GrantStaticEffectToSourceEffect(new GrantTriggeredAbilityEffect(

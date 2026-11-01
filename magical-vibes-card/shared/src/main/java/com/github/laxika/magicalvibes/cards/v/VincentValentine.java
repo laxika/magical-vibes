@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "125")
 @CardRegistration(set = "FIN", collectorNumber = "383")
@@ -17,7 +19,7 @@ public class VincentValentine extends Card {
     public VincentValentine() {
         setBackFaceCard(new GalianBeast());
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new PutCountersOnSourceEqualToDyingPowerEffect(1, 1, false));
         addEffect(EffectSlot.ON_ATTACK,
                 new MayEffect(new TransformSelfEffect(), "Transform Vincent Valentine?"));

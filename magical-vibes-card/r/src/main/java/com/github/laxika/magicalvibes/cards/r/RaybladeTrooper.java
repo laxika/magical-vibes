@@ -39,9 +39,7 @@ public class RaybladeTrooper extends Card {
         CreateTokenEffect humanSoldier = new CreateTokenEffect(
                 1, "Human Soldier", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringPermanentConditionalEffect(NONTOKEN_WITH_PLUS_ONE_COUNTER, humanSoldier));
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(NONTOKEN_WITH_PLUS_ONE_COUNTER, humanSoldier));
     }
 }

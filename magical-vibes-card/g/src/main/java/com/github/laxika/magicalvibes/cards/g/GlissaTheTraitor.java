@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MBS", collectorNumber = "96")
 @CardRegistration(set = "V16", collectorNumber = "5")
@@ -20,7 +21,7 @@ public class GlissaTheTraitor extends Card {
         CardTypePredicate artifact = new CardTypePredicate(CardType.ARTIFACT);
 
         target(new GraveyardCardPredicateTargetFilter(artifact, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+                .addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                         new MayEffect(
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.HAND)

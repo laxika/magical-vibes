@@ -11,15 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
-import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "733")
 @CardRegistration(set = "CMM", collectorNumber = "764")
@@ -33,16 +28,10 @@ public class LazotepSliver extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
 
-        // Whenever a nontoken Sliver you control dies, amass Slivers 2. The separate death
-        // trigger covers Lazotep Sliver itself; ally-death watchers exclude their source.
+        // Whenever a nontoken Sliver you control dies, amass Slivers 2. Lazotep Sliver is one of them.
         CardEffect sliverDeath = new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.SLIVER),
                 new AmassGoblinsEffect(2, CardSubtype.SLIVER));
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, sliverDeath);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringCardConditionalEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.SLIVER),
-                        new CardNotPredicate(new CardIsTokenPredicate()))),
-                new AmassGoblinsEffect(2, CardSubtype.SLIVER)));
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), sliverDeath);
     }
 }

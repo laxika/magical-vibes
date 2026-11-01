@@ -498,9 +498,9 @@ public sealed interface TriggerContext {
 
     /**
      * Context for creature-death triggers that reference the dying creature's card and controller.
-     * Shared by ON_ALLY_CREATURE_DIES, ON_ANY_CREATURE_DIES, ON_ALLY_NONTOKEN_CREATURE_DIES,
-     * ON_ANY_NONTOKEN_CREATURE_DIES, ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES, and
-     * ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
+     * Shared by Triggers.creatureDies(YOU_CONTROL), Triggers.creatureDies(ANY), Triggers.nontokenCreatureDies(YOU_CONTROL),
+     * Triggers.nontokenCreatureDies(ANY), Triggers.nontokenCreatureDies(ENCHANTED_PLAYER_CONTROLS), and
+     * Triggers.creatureDies(OPPONENT_CONTROLS). {@code dyingCreaturePower} is the
      * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided) and
      * {@code dyingCreatureToughness} its last-known effective toughness (Grim Feast).
      * {@code dyingPermanent} preserves the dying permanent's counter state for trigger collectors
@@ -536,7 +536,7 @@ public sealed interface TriggerContext {
     }
 
     /**
-     * Context for ON_EQUIPPED_CREATURE_DIES triggers. The power is the equipped creature's
+     * Context for Triggers.creatureDies(EQUIPPED) triggers. The power is the equipped creature's
      * last-known effective power; {@code dyingCard} is the card that died, needed by effects that
      * act on it in the graveyard (Oathkeeper, Takeno's Daisho).
      */

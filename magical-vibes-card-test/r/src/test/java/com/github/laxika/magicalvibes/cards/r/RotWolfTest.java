@@ -140,7 +140,7 @@ class RotWolfTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castSorcery(player1, 0, player2.getId());
-        // Pass 1: resolve Cruel Edict, creature dies, ON_DAMAGED_CREATURE_DIES trigger fires
+        // Pass 1: resolve Cruel Edict, creature dies, Triggers.creatureDies(DAMAGED_BY_THIS) trigger fires
         harness.passBothPriorities();
         // Pass 2: resolve triggered ability -> MayEffect prompts player
         harness.passBothPriorities();

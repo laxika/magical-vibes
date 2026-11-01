@@ -506,7 +506,7 @@ class TurnCleanupServiceTest {
         @DisplayName("Clears temporary global triggered abilities")
         void clearsTemporaryGlobalTriggeredAbilities() {
             gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                    player1Id, createCardWithName("Shriveling Rot"), EffectSlot.ON_ANY_CREATURE_DIES,
+                    player1Id, createCardWithName("Shriveling Rot"), EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE,
                     new LoseLifeEffect(1)));
 
             sut.resetEndOfTurnModifiers(gd);

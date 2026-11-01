@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "165")
 public class WaltzOfRage extends Card {
@@ -19,7 +21,7 @@ public class WaltzOfRage extends Card {
         )).addSpellEffect(new TargetCreatureDealsPowerDamageToEachOtherCreatureEffect());
 
         addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                EffectSlot.ON_ALLY_CREATURE_DIES,
-                new ExileTopCardsMayPlayUntilNextTurnEffect(1)));
+                new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
+                new ExileTopCardsMayPlayUntilNextTurnEffect(1))));
     }
 }

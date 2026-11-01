@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTC", collectorNumber = "137")
 @CardRegistration(set = "VOC", collectorNumber = "19")
@@ -25,7 +27,7 @@ public class KamberThePlunderer extends Card {
                 MayChoicePlayer.TARGET_PLAYER
         ));
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, SequenceEffect.of(
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), SequenceEffect.of(
                 new GainLifeEffect(1),
                 CreateTokenEffect.ofBloodToken(1)
         ));

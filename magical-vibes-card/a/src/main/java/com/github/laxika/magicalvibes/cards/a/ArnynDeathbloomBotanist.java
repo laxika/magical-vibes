@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -44,7 +43,6 @@ public class ArnynDeathbloomBotanist extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, CONDITIONAL_DRAIN)
-                .addTrigger(Triggers.dies(ObjectRelation.THIS), CONDITIONAL_DRAIN);
+        )).addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), CONDITIONAL_DRAIN);
     }
 }

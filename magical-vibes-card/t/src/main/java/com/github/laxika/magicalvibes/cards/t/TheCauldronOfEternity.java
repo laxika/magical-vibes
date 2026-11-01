@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "82")
@@ -24,7 +25,7 @@ public class TheCauldronOfEternity extends Card {
     public TheCauldronOfEternity() {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER), 2)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect());
 
         addActivatedAbility(new ActivatedAbility(

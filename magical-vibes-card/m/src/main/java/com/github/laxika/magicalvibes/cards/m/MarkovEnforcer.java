@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOC", collectorNumber = "26")
 @CardRegistration(set = "VOC", collectorNumber = "64")
@@ -24,6 +26,6 @@ public class MarkovEnforcer extends Card {
                                 new SourceFightsTargetCreatureEffect()));
 
         // Whenever a creature dealt damage by this creature this turn dies, create a Blood token.
-        addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES, CreateTokenEffect.ofBloodToken(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS), CreateTokenEffect.ofBloodToken(1));
     }
 }

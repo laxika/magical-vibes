@@ -25,7 +25,7 @@ public class BelfrySpirit extends Card {
         CreateTokenEffect bats = new CreateTokenEffect(2, "Bat", 1, 1,
                 CardColor.BLACK, List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, bats);
-        addEffect(EffectSlot.ON_HAUNTED_CREATURE_DIES, bats);
+        addTrigger(Triggers.dies(ObjectRelation.HAUNTED), bats);
 
         // Haunt
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -39,7 +38,6 @@ public class AtlaPalaniNestTender extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EGG),
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
                         new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.BATTLEFIELD));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, eggDeath);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), eggDeath);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), eggDeath);
     }
 }

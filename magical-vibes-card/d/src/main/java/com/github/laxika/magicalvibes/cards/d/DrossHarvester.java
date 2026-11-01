@@ -18,7 +18,6 @@ public class DrossHarvester extends Card {
     public DrossHarvester() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new LoseLifeEffect(4));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new GainLifeEffect(2));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new GainLifeEffect(2));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new GainLifeEffect(2));
     }
 }

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.OneOrMoreArtifactOrCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
@@ -120,6 +119,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardsForEachDyingSourceCounterEffect;
@@ -223,6 +223,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -245,6 +246,234 @@ public class DeathTriggerCollectorService {
     private final com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     @Autowired @Lazy private GraveyardTargetingService graveyardTargetingService;
+
+    /**
+     * The handlers of the "whenever [an object] dies" abilities the trigger pipeline matches, by the old slot
+     * collector that binds them ({@link CreatureDeathWatch}) and effect class. They left {@code @CollectsTrigger}
+     * when their slots left {@code EffectSlot} (effect-slot-refactor.md step 11); step 15 replaces them.
+     */
+    private final Map<CreatureDeathWatch, Map<Class<? extends CardEffect>, TriggerCollectorHandler>>
+            creatureDeathHandlers = new EnumMap<>(CreatureDeathWatch.class);
+
+    {
+        registerCreatureDeathHandlers();
+    }
+
+    /**
+     * Dispatches {@code effect}, an effect of a "whenever [an object] dies" ability that {@code watch}'s collector
+     * binds, to its handler, in the order the trigger registry picks one: the effect's class, then the class of the
+     * effect a {@link MayEffect}, {@link MayPayManaEffect} or {@link MayPayTapPermanentsEffect} wraps, then the
+     * watch's default. Returns whether it triggered.
+     */
+    public boolean dispatchCreatureDeath(CreatureDeathWatch watch, TriggerMatchContext match, CardEffect effect,
+                                         TriggerContext context) {
+        Map<Class<? extends CardEffect>, TriggerCollectorHandler> handlers =
+                creatureDeathHandlers.getOrDefault(watch, Map.of());
+        TriggerCollectorHandler handler = handlers.get(effect.getClass());
+        if (handler != null) {
+            return handler.handle(match, effect, context);
+        }
+        CardEffect inner = switch (effect) {
+            case MayEffect may -> may.wrapped();
+            case MayPayManaEffect mayPay -> mayPay.wrapped();
+            case MayPayTapPermanentsEffect mayPayTap -> mayPayTap.wrapped();
+            default -> null;
+        };
+        if (inner != null) {
+            handler = handlers.get(inner.getClass());
+            if (handler != null) {
+                return handler.handle(match, inner, context);
+            }
+        }
+        handler = handlers.get(CardEffect.class);
+        return handler != null && handler.handle(match, effect, context);
+    }
+
+    private void registerCreatureDeath(CreatureDeathWatch watch, Class<? extends CardEffect> effectClass,
+                                       TriggerCollectorHandler handler) {
+        creatureDeathHandlers.computeIfAbsent(watch, ignored -> new HashMap<>()).put(effectClass, handler);
+    }
+
+    private void registerCreatureDeathHandlers() {
+        registerCreatureDeath(CreatureDeathWatch.ANY, DistributeCountersAmongCreaturesOnDeathEffect.class,
+                (match, effect, context) -> handleDistributeCountersAmongCreaturesOnDeath(match,
+                        (DistributeCountersAmongCreaturesOnDeathEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY, MayPayManaEffect.class,
+                (match, effect, context) -> handleAllyCreatureMayPay(match, (MayPayManaEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY, MayPayLifeEffect.class,
+                (match, effect, context) -> handleAllyCreatureMayPayLife(match, (MayPayLifeEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY, MayEffect.class,
+                (match, effect, context) -> handleAllyCreatureMay(match, (MayEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_CREATURE_OR_PLANESWALKER, MayEffect.class,
+                (match, effect, context) -> handleAllyCreatureOrPlaneswalkerMay(match, (MayEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, MayPayLifeAndDrawEqualToDyingPowerEffect.class,
+                (match, effect, context) -> handleEquippedCreatureDeathMayPayLifeAndDrawEqualToPower(match,
+                        (MayPayLifeAndDrawEqualToDyingPowerEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, ReturnDyingCreatureToBattlefieldEffect.class,
+                (match, effect, context) -> handleEquippedCreatureReturn(match,
+                        (ReturnDyingCreatureToBattlefieldEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
+                (match, effect, context) -> handleEquippedCreatureDelayedReturn(match,
+                        (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, ExileTriggeringCreatureAndTrackWithSourceEffect.class,
+                (match, effect, context) -> handleEquippedCreatureDeathExileAndTrack(match,
+                        (ExileTriggeringCreatureAndTrackWithSourceEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, PerpetuallyGrantTriggeredAbilityToSourceCardEffect.class,
+                (match, effect, context) -> handleEquippedCreatureDeathPerpetualGrant(match,
+                        (PerpetuallyGrantTriggeredAbilityToSourceCardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, CardEffect.class,
+                (match, effect, context) -> handleEquippedCreatureDeathDefault(match, (CardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, ReturnTriggeringCardToOwnerHandEffect.class,
+                (match, effect, context) -> handleEquippedCreatureReturnToHand(match,
+                        (ReturnTriggeringCardToOwnerHandEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_ARTIFACT_OR_CREATURE, CardEffect.class,
+                this::handleAllyArtifactOrCreatureDeath);
+        registerCreatureDeath(CreatureDeathWatch.ANY, ReturnTriggeringPermanentToBattlefieldWithCounterEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathReturnCounteredPermanent(match,
+                        (ReturnTriggeringPermanentToBattlefieldWithCounterEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, BoostSelfEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathBoostSelf(match, (BoostSelfEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSourceEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathPutCounters(match,
+                        (PutCountersOnSourceEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSelfEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathPutCountersOnSelf(match,
+                        (PutCountersOnSelfEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSourceEqualToDyingPowerEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathPutCountersEqualToPower(match,
+                        (PutCountersOnSourceEqualToDyingPowerEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, UntapPermanentsEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathUntap(match,
+                        (UntapPermanentsEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, TapPermanentsEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathTap(match, (TapPermanentsEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, TapOrUntapCreaturesSharingDyingCreatureTypeEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathTapOrUntap(match,
+                        (TapOrUntapCreaturesSharingDyingCreatureTypeEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, MayEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathMay(match, (MayEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerMayDrawCardEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDyingControllerDraws(match,
+                        (DyingCreatureControllerMayDrawCardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DrawCardForEachAuraAttachedToDyingCreatureEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDrawsForAttachedAuras(match,
+                        (DrawCardForEachAuraAttachedToDyingCreatureEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, BecomeCopyOfDyingCreatureEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathBecomeCopy(match,
+                        (BecomeCopyOfDyingCreatureEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerDiscardsCardEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDyingControllerDiscards(match,
+                        (DyingCreatureControllerDiscardsCardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerSacrificesPermanentsEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDyingControllerSacrifices(match,
+                        (DyingCreatureControllerSacrificesPermanentsEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY,
+                EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathBountyReward(match,
+                        (EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DealDamageToPlayersEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDamageController(match,
+                        (DealDamageToPlayersEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, LoseLifeEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDyingControllerLosesLife(match,
+                        (LoseLifeEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, CreateTokenCopyOfDyingCreatureEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathCreateTokenCopy(match,
+                        (CreateTokenCopyOfDyingCreatureEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, CardEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDefault(match, (CardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDelayedReturnUnderOwnersControl(match,
+                        (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, CreateTokensForEachDyingSourceCounterEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathCreateTokensForEachDyingSourceCounter(match,
+                        (CreateTokensForEachDyingSourceCounterEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DrawCardForEachDyingSourceCounterEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDrawCardForEachDyingSourceCounter(match,
+                        (DrawCardForEachDyingSourceCounterEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, ExileTriggeringCreatureAndReturnSourceToHandEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathExileLinkedCreature(match,
+                        (ExileTriggeringCreatureAndReturnSourceToHandEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DestroyReferencedPermanentEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDestroyEnchanted(match,
+                        (DestroyReferencedPermanentEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, PutCounterOnReferencedPermanentEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathCounterOnEnchanted(match,
+                        (PutCounterOnReferencedPermanentEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, ConditionalReplacementEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathConditionalReplacement(match,
+                        (ConditionalReplacementEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, CreateTokenWithTotalDyingCreaturesPowerEffect.class,
+                (match, effect, context) -> handleAllyNontokenCreateTokenWithTotalDyingCreaturesPower(match,
+                        (CreateTokenWithTotalDyingCreaturesPowerEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, MayEffect.class,
+                (match, effect, context) -> handleAllyNontokenMay(match, (MayEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, ExileTriggeringCreatureAndTrackWithSourceEffect.class,
+                (match, effect, context) -> handleAllyNontokenExileAndTrack(match,
+                        (ExileTriggeringCreatureAndTrackWithSourceEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, ExileDyingCreatureAndCreateSpiritTokenCopyEffect.class,
+                (match, effect, context) -> handleAllyNontokenExileAndCreateSpiritCopy(match,
+                        (ExileDyingCreatureAndCreateSpiritTokenCopyEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, MayPayManaEffect.class,
+                (match, effect, context) -> handleAllyNontokenMayPay(match, (MayPayManaEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerMaySearchLibraryForSameNameEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathDyingControllerSearchesSameName(match,
+                        (DyingCreatureControllerMaySearchLibraryForSameNameEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN,
+                RegisterDelayedReturnCardFromGraveyardToHandEffect.class,
+                (match, effect, context) -> handleAllyNontokenDelayedReturn(match,
+                        (RegisterDelayedReturnCardFromGraveyardToHandEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, TriggeringPermanentConditionalEffect.class,
+                (match, effect, context) -> handleAllyNontokenPermanentConditional(match,
+                        (TriggeringPermanentConditionalEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, CardEffect.class,
+                (match, effect, context) -> handleAllyNontokenDefault(match, (CardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, ConditionalEffect.class,
+                (match, effect, context) -> handleAllyNontokenInterveningIfConditional(match,
+                        (ConditionalEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, TriggeringCardConditionalEffect.class,
+                (match, effect, context) -> handleAllyNontokenConditional(match,
+                        (TriggeringCardConditionalEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, ExileTriggeringCreatureAndTrackWithSourceEffect.class,
+                (match, effect, context) -> handleAnyNontokenCreatureDeathExileAndTrack(match,
+                        (ExileTriggeringCreatureAndTrackWithSourceEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, ImprintDyingCreatureEffect.class,
+                (match, effect, context) -> handleImprintDyingCreature(match,
+                        (ImprintDyingCreatureEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, ReturnDyingCreatureToBattlefieldEffect.class,
+                (match, effect, context) -> handleReturnDyingCreatureMayPay(match,
+                        (ReturnDyingCreatureToBattlefieldEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, CardEffect.class,
+                (match, effect, context) -> handleAnyNontokenCreatureDeathDefault(match, (CardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ENCHANTED_PLAYER_NONTOKEN, CardEffect.class,
+                (match, effect, context) -> handleEnchantedPlayerNontokenCreatureDeathDefault(match,
+                        (CardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, MayEffect.class,
+                (match, effect, context) -> handleOpponentCreatureDeathMay(match, (MayEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, PutCountersOnSourceEqualToDyingPowerEffect.class,
+                (match, effect, context) -> handleOpponentCreatureDeathPutCountersEqualToPower(match,
+                        (PutCountersOnSourceEqualToDyingPowerEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, ReturnDyingOpponentCreatureUnderYourControlEffect.class,
+                (match, effect, context) -> handleOpponentCreatureReturnUnderControl(match,
+                        (ReturnDyingOpponentCreatureUnderYourControlEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, ReturnDyingOpponentCreatureAsTreasureEffect.class,
+                (match, effect, context) -> handleOpponentCreatureReturnAsTreasure(match,
+                        (ReturnDyingOpponentCreatureAsTreasureEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
+                (match, effect, context) -> handleOpponentCreatureDelayedReturnUnderControl(match,
+                        (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, GainLifeEqualToDyingCreatureToughnessEffect.class,
+                (match, effect, context) -> handleOpponentCreatureDeathGainLifeEqualToToughness(match,
+                        (GainLifeEqualToDyingCreatureToughnessEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, CreateTokenIfDyingSourceHadCounterEffect.class,
+                (match, effect, context) -> handleOpponentCreatureDeathCreateTokenIfDyingSourceHadCounter(match,
+                        (CreateTokenIfDyingSourceHadCounterEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.OPPONENT, CardEffect.class,
+                (match, effect, context) -> handleOpponentCreatureDeathDefault(match, (CardEffect) effect, context));
+        registerCreatureDeath(CreatureDeathWatch.ANY, PutCountersOnSourceCardEffect.class,
+                (match, effect, context) -> handleAnyCreatureDeathPutCountersOnSourceCard(match,
+                        (PutCountersOnSourceCardEffect) effect, context));
+    }
 
     @CollectsTrigger(value = SacrificePermanentsSharingDyingPermanentTypeEffect.class,
             slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
@@ -298,8 +527,6 @@ public class DeathTriggerCollectorService {
         };
     }
 
-    @CollectsTrigger(value = DistributeCountersAmongCreaturesOnDeathEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleDistributeCountersAmongCreaturesOnDeath(TriggerMatchContext match,
             DistributeCountersAmongCreaturesOnDeathEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureDeath cd) || !effect.countFromSourcePower()) {
@@ -376,7 +603,6 @@ public class DeathTriggerCollectorService {
         return staged;
     }
 
-    // ── ON_ALLY_CREATURE_DIES (may effects only — non-may effects are batched by orchestrator) ──
 
     private CardEffect snapshotArtifactManaValue(CardEffect effect, int artifactManaValue) {
         if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
@@ -394,7 +620,6 @@ public class DeathTriggerCollectorService {
                 .build();
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DIES)
     boolean handleAllyCreatureMayPay(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -403,7 +628,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayLifeEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DIES)
     boolean handleAllyCreatureMayPayLife(TriggerMatchContext match,
             MayPayLifeEffect mayPay, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -416,7 +640,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DIES)
     boolean handleAllyCreatureMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -510,7 +733,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES)
     boolean handleAllyCreatureOrPlaneswalkerMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -519,10 +741,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    // ── ON_EQUIPPED_CREATURE_DIES ──────────────────────────────────────
 
-    @CollectsTrigger(value = MayPayLifeAndDrawEqualToDyingPowerEffect.class,
-            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureDeathMayPayLifeAndDrawEqualToPower(TriggerMatchContext match,
             MayPayLifeAndDrawEqualToDyingPowerEffect effect, TriggerContext ctx) {
         TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
@@ -547,7 +766,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnDyingCreatureToBattlefieldEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureReturn(TriggerMatchContext match,
             ReturnDyingCreatureToBattlefieldEffect effect, TriggerContext ctx) {
         TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
@@ -572,8 +790,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
-            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureDelayedReturn(TriggerMatchContext match,
             RegisterDelayedReturnDyingCreatureUnderControlEffect effect, TriggerContext ctx) {
         TriggerContext.EquippedCreatureDeath death = (TriggerContext.EquippedCreatureDeath) ctx;
@@ -599,8 +815,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
-            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureDeathExileAndTrack(TriggerMatchContext match,
             ExileTriggeringCreatureAndTrackWithSourceEffect effect, TriggerContext ctx) {
         TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
@@ -610,8 +824,6 @@ public class DeathTriggerCollectorService {
         return handleEquippedCreatureDeathDefault(match, bound, ctx);
     }
 
-    @CollectsTrigger(value = PerpetuallyGrantTriggeredAbilityToSourceCardEffect.class,
-            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureDeathPerpetualGrant(TriggerMatchContext match,
             PerpetuallyGrantTriggeredAbilityToSourceCardEffect effect, TriggerContext ctx) {
         TriggerContext.EquippedCreatureDeath death = (TriggerContext.EquippedCreatureDeath) ctx;
@@ -635,7 +847,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -1834,8 +2045,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureReturnToHand(TriggerMatchContext match,
             ReturnTriggeringCardToOwnerHandEffect effect, TriggerContext ctx) {
         TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
@@ -1945,16 +2154,13 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OneOrMoreArtifactOrCreatureDeathTriggerEffect.class,
-            slot = EffectSlot.ON_ALLY_ARTIFACT_OR_CREATURE_DIES)
-    boolean handleAllyArtifactOrCreatureDeath(TriggerMatchContext match,
-            OneOrMoreArtifactOrCreatureDeathTriggerEffect effect, TriggerContext ctx) {
+    boolean handleAllyArtifactOrCreatureDeath(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.wrapped())),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
         ));
@@ -2155,10 +2361,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    // ── ON_ANY_CREATURE_DIES ───────────────────────────────────────────
 
-    @CollectsTrigger(value = ReturnTriggeringPermanentToBattlefieldWithCounterEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathReturnCounteredPermanent(TriggerMatchContext match,
             ReturnTriggeringPermanentToBattlefieldWithCounterEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureDeath death)
@@ -2186,7 +2389,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -2202,7 +2404,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathPutCounters(TriggerMatchContext match,
             PutCountersOnSourceEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -2218,7 +2419,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathPutCountersOnSelf(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -2239,7 +2439,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEqualToDyingPowerEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathPutCountersEqualToPower(TriggerMatchContext match,
             PutCountersOnSourceEqualToDyingPowerEffect effect, TriggerContext ctx) {
         // Kresh the Bloodbraided: "you may put X +1/+1 counters on this creature, where X is that
@@ -2266,7 +2465,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = UntapPermanentsEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathUntap(TriggerMatchContext match,
             UntapPermanentsEffect effect, TriggerContext ctx) {
         // "Whenever another creature dies, untap this creature." SELF-scope untap needs its source
@@ -2284,7 +2482,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TapPermanentsEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathTap(TriggerMatchContext match,
             TapPermanentsEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -2300,8 +2497,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TapOrUntapCreaturesSharingDyingCreatureTypeEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathTapOrUntap(TriggerMatchContext match,
             TapOrUntapCreaturesSharingDyingCreatureTypeEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -2330,7 +2525,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         // CR 603.3d: a targeted "may" ability (e.g. Vicious Shadows' "you may have this deal damage
@@ -2350,7 +2544,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DyingCreatureControllerMayDrawCardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDyingControllerDraws(TriggerMatchContext match,
             DyingCreatureControllerMayDrawCardEffect effect, TriggerContext ctx) {
         // Fecundity: the dying creature's controller (not the source's controller) may draw.
@@ -2367,8 +2560,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardForEachAuraAttachedToDyingCreatureEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDrawsForAttachedAuras(TriggerMatchContext match,
             DrawCardForEachAuraAttachedToDyingCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -2419,7 +2610,6 @@ public class DeathTriggerCollectorService {
         return count[0];
     }
 
-    @CollectsTrigger(value = BecomeCopyOfDyingCreatureEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathBecomeCopy(TriggerMatchContext match,
             BecomeCopyOfDyingCreatureEffect effect, TriggerContext ctx) {
         // Cemetery Puca: "you may pay {1}. If you do, this creature becomes a copy of that creature,
@@ -2446,7 +2636,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DyingCreatureControllerDiscardsCardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDyingControllerDiscards(TriggerMatchContext match,
             DyingCreatureControllerDiscardsCardEffect effect, TriggerContext ctx) {
         // Bereavement: the dying creature's controller (not the source's controller) discards a card.
@@ -2466,8 +2655,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DyingCreatureControllerSacrificesPermanentsEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDyingControllerSacrifices(TriggerMatchContext match,
             DyingCreatureControllerSacrificesPermanentsEffect effect, TriggerContext ctx) {
         // Earthlink: the dying creature's controller (not the source's controller) sacrifices.
@@ -2486,8 +2673,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathBountyReward(TriggerMatchContext match,
             EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureDeath death)
@@ -2565,7 +2750,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -2587,7 +2771,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDyingControllerLosesLife(TriggerMatchContext match,
             LoseLifeEffect effect, TriggerContext ctx) {
         if (effect.recipient() != LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
@@ -2608,8 +2791,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenCopyOfDyingCreatureEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathCreateTokenCopy(TriggerMatchContext match,
             CreateTokenCopyOfDyingCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -2639,7 +2820,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -2682,8 +2862,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDelayedReturnUnderOwnersControl(TriggerMatchContext match,
             RegisterDelayedReturnDyingCreatureUnderControlEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -2724,8 +2902,6 @@ public class DeathTriggerCollectorService {
                 .anyMatch(entry -> gameQueryService.isCreature(gameData, entry.getValue()));
     }
 
-    @CollectsTrigger(value = CreateTokensForEachDyingSourceCounterEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathCreateTokensForEachDyingSourceCounter(TriggerMatchContext match,
             CreateTokensForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -2751,8 +2927,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardForEachDyingSourceCounterEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDrawCardForEachDyingSourceCounter(TriggerMatchContext match,
             DrawCardForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -2782,8 +2956,6 @@ public class DeathTriggerCollectorService {
                 : SequenceEffect.of(new DrawCardEffect(counters), thenEffect);
     }
 
-    @CollectsTrigger(value = ExileTriggeringCreatureAndReturnSourceToHandEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathExileLinkedCreature(TriggerMatchContext match,
             ExileTriggeringCreatureAndReturnSourceToHandEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -2807,7 +2979,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDestroyEnchanted(TriggerMatchContext match,
             DestroyReferencedPermanentEffect effect, TriggerContext ctx) {
         // Yoke of the Damned: the Aura may leave the battlefield in the same event that triggered it, so the
@@ -2827,7 +2998,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathCounterOnEnchanted(TriggerMatchContext match,
             PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
         // Sadistic Glee: needs its source Aura's permanent id to re-derive the enchanted creature.
@@ -2844,7 +3014,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalReplacementEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathConditionalReplacement(TriggerMatchContext match,
             ConditionalReplacementEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -2882,10 +3051,7 @@ public class DeathTriggerCollectorService {
         return Set.copyOf(gameQueryService.effectiveCreatureSubtypes(gameData, dyingPermanent));
     }
 
-    // ── ON_ALLY_NONTOKEN_CREATURE_DIES ─────────────────────────────────
 
-    @CollectsTrigger(value = CreateTokenWithTotalDyingCreaturesPowerEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenCreateTokenWithTotalDyingCreaturesPower(
             TriggerMatchContext match, CreateTokenWithTotalDyingCreaturesPowerEffect effect,
             TriggerContext ctx) {
@@ -2953,7 +3119,6 @@ public class DeathTriggerCollectorService {
         return totalPower;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -2977,8 +3142,6 @@ public class DeathTriggerCollectorService {
      * Purgatory: bind the exile-and-track effect to the specific dying creature card so resolution
      * knows which graveyard card to exile with this enchantment.
      */
-    @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenExileAndTrack(TriggerMatchContext match,
             ExileTriggeringCreatureAndTrackWithSourceEffect exile, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -2988,8 +3151,6 @@ public class DeathTriggerCollectorService {
         return handleAllyNontokenDefault(match, bound, ctx);
     }
 
-    @CollectsTrigger(value = ExileDyingCreatureAndCreateSpiritTokenCopyEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenExileAndCreateSpiritCopy(TriggerMatchContext match,
             ExileDyingCreatureAndCreateSpiritTokenCopyEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -2999,8 +3160,6 @@ public class DeathTriggerCollectorService {
         return handleAllyNontokenDefault(match, bound, ctx);
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenMayPay(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3021,8 +3180,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DyingCreatureControllerMaySearchLibraryForSameNameEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathDyingControllerSearchesSameName(TriggerMatchContext match,
             DyingCreatureControllerMaySearchLibraryForSameNameEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3053,8 +3210,6 @@ public class DeathTriggerCollectorService {
      * creature card ("return <em>that card</em> to its owner's hand at the beginning of the next end
      * step"), otherwise the handler would fall back to the source card on the stack entry.
      */
-    @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToHandEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenDelayedReturn(TriggerMatchContext match,
             RegisterDelayedReturnCardFromGraveyardToHandEffect delayedReturn, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3065,8 +3220,6 @@ public class DeathTriggerCollectorService {
         return handleAllyNontokenDefault(match, bound, ctx);
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenPermanentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -3077,7 +3230,6 @@ public class DeathTriggerCollectorService {
         return handleAllyNontokenDefault(match, conditional.wrapped(), ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3105,7 +3257,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenInterveningIfConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (conditional.interveningIf()
@@ -3116,8 +3267,6 @@ public class DeathTriggerCollectorService {
         return handleAllyNontokenDefault(match, conditional, ctx);
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)
     boolean handleAllyNontokenConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -3224,10 +3373,7 @@ public class DeathTriggerCollectorService {
         log.info("Game {} - {} triggers (ally nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
     }
 
-    // ── ON_ANY_NONTOKEN_CREATURE_DIES ──────────────────────────────────
 
-    @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
-            slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
     boolean handleAnyNontokenCreatureDeathExileAndTrack(TriggerMatchContext match,
             ExileTriggeringCreatureAndTrackWithSourceEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3250,7 +3396,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ImprintDyingCreatureEffect.class, slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
     boolean handleImprintDyingCreature(TriggerMatchContext match,
             ImprintDyingCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3268,7 +3413,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnDyingCreatureToBattlefieldEffect.class, slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
     boolean handleReturnDyingCreatureMayPay(TriggerMatchContext match,
             ReturnDyingCreatureToBattlefieldEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3298,7 +3442,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
     boolean handleAnyNontokenCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -3315,8 +3458,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES)
     boolean handleEnchantedPlayerNontokenCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
@@ -3338,9 +3479,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    // ── ON_OPPONENT_CREATURE_DIES ──────────────────────────────────────
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureDeathMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         // "You may return target artifact card from your graveyard" (Glissa, the Traitor): the target
@@ -3357,7 +3496,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEqualToDyingPowerEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureDeathPutCountersEqualToPower(TriggerMatchContext match,
             PutCountersOnSourceEqualToDyingPowerEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3381,7 +3519,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnDyingOpponentCreatureUnderYourControlEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureReturnUnderControl(TriggerMatchContext match,
             ReturnDyingOpponentCreatureUnderYourControlEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3422,8 +3559,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnDyingOpponentCreatureAsTreasureEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureReturnAsTreasure(TriggerMatchContext match,
             ReturnDyingOpponentCreatureAsTreasureEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
@@ -3450,7 +3585,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureDelayedReturnUnderControl(TriggerMatchContext match,
             RegisterDelayedReturnDyingCreatureUnderControlEffect effect, TriggerContext ctx) {
         // Grave Betrayal: the delayed return is registered when this trigger resolves, and the
@@ -3481,7 +3615,6 @@ public class DeathTriggerCollectorService {
                 || dying.getPersistentGrantedCardTypes().contains(CardType.CREATURE);
     }
 
-    @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class,
             slot = EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentCreatureDeathGainLifeEqualToToughness(TriggerMatchContext match,
@@ -3511,8 +3644,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenIfDyingSourceHadCounterEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureDeathCreateTokenIfDyingSourceHadCounter(
             TriggerMatchContext match, CreateTokenIfDyingSourceHadCounterEffect effect,
             TriggerContext ctx) {
@@ -3527,7 +3658,6 @@ public class DeathTriggerCollectorService {
         return handleOpponentCreatureDeathDefault(match, effect.tokenTemplate(), ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         return queueOpponentCreatureDeath(match, effect, effect, ctx);
@@ -3654,7 +3784,6 @@ public class DeathTriggerCollectorService {
                 match.gameData().id, match.permanent().getCard().getName(), dyingCard.getName());
         return true;
     }
-    @CollectsTrigger(value = PutCountersOnSourceCardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathPutCountersOnSourceCard(TriggerMatchContext match,
             PutCountersOnSourceCardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(

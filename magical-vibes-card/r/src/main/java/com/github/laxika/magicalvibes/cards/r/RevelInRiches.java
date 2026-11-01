@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "XLN", collectorNumber = "117")
 @CardRegistration(set = "SLD", collectorNumber = "1830")
@@ -16,7 +18,7 @@ public class RevelInRiches extends Card {
 
     public RevelInRiches() {
         // Whenever a creature an opponent controls dies, create a Treasure token.
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), CreateTokenEffect.ofTreasureToken(1));
 
         // At the beginning of your upkeep, if you control ten or more Treasures, you win the game.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

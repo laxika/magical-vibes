@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +41,7 @@ public class HanskSlayerZealot extends Card {
                 TargetFilters.creature()
         ));
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.ZOMBIE), new DrawCardEffect()));
     }
 }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveHitCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.Set;
 
 @CardRegistration(set = "NCC", collectorNumber = "89")
@@ -26,7 +28,7 @@ public class MariTheKillingQuill extends Card {
         var outlaw = new PermanentHasAnySubtypePredicate(
                 Set.of(CardSubtype.ASSASSIN, CardSubtype.MERCENARY, CardSubtype.ROGUE));
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new ExileTriggeringCreatureWithHitCounterEffect());
         addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, outlaw));
         addStaticEffect(new GrantTriggeredAbilityEffect(

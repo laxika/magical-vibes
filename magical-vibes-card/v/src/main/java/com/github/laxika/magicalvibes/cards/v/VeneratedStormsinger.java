@@ -27,7 +27,6 @@ public class VeneratedStormsinger extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
         addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());
-        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
+        addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), DEATH_TRIGGER);
     }
 }

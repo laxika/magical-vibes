@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.DepartureSnapshot;
 import com.github.laxika.magicalvibes.model.DepartureStage;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -789,10 +788,8 @@ public class DepartureService {
         Map<UUID, Integer> oldPowers = new HashMap<>(gameData.simultaneousDyingPowers);
         Map<UUID, Map<Keyword, Integer>> oldKeywordInstances =
                 new HashMap<>(gameData.simultaneousDyingTriggerKeywordInstances);
-        Map<UUID, List<CardEffect>> oldCreatureDeathEffects =
-                new HashMap<>(gameData.simultaneousDyingGrantedCreatureDeathEffects);
-        Map<UUID, List<TriggeredAbility>> oldSelfAbilities =
-                new HashMap<>(gameData.simultaneousDyingGrantedSelfAbilities);
+        Map<UUID, List<TriggeredAbility>> oldGrantedAbilities =
+                new HashMap<>(gameData.simultaneousDyingGrantedZoneChangeAbilities);
         batch.snapshots().values().forEach(snapshot -> publish(gameData, snapshot));
         // Leaving together, so "whenever one or more ... leave" watchers that also leave still see the others leave.
         boolean leaveBatch = departing.size() > 1;
@@ -808,8 +805,6 @@ public class DepartureService {
                         batch.replacementAnswers().get(leaving.intent().permanentId()));
                 hooks.afterEach().departed(leaving.intent(), leaving.permanent(), snapshot, removed);
             }
-            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
-            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             // The batch's zone changes are matched against triggers as it ends, while the snapshots above still
             // show what left together, so look-back abilities see it (CR 603.10a).
@@ -822,8 +817,7 @@ public class DepartureService {
             restore(gameData.simultaneousDyingControllers, oldCreatureControllers);
             restore(gameData.simultaneousDyingPowers, oldPowers);
             restore(gameData.simultaneousDyingTriggerKeywordInstances, oldKeywordInstances);
-            restore(gameData.simultaneousDyingGrantedCreatureDeathEffects, oldCreatureDeathEffects);
-            restore(gameData.simultaneousDyingGrantedSelfAbilities, oldSelfAbilities);
+            restore(gameData.simultaneousDyingGrantedZoneChangeAbilities, oldGrantedAbilities);
             permanentRemovalService.endDeathReplacementChoiceBatch(gameData);
         }
         return batch.withStage(DepartureStage.REPORT);
@@ -846,27 +840,22 @@ public class DepartureService {
         }
         lastKnown.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent));
         permanentRemovalService.snapshotEffectiveSubtypes(gameData, lastKnown);
-        List<TriggeredAbility> selfAbilities =
-                triggerCollectionService.grantedSelfZoneChangeAbilities(gameData, permanent);
+        List<TriggeredAbility> grantedAbilities =
+                triggerCollectionService.grantedZoneChangeAbilities(gameData, permanent);
         boolean creature = gameQueryService.isCreature(gameData, permanent);
         if (!creature) {
-            return new DepartureSnapshot(lastKnown, departing.controllerId(), false, Map.of(), List.of(),
-                    selfAbilities);
+            return new DepartureSnapshot(lastKnown, departing.controllerId(), false, Map.of(), grantedAbilities);
         }
-        List<CardEffect> creatureDeathEffects =
-                new ArrayList<>(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_ANY_CREATURE_DIES));
-        creatureDeathEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
-                gameData, permanent, EffectSlot.ON_ANY_CREATURE_DIES));
         return new DepartureSnapshot(lastKnown, departing.controllerId(), true, Map.of(
                 Keyword.PERSIST, gameQueryService.triggerKeywordInstances(gameData, permanent, Keyword.PERSIST),
                 Keyword.UNDYING, gameQueryService.triggerKeywordInstances(gameData, permanent, Keyword.UNDYING)),
-                creatureDeathEffects, selfAbilities);
+                grantedAbilities);
     }
 
     /** Exposes a snapshot through the {@code simultaneousDying*} maps the removal and trigger code read. */
     private static void publish(GameData gameData, DepartureSnapshot snapshot) {
         UUID permanentId = snapshot.permanentId();
-        gameData.simultaneousDyingGrantedSelfAbilities.put(permanentId, snapshot.grantedSelfAbilities());
+        gameData.simultaneousDyingGrantedZoneChangeAbilities.put(permanentId, snapshot.grantedZoneChangeAbilities());
         gameData.simultaneousDyingPermanents.put(permanentId, snapshot.permanent());
         gameData.simultaneousDyingPermanentControllers.put(permanentId, snapshot.controllerId());
         if (!snapshot.creature()) {
@@ -876,7 +865,6 @@ public class DepartureService {
         gameData.simultaneousDyingControllers.put(permanentId, snapshot.controllerId());
         gameData.simultaneousDyingPowers.put(permanentId, snapshot.permanent().getLastKnownPower());
         gameData.simultaneousDyingTriggerKeywordInstances.put(permanentId, snapshot.triggerKeywordInstances());
-        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(permanentId, snapshot.grantedCreatureDeathEffects());
     }
 
     private static <V> void restore(Map<UUID, V> map, Map<UUID, V> previous) {

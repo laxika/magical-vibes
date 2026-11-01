@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.mechanics;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoonlitWake;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -22,6 +26,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Abilities with a real trigger go through the trigger pipeline: matched against the rules events of their
- * source's own zone changes and put on the stack with their options and targets.
+ * source's own zone changes, or of another object's death, and put on the stack with their options and targets.
  */
 class TriggerPipelineTest extends BaseCardTest {
 
@@ -188,6 +193,65 @@ class TriggerPipelineTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
 
         assertThat(onlyTriggerOf(card).getEffectsToResolve()).containsExactly(DRAW, GAIN);
+    }
+
+    @Test
+    void aCreatureYouControlAbilityTriggersForItsSourcesOwnDeath() {
+        Permanent bears = battlefieldCreatureWith(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), GAIN);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+
+        // It was a creature its controller controlled as it died (CR 603.10a).
+        assertThat(onlyTriggerOf(bears.getCard()).getEffectsToResolve()).containsExactly(GAIN);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, MoonlitWake.class})
+    void anAnimatedNoncreatureSourceTriggersForItsOwnDeath() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent wake = harness.addToBattlefieldAndReturn(player1, new MoonlitWake());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wake));
+
+        // Opalescence made it a creature, so "whenever a creature dies" sees it die (CR 603.10a).
+        onlyTriggerOf(wake.getCard());
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    void anAnotherCreatureAbilityDoesNotTriggerForItsSourcesOwnDeath() {
+        Permanent watcher = battlefieldCreatureWith(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), GAIN);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
+        assertThat(triggersOf(watcher.getCard())).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, watcher));
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({MoonlitWake.class, PlanarCleansing.class})
+    void aWatcherDestroyedWithTheCreaturesItWatchesTriggersForEachOfThem() {
+        Permanent wake = harness.addToBattlefieldAndReturn(player1, new MoonlitWake());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        // CR 603.10a's example: the watcher goes to the graveyard at the same time as the two creatures, and its
+        // ability still triggers once for each of them.
+        harness.assertInGraveyard(player1, "Moonlit Wake");
+        assertThat(triggersOf(wake.getCard())).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 2);
     }
 
     /** Moves {@code card} straight between two of {@code player}'s zone lists, which report the move. */

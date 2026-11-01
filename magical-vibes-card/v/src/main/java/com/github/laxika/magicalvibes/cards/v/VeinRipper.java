@@ -28,12 +28,7 @@ public class VeinRipper extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(2)));
-        target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ANY_CREATURE_DIES, SequenceEffect.of(
+        )).addTrigger(Triggers.creatureDies(ObjectRelation.ANY), SequenceEffect.of(
                 new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(2)));
     }
 }

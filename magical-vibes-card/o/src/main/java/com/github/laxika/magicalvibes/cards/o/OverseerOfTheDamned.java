@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C14", collectorNumber = "28")
 @CardRegistration(set = "MKC", collectorNumber = "132")
@@ -23,7 +25,7 @@ public class OverseerOfTheDamned extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target creature?"));
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         CreateTokenEffect.blackZombie(1).withTapped(true)));

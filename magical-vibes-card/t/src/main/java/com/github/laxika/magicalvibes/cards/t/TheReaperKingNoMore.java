@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECC", collectorNumber = "4")
 public class TheReaperKingNoMore extends Card {
@@ -24,7 +26,7 @@ public class TheReaperKingNoMore extends Card {
         // that card onto the battlefield under your control. Do this only once each turn. The
         // trigger always goes on the stack; the once-per-turn limit is used only when the return is
         // accepted on resolution (CR 603.5).
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, OncePerTurnTriggerEffect.markOnAcceptance(
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), OncePerTurnTriggerEffect.markOnAcceptance(
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                         new ReturnDyingOpponentCreatureUnderYourControlEffect())));

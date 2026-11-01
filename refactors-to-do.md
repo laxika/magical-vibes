@@ -61,43 +61,6 @@ Do not run the full test suite; ask me to run it. Don't commit until I say so.
 
 ---
 
-## 2. Explicit "a creature" vs "another creature" for creature-death triggers
-
-**Status:** open · **Found:** 2026-10-10, while fixing Dark Prophecy / Dread Tiller / Dreadhound
-
-**Problem.** `ON_ALLY_CREATURE_DIES` and `ON_ANY_CREATURE_DIES` serve both "whenever a creature
-dies" and "whenever another creature dies" cards. `TriggerCollectionService` now decides
-self-inclusion by a heuristic (printed noncreature sources include themselves, printed creatures
-don't), and printed creatures that include themselves add a duplicate `ON_DEATH` effect
-(Blood Artist / Zulaport / Dread Tiller pattern).
-
-**Why it matters.** About 20 printed creatures whose oracle includes their own death don't trigger
-on it today (e.g. Indebted Samurai, Knucklebone Witch, Titania, Nature's Force, Skyclave Shadowcat,
-Meltstrider Eulogist, Tributary Instructor, Shadow Urchin, Kheru Bloodsucker, Yarus, Blowfly
-Infestation-style any-creature cards). The heuristic would be wrong for a printed noncreature
-"another creature" card. The classification of the 181 slot users is in the session scratchpad
-(ally_dies_classification.txt) and should be regenerated.
-
-**Proposed direction.** Make self-inclusion explicit per registration (a flag or separate
-self-inclusive slots, mirroring `ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD`), migrate cards by
-oracle wording, and drop the duplicate `ON_DEATH` workarounds and the printed-type heuristic.
-
-**Prompt to start it:**
-
-```
-Refactor creature-death trigger self-inclusion (see refactors-to-do.md, entry 2). Classify every
-card on ON_ALLY_CREATURE_DIES / ON_ANY_CREATURE_DIES (and cards with an extra ON_DEATH copy of the
-same trigger) by oracle wording via the scryfall MCP: "a/each creature" (includes itself, with
-CR 603.10a look-back) vs "another creature". Add an explicit self-inclusive registration (mirror
-ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD), migrate the cards, remove the printed-type heuristic
-in TriggerCollectionService.checkAllyCreatureDeathTriggers and the duplicate ON_DEATH workarounds,
-and add tests for a creature dying itself, an animated noncreature source dying, and "another"
-cards not triggering on themselves. Verify every CR number with the rules MCP. Don't run the full
-suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 3. Small cleanups left by the D-card test fixes
 
 **Status:** open · **Found:** 2026-10-10

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -39,7 +38,6 @@ public class EmbroseDeanOfShadow extends Card {
         TriggeringPermanentConditionalEffect drawForCounteredCreatureDeath = new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                 new DrawCardEffect(1));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawForCounteredCreatureDeath);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), drawForCounteredCreatureDeath);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drawForCounteredCreatureDeath);
     }
 }

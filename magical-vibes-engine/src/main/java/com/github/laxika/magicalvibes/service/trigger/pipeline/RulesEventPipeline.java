@@ -10,12 +10,16 @@ import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,8 +28,11 @@ import java.util.UUID;
  * {@link TriggerIndex} for each event's candidate abilities, matches them ({@link TriggerMatcher}) and puts every
  * ability that triggers on the stack through {@link TriggeredAbilityStackService}. An ability with
  * {@link TriggerMultiplicity#EACH} triggers once for each event of the batch that matches it, and one with
- * {@link TriggerMultiplicity#ONE_OR_MORE} once for the batch (CR 603.2c). The abilities one event triggers are put on
- * the stack in the order the old slot collectors put them there, which is the order of
+ * {@link TriggerMultiplicity#ONE_OR_MORE} once for the batch (CR 603.2c).
+ *
+ * <p>The abilities of the objects that see another object move (a creature dies) are put on the stack first, those
+ * that trigger for each event in event order and then the "one or more" ones, as the old slot collectors queued
+ * them while the objects were still moving. The moving objects' own abilities follow, each event's in the order of
  * {@link LegacyTriggerBindings.Kind}: leaves the battlefield, arrives in a zone, dies, sacrificed. Their controller
  * orders them later all the same (CR 603.3b).
  *
@@ -40,28 +47,67 @@ public class RulesEventPipeline {
     private final TriggerIndex triggerIndex;
     private final TriggeredAbilityStackService stackService;
     private final LegacyTriggerOptions legacyTriggerOptions;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
-                              LegacyTriggerOptions legacyTriggerOptions) {
+                              LegacyTriggerOptions legacyTriggerOptions,
+                              @Lazy PredicateEvaluationService predicateEvaluationService) {
         this.triggerIndex = triggerIndex;
         this.stackService = stackService;
         this.legacyTriggerOptions = legacyTriggerOptions;
+        this.predicateEvaluationService = predicateEvaluationService;
     }
 
     /** Matches the events of {@code batch}, one occurrence that just ended, and triggers what they trigger. */
     public void process(GameData gameData, RulesEventBatch batch) {
+        List<ZoneChangeEvent> events = new ArrayList<>();
+        for (RulesEvent event : batch.events()) {
+            if (event instanceof ZoneChangeEvent zoneChange) {
+                events.add(zoneChange);
+            }
+        }
+        Set<OneOrMoreKey> triggeredForBatch = new HashSet<>();
+        triggerObservers(gameData, events, triggeredForBatch);
+        triggerMovingObjects(gameData, events, triggeredForBatch);
+    }
+
+    /** The abilities of other objects that see an object move: "whenever a creature dies". */
+    private void triggerObservers(GameData gameData, List<ZoneChangeEvent> events,
+                                  Set<OneOrMoreKey> triggeredForBatch) {
+        Map<OneOrMoreKey, ObservedEvents> oneOrMore = new LinkedHashMap<>();
+        for (ZoneChangeEvent event : events) {
+            for (TriggerCandidate candidate : triggerIndex.observerCandidates(gameData, event, events)) {
+                ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(gameData, predicateEvaluationService,
+                        candidate, event, false);
+                if (trigger == null || TriggerMatcher.suppressed(candidate.ability(), event)) {
+                    continue;
+                }
+                if (candidate.ability().options().multiplicity() == TriggerMultiplicity.EACH) {
+                    stackService.trigger(gameData, candidate, event, trigger);
+                } else {
+                    oneOrMore.computeIfAbsent(new OneOrMoreKey(candidate.sourceObjectId(), candidate.ability()),
+                            ignored -> new ObservedEvents(candidate, trigger, new ArrayList<>())).events().add(event);
+                }
+            }
+        }
+        oneOrMore.forEach((key, observed) -> {
+            triggeredForBatch.add(key);
+            stackService.triggerOnce(gameData, observed.candidate(), observed.events(), observed.trigger());
+        });
+    }
+
+    /** The moving objects' own abilities, and the slot abilities shadow mode reports. */
+    private void triggerMovingObjects(GameData gameData, List<ZoneChangeEvent> events,
+                                      Set<OneOrMoreKey> triggeredForBatch) {
         RulesObserver observer = gameData.rulesObserver;
         Set<EffectSlot> shadowedSlots = observer == null ? Set.of() : observer.shadowedSlots();
-        Set<OneOrMoreKey> triggeredForBatch = new HashSet<>();
-        for (RulesEvent event : batch.events()) {
-            if (!(event instanceof ZoneChangeEvent zoneChange)) {
-                continue;
-            }
+        for (ZoneChangeEvent zoneChange : events) {
             List<Match> matches = new ArrayList<>();
             for (TriggerCandidate candidate : triggerIndex.movingObjectCandidates(gameData, zoneChange)) {
                 EffectSlot slot = TriggerMatcher.legacySlot(candidate);
                 if (slot == null) {
-                    ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(candidate, zoneChange);
+                    ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(gameData, predicateEvaluationService,
+                            candidate, zoneChange, true);
                     if (trigger != null && !TriggerMatcher.suppressed(candidate.ability(), zoneChange)) {
                         matches.add(new Match(candidate, trigger));
                     }
@@ -102,5 +148,10 @@ public class RulesEventPipeline {
 
     /** A candidate whose ability's trigger condition {@code trigger} an event met. */
     private record Match(TriggerCandidate candidate, ZoneChangeTrigger trigger) {
+    }
+
+    /** A "one or more" ability of another object and the events of the batch that met its {@code trigger}. */
+    private record ObservedEvents(TriggerCandidate candidate, ZoneChangeTrigger trigger,
+                                  List<ZoneChangeEvent> events) {
     }
 }

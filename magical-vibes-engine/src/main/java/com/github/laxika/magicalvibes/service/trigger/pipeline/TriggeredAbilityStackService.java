@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -22,6 +24,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.trigger.CreatureDeath;
+import com.github.laxika.magicalvibes.service.trigger.CreatureDeathWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -51,6 +55,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@link PermanentChoiceContext.DeathTriggerTarget}, chosen through {@code TriggerTargetCollector} as it goes on
  * the stack and removed if none is legal (CR 603.3d), and otherwise it goes on the stack through
  * {@link GameData#enqueueTrigger}.
+ * An ability that watches another object die ("whenever a creature you control dies", a relation other than
+ * {@code THIS}) goes through {@link #triggerOnce} instead: its options are checked the same way, and its effects go on
+ * the stack the way the old slot collector of its {@link CreatureDeathWatch} put them there.
  * APNAP ordering (CR 603.3b) happens later, in {@code TriggeredAbilityQueueService.beginTriggerOrder}.
  */
 @Service
@@ -86,6 +93,10 @@ public class TriggeredAbilityStackService {
      */
     public void trigger(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
                         ZoneChangeTrigger trigger) {
+        if (trigger.relation() != ObjectRelation.THIS) {
+            triggerOnce(gameData, candidate, List.of(event), trigger);
+            return;
+        }
         TriggerOptions options = candidate.ability().options();
         Permanent source = candidate.sourceAsPermanent();
         Condition interveningIf = options.interveningIf();
@@ -107,6 +118,46 @@ public class TriggeredAbilityStackService {
         } else {
             triggered = triggerAll(gameData, candidate, event, kind, registrations, interveningIf, options);
         }
+        if (triggered) {
+            markLimit(gameData, options.limit(), sourceId, limitKey);
+        }
+    }
+
+    /**
+     * Triggers {@code candidate}'s "whenever [an object] dies" ability once for {@code events}, the deaths of one
+     * batch that met its trigger condition {@code trigger}: once for the one death of an ability that triggers for
+     * each, once for all of them for "one or more" (CR 603.2c). Its options are checked as for any ability; its
+     * effects go on the stack the way the old slot collector of its {@link CreatureDeathWatch} put them there.
+     */
+    public void triggerOnce(GameData gameData, TriggerCandidate candidate, List<ZoneChangeEvent> events,
+                            ZoneChangeTrigger trigger) {
+        if (LegacyTriggerBindings.kindOf(trigger) != LegacyTriggerBindings.Kind.DIES) {
+            return;
+        }
+        TriggerOptions options = candidate.ability().options();
+        Permanent source = candidate.sourceAsPermanent();
+        Condition interveningIf = options.interveningIf();
+        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
+                ConditionContext.forPermanent(source, candidate.controllerId()))) {
+            return;
+        }
+        UUID sourceId = candidate.sourceObjectId();
+        String limitKey = limitKey(candidate);
+        if (limitReached(gameData, options.limit(), sourceId, limitKey)) {
+            return;
+        }
+        List<CardEffect> effects = new ArrayList<>();
+        for (EffectRegistration registration : candidate.ability().effects()) {
+            effects.add(interveningIf == null ? registration.effect()
+                    : new ConditionalEffect(interveningIf, registration.effect(), true));
+        }
+        CreatureDeathWatch watch = CreatureDeathWatch.of(trigger, candidate.zone());
+        List<CreatureDeath> deaths = events.stream().map(CreatureDeath::of).toList();
+        boolean triggered = options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE
+                ? triggerCollectionService.triggerCreatureDeaths(gameData, watch, source, candidate.controllerId(),
+                        effects, deaths)
+                : triggerCollectionService.triggerCreatureDeath(gameData, watch, source, candidate.controllerId(),
+                        effects, deaths.getFirst());
         if (triggered) {
             markLimit(gameData, options.limit(), sourceId, limitKey);
         }

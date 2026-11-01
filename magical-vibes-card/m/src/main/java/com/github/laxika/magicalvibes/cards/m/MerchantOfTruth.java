@@ -3,11 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -21,9 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MerchantOfTruth extends Card {
 
     public MerchantOfTruth() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, CreateTokenEffect.ofClueToken(1));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new NotCondition(new SourceIsToken()), CreateTokenEffect.ofClueToken(1)));
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), CreateTokenEffect.ofClueToken(1));
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.EXALTED,
                 GrantScope.OWN_PERMANENTS,

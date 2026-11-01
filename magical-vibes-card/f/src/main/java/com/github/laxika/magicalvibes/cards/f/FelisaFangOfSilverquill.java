@@ -53,9 +53,6 @@ public class FelisaFangOfSilverquill extends Card {
                                 new PermanentHasCountersPredicate(CounterType.ANY))),
                         createInklings);
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, nontokenWithCounters);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
-                createInklings));
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), nontokenWithCounters);
     }
 }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,7 @@ public class LightningCoils extends Card {
 
     public LightningCoils() {
         // Whenever a nontoken creature you control dies, put a charge counter on this artifact.
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
                 new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // At the beginning of your upkeep, if this artifact has five or more charge counters on it,

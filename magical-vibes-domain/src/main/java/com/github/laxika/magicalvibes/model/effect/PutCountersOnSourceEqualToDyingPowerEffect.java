@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * ON_ANY_CREATURE_DIES value-materialising effect: put a number of
+ * Triggers.creatureDies(ANY) value-materialising effect: put a number of
  * {@code powerModifier}/{@code toughnessModifier} counters on this creature equal to the dying
  * creature's last-known effective power. The dying creature's power is read at trigger time and
  * baked into a concrete {@link PutCountersOnSourceEffect} (the death sibling of

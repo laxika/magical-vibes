@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -22,10 +21,7 @@ public class VengefulBloodwitch extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        drainTarget.addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
-                new GainLifeEffect(1)));
-        drainTarget.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, SequenceEffect.of(
+        drainTarget.addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
                 new GainLifeEffect(1)));
     }

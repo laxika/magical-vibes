@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -22,9 +21,9 @@ import java.util.Set;
 public class XathridNecromancer extends Card {
 
     public XathridNecromancer() {
-        // Ally-death alone is "another" (the source is already gone); its dies trigger covers this creature itself,
-        // which is a Human and so always qualifies.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        // "This creature" is its own "when this dies" ability, so the Human restriction applies only to another
+        // creature.
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN),
                 tappedZombie()
         ));

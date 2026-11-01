@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
@@ -25,7 +24,6 @@ public class BeifongsBountyHunters extends Card {
                     NONLAND, new EarthbendTargetLandEffect(new SourcePower()));
 
     public BeifongsBountyHunters() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, ALLY_DEATH_TRIGGER);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), SELF_DEATH_TRIGGER);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), ALLY_DEATH_TRIGGER);
     }
 }

@@ -32,7 +32,6 @@ public class GyoxBrutalCarnivora extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentHasCountersPredicate(CounterType.OIL))),
                 new ConjureDuplicatesOfDyingCreatureIntoLibraryEffect());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, deathTrigger);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), deathTrigger);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), deathTrigger);
     }
 }

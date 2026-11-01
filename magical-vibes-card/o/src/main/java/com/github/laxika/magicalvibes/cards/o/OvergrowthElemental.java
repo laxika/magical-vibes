@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class OvergrowthElemental extends Card {
 
         // One triggered ability: the Elemental check on the dying creature is a conditional inside its
         // effect, not a separate trigger, so both parts share one stack entry.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, SequenceEffect.of(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
                 new GainLifeEffect(1),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ELEMENTAL),

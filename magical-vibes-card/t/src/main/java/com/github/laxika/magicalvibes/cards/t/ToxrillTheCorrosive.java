@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +43,7 @@ public class ToxrillTheCorrosive extends Card {
                         CounterType.SLIME, 1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS));
         addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
                         opponentsCreatures, CounterType.SLIME, true));
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new CreateTokenIfDyingSourceHadCounterEffect(
                         CounterType.SLIME,
                         new CreateTokenEffect("Slug", 1, 1, CardColor.BLACK,

@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class ShadowsOfThePast extends Card {
 
     public ShadowsOfThePast() {
         // Whenever a creature dies, scry 1.
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new ScryEffect(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new ScryEffect(1));
 
         // {4}{B}: Each opponent loses 2 life and you gain 2 life.
         // Activate only if there are four or more creature cards in your graveyard.

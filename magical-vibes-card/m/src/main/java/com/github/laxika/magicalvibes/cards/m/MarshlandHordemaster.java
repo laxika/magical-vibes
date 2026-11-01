@@ -38,7 +38,7 @@ public class MarshlandHordemaster extends Card {
                 "Target must be an opponent"
         ));
         deathTrigger.addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
-        deathTrigger.addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        deathTrigger.addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.LIZARD), DEATH_TRIGGER));
     }

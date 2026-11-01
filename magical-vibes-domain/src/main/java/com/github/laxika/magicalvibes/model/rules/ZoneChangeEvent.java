@@ -38,11 +38,13 @@ import java.util.UUID;
  *                     {@code null}
  * @param attachments  for a departure, the Auras and Equipment attached to the permanent just before it left;
  *                     {@link DepartedAttachments#NONE} otherwise
+ * @param hauntedBy    for a departure, the cards in exile that haunted the permanent (CR 702.55b) just before it
+ *                     left, whose "when the creature it haunts dies" abilities it can trigger; empty otherwise
  */
 public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause,
                               Permanent permanent, UUID controllerId, List<Ability> grantedAbilities,
                               boolean deathTriggersSuppressed, Card costOf,
-                              DepartedAttachments attachments)
+                              DepartedAttachments attachments, List<UUID> hauntedBy)
         implements RulesEvent {
 
     public ZoneChangeEvent {
@@ -51,12 +53,14 @@ public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneC
         Objects.requireNonNull(cause, "cause");
         grantedAbilities = List.copyOf(grantedAbilities);
         Objects.requireNonNull(attachments, "attachments");
+        hauntedBy = List.copyOf(hauntedBy);
     }
 
     /** A zone change with no granted abilities. */
     public ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause,
                            Permanent permanent, UUID controllerId) {
-        this(card, ownerId, from, to, cause, permanent, controllerId, List.of(), false, null, DepartedAttachments.NONE);
+        this(card, ownerId, from, to, cause, permanent, controllerId, List.of(), false, null, DepartedAttachments.NONE,
+                List.of());
     }
 
     /** Whether a permanent left the battlefield (CR 603.6c). */
@@ -77,13 +81,13 @@ public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneC
     /** This event with another destination, for a move that a replacement effect sent elsewhere. */
     public ZoneChangeEvent withTo(Zone destination) {
         return new ZoneChangeEvent(card, ownerId, from, destination, cause, permanent, controllerId, grantedAbilities,
-                deathTriggersSuppressed, costOf, attachments);
+                deathTriggersSuppressed, costOf, attachments, hauntedBy);
     }
 
     @Override
     public ZoneChangeEvent deepCopy() {
         return permanent == null ? this
                 : new ZoneChangeEvent(card, ownerId, from, to, cause, new Permanent(permanent), controllerId,
-                        grantedAbilities, deathTriggersSuppressed, costOf, attachments);
+                        grantedAbilities, deathTriggersSuppressed, costOf, attachments, hauntedBy);
     }
 }

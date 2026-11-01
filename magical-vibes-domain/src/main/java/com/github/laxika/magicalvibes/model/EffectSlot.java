@@ -80,9 +80,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires once per matching Curse attached to the entering land's controller. The enchanted
      *  player's id is baked as the non-targeting {@code targetId}. */
     ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD,
-    /** Aura slot for player-enchanting Curses: "Whenever a nontoken creature enchanted player controls dies".
-     *  Fires once per matching Curse attached to the dying creature's controller. */
-    ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES,
     /** Triggers when cards are put into exile from anywhere (The War Doctor). */
     ON_ANY_CARD_EXILED,
     /** Triggers when the source controller's commander is put into the command zone. */
@@ -139,23 +136,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      */
     ON_OPPONENT_PLAYS_LAND,
     ON_OPPONENT_CASTS_SPELL,
-    ON_HAUNTED_CREATURE_DIES,
-    ON_ALLY_CREATURE_DIES,
-    /** Triggers once when one or more artifacts and/or creatures controlled by the source controller are put into a graveyard from the battlefield as one event. */
-    ON_ALLY_ARTIFACT_OR_CREATURE_DIES,
     /**
      * A permanent that was a creature on the battlefield is put into this permanent's
      * controller's graveyard. This is keyed to the graveyard owner rather than the creature's
      * last controller and uses the permanent's last-known battlefield type.
      */
     ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
-    /**
-     * A creature <b>or planeswalker</b> you control dies (is put into a graveyard from the
-     * battlefield). Superset of {@link #ON_ALLY_CREATURE_DIES}; a permanent that is both a
-     * creature and a planeswalker still fires this slot only once. Ajani's Last Stand.
-     */
-    ON_ALLY_CREATURE_OR_PLANESWALKER_DIES,
-    ON_DAMAGED_CREATURE_DIES,
     ON_COMBAT_DAMAGE_TO_PLAYER,
     ON_COMBAT_DAMAGE_TO_CREATURE,
     /** Triggers once per combat damage step when the source deals combat damage to one or more blockers. */
@@ -308,7 +294,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  sacrifices a creature"). Fires on every permanent with this slot across all battlefields, once
      *  per sacrificed creature (last-known info decides creature-ness). The trigger belongs to the
      *  scanning permanent's controller; a wrapped {@code MayEffect(PutCountersOnSourceEffect)} resolves
-     *  onto that permanent (like Scavenger Drake's {@code ON_ANY_CREATURE_DIES}). Checked in
+     *  onto that permanent (like Scavenger Drake's "whenever another creature dies"). Checked in
      *  {@code TriggerCollectionService.checkAnyCreatureSacrificedTriggers}, fired from the two sacrifice
      *  choke points ({@code DestructionSupport.sacrificeAndLog} for edict/chosen sacrifices,
      *  {@code checkAllyPermanentSacrificedTriggers} for sacrifice-self / sacrifice-as-cost). Used by
@@ -333,9 +319,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      * ability controlled by an opponent. The targeted player is not a permanent, so this is checked
      * from the player-target paths in {@code TriggerCollectionService}. */
     ON_CONTROLLER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
-    ON_ANY_CREATURE_DIES,
-    ON_ALLY_NONTOKEN_CREATURE_DIES,
-    ON_ANY_NONTOKEN_CREATURE_DIES,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever an artifact is put into exile from the battlefield. */
     ON_ANY_ARTIFACT_EXILED_FROM_BATTLEFIELD,
@@ -592,7 +575,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  The damaged creature is captured as the non-targeting {@code targetId} of the queued
      *  ability. Checked from both combat and noncombat creature-damage paths. */
     ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE,
-    ON_EQUIPPED_CREATURE_DIES,
     /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
@@ -613,7 +595,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land the controller controls enters the battlefield.
      *  Checked in {@code BattlefieldEntryService.checkAllyLandEntersTriggers}. */
     ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-    ON_OPPONENT_CREATURE_DIES,
     ON_DEALT_DAMAGE,
     /** Triggers whenever this permanent is dealt noncombat damage. The amount is snapshotted onto
      *  the triggered ability's event value. */
@@ -1026,13 +1007,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  graveyard. Like {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} but fired from the graveyard.
      *  Checked in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
     GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
-    /** Triggers whenever a creature the controller controls dies, while this card is in the
-     *  controller's graveyard. Like {@link #ON_ALLY_CREATURE_DIES} but fired from the graveyard.
-     *  Checked in {@code TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers}. */
-    GRAVEYARD_ON_ALLY_CREATURE_DIES,
-    /** Triggers whenever a creature an opponent controls dies, while this card is in its owner's
-     *  graveyard. Checked in {@code TriggerCollectionService.checkGraveyardOpponentCreatureDeathTriggers}. */
-    GRAVEYARD_ON_OPPONENT_CREATURE_DIES,
     /** Triggers from a graveyard when a creature enters from that graveyard or is cast from it. */
     GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD,
     /** Triggers whenever an artifact the controller controls enters the battlefield, while this card is

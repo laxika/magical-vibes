@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsController;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -40,6 +39,7 @@ public class TheGhoulGunslinger extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"));
         addTrigger(Triggers.dies(ObjectRelation.THIS), RAD_AND_TREASURE);
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, ZOMBIE_OR_MUTANT_RAD_AND_TREASURE);
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
+                ZOMBIE_OR_MUTANT_RAD_AND_TREASURE);
     }
 }

@@ -9,8 +9,8 @@ import java.util.Map;
 /**
  * The {@code Trigger} each slot of a family in shadow mode becomes when that family moves to the trigger
  * pipeline (step 1 of each family's move in effect-slot-refactor.md). Shadow mode matches a slot's abilities as
- * if they had this trigger. No family is in shadow mode now: the pilot's slots moved in step 10b, and step 11
- * maps the creature-death slots here before it moves them.
+ * if they had this trigger. No family is in shadow mode now: the pilot's slots moved in step 10b and the
+ * creature-death slots in step 11, which ported their collectors rather than shadowing them.
  */
 public final class LegacySlotTriggers {
 

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,8 +31,8 @@ public class BastionOfRemembrance extends Card {
                 "Human Soldier", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new GainLifeEffect(1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(1));
     }
 }

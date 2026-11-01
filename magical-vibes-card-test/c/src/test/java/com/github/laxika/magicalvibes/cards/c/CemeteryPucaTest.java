@@ -87,8 +87,13 @@ class CemeteryPucaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.castAndResolveInstant(player1, 0, firstPuca.getId()));
-        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
-        harness.handleMayAbilityChosen(player1, true);
+        // The first Puca is a creature too, so its copied ability triggers for its own death as well; only the
+        // second Puca's copy is wanted.
+        for (int i = 0; i < 2; i++) {
+            harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+            harness.handleMayAbilityChosen(player1,
+                    secondPuca.getId().equals(gd.pendingMayAbilities.getFirst().sourcePermanentId()));
+        }
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(secondPuca.getCard().getName()).isEqualTo("Grizzly Bears");

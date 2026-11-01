@@ -38,7 +38,7 @@ public class SkirkDrillSergeant extends Card {
         // Whenever this creature or another Goblin dies, you may pay {2}{R}. If you do, reveal the
         // top card of your library. If it's a Goblin permanent card, put it onto the battlefield.
         // Otherwise, put it into your graveyard.
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), DRILL_SERGEANT_ABILITY));
         // A noncreature Goblin permanent that dies is not a creature, so it reaches this card through the
         // ally and opponent permanent slots instead (CR 700.4: "dies" means put into a graveyard from the battlefield).

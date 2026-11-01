@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTra
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ import java.util.Set;
 public class GardensOfTranquilRepose extends Card {
 
     public GardensOfTranquilRepose() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, SequenceEffect.of(
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), SequenceEffect.of(
                 new ExileTriggeringCreatureAndTrackWithSourceEffect(),
                 new ScryEffect(1, LibraryOwner.DYING_CREATURE_CONTROLLER)));
 

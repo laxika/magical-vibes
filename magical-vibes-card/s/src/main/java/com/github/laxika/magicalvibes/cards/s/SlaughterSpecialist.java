@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,6 +22,6 @@ public class SlaughterSpecialist extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachOpponentCreatesTokenEffect(
                 new CreateTokenEffect("Human", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.HUMAN), Set.of(), Set.of())));
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

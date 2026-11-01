@@ -42,7 +42,7 @@ class ThrabenSentryTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bears.getId());
 
-        // ON_ALLY_CREATURE_DIES trigger goes on stack → resolve → MayEffect prompts
+        // Triggers.creatureDies(YOU_CONTROL) trigger goes on stack → resolve → MayEffect prompts
         harness.passBothPriorities();
 
         // Accept the may transform
@@ -94,7 +94,7 @@ class ThrabenSentryTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
-        // No trigger on the stack — ON_ALLY_CREATURE_DIES only fires for controller's creatures
+        // No trigger on the stack — Triggers.creatureDies(YOU_CONTROL) only fires for controller's creatures
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }

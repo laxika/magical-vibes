@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +19,8 @@ public class JarOfEyeballs extends Card {
 
     public JarOfEyeballs() {
         // Whenever a creature you control dies, put two eyeball counters on Jar of Eyeballs.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new PutCountersOnSelfEffect(CounterType.EYEBALL, 2));
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.EYEBALL, 2));
 
         // {3}, {T}, Remove all eyeball counters from Jar of Eyeballs: Look at the top X cards of
         // your library, where X is the number of eyeball counters removed this way. Put one of

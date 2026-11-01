@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -50,9 +49,7 @@ public class PawnOfUlamog extends Card {
             Set.of());
 
     public PawnOfUlamog() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
-                new MayEffect(SPAWN_TOKEN, "Create an Eldrazi Spawn token?"));
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new MayEffect(SPAWN_TOKEN, "Create an Eldrazi Spawn token?"));
     }
 }

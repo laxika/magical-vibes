@@ -39,10 +39,7 @@ public class VoldarenBloodcaster extends Card {
         setBackFaceCard(new BloodbatSummoner());
 
         // Whenever this creature or another nontoken creature you control dies, create a Blood token.
-        // Ally-death watchers are already off the battlefield when collected, so ON_ALLY alone is
-        // "another"; its dies trigger covers this creature's own death.
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, CREATE_BLOOD);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), CREATE_BLOOD);
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), CREATE_BLOOD);
 
         // Whenever you create a Blood token, if you control five or more Blood tokens, transform.
         // Blood tokens are artifacts — gated via TriggeringCardConditionalEffect on ally-artifact ETB.

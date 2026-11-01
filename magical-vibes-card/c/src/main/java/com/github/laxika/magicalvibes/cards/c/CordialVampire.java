@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,8 +19,6 @@ public class CordialVampire extends Card {
         var trigger = new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, vampires);
 
-        // Whenever this creature or another creature dies, put a +1/+1 counter on each Vampire you control.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), trigger);
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, trigger);
+        addTrigger(Triggers.creatureDies(ObjectRelation.THIS_OR_ANOTHER), trigger);
     }
 }

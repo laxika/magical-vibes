@@ -74,6 +74,15 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         this(trigger, TriggerOptions.DEFAULT, Arrays.stream(effects).map(EffectRegistration::new).toList());
     }
 
+    /**
+     * An ability with one trigger condition, which functions from the zones {@code condition} names, and no
+     * options: "while this card is in your graveyard, whenever a creature you control dies".
+     */
+    public TriggeredAbility(TriggerCondition condition, CardEffect... effects) {
+        this(List.of(condition), TriggerOptions.DEFAULT,
+                Arrays.stream(effects).map(EffectRegistration::new).toList());
+    }
+
     /** Whether {@code trigger} is one of this ability's trigger conditions. */
     public boolean hasTrigger(Trigger trigger) {
         return conditions.stream().anyMatch(condition -> condition.trigger().equals(trigger));

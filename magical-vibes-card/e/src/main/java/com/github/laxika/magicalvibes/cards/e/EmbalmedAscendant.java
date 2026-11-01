@@ -25,7 +25,6 @@ public class EmbalmedAscendant extends Card {
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, maxSpeedDrain);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), maxSpeedDrain);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), maxSpeedDrain);
     }
 }

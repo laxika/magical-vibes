@@ -61,6 +61,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -69,6 +71,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -918,15 +921,26 @@ public class SpellEvaluator {
     }
 
     /**
+     * Whether {@code card} has a "whenever a creature dies" or "whenever a creature you control dies" triggered
+     * ability, "another" or "this or another" included.
+     */
+    private static boolean hasCreatureDeathTrigger(Card card) {
+        return card.getTriggeredAbilities().stream()
+                .flatMap(ability -> ability.conditions().stream())
+                .anyMatch(condition -> condition.trigger() instanceof ZoneChangeTrigger trigger
+                        && trigger.from().equals(Set.of(Zone.BATTLEFIELD)) && trigger.to() == Zone.GRAVEYARD
+                        && trigger.relation() != ObjectRelation.THIS
+                        && (trigger.relation().youControl() || trigger.relation() == ObjectRelation.ANY
+                        || trigger.relation() == ObjectRelation.ANOTHER
+                        || trigger.relation() == ObjectRelation.THIS_OR_ANOTHER));
+    }
+
+    /**
      * A creature with "whenever a creature dies" triggers is more valuable when the AI
      * already controls sacrifice outlets (activated abilities with SacrificeCreatureCost).
      */
     private double deathTriggerWithSacOutletBonus(Card card, List<Permanent> aiBattlefield) {
-        boolean hasDeathTrigger = !card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).isEmpty()
-                || !card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).isEmpty()
-                || !card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES).isEmpty();
-
-        if (!hasDeathTrigger) return 0;
+        if (!hasCreatureDeathTrigger(card)) return 0;
 
         // Check if the AI controls a sacrifice outlet
         boolean hasSacOutlet = aiBattlefield.stream().anyMatch(p -> hasSacrificeAbility(p.getCard()));
@@ -1000,9 +1014,7 @@ public class SpellEvaluator {
 
         // Check for "creature dies" triggers on the battlefield
         for (Permanent perm : aiBattlefield) {
-            if (!perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES).isEmpty()
-                    || !perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).isEmpty()
-                    || !perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES).isEmpty()) {
+            if (hasCreatureDeathTrigger(perm.getCard())) {
                 bonus += 3.0;
             }
             // Sacrifice outlets make tokens doubly useful — both as sac fodder and trigger fuel

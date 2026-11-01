@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class VillagePillagers extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DealDamageToEachMatchingPermanentEffect(1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS));
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new CreateTokenIfDyingSourceHadCounterEffect(
                         CounterType.ANY, CreateTokenEffect.ofTreasureToken(1, true)));
     }

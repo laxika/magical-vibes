@@ -4,9 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -23,14 +21,10 @@ public class IndebtedSamurai extends Card {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
 
         // Whenever a Samurai you control dies, you may put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.SAMURAI),
                         new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
                                 "Put a +1/+1 counter on Indebted Samurai?")));
-        // Printed creatures are excluded from their own ON_ALLY_CREATURE_DIES scan, so its own death
-        // (it is a Samurai it controls) is authored here.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), ConditionalEffect.unless(new SourceIsOnBattlefield(),
-                new MayEffect(new PutCountersOnSourceEffect(1, 1, 1), "Put a +1/+1 counter on Indebted Samurai?")));
     }
 }

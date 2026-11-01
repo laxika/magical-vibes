@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -28,8 +27,7 @@ public class KheruBloodsucker extends Card {
                             new GainLifeEffect(2)));
 
     public KheruBloodsucker() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), DEATH_TRIGGER);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

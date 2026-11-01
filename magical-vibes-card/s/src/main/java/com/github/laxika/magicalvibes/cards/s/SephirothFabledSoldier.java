@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -53,7 +55,7 @@ public class SephirothFabledSoldier extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SACRIFICE_ANOTHER_AND_DRAW);
         addEffect(EffectSlot.ON_ATTACK, SACRIFICE_ANOTHER_AND_DRAW);
 
-        target(OPPONENT_TARGET).addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
+        target(OPPONENT_TARGET).addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER),
                 SequenceEffect.of(
                         DRAIN,
                         new ConditionalEffect(

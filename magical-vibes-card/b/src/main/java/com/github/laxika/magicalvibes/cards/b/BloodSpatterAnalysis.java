@@ -15,9 +15,12 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.OneOrMoreCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "189")
 @CardRegistration(set = "MKM", collectorNumber = "413")
@@ -28,7 +31,8 @@ public class BloodSpatterAnalysis extends Card {
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DealDamageToTargetCreatureEffect(3));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new OneOrMoreCreatureDeathTriggerEffect(SequenceEffect.of(
+        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY)), TriggerOptions.ONE_OR_MORE,
+                SequenceEffect.of(
                 new MillEffect(1, MillRecipient.CONTROLLER),
                 new PutCountersOnSelfEffect(CounterType.BLOODSTAIN),
                 ConditionalEffect.unless(
@@ -37,6 +41,6 @@ public class BloodSpatterAnalysis extends Card {
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
                                 .targetGraveyard(true)
-                                .build())))));
+                                .build()))));
     }
 }

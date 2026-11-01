@@ -135,6 +135,9 @@ class IndebtedSamuraiTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        // It was a Samurai its controller controlled, so it is "a Samurai you control"; the choice is made as the
+        // ability resolves (CR 603.5), and the counter has nowhere to go.
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
