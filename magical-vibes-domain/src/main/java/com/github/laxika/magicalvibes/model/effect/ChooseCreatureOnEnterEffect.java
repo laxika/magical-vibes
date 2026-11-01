@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Marker effect placed in ON_ENTER_BATTLEFIELD to indicate that the controller chooses a creature
+ * Static as-enters ability (CR 614.1c) to indicate that the controller chooses a creature
  * on the battlefield — any creature, regardless of controller — as this permanent enters
  * ("As this Aura enters, choose a creature."). The chosen creature's ID is stored on the entering
  * permanent via {@code chosenPermanentId}.

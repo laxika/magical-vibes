@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ThornaAndTwigtooth extends Card {
 
     public ThornaAndTwigtooth() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(2)));
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ATTACK,
                 SequenceEffect.of(

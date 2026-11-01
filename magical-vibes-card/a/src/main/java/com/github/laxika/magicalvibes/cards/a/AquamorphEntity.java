@@ -16,7 +16,7 @@ public class AquamorphEntity extends Card {
         ChoosePowerToughnessFormEffect formChoice = new ChoosePowerToughnessFormEffect(List.of(
                 new PowerToughnessForm("5/1", 5, 1),
                 new PowerToughnessForm("1/5", 1, 5)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, formChoice);
+        addStaticEffect(formChoice);
         addMorph("{2}{U}");
         addEffect(EffectSlot.ON_TURNED_FACE_UP, formChoice);
     }

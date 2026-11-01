@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -20,8 +19,7 @@ import java.util.List;
 public class EtchedMonstrosity extends Card {
 
     public EtchedMonstrosity() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(5)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

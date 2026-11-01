@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColor
 public class ChameleonSpirit extends Card {
 
     public ChameleonSpirit() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         PermanentCount matchingOpponentPermanents = new PermanentCount(
                 new PermanentHasSourceChosenColorPredicate(), CountScope.OPPONENTS);
         addStaticEffect(new SetPowerToughnessToAmountEffect(matchingOpponentPermanents, matchingOpponentPermanents));

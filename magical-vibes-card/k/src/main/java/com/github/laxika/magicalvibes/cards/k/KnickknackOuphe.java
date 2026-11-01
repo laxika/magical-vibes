@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 public class KnickknackOuphe extends Card {
 
     public KnickknackOuphe() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LookAtTopCardsEffect(
                 new XValue(), new XValue(), new CardIsAuraPredicate(),
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true,

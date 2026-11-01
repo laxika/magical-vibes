@@ -20,7 +20,7 @@ public class Shapeshifter extends Card {
 
     public Shapeshifter() {
         // "As this creature enters, choose a number between 0 and 7."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNumberOnEnterEffect(0, 7));
+        addStaticEffect(new ChooseNumberOnEnterEffect(0, 7));
         // "At the beginning of your upkeep, you may choose a number between 0 and 7."
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new MayEffect(new ChooseNumberEffect(0, 7), "Choose a number between 0 and 7?"));

@@ -16,10 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -30,16 +27,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
-import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -64,7 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -183,7 +175,7 @@ public class EtbTriggerService {
     public void processLandETBEffects(GameData gameData, UUID controllerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
-        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getStaticEffects().stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -194,7 +186,7 @@ public class EtbTriggerService {
                     enteringPermanent.getChosenModeLabels().size());
             return;
         }
-        ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseModeOnEnterEffect modeChoice = card.getStaticEffects().stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -215,7 +207,7 @@ public class EtbTriggerService {
                 return;
             }
         }
-        ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseColorEffect colorChoice = card.getStaticEffects().stream()
                 .filter(e -> e instanceof ChooseColorEffect)
                 .map(e -> (ChooseColorEffect) e)
                 .findFirst()
@@ -225,7 +217,7 @@ public class EtbTriggerService {
             return;
         }
 
-        SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        SubtypeChoiceOnEnterEffect subtypeChoice = card.getStaticEffects().stream()
                 .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
@@ -238,7 +230,7 @@ public class EtbTriggerService {
                     subtypeChoice, true);
             return;
         }
-        ChooseBasicLandTypeOnEnterEffect basicLandTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseBasicLandTypeOnEnterEffect basicLandTypeChoice = card.getStaticEffects().stream()
                 .filter(ChooseBasicLandTypeOnEnterEffect.class::isInstance)
                 .map(ChooseBasicLandTypeOnEnterEffect.class::cast)
                 .findFirst()
@@ -251,7 +243,7 @@ public class EtbTriggerService {
         }
         // "As this land enters, draft a card from its spellbook" is a replacement-style choice made while the
         // land enters, so it is offered before any other entry ability and never reaches the stack.
-        DraftCardFromSpellbookToExileEffect spellbookDraftEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+        DraftCardFromSpellbookToExileEffect spellbookDraftEffect = card.getStaticEffects()
                 .stream()
                 .filter(DraftCardFromSpellbookToExileEffect.class::isInstance)
                 .map(DraftCardFromSpellbookToExileEffect.class::cast)
@@ -328,7 +320,7 @@ public class EtbTriggerService {
         boolean printedAbilitiesRemoved = enteringPermanent != null
                 && gameQueryService.hasLostPrintedAbilities(gameData, enteringPermanent);
         ChooseIndependentModesOnEnterEffect independentModeChoice = printedAbilitiesRemoved ? null
-                : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                : card.getStaticEffects().stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -340,7 +332,7 @@ public class EtbTriggerService {
             return;
         }
         ChooseModeOnEnterEffect modeChoice = printedAbilitiesRemoved ? null
-                : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                : card.getStaticEffects().stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -357,7 +349,7 @@ public class EtbTriggerService {
             }
         }
         SubtypeChoiceOnEnterEffect subtypeChoice = printedAbilitiesRemoved ? null
-                : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                : card.getStaticEffects().stream()
                 .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
@@ -373,7 +365,7 @@ public class EtbTriggerService {
         // "As this enters, draft a card from its spellbook and exile it" is made while the permanent enters
         // (CR 614.12), not as a triggered ability, so it waits for the draft before any entry trigger.
         if (enteringPermanent != null && !printedAbilitiesRemoved
-                && card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                && card.getStaticEffects().stream()
                 .anyMatch(DraftProteanWarEngineSpellbookEffect.class::isInstance)
                 && gameData.getCardsExiledByPermanent(enteringPermanent.getId()).isEmpty()) {
             proteanWarEngineSpellbookDraft.beginDraft(gameData, controllerId, enteringPermanent.getId());
@@ -416,26 +408,6 @@ public class EtbTriggerService {
             }
         }
         triggeredEffects.addAll(independentlyGrantedEffects);
-        triggeredEffects = triggeredEffects.stream()
-                .filter(e -> !(e instanceof ChooseColorEffect))
-                .filter(e -> !(e instanceof ChooseCardTypeOnEnterEffect))
-                .filter(e -> !(e instanceof ChooseBasicLandTypeOnEnterEffect))
-                // "As enters, choose a creature" is made while the Aura enters (AuraCopyService), not a trigger.
-                .filter(e -> !(e instanceof ChooseCreatureOnEnterEffect))
-                .filter(e -> !(e instanceof ChooseEquipmentAttachmentOnEnterEffect))
-                // Primal Clay's shape choice is made while the new permanent enters, not as an ETB ability.
-                .filter(e -> !(e instanceof ChoosePrimalClayFormOnEnterEffect))
-                // "As enters, choose a creature type" is a replacement-style choice made during entry
-                // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
-                .filter(e -> !(e instanceof SubtypeChoiceOnEnterEffect))
-                // "As enters, choose a number at random" is applied while the permanent enters (Haktos).
-                .filter(e -> !(e instanceof ChooseRandomNumberOnEnterEffect))
-                .filter(e -> !(e instanceof DraftProteanWarEngineSpellbookEffect))
-                .filter(e -> !(e instanceof DraftCardFromSpellbookToExileEffect && card.hasType(CardType.LAND)))
-                .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
-                .filter(e -> !(e instanceof ChooseIndependentModesOnEnterEffect))
-                .filter(e -> !isEntryReplacementEffect(e))
-                .toList();
         if (!triggeredEffects.isEmpty()) {
             List<OncePerTurnTriggerEffect> oncePerTurnEffects = new ArrayList<>();
             triggeredEffects = triggeredEffects.stream()
@@ -520,7 +492,6 @@ public class EtbTriggerService {
             independentlyGrantedEffects.stream()
                     .filter(effect -> !(effect instanceof MayEffect))
                     .filter(effect -> !(effect instanceof ChooseOneAtTriggerTimeEffect))
-                    .filter(effect -> !isEntryReplacementEffect(effect))
                     .map(effect -> etbEffectResolver.resolve(etbCtx, effect))
                     .filter(Objects::nonNull)
                     .forEach(independentEffects::add);
@@ -739,26 +710,6 @@ public class EtbTriggerService {
         entry.setTriggeringPermanentControllerId(
                 gameQueryService.findPermanentController(gameData, attached.getId()));
         entry.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attached));
-    }
-
-    /** Returns whether every possible branch is handled during entry instead of as a trigger. */
-    private boolean isEntryReplacementEffect(CardEffect effect) {
-        if (effect instanceof ReplacementEffect) {
-            return true;
-        }
-        // "This creature enters prepared" is applied as the permanent enters, not as a triggered ability.
-        if (effect instanceof BecomePreparedEffect prepared) {
-            return !prepared.asTriggeredAbility();
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            return isEntryReplacementEffect(conditional.wrapped());
-        }
-        if (effect instanceof ConditionalReplacementEffect replacement) {
-            return (replacement.baseEffect() == null || isEntryReplacementEffect(replacement.baseEffect()))
-                    && (replacement.upgradedEffect() == null
-                    || isEntryReplacementEffect(replacement.upgradedEffect()));
-        }
-        return false;
     }
 
     private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,

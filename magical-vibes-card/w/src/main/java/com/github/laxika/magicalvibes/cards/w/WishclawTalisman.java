@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -20,8 +19,7 @@ import java.util.List;
 public class WishclawTalisman extends Card {
 
     public WishclawTalisman() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.WISH, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.WISH, new Fixed(3)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

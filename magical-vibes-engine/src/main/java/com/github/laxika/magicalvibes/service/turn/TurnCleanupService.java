@@ -960,7 +960,7 @@ public class TurnCleanupService {
             for (Permanent perm : bf) {
                 boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(RememberTargetPlayerEffect.class::isInstance);
-                boolean choosesOpponentAsEnters = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                boolean choosesOpponentAsEnters = perm.getCard().getStaticEffects().stream()
                         .anyMatch(com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
                 List<CardEffect> staticEffects = nested
                         ? unconditionalPrintedStaticEffects(gameData, perm)

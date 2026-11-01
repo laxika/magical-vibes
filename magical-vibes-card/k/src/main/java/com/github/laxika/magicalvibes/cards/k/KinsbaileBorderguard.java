@@ -23,7 +23,7 @@ public class KinsbaileBorderguard extends Card {
         // Kinsbaile Borderguard enters the battlefield with a +1/+1 counter on it for each other
         // Kithkin you control. (It isn't on the battlefield yet while the amount is evaluated, so
         // the battlefield count naturally covers only the *other* Kithkin.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.KITHKIN), CountScope.CONTROLLER)));
 

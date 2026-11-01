@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +17,7 @@ public class MetamorphicAlteration extends Card {
                 "Metamorphic Alteration can only enchant a creature."
         ))
                 // As this Aura enters, choose a creature.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCreatureOnEnterEffect())
+                .addStaticEffect(new ChooseCreatureOnEnterEffect())
                 // Enchanted creature is a copy of the chosen creature.
                 .addStaticEffect(new EnchantedCreatureIsCopyOfChosenCreatureEffect());
     }

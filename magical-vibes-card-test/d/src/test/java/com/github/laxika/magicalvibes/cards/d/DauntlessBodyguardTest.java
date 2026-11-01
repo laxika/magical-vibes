@@ -50,6 +50,20 @@ class DauntlessBodyguardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing the creature as Dauntless Bodyguard enters puts no ability on the stack")
+    void creatureChoiceIsNotATriggeredAbility() {
+        Permanent baloth = addCreatureReady(player1, new BalothGorger());
+        harness.setHand(player1, List.of(new DauntlessBodyguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, baloth.getId());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Casting with no other creatures enters without choice prompt")
     void castingWithNoOtherCreaturesEntersNormally() {
         harness.setHand(player1, List.of(new DauntlessBodyguard()));

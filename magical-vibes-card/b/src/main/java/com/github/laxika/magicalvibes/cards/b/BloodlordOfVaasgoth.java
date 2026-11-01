@@ -30,7 +30,7 @@ import java.util.List;
 public class BloodlordOfVaasgoth extends Card {
 
     public BloodlordOfVaasgoth() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new OpponentDealtDamageThisTurn(1),
+        addStaticEffect(new ConditionalEffect(new OpponentDealtDamageThisTurn(1),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(

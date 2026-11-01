@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,8 +27,7 @@ import java.util.Set;
 public class ReckonerBankbuster extends Card {
 
     public ReckonerBankbuster() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

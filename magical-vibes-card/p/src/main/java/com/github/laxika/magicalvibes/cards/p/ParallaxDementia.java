@@ -17,8 +17,7 @@ public class ParallaxDementia extends Card {
 
     public ParallaxDementia() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new EnterWithCountersEffect(CounterType.FADE, new Fixed(1)))
+                .addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(1)))
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE))
                 .addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.ENCHANTED_CREATURE))

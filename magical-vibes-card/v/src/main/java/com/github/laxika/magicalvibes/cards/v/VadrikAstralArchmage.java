@@ -19,7 +19,7 @@ import java.util.List;
 public class VadrikAstralArchmage extends Card {
 
     public VadrikAstralArchmage() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
 
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

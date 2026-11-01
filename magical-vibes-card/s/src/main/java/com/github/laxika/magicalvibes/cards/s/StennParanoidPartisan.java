@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -17,7 +16,7 @@ import java.util.List;
 public class StennParanoidPartisan extends Card {
 
     public StennParanoidPartisan() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardTypeOnEnterEffect(
+        addStaticEffect(new ChooseCardTypeOnEnterEffect(
                 List.of(CardType.CREATURE, CardType.LAND)));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardHasSourceChosenCardTypePredicate(), 1, CostModificationScope.SELF));

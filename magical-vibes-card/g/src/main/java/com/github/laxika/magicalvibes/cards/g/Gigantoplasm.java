@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -25,7 +24,7 @@ public class Gigantoplasm extends Card {
                 "{X}: This creature has base power and toughness X/X.")
                 .withXValue();
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", null, null, Set.of(),
                 List.of(basePowerAndToughnessAbility)));
     }

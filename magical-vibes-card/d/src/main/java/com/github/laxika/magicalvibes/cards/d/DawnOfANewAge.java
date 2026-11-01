@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class DawnOfANewAge extends Card {
 
     public DawnOfANewAge() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.HOPE,
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
 

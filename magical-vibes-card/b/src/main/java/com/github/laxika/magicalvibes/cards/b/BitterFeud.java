@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseTwoPlayersOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageBetweenChosenPlayersEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageBetweenChosenPlay
 public class BitterFeud extends Card {
 
     public BitterFeud() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseTwoPlayersOnEnterEffect());
+        addStaticEffect(new ChooseTwoPlayersOnEnterEffect());
         addStaticEffect(new DoubleDamageBetweenChosenPlayersEffect());
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.entryfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +21,7 @@ public class UpgradeSupport {
     private final GameQueryService gameQueryService;
 
     public boolean isUpgrade(Card card) {
-        return card != null && card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        return card != null && card.getStaticEffects().stream()
                 .anyMatch(UpgradeEffect.class::isInstance);
     }
 

@@ -26,8 +26,7 @@ public class AgentsToolkit extends Card {
 
     public AgentsToolkit() {
         for (CounterType counterType : COUNTER_TYPES) {
-            addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                    new EnterWithCountersEffect(counterType, new Fixed(1)));
+            addStaticEffect(new EnterWithCountersEffect(counterType, new Fixed(1)));
         }
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

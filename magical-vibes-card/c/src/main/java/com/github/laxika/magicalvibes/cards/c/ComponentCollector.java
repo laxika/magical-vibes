@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ComponentCollector extends Card {
 
     public ComponentCollector() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         target(TargetFilters.nonlandPermanent()).addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE,
                 new MayEffect(new TapOrUntapTargetPermanentEffect(),
                         "Tap or untap target nonland permanent?"));

@@ -28,8 +28,7 @@ import java.util.List;
 public class ClockworkHydra extends Card {
 
     public ClockworkHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         var attackOrBlockEffect = ConditionalEffect.unless(
                 new AllOf(List.of(new SourceIsOnBattlefield(),

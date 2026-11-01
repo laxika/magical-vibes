@@ -16,7 +16,7 @@ public class GatheringStone extends Card {
         CardHasSourceChosenSubtypePredicate chosenType = new CardHasSourceChosenSubtypePredicate(false);
 
         // As this artifact enters, choose a creature type.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         // Spells you cast of the chosen type cost {1} less to cast.
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(chosenType, 1, CostModificationScope.SELF));

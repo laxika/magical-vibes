@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import java.util.List;
 
 /**
- * Marker effect placed in ON_ENTER_BATTLEFIELD to indicate that this permanent
+ * Static as-enters ability (CR 614.1c) to indicate that this permanent
  * requires a creature type choice as it enters the battlefield ("As ~ enters, choose a creature type.").
  */
 public record ChooseSubtypeOnEnterEffect(List<CardSubtype> allowedSubtypes, boolean opponentChooses)

@@ -21,7 +21,6 @@ public class HydroidKrasis extends Card {
     public HydroidKrasis() {
         addEffect(EffectSlot.ON_SELF_CAST, new GainLifeEffect(new Divided(new XValue(), 2)));
         addEffect(EffectSlot.ON_SELF_CAST, new DrawCardEffect(new Divided(new XValue(), 2)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }
 }

@@ -21,8 +21,7 @@ public class SleepCursedFaerie extends Card {
     public SleepCursedFaerie() {
         addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.STUN, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(3)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

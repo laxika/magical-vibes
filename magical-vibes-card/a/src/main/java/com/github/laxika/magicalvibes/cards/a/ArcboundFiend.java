@@ -20,8 +20,7 @@ import java.util.List;
 public class ArcboundFiend extends Card {
 
     public ArcboundFiend() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
         target(TargetFilters.creature()).addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new MayEffect(

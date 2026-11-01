@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class EchoingDeeps extends Card {
 
     public EchoingDeeps() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CopyPermanentOnEnterEffect.fromAnyGraveyard(
+        addStaticEffect(CopyPermanentOnEnterEffect.fromAnyGraveyard(
                 new CardTypePredicate(CardType.LAND), "land card", true, Set.of(CardSubtype.CAVE)));
         // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

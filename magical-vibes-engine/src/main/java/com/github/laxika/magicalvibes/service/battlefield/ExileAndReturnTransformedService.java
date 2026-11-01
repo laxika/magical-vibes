@@ -230,7 +230,7 @@ public class ExileAndReturnTransformedService {
         }
 
         UUID ownerId = exiled.ownerId();
-        ChooseCardTypeOnEnterEffect cardTypeChoice = backFace.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseCardTypeOnEnterEffect cardTypeChoice = backFace.getStaticEffects().stream()
                 .filter(ChooseCardTypeOnEnterEffect.class::isInstance)
                 .map(ChooseCardTypeOnEnterEffect.class::cast)
                 .filter(ChooseCardTypeOnEnterEffect::sharedWithCraftMaterials)

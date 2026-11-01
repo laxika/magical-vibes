@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class SoulEcho extends Card {
 
     public SoulEcho() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.ECHO, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.ECHO, new XValue()));
         addStaticEffect(new CantLoseGameFromLifeEffect());
 
         // The sacrifice clause is checked on resolution, not as an intervening-if, so the trigger

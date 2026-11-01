@@ -19,7 +19,7 @@ import java.util.List;
 public class StuffyDoll extends Card {
 
     public StuffyDoll() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChoosePlayerOnEnterEffect());
+        addStaticEffect(new ChoosePlayerOnEnterEffect());
 
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.CHOSEN_PLAYER));

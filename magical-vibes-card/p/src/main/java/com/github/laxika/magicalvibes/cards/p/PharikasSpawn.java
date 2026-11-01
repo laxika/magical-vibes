@@ -27,7 +27,7 @@ public class PharikasSpawn extends Card {
         addCastingOption(new GraveyardCast(null, "{5}{B}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceWasCastWithEscape(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(

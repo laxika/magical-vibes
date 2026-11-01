@@ -14,8 +14,7 @@ public class ClockworkCondor extends Card {
 
     public ClockworkCondor() {
         // This creature enters with three +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
         // Whenever this creature attacks or blocks, remove a +1/+1 counter from it at end of combat.
         addEffect(EffectSlot.ON_ATTACK,

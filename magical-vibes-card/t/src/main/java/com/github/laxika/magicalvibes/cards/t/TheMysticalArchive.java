@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
@@ -45,8 +44,7 @@ public class TheMysticalArchive extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("ODY", "171"));
 
     public TheMysticalArchive() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DraftCardFromSpellbookToExileEffect(SPELLBOOK));
+        addStaticEffect(new DraftCardFromSpellbookToExileEffect(SPELLBOOK));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         addActivatedAbility(new ActivatedAbility(true, "{1}",
                 List.of(new AwardAnyColorManaEffect(2,

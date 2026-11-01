@@ -17,8 +17,7 @@ import java.util.List;
 public class BroodguardElite extends Card {
 
     public BroodguardElite() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new PutCountersOnTargetForEachLeavingSourceCountersEffect());

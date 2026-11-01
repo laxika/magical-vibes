@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 public class WoollyRazorback extends Card {
 
     public WoollyRazorback() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.ICE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.ICE, new Fixed(3)));
 
         SourceCounterThreshold hasIceCounter = new SourceCounterThreshold(1, CounterType.ICE);
         addStaticEffect(new ConditionalEffect(hasIceCounter,

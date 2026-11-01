@@ -83,7 +83,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Aura slot for player-enchanting Curses: "Whenever a nontoken creature enchanted player controls dies".
      *  Fires once per matching Curse attached to the dying creature's controller. */
     ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES,
-    /** Marker for abilities that observe cards as they are put into exile without using the stack. */
+    /** Triggers when cards are put into exile from anywhere (The War Doctor). */
     ON_ANY_CARD_EXILED,
     /** Triggers when the source controller's commander is put into the command zone. */
     ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE,
@@ -181,13 +181,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED,
     DRAW_TRIGGERED,
     EACH_DRAW_TRIGGERED,
-    /** Marker slot: the controller may skip their turn-based draw-step draw. Detected by presence
-     *  (not effect type) in {@code StepTriggerService.handleDrawStep}, which offers the controller a
-     *  may-ability to replace the draw. Used by Fasting and Island Sanctuary. */
-    MAY_SKIP_DRAW_STEP_DRAW,
-    /** Replacement ability of a card in its owner's graveyard that may replace a card draw by
-     *  milling a fixed number of cards and returning that card to its owner's hand. */
-    GRAVEYARD_DRAW_REPLACEMENT,
     END_STEP_TRIGGERED,
     /** End-step trigger fired from a card sitting in its owner's graveyard ("At the beginning of the
      *  end step, if this card is in your graveyard …"). Fires at EVERY end step, not just the card
@@ -631,9 +624,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_COMBAT_DAMAGE_TO_SELF,
     /** Triggers once per combat damage step in which this permanent's controller is dealt combat damage. */
     ON_CONTROLLER_DEALT_COMBAT_DAMAGE,
-    ON_OPENING_HAND_REVEAL,
-    /** Special actions offered while a player is deciding whether to mulligan. */
-    MULLIGAN_ACTION,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     ON_ANY_PLAYER_SHUFFLES_LIBRARY,
@@ -1390,38 +1380,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
      *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
     ON_SELF_CAST,
-    /** Marker slot for a permanent that gives its controller's instant and sorcery spells storm. */
-    GRANT_STORM_TO_INSTANT_OR_SORCERY,
-    /** Marker slot: "The first spell you cast each turn has cascade." Holds a {@code CascadeEffect};
-     *  detected by presence (not effect type) in {@code TriggerCollectionService.checkSpellCastTriggers},
-     *  which — when the casting player casts their first spell of the turn — queues that CascadeEffect as
-     *  a triggered ability keyed to the just-cast spell (so the cascade threshold is the spell's mana
-     *  value, not this permanent's). Used by Maelstrom Nexus. */
-    GRANT_CASCADE_TO_FIRST_SPELL,
-    /** Marker slot: "The first spell you cast each turn that mana from a Treasure was spent to cast
-     *  has cascade." Holds a {@code CascadeEffect}; detected by presence on the casting player's
-     *  battlefield when the first Treasure-mana-funded spell of the turn is cast. */
-    GRANT_CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA,
-    /** Marker slot: "Instant and sorcery spells you cast from your hand have cascade." Holds a
-     *  {@code CascadeEffect}; detected by presence on the casting player's battlefield when an
-     *  instant or sorcery is cast from hand. */
-    GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND,
-    /** Marker slot: "Enchantment spells you cast from your hand have cascade." Holds a
-     *  {@code CascadeEffect}; detected by {@code TriggerCollectionService.checkSpellCastTriggers}
-     *  when an enchantment is cast from hand. */
-    GRANT_CASCADE_TO_ENCHANTMENT_FROM_HAND,
-    /** Marker slot: "Sliver spells you cast have cascade." Holds a {@code CascadeEffect};
-     *  detected by presence on the casting player's battlefield when a Sliver spell is cast. */
-    GRANT_CASCADE_TO_SLIVER_SPELL,
-    /** Marker slot: "The first spell you cast from anywhere other than your hand each turn has
-     *  demonstrate." Holds a {@code MayEffect} wrapping {@code DemonstrateEffect}; detected by
-     *  {@code TriggerCollectionService.checkSpellCastTriggers} when the outside-hand cast count
-     *  for the casting player becomes one. */
-    GRANT_DEMONSTRATE_TO_FIRST_SPELL_FROM_OUTSIDE_HAND,
-    /** Marker slot: during your turn, hand-cast spells with mana value at most the life lost by
-     *  your opponents this turn have cascade. Holds a {@code CascadeEffect}; detected by presence
-     *  on the casting player's battlefield when a qualifying spell is cast. */
-    GRANT_CASCADE_TO_HAND_SPELLS_WITH_MANA_VALUE_AT_MOST_OPPONENTS_LIFE_LOST,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller

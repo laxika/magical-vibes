@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -29,8 +28,7 @@ public class ImposterMech extends Card {
                 "Crew 3");
         addActivatedAbility(crewAbility);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                CopyPermanentOnEnterEffect.withCardTypesOverride(
+        addStaticEffect(CopyPermanentOnEnterEffect.withCardTypesOverride(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),

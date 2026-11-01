@@ -22,7 +22,7 @@ public class PrimoTheUnbounded extends Card {
 
     public PrimoTheUnbounded() {
         // Primo enters with twice X +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Scaled(new XValue(), 2)));
 
         // Whenever one or more creatures you control with base power 0 deal combat damage to a

@@ -18,7 +18,7 @@ import java.util.List;
 public class GavonyDawnguard extends Card {
 
     public GavonyDawnguard() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
         addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4,

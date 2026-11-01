@@ -550,7 +550,7 @@ public final class EffectResolution {
      * to cast the permanent.
      */
     public static boolean hasColorsSpentCounterEffect(Card card) {
-        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(effect -> {
                     if (effect instanceof EnterWithCountersEffect enterWith) {
                         return enterWith.countColorsSpent();
@@ -562,14 +562,15 @@ public final class EffectResolution {
     }
 
     /**
-     * Returns true if a spell or its battlefield-entry effect is gated on which mana color was
+     * Returns true if a spell, its enters trigger or its "enters with" ability is gated on which mana color was
      * spent to cast it ({@link com.github.laxika.magicalvibes.model.condition.ColorSpentToCast}).
      * Signals that spell payment must snapshot the colors and amounts of mana spent (e.g. Repel
      * Intruders and Catharsis).
      */
     public static boolean hasColorSpentCondition(Card card) {
-        return java.util.stream.Stream.concat(card.getCastingCostsAndSpellEffects().stream(),
-                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream())
+        return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
+                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), card.getStaticEffects())
+                .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesColorSpentMana);
     }
 
@@ -596,13 +597,14 @@ public final class EffectResolution {
     }
 
     /**
-     * Returns true if a spell or its battlefield-entry effect reads the number of complete pairs of
+     * Returns true if a spell, its enters trigger or its "enters with" ability reads the number of complete pairs of
      * one color spent to cast it. The cast path must retain the per-color payment snapshot until
      * the permanent's entry replacements and entry triggers have resolved.
      */
     public static boolean hasColorManaPairsSpentToCastAmount(Card card) {
-        return java.util.stream.Stream.concat(card.getCastingCostsAndSpellEffects().stream(),
-                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream())
+        return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
+                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), card.getStaticEffects())
+                .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesColorManaPairsSpentToCast);
     }
 
@@ -651,13 +653,14 @@ public final class EffectResolution {
     }
 
     /**
-     * True when any spell, self-cast, or battlefield-entry effect reads {@link ManaSpentToCast} — the cast path
+     * True when any spell, self-cast, enters-trigger or "enters with" effect reads {@link ManaSpentToCast} — the cast path
      * must snapshot total mana spent into the stack entry's {@code xValue}.
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
-        return java.util.stream.Stream.concat(card.getCastingCostsAndSpellEffects().stream(),
-                        java.util.stream.Stream.of(EffectSlot.ON_SELF_CAST, EffectSlot.ON_ENTER_BATTLEFIELD)
-                                .flatMap(slot -> card.getEffects(slot).stream()))
+        return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
+                        card.getEffects(EffectSlot.ON_SELF_CAST), card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                        card.getStaticEffects())
+                .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesManaSpentToCast);
     }
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
@@ -18,7 +17,7 @@ import java.util.List;
 public class KilnmouthDragon extends Card {
 
     public KilnmouthDragon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmplifyEffect(
+        addStaticEffect(new AmplifyEffect(
                 3, new CardSharesCreatureTypeWithSourcePredicate()));
 
         addActivatedAbility(new ActivatedAbility(

@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 
 @CardRegistration(set = "SOS", collectorNumber = "218")
 public class QuandrixTheProof extends Card {
@@ -14,6 +16,7 @@ public class QuandrixTheProof extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
 
         // Instant and sorcery spells cast from its controller's hand have cascade.
-        addEffect(EffectSlot.GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND, new CascadeEffect());
+        addStaticEffect(new GrantCastTriggerToSpellsEffect(
+                SpellCastTriggerGrant.CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND, new CascadeEffect()));
     }
 }

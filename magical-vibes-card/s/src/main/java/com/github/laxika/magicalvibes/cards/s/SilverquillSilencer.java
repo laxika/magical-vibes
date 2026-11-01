@@ -17,8 +17,7 @@ import java.util.List;
 public class SilverquillSilencer extends Card {
 
     public SilverquillSilencer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCardNameOnEnterEffect(List.of(CardType.LAND)));
+        addStaticEffect(new ChooseCardNameOnEnterEffect(List.of(CardType.LAND)));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(

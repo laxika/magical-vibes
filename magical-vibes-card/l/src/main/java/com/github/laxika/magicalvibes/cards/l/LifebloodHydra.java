@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class LifebloodHydra extends Card {
 
     public LifebloodHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
                 new GainLifeEffect(new EventValue()),
                 new DrawCardEffect(new EventValue())));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.entryfx;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -76,7 +75,7 @@ public class LoseLifeEqualToLifeTotalAsEntersEffectHandler implements EntryRepla
      */
     public boolean askBeforeResolving(GameData gameData, StackEntry entry) {
         if (!PERMANENT_SPELLS.contains(entry.getEntryType()) || entry.getCard() == null
-                || entry.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                || entry.getCard().getStaticEffects().stream()
                 .noneMatch(LoseLifeEqualToLifeTotalAsEntersEffect.class::isInstance)) {
             return false;
         }
@@ -99,7 +98,7 @@ public class LoseLifeEqualToLifeTotalAsEntersEffectHandler implements EntryRepla
      */
     public boolean askBeforeEntering(GameData gameData, BattlefieldEntryRequest request) {
         Permanent entering = request.permanent();
-        if (entering.isFaceDown() || entering.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        if (entering.isFaceDown() || entering.getCard().getStaticEffects().stream()
                 .noneMatch(LoseLifeEqualToLifeTotalAsEntersEffect.class::isInstance)
                 || gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, request.controllerId(), entering)) {
             return false;

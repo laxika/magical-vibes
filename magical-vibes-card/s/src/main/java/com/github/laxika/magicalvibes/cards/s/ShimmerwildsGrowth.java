@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ShimmerwildsGrowth extends Card {
 
     public ShimmerwildsGrowth() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         target(TargetFilters.land())
                 .addStaticEffect(new EnchantedPermanentBecomesChosenColorEffect())
                 .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,

@@ -26,8 +26,7 @@ public class Tetravus extends Card {
         // Flying — loaded from Scryfall.
 
         // "This creature enters with three +1/+1 counters on it."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
         // 1/1 colorless Tetravite artifact creature token with flying and "This token can't be enchanted."
         CreateTokenEffect tetravite = new CreateTokenEffect(1, "Tetravite", 1, 1, null,

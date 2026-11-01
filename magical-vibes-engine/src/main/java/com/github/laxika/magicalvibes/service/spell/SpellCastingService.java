@@ -6022,7 +6022,7 @@ public class SpellCastingService {
                     ? new ManaPool(gameData.playerManaPools.get(playerId)) : null;
             // Converge or Sunburst on a permanent: snapshot the pool before payment so the number
             // of distinct colors spent can be counted after it, then carry that count as the stack
-            // entry's X — which is what an ON_ENTER_BATTLEFIELD EnterWithCountersEffect(XValue)
+            // entry's X — which is what a static "enters with" EnterWithCountersEffect(XValue)
             // reads. Sunburst still needs this snapshot when the card also has a real {X} cost.
             boolean needsConvergeValue = card.getKeywords().contains(Keyword.SUNBURST)
                     || EffectResolution.hasColorsSpentCounterEffect(card)

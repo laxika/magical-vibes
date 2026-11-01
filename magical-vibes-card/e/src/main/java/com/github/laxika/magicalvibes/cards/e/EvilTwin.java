@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class EvilTwin extends Card {
 
     public EvilTwin() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature",
                 null, null, Set.of(),
                 List.of(new ActivatedAbility(

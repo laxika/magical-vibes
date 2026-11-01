@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class EntropicSpecter extends Card {
 
     public EntropicSpecter() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
 
         CardsInHand chosenOpponentHand = new CardsInHand(CountScope.CHOSEN_PLAYER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(chosenOpponentHand, chosenOpponentHand));

@@ -20,8 +20,7 @@ public class AinokGuide extends Card {
     private static final String LAND_MODE = "Search your library for a basic land card, reveal it, then shuffle and put that card on top";
 
     public AinokGuide() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(COUNTER_MODE, LAND_MODE)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(COUNTER_MODE, LAND_MODE)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new SourceHasChosenMode(COUNTER_MODE),

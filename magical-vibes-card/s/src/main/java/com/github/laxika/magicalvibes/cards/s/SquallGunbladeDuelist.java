@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEff
 public class SquallGunbladeDuelist extends Card {
 
     public SquallGunbladeDuelist() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNumberOnEnterEffect(0, 20));
+        addStaticEffect(new ChooseNumberOnEnterEffect(0, 20));
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
                 new ConditionalEffect(
                         new PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber(),

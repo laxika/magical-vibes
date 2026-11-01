@@ -29,8 +29,7 @@ public class BattleOfHooverDam extends Card {
     private static final String LEGION = "Legion";
 
     public BattleOfHooverDam() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(NCR, LEGION)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(NCR, LEGION)));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new SourceHasChosenMode(NCR), ReturnCardFromGraveyardEffect.builder()

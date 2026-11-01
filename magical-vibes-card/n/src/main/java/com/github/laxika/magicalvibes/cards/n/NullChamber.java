@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithChosenNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNames
 public class NullChamber extends Card {
 
     public NullChamber() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new YouAndOpponentChooseCardNamesOnEnterEffect());
+        addStaticEffect(new YouAndOpponentChooseCardNamesOnEnterEffect());
         addStaticEffect(new SpellsAndLandsWithChosenNamesCantBePlayedEffect());
     }
 }

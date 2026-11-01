@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class VoraciousBrood extends Card {
 
     public VoraciousBrood() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
 

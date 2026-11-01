@@ -36,8 +36,7 @@ public class SanctuaryWarden extends Card {
                     new PermanentIsPlaneswalkerPredicate()))));
 
     public SanctuaryWarden() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(2)));
 
         CreateTokenEffect citizenToken = new CreateTokenEffect(
                 "Citizen", 1, 1, CardColor.GREEN,

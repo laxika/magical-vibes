@@ -18,7 +18,7 @@ import java.util.List;
 public class MoltenEchoes extends Card {
 
     public MoltenEchoes() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

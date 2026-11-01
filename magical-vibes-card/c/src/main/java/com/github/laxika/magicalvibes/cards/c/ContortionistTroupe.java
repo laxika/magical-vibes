@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ContortionistTroupe extends Card {
 
     public ContortionistTroupe() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new Coven(),

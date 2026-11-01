@@ -17,8 +17,7 @@ import java.util.List;
 public class DefenderEnVec extends Card {
 
     public DefenderEnVec() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(4)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));

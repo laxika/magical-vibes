@@ -32,7 +32,7 @@ public class IndominusRexAlpha extends Card {
     );
 
     public IndominusRexAlpha() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardCreatureCardsAsEntersForKeywordCountersEffect(
+        addStaticEffect(new DiscardCreatureCardsAsEntersForKeywordCountersEffect(
                 new CardTypePredicate(CardType.CREATURE), KEYWORD_COUNTERS));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(new AllCountersOnSource()));
     }

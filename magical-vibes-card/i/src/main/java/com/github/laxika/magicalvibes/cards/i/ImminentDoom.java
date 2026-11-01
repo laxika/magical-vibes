@@ -20,7 +20,7 @@ public class ImminentDoom extends Card {
 
     public ImminentDoom() {
         // This enchantment enters with a doom counter on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.DOOM, new Fixed(1)));
 
         // Whenever you cast a spell with mana value equal to the number of doom counters on this

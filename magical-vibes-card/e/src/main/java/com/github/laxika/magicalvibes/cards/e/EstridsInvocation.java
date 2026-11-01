@@ -22,7 +22,7 @@ import java.util.Set;
 public class EstridsInvocation extends Card {
 
     public EstridsInvocation() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentControlledBySourceControllerPredicate()

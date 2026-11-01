@@ -21,8 +21,7 @@ import java.util.Set;
 public class DyadrineSynthesisAmalgam extends Card {
 
     public DyadrineSynthesisAmalgam() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new ManaSpentToCast()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new ManaSpentToCast()));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new MayEffect(
                         new RemoveCounterFromTwoCreaturesThenEffect(

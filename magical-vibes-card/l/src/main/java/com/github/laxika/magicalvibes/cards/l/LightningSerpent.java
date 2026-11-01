@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class LightningSerpent extends Card {
 
     public LightningSerpent() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new XValue()));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect());
     }
 }

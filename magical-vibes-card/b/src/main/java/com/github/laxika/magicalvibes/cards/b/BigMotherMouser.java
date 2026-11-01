@@ -20,8 +20,7 @@ import java.util.Set;
 public class BigMotherMouser extends Card {
 
     public BigMotherMouser() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
         addEffect(EffectSlot.ON_ATTACK, new DoublePlusOneCountersOnSourceEffect());
         addEffect(EffectSlot.ON_DEATH, new CreateTokensForEachDyingSourceCounterEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,

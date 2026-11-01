@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -17,7 +16,7 @@ import java.util.Set;
 public class SynthInfiltrator extends Card {
 
     public SynthInfiltrator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature",
                 Set.of(CardType.ARTIFACT, CardType.CREATURE), Set.of(CardSubtype.SYNTH)
         ));

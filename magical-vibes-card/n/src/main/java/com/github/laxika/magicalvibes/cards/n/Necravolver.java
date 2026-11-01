@@ -27,12 +27,12 @@ public class Necravolver extends Card {
         addStaticEffect(new KickerEffect("{1}{G}"));
         addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{W}")));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{W}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(

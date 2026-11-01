@@ -19,8 +19,7 @@ import java.util.List;
 public class GyrusWakerOfCorpses extends Card {
 
     public GyrusWakerOfCorpses() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new ManaSpentToCast()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new ManaSpentToCast()));
 
         var lesserPowerCreature = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

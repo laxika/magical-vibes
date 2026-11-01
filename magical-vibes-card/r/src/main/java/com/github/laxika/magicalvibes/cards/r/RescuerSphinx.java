@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,8 +22,7 @@ public class RescuerSphinx extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayReturnPermanentToHandAndEnterWithCountersEffect(
+        addStaticEffect(new MayReturnPermanentToHandAndEnterWithCountersEffect(
                         filter, CounterType.PLUS_ONE_PLUS_ONE, 1, "a nonland permanent"));
     }
 }

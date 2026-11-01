@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
@@ -40,7 +39,7 @@ public class ChainwebAracnir extends Card {
         addCastingOption(new GraveyardCast(null, "{3}{G}{G}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4)), null, false, false, true));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceWasCastWithEscape(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
     }

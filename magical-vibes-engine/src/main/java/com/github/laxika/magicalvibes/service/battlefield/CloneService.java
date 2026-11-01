@@ -176,7 +176,7 @@ public class CloneService {
                 || findGraveyardCopyEffect(card) != null || findFixedGraveyardCopyEffect(card) != null) {
             return true;
         }
-        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(CopyCreatureCardInExileOnEnterEffect.class::isInstance);
     }
 
@@ -529,7 +529,7 @@ public class CloneService {
     }
 
     private CopyCreatureCardInGraveyardOnEnterEffect findGraveyardCopyEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof CopyCreatureCardInGraveyardOnEnterEffect copyEffect) {
                 return copyEffect;
             }
@@ -538,7 +538,7 @@ public class CloneService {
     }
 
     private MimeoplasmCopyOnEnterEffect findMimeoplasmEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof MimeoplasmCopyOnEnterEffect copyEffect) {
                 return copyEffect;
             }
@@ -547,7 +547,7 @@ public class CloneService {
     }
 
     private CopyCreatureCardFromGraveyardOnEnterEffect findFixedGraveyardCopyEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof CopyCreatureCardFromGraveyardOnEnterEffect copyEffect) {
                 return copyEffect;
             }
@@ -557,7 +557,7 @@ public class CloneService {
 
     private CopyPermanentOnEnterEffect findCopyEffect(GameData gameData, UUID controllerId, Card card) {
         ConditionContext conditionContext = ConditionContext.forCard(card, controllerId);
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof CopyPermanentOnEnterEffect copyEffect) {
                 return copyEffect;
             }
@@ -770,8 +770,7 @@ public class CloneService {
                 }
                 if (addVanishingIfCopiedPermanentLacksIt && !copiedPermanentHasVanishing) {
                     applyAdditionalCopyCharacteristics(perm.getCard(), Set.of(), Set.of(Keyword.VANISHING));
-                    perm.getCard().addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                            new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+                    perm.getCard().addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
                     perm.getCard().addEffect(EffectSlot.UPKEEP_TRIGGERED,
                             new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
                 }

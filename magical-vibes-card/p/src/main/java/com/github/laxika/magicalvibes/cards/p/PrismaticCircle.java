@@ -15,7 +15,7 @@ public class PrismaticCircle extends Card {
 
     public PrismaticCircle() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

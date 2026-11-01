@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
@@ -19,7 +18,7 @@ public class RadiantDestiny extends Card {
 
     public RadiantDestiny() {
         addStaticEffect(new AscendEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES,

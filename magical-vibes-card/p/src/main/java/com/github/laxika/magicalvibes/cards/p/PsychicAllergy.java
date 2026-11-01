@@ -25,7 +25,7 @@ import java.util.List;
 public class PsychicAllergy extends Card {
 
     public PsychicAllergy() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
 
         var nontokenPermanentOfChosenColor = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSourceChosenColorPredicate(),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -21,8 +20,7 @@ import java.util.List;
 public class AstralCornucopia extends Card {
 
     public AstralCornucopia() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

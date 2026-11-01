@@ -27,8 +27,7 @@ public class PhenomenonInvestigators extends Card {
     private static final String DOUBT = "Doubt";
 
     public PhenomenonInvestigators() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(BELIEVE, DOUBT)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(BELIEVE, DOUBT)));
 
         // Believe: "a nontoken creature you control" includes this creature, so it also triggers on its own death.
         var believeHorror = new ConditionalEffect(new SourceHasChosenMode(BELIEVE),

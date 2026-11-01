@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachTokenOfC
 public class RenewedSolidarity extends Card {
 
     public RenewedSolidarity() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 0));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new CreateTokenCopyOfEachTokenOfChosenSubtypeEnteredThisTurnEffect());

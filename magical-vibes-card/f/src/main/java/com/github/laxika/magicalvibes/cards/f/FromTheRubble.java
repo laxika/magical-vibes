@@ -19,7 +19,7 @@ import java.util.List;
 public class FromTheRubble extends Card {
 
     public FromTheRubble() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

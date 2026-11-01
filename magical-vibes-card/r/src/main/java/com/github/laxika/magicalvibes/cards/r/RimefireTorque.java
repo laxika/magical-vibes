@@ -19,7 +19,7 @@ import java.util.List;
 public class RimefireTorque extends Card {
 
     public RimefireTorque() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSourceChosenSubtypePredicate(),

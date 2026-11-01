@@ -26,8 +26,7 @@ public class RocHatchling extends Card {
 
     public RocHatchling() {
         // This creature enters with four shell counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SHELL, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SHELL, new Fixed(4)));
 
         // At the beginning of your upkeep, remove a shell counter from this creature.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

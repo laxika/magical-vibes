@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -12,6 +11,6 @@ public class Shenanigans extends Card {
 
     public Shenanigans() {
         target(TargetFilters.artifact()).addSpellEffect(new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(1));
+        addStaticEffect(new DredgeEffect(1));
     }
 }

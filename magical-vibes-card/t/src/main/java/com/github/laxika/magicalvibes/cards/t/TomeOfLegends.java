@@ -24,8 +24,7 @@ import java.util.List;
 public class TomeOfLegends extends Card {
 
     public TomeOfLegends() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PAGE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PAGE, new Fixed(1)));
 
         PutCountersOnSelfEffect addPageCounter = new PutCountersOnSelfEffect(CounterType.PAGE);
         PermanentIsCommanderPredicate yourCommander = new PermanentIsCommanderPredicate(true);

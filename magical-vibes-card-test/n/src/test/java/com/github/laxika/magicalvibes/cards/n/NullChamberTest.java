@@ -51,6 +51,22 @@ class NullChamberTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Naming the cards as Null Chamber enters puts no ability on the stack")
+    void nameChoicesAreNotATriggeredAbility() {
+        harness.setHand(player1, List.of(new NullChamber(), new NobleElephant()));
+        harness.setHand(player2, List.of(new BadRiver()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Bad River");
+        harness.handleListChoice(player2, "Noble Elephant");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Null Chamber");
+    }
+
+    @Test
     @DisplayName("Basic land names are not offered as choices")
     void basicLandNamesAreNotOffered() {
         harness.setHand(player1, List.of(new NullChamber(), new NobleElephant()));

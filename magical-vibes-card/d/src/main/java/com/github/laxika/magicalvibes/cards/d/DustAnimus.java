@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -27,11 +26,9 @@ public class DustAnimus extends Card {
 
     public DustAnimus() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{W}"))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new ControlsPermanentCount(5, UNTAPPED_LAND),
+        addStaticEffect(new ConditionalEffect(new ControlsPermanentCount(5, UNTAPPED_LAND),
                         new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new ControlsPermanentCount(5, UNTAPPED_LAND),
+        addStaticEffect(new ConditionalEffect(new ControlsPermanentCount(5, UNTAPPED_LAND),
                         new EnterWithCountersEffect(CounterType.LIFELINK, new Fixed(1))));
     }
 }

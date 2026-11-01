@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -21,8 +20,7 @@ import java.util.List;
 public class EngineeredExplosives extends Card {
 
     public EngineeredExplosives() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new XValue(), true));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue(), true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

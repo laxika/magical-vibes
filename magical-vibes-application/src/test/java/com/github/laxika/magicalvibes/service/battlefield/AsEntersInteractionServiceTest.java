@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
@@ -76,7 +75,7 @@ class AsEntersInteractionServiceTest {
     @Test
     void parityChoiceDefersCreatureEnterTriggersAndPreservesCastContext() {
         Card card = creature("Parity Creature");
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseManaValueParityOnEnterEffect());
+        card.addStaticEffect(new ChooseManaValueParityOnEnterEffect());
         Permanent entering = new Permanent(card);
         gameData.playerBattlefields.get(controllerId).add(entering);
         UUID target = UUID.randomUUID();
@@ -110,7 +109,7 @@ class AsEntersInteractionServiceTest {
     @Test
     void chooseAnotherCreatureStartsEntryChoiceBeforeEtbTriggers() {
         Card card = creature("Bodyguard");
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseAnotherCreatureOnEnterEffect());
+        card.addStaticEffect(new ChooseAnotherCreatureOnEnterEffect());
         Permanent other = new Permanent(creature("Other Creature"));
         Permanent entering = new Permanent(card);
         gameData.playerBattlefields.get(controllerId).add(other);
@@ -129,8 +128,7 @@ class AsEntersInteractionServiceTest {
     @Test
     void chooseCounterTypesStartsTheRequiredNumberOfDistinctChoices() {
         Card card = creature("Grimdancer");
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCounterTypeOnEnterEffect(2,
+        card.addStaticEffect(new ChooseCounterTypeOnEnterEffect(2,
                         CounterType.MENACE, CounterType.DEATHTOUCH, CounterType.LIFELINK));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
 

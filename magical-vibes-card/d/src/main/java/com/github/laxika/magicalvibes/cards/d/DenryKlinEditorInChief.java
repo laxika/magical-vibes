@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreature
 public class DenryKlinEditorInChief extends Card {
 
     public DenryKlinEditorInChief() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCounterTypeOnEnterEffect(
+        addStaticEffect(new ChooseCounterTypeOnEnterEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, CounterType.FIRST_STRIKE, CounterType.VIGILANCE));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
                 new ConditionalEffect(

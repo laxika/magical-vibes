@@ -21,7 +21,7 @@ public class EmeritusOfIdeationAncestralRecall extends Card {
     public EmeritusOfIdeationAncestralRecall() {
         setBackFaceCard(new AncestralRecall());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
         addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.unless(
                 new GraveyardCardThreshold(8, null),
                 new MayEffect(

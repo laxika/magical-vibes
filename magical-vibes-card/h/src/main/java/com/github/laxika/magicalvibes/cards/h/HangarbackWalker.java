@@ -26,8 +26,7 @@ public class HangarbackWalker extends Card {
 
     public HangarbackWalker() {
         // This creature enters with X +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         // When this creature dies, create a 1/1 colorless Thopter artifact creature token
         // with flying for each +1/+1 counter on this creature.

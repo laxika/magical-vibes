@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -15,7 +14,7 @@ import java.util.List;
 public class QuicksilverBrashBlur extends Card {
 
     public QuicksilverBrashBlur() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Quicksilver, Brash Blur on the battlefield?"));
 

@@ -40,7 +40,7 @@ public class WoeStrider extends Card {
         addCastingOption(new GraveyardCast(null, "{3}{B}{B}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4)), null, false, false, true));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceWasCastWithEscape(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
     }

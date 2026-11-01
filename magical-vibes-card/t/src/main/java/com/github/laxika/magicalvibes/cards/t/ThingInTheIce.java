@@ -38,8 +38,7 @@ public class ThingInTheIce extends Card {
         setBackFaceCard(new AwokenHorror());
 
         // This creature enters with four ice counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.ICE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.ICE, new Fixed(4)));
 
         // Whenever you cast an instant or sorcery spell, remove an ice counter from this creature.
         // Then if it has no ice counters on it, transform it.

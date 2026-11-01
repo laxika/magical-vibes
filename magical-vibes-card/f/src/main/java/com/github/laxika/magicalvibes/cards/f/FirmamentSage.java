@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class FirmamentSage extends Card {
 
     public FirmamentSage() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE, new DrawCardEffect());
     }
 }

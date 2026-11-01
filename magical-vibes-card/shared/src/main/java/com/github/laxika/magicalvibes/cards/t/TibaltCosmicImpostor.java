@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -28,7 +27,7 @@ public class TibaltCosmicImpostor extends Card {
                         true, null, false, false, 0, null,
                         false, false, false, true);
         addStaticEffect(permission);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateEmblemAsEntersEffect(new CreateEmblemEffect(
+        addStaticEffect(new CreateEmblemAsEntersEffect(new CreateEmblemEffect(
                 List.of(permission),
                 "You may play cards exiled with Tibalt, Cosmic Impostor, and you may spend mana as though it were mana of any color to cast those spells."
         )));

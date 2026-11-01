@@ -119,7 +119,7 @@ public class PermanentCopierService {
             return permanent.getOriginalCard();
         }
         FlipCoinOnEnterEffect entryFlip = permanent.getEntryCoinFlipHeads() == null ? null
-                : original.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                : original.getStaticEffects().stream()
                         .filter(FlipCoinOnEnterEffect.class::isInstance)
                         .map(FlipCoinOnEnterEffect.class::cast)
                         .findFirst().orElse(null);
@@ -136,7 +136,7 @@ public class PermanentCopierService {
             formCopy.setKeywords(keywords);
             return formCopy;
         }
-        if (original.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        if (original.getStaticEffects().stream()
                 .noneMatch(ChooseIndependentModesOnEnterEffect.class::isInstance)) {
             return original;
         }

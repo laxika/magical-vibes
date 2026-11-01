@@ -22,8 +22,7 @@ public class PrimordialHydra extends Card {
 
     public PrimordialHydra() {
         // This creature enters with X +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         // At the beginning of your upkeep, double the number of +1/+1 counters on this creature:
         // add as many as it already has.

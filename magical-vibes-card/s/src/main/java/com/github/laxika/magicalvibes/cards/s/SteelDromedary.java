@@ -18,8 +18,7 @@ public class SteelDromedary extends Card {
 
     public SteelDromedary() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
         addStaticEffect(new DoesntUntapWithCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         target(TargetFilters.creature())

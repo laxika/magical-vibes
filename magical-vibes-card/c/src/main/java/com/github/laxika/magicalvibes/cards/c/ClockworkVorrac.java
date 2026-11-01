@@ -18,8 +18,7 @@ import java.util.List;
 public class ClockworkVorrac extends Card {
 
     public ClockworkVorrac() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),

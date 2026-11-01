@@ -26,8 +26,7 @@ public class LivingLore extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
         var exiledManaValue = new GreatestManaValueAmongCardsExiledWithSource();
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileCardFromGraveyardOnEnterEffect(instantOrSorcery));
+        addStaticEffect(new ExileCardFromGraveyardOnEnterEffect(instantOrSorcery));
         addStaticEffect(new SetPowerToughnessToAmountEffect(exiledManaValue, exiledManaValue));
         addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                 new MayEffect(

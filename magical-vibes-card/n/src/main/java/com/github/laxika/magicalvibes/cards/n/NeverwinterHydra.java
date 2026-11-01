@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RollDiceAndEnterWithCountersE
 public class NeverwinterHydra extends Card {
 
     public NeverwinterHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new RollDiceAndEnterWithCountersEffect(new XValue(), 6, CounterType.PLUS_ONE_PLUS_ONE));
+        addStaticEffect(new RollDiceAndEnterWithCountersEffect(new XValue(), 6, CounterType.PLUS_ONE_PLUS_ONE));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(4));
     }

@@ -21,7 +21,7 @@ import java.util.Set;
 public class LeylineOfResonance extends Card {
 
     public LeylineOfResonance() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Resonance on the battlefield?"
         ));

@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 public class EternityVessel extends Card {
 
     public EternityVessel() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new ControllerLifeTotal()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new ControllerLifeTotal()));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new MayEffect(
                         new SetLifeTotalEffect(new CountersOnSource(CounterType.CHARGE)),

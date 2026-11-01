@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class CircleOfAffliction extends Card {
 
     public CircleOfAffliction() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addEffect(EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE,
                 new MayPayManaEffect("{1}",
                         SequenceEffect.of(

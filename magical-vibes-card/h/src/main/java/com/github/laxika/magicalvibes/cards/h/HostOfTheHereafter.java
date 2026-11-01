@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class HostOfTheHereafter extends Card {
 
     public HostOfTheHereafter() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
 
         var deathTrigger = target(TargetFilters.creatureYouControl(), 0, 1);
         deathTrigger.addEffect(EffectSlot.ON_DEATH,

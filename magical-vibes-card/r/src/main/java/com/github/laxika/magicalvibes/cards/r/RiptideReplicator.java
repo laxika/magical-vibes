@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
@@ -18,10 +17,9 @@ import java.util.List;
 public class RiptideReplicator extends Card {
 
     public RiptideReplicator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+        addStaticEffect(new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",

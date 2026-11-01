@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -22,7 +21,7 @@ public class JoragaWarcaller extends Card {
 
     public JoragaWarcaller() {
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{G}")));
         addStaticEffect(new StaticBoostEffect(
                 1, 1, Set.of(), GrantScope.OWN_CREATURES,

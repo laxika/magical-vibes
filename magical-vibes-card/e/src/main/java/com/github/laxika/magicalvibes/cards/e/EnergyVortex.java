@@ -20,7 +20,7 @@ public class EnergyVortex extends Card {
     public EnergyVortex() {
         // "As this enchantment enters, choose an opponent." The chosen player is recorded on entry and
         // keeps being the chosen player if control of the enchantment changes.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveAllCountersEffect(CounterType.VORTEX));
 

@@ -18,8 +18,7 @@ import java.util.List;
 public class ParallaxTide extends Card {
 
     public ParallaxTide() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(5)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));

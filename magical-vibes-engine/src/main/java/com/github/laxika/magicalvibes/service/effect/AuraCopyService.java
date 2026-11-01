@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -55,7 +54,7 @@ public class AuraCopyService {
      */
     public boolean beginChooseCreatureOnEnter(GameData gameData, UUID controllerId, Permanent entered,
                                               Card card, UUID targetId, boolean wasCastFromHand) {
-        boolean needsChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsChoice = card.getStaticEffects().stream()
                 .anyMatch(ChooseCreatureOnEnterEffect.class::isInstance);
         if (!needsChoice) {
             return false;

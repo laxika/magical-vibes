@@ -32,7 +32,6 @@ public class RampagingYaoGuai extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         DestroyTargetPermanentsWithinTotalManaValueEffect.withinTotalManaValue(
                                 artifactOrEnchantment, new XValue()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }
 }

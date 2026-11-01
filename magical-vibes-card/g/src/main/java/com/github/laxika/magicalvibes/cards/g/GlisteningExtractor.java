@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class GlisteningExtractor extends Card {
 
     public GlisteningExtractor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OIL, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(4)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.OIL),

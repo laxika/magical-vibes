@@ -20,8 +20,7 @@ import java.util.Set;
 public class ParadoxZone extends Card {
 
     public ParadoxZone() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.GROWTH, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.GROWTH, new Fixed(1)));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.GROWTH,

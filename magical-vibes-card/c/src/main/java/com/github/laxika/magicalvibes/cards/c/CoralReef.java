@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -28,7 +27,7 @@ public class CoralReef extends Card {
 
     public CoralReef() {
         // This enchantment enters with four polyp counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.POLYP, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.POLYP, new Fixed(4)));
 
         // Sacrifice an Island: Put two polyp counters on this enchantment.
         addActivatedAbility(new ActivatedAbility(

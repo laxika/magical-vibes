@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -22,8 +21,7 @@ public class Fylgja extends Card {
         target(TargetFilters.creature());
 
         // This Aura enters with four healing counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.HEALING, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.HEALING, new Fixed(4)));
 
         // Remove a healing counter from this Aura: Prevent the next 1 damage that would be
         // dealt to enchanted creature this turn.

@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 public class SavageFirecat extends Card {
 
     public SavageFirecat() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(7)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(7)));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                 new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }

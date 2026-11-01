@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 public class HeirloomAuntie extends Card {
 
     public HeirloomAuntie() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(2)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new SurveilEffect(1));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));

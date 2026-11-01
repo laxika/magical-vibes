@@ -16,8 +16,7 @@ public class CrowdControlWarden extends Card {
     public CrowdControlWarden() {
         PermanentCount otherCreatures = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, otherCreatures));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, otherCreatures));
         addMorph("{3}{G/W}{G/W}");
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(otherCreatures));
     }

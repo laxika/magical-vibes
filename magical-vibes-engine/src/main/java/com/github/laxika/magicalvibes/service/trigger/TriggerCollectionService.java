@@ -146,6 +146,8 @@ import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
@@ -953,8 +955,7 @@ public class TriggerCollectionService {
             if (casterBattlefield != null) {
                 for (Permanent perm : new ArrayList<>(casterBattlefield)) {
                     if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(
-                            EffectSlot.GRANT_DEMONSTRATE_TO_FIRST_SPELL_FROM_OUTSIDE_HAND);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.DEMONSTRATE_TO_FIRST_SPELL_FROM_OUTSIDE_HAND);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry entry = new StackEntry(
@@ -1488,8 +1489,7 @@ public class TriggerCollectionService {
                     GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
                     if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
                             || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(
-                            EffectSlot.GRANT_CASCADE_TO_HAND_SPELLS_WITH_MANA_VALUE_AT_MOST_OPPONENTS_LIFE_LOST);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_HAND_SPELLS_WITH_MANA_VALUE_AT_MOST_OPPONENTS_LIFE_LOST);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry cascadeTrigger = new StackEntry(
@@ -2275,8 +2275,7 @@ public class TriggerCollectionService {
                     GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
                     if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
                             || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(
-                            EffectSlot.GRANT_CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_INSTANT_OR_SORCERY_FROM_HAND);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry cascadeTrigger = new StackEntry(
@@ -2305,8 +2304,7 @@ public class TriggerCollectionService {
                     GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
                     if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
                             || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(
-                            EffectSlot.GRANT_CASCADE_TO_ENCHANTMENT_FROM_HAND);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_ENCHANTMENT_FROM_HAND);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry cascadeTrigger = new StackEntry(
@@ -2326,8 +2324,7 @@ public class TriggerCollectionService {
         }
 
         // "The first spell you cast each turn has cascade" (Maelstrom Nexus). A permanent-granted
-        // keyword, detected by the presence of a GRANT_CASCADE_TO_FIRST_SPELL slot on the caster's
-        // battlefield rather than an effect-type check. recordSpellCast runs before this method in
+        // keyword: a static GrantCastTriggerToSpellsEffect on the caster's battlefield. recordSpellCast runs before this method in
         // every cast path, so a count of 1 identifies the caster's first spell of the turn. The held
         // CascadeEffect is queued keyed to the just-cast spell so CascadeEffectHandler's threshold is
         // the spell's mana value (not the granting permanent's). One trigger per granting permanent.
@@ -2336,8 +2333,7 @@ public class TriggerCollectionService {
             if (casterBattlefield != null) {
                 for (Permanent perm : new ArrayList<>(casterBattlefield)) {
                     if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(
-                            EffectSlot.GRANT_CASCADE_TO_SLIVER_SPELL);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_SLIVER_SPELL);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry grantedCascade = new StackEntry(
@@ -2363,7 +2359,7 @@ public class TriggerCollectionService {
             if (casterBattlefield != null) {
                 for (Permanent perm : new ArrayList<>(casterBattlefield)) {
                     if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(EffectSlot.GRANT_CASCADE_TO_FIRST_SPELL);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_FIRST_SPELL);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry grantedCascade = new StackEntry(
@@ -2393,8 +2389,7 @@ public class TriggerCollectionService {
             if (casterBattlefield != null) {
                 for (Permanent perm : new ArrayList<>(casterBattlefield)) {
                     if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(
-                            EffectSlot.GRANT_CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.CASCADE_TO_FIRST_SPELL_USING_TREASURE_MANA);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry grantedCascade = new StackEntry(
@@ -2421,8 +2416,7 @@ public class TriggerCollectionService {
                 for (Permanent perm : new ArrayList<>(casterBattlefield)) {
                     if (perm.isLosesAllAbilitiesUntilEndOfTurn()
                             || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    List<CardEffect> grantEffects = perm.getCard().getEffects(
-                            EffectSlot.GRANT_STORM_TO_INSTANT_OR_SORCERY);
+                    List<CardEffect> grantEffects = castTriggerGrants(perm, SpellCastTriggerGrant.STORM_TO_INSTANT_OR_SORCERY);
                     if (grantEffects.isEmpty()) continue;
 
                     StackEntry spellEntry = null;
@@ -2453,6 +2447,19 @@ public class TriggerCollectionService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * The triggered abilities a permanent's static {@link GrantCastTriggerToSpellsEffect}s of the given kind give
+     * the spell being cast, in the order the permanent lists them.
+     */
+    private static List<CardEffect> castTriggerGrants(Permanent perm, SpellCastTriggerGrant grant) {
+        return perm.getCard().getStaticEffects().stream()
+                .filter(GrantCastTriggerToSpellsEffect.class::isInstance)
+                .map(GrantCastTriggerToSpellsEffect.class::cast)
+                .filter(granting -> granting.grant() == grant)
+                .map(GrantCastTriggerToSpellsEffect::ability)
+                .toList();
     }
 
     private void queueStormTrigger(GameData gameData, Card spellCard, UUID castingPlayerId,
@@ -19172,7 +19179,6 @@ public class TriggerCollectionService {
 
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
             EffectSlot slot, TriggerContext ctx, CardEffect effect) {
-        if (effect.notesManaValueOfExiledCards()) return false;
         CardEffect conditionedEffect = effect;
         if (slot == EffectSlot.ON_CONTROLLER_DISCARD_EVENT
                 && ctx instanceof TriggerContext.DiscardEvent discardEvent

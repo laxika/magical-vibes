@@ -17,7 +17,7 @@ import java.util.List;
 public class SigardasSplendor extends Card {
 
     public SigardasSplendor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new NoteControllerLifeTotalEffect());
+        addStaticEffect(new NoteControllerLifeTotalEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardIfControllerLifeTotalAtLeastNotedEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardColorPredicate(CardColor.WHITE), List.of(new GainLifeEffect(1))));

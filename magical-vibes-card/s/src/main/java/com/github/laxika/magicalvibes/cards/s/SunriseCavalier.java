@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SunriseCavalier extends Card {
 
     public SunriseCavalier() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 public class CurseOfWizardry extends Card {
 
     public CurseOfWizardry() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new CasterLosesLifeOnChosenColorSpellCastEffect(1));
     }

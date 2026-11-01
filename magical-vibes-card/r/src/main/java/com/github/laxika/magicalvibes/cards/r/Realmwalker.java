@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 public class Realmwalker extends Card {
 
     public Realmwalker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardHasSourceChosenSubtypePredicate()));
     }

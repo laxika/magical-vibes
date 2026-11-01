@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTarg
 public class SpitefulSquad extends Card {
 
     public SpitefulSquad() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
 
         addEffect(EffectSlot.ON_DEATH, MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true));
     }

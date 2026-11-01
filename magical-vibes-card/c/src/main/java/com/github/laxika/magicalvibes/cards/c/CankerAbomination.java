@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -18,7 +17,7 @@ public class CankerAbomination extends Card {
         // counter on it for each creature that player controls. In the two-player
         // engine the chosen opponent is the single opponent, so OPPONENTS scope
         // counts exactly the creatures that player controls.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.MINUS_ONE_MINUS_ONE,
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS)));
     }

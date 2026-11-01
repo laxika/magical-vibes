@@ -20,7 +20,7 @@ import java.util.Set;
 public class VesuvanDoppelganger extends Card {
 
     public VesuvanDoppelganger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(),
                 List.of(
                         LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, List.of(

@@ -15,7 +15,7 @@ import java.util.List;
 public class JeweledTorque extends Card {
 
     public JeweledTorque() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(
                         new CardHasSourceChosenColorPredicate(),

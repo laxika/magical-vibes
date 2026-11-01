@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 public class AlloyGolem extends Card {
 
     public AlloyGolem() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new BecomeChosenColorEffect());
     }
 }

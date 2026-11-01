@@ -15,7 +15,7 @@ public class AncientImperiosaur extends Card {
 
     public AncientImperiosaur() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Scaled(new ConvokeCreatureCount(), 2)));
     }
 }

@@ -13,7 +13,7 @@ public class BrassHerald extends Card {
 
     public BrassHerald() {
         // As Brass Herald enters, choose a creature type.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         // When Brass Herald enters, reveal the top four cards of your library. Put all creature cards
         // of the chosen type revealed this way into your hand and the rest on the bottom in any order.

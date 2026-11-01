@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.SecretMissionEffect;
+import com.github.laxika.magicalvibes.model.effect.MulliganActionEffect;
 import com.github.laxika.magicalvibes.model.effect.SerumPowderEffect;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
@@ -228,17 +228,13 @@ public class MulliganService {
             return false;
         }
         for (Card card : hand) {
-            List<CardEffect> effects = card.getEffects(EffectSlot.MULLIGAN_ACTION);
-            if (effects.isEmpty() || card.getId().equals(declinedCardId)) {
+            MulliganActionEffect effect = mulliganAction(card);
+            if (effect == null || card.getId().equals(declinedCardId)) {
                 continue;
             }
-            CardEffect effect = effects.getFirst();
-            String description = effect.mulliganActionDescription();
-            if (description == null) {
-                description = "Use this mulligan action?";
-            }
             gameData.pendingMayAbilities.add(new PendingMayAbility(
-                    card, player.getId(), List.of(effect), card.getName() + " — " + description));
+                    card, player.getId(), List.of(effect),
+                    card.getName() + " — " + effect.mulliganActionDescription()));
             invalidateForAllPlayers(gameData);
             playerInputService.processNextMayAbility(gameData);
             return true;
@@ -284,8 +280,15 @@ public class MulliganService {
     }
 
     private static boolean holdsSerumPowder(List<Card> hand) {
-        return hand.stream().anyMatch(card -> card.getEffects(EffectSlot.MULLIGAN_ACTION).stream()
-                .anyMatch(SerumPowderEffect.class::isInstance));
+        return hand.stream().anyMatch(card -> mulliganAction(card) instanceof SerumPowderEffect);
+    }
+
+    /** The card's first mulligan action, a static ability of the hand (CR 113.6b). */
+    private static MulliganActionEffect mulliganAction(Card card) {
+        return card.getStaticEffects(Zone.HAND).stream()
+                .filter(MulliganActionEffect.class::isInstance)
+                .map(MulliganActionEffect.class::cast)
+                .findFirst().orElse(null);
     }
 
     /**
@@ -382,13 +385,13 @@ public class MulliganService {
             if (library != null) {
                 // Legacy cards are chosen before the game starts wherever they are in the deck.
                 library.stream()
-                        .filter(card -> card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).stream()
+                        .filter(card -> card.getStaticEffects(Zone.HAND).stream()
                                 .anyMatch(effect -> effect instanceof MayEffect may
                                         && may.wrapped() instanceof ChooseLegacyWordEffect))
                         .forEach(pregameCards::add);
             }
             for (Card card : pregameCards) {
-                for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
+                for (CardEffect effect : card.getStaticEffects(Zone.HAND)) {
                     if (effect instanceof MayEffect may
                             && may.wrapped() instanceof PregameChoiceEffect pregame
                             && (!pregame.onlyForNonStartingPlayer()

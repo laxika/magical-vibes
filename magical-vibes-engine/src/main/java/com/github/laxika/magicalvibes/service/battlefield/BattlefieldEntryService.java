@@ -84,11 +84,11 @@ public class BattlefieldEntryService {
         if (permanent.getCard() == null || permanent.isFaceDown() || permanent.getChosenName() != null) {
             return false;
         }
-        ChooseCardNameOnEnterEffect effect = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+        ChooseCardNameOnEnterEffect effect = permanent.getCard().getStaticEffects()
                 .stream().filter(ChooseCardNameOnEnterEffect.class::isInstance)
                 .map(ChooseCardNameOnEnterEffect.class::cast).findFirst().orElse(null);
         if (effect != null && permanent.getChosenPlayerIds().isEmpty()
-                && permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance)) {
             List<UUID> opponents = gameData.orderedPlayerIds.stream()
                     .filter(id -> !id.equals(controllerId)).toList();
@@ -216,7 +216,7 @@ public class BattlefieldEntryService {
         if (beginLandCardNameChoice(gameData, controllerId, permanent, null)) return true;
         boolean needsDualNameChoice = permanent.getCard() != null
                 && permanent.getChosenName() == null
-                && permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(YouAndOpponentChooseCardNamesOnEnterEffect.class::isInstance);
         if (needsDualNameChoice) {
             if (playerInputService == null) {

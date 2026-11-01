@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class GauntletOfPower extends Card {
 
     public GauntletOfPower() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSourceChosenColorPredicate()));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,

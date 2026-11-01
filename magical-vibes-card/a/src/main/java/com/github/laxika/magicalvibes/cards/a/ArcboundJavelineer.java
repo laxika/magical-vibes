@@ -25,8 +25,7 @@ import java.util.List;
 public class ArcboundJavelineer extends Card {
 
     public ArcboundJavelineer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
         addEffect(EffectSlot.ON_DEATH,
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(

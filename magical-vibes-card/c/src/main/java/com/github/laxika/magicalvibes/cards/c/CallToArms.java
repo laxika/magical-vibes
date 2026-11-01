@@ -25,8 +25,8 @@ public class CallToArms extends Card {
 
     public CallToArms() {
         // "As this enchantment enters, choose a color and an opponent."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
 
         // "White creatures get +1/+1 as long as the chosen color is the most common color among
         // nontoken permanents the chosen player controls but isn't tied for most common."

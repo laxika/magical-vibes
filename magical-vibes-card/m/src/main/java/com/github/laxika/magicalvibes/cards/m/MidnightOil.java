@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeT
 public class MidnightOil extends Card {
 
     public MidnightOil() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.HOUR, new Fixed(7)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.HOUR, new Fixed(7)));
         addStaticEffect(new SetControllerMaximumHandSizeToSourceCountersEffect(CounterType.HOUR));
         addEffect(EffectSlot.DRAW_TRIGGERED, SequenceEffect.of(
                 new DrawCardEffect(1),

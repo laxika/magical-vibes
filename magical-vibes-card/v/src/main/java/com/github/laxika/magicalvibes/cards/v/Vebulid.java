@@ -15,8 +15,7 @@ public class Vebulid extends Card {
 
     public Vebulid() {
         // This creature enters with a +1/+1 counter on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
         // At the beginning of your upkeep, you may put a +1/+1 counter on this creature.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(

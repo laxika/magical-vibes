@@ -35,7 +35,7 @@ public class LurkerInTheDeep extends Card {
         addEffect(EffectSlot.ON_ATTACK, seekNonland);
         addEffect(EffectSlot.ON_CONTROLLER_SEEKS, new ConjureDuplicatesOfSoughtCardsAndManifestEffect());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(3))));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(

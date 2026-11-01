@@ -25,8 +25,7 @@ public class ClockworkSteed extends Card {
 
     public ClockworkSteed() {
         // This creature enters with four +1/+0 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(4)));
 
         // This creature can't be blocked by artifact creatures. Blockers are creatures, so an artifact
         // blocker is an artifact creature.

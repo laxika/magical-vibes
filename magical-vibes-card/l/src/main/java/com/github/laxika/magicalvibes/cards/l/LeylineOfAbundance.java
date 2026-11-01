@@ -19,7 +19,7 @@ import java.util.List;
 public class LeylineOfAbundance extends Card {
 
     public LeylineOfAbundance() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Abundance on the battlefield?"
         ));

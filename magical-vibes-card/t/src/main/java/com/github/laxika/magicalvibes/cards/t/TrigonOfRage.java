@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -18,7 +17,7 @@ public class TrigonOfRage extends Card {
 
     public TrigonOfRage() {
         // Trigon of Rage enters the battlefield with three charge counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
 
         // {R}{R}, {T}: Put a charge counter on Trigon of Rage.
         addActivatedAbility(new ActivatedAbility(

@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class CelestialConvergence extends Card {
 
     public CelestialConvergence() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OMEN, new Fixed(7)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OMEN, new Fixed(7)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new RemoveCounterFromSourceEffect(CounterType.OMEN, 1),
                 ConditionalEffect.unless(

@@ -77,7 +77,7 @@
 | playtest legendary banding creature with banding-creature cost reduction and band-size attack boosts | `c/ChatzukMightyGuitarist.java` + `ReduceCastCostForMatchingSpellsEffect` + `BoostCreaturesInAttackingBandsEffect` |
 | playtest creature that enters with five custom counters for each Forest or Plant its controller controls | `d/DairyCow.java` + `EnterWithCountersEffect(MILK, Scaled(PermanentCount(Forest or Plant, CONTROLLER), 5))` |
 | playtest creature with library-only ninjutsu and a mandatory combat-damage draw | `p/PanglacialShinobi.java` + `LibraryNinjutsuEffect` + `DrawCardEffect` |
-| mulligan-time reveal and look at top two | `n/NoRegretsEgret.java` + `NoRegretsEgretEffect` | `MULLIGAN_ACTION`; accepting publicly reveals the card, privately reveals up to two library cards in order, and leaves the normal mulligan decision available |
+| mulligan-time reveal and look at top two | `n/NoRegretsEgret.java` + `NoRegretsEgretEffect` | `addStaticEffect`, a static ability of the hand; accepting publicly reveals the card, privately reveals up to two library cards in order, and leaves the normal mulligan decision available |
 | playtest Saga whose lore counter is added at the beginning of its controller's end step | `n/NightOfTheFlyingMerfolk.java` + `Card.bedtimeStory` + `SagaChapterService` end-step handling |
 | playtest Quest enchantment with three persistent objectives that sacrifice itself and create a token copy of a named creature when all are checked | `m/MapToLorthossTemple.java` + `CompleteChecklistObjectiveEffect` + artifact/permanent-enter and instant-or-sorcery cast triggers |
 | static enchantment that lets its controller choose any position in their library for each draw and draws on entry | `h/HeartOfADuelist.java` + `DrawFromAnywhereInLibraryEffect` + `DrawFromLibraryPositionChoice` |
@@ -318,7 +318,7 @@
 | end step draws and creates Treasures for opponents meeting independent turn thresholds | `s/SmugglersShare.java` |
 | upkeep reveals a fresh top card for each opponent, who may pay its mana value in life to exile it | `p/ProtectionRacket.java` + `ProtectionRacketEffect` |
 
-- Lich (2ED 114): `LoseLifeEqualToLifeTotalAsEntersEffect` on `ON_ENTER_BATTLEFIELD`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `ON_DEATH`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
+- Lich (2ED 114): static `LoseLifeEqualToLifeTotalAsEntersEffect`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `ON_DEATH`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
 
 Purpose: quickly find a reference card for the pattern you're implementing. One or two examples per archetype. All paths relative to `cards/`.
 

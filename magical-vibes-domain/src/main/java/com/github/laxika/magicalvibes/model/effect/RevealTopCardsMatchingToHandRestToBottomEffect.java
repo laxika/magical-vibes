@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>
  * When {@code matcher} is {@code null} the match is "creature card of the source permanent's chosen
  * creature type" (see {@code Permanent.getChosenSubtype()}, Changeling-aware), which pairs with a
- * {@link ChooseSubtypeOnEnterEffect} in the {@code ON_ENTER_BATTLEFIELD} slot — Brass Herald
+ * a static {@link ChooseSubtypeOnEnterEffect} — Brass Herald
  * ({@code count}=4). Otherwise the predicate decides — Sylvan Messenger
  * ({@code count}=4, {@code CardSubtypePredicate(ELF)}).
  */

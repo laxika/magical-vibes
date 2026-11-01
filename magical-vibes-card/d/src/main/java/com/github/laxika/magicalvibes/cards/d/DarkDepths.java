@@ -32,8 +32,7 @@ import java.util.Set;
 public class DarkDepths extends Card {
 
     public DarkDepths() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.ICE, new Fixed(10)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.ICE, new Fixed(10)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

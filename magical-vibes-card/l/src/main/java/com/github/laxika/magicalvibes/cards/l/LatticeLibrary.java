@@ -24,8 +24,7 @@ import java.util.Set;
 public class LatticeLibrary extends Card {
 
     public LatticeLibrary() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.STUDY, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.STUDY, new XValue()));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, createFractalWithStudyCounters());
 

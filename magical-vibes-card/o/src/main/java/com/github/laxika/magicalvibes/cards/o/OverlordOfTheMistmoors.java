@@ -36,7 +36,7 @@ public class OverlordOfTheMistmoors extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, insect);
         addEffect(EffectSlot.ON_ATTACK, insect);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(4))));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(

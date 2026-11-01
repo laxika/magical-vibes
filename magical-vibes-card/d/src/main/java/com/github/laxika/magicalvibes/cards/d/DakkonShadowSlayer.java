@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -27,8 +26,7 @@ public class DakkonShadowSlayer extends Card {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.LOYALTY, landsYouControl));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.LOYALTY, landsYouControl));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

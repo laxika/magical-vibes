@@ -28,8 +28,7 @@ public class TangleWire extends Card {
             new PermanentIsLandPredicate()));
 
     public TangleWire() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(4)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -17,8 +16,7 @@ import java.util.List;
 public class FontOfProgress extends Card {
 
     public FontOfProgress() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

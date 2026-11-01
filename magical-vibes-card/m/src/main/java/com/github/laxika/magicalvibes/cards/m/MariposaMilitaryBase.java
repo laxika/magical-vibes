@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ControllerRadCounters;
@@ -20,8 +19,7 @@ import java.util.List;
 public class MariposaMilitaryBase extends Card {
 
     public MariposaMilitaryBase() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayHaveThisLandEnterTappedForRadCountersEffect(2));
+        addStaticEffect(new MayHaveThisLandEnterTappedForRadCountersEffect(2));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 

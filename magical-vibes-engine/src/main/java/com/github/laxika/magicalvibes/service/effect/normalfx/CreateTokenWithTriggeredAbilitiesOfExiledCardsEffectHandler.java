@@ -77,9 +77,6 @@ public class CreateTokenWithTriggeredAbilitiesOfExiledCardsEffectHandler impleme
         }
         for (Card card : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
             for (EffectSlot slot : EffectSlot.values()) {
-                if (!isTriggeredAbilitySlot(slot)) {
-                    continue;
-                }
                 List<EffectRegistration> registrations = card.getEffectRegistrations(slot);
                 if (!registrations.isEmpty()) {
                     result.computeIfAbsent(slot, ignored -> new java.util.ArrayList<>()).addAll(registrations);
@@ -87,12 +84,5 @@ public class CreateTokenWithTriggeredAbilitiesOfExiledCardsEffectHandler impleme
             }
         }
         return result;
-    }
-
-    private boolean isTriggeredAbilitySlot(EffectSlot slot) {
-        return switch (slot) {
-            case MAY_SKIP_DRAW_STEP_DRAW, MULLIGAN_ACTION -> false;
-            default -> true;
-        };
     }
 }

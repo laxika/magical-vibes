@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * A {@code null} {@code subtype} means "the creature type chosen as the source entered"
  * — the effect then reads the source permanent's {@code chosenSubtype} and applies to
  * nothing while no type has been chosen. Pair it with a
- * {@link ChooseSubtypeOnEnterEffect} in {@code ON_ENTER_BATTLEFIELD} (Metallic Mimic).
+ * a static {@link ChooseSubtypeOnEnterEffect} (Metallic Mimic).
  */
 public record ControlledCreaturesEnterWithAdditionalCountersEffect(
         CardSubtype subtype,

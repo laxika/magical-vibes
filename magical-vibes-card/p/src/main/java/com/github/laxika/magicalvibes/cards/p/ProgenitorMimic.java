@@ -26,7 +26,7 @@ public class ProgenitorMimic extends Card {
         // You may have this creature enter as a copy of any creature on the battlefield, except it
         // has "At the beginning of your upkeep, if this creature isn't a token, create a token
         // that's a copy of this creature."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature",
                 Set.of(),
                 List.of(

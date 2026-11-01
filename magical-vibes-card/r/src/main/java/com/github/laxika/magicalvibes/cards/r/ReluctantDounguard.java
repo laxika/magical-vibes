@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 public class ReluctantDounguard extends Card {
 
     public ReluctantDounguard() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(2)));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new ConditionalEffect(

@@ -18,8 +18,7 @@ import java.util.List;
 public class ArcboundSlasher extends Card {
 
     public ArcboundSlasher() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         addStaticEffect(new RiotEffect());
 

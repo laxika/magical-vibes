@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GhastlyMimicry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DisturbCast;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -19,7 +18,7 @@ public class MirrorhallMimic extends Card {
     public MirrorhallMimic() {
         setBackFaceCard(new GhastlyMimicry());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(CardSubtype.SPIRIT), List.of()));
         addCastingOption(new DisturbCast("{3}{U}{U}"));
     }

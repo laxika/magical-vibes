@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 public class HeraldsHorn extends Card {
 
     public HeraldsHorn() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new ReduceCastCostForChosenSubtypeSpellsEffect(1));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new LookAtTopCardMayRevealMatchingToHandEffect(

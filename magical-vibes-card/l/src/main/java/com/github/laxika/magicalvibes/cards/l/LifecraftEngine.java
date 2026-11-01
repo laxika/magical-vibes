@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class LifecraftEngine extends Card {
 
     public LifecraftEngine() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.ownCreaturesMatching(
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
         addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelfMatching(new PermanentAllOfPredicate(List.of(

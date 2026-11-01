@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AddActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -19,7 +18,7 @@ public class ThranPortal extends Card {
     public ThranPortal() {
         addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect());
+        addStaticEffect(new ChooseBasicLandTypeOnEnterEffect());
         addStaticEffect(new SourceBecomesChosenBasicLandTypeEffect(true));
         addStaticEffect(new AddActivatedAbilityCostEffect(
                 new PermanentIsSourceCardPredicate(), new PayLifeCost(1)));

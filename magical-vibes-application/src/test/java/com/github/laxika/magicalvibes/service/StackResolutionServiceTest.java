@@ -450,8 +450,7 @@ class StackResolutionServiceTest {
         @DisplayName("Creature spell forwards the X paid to battlefield entry")
         void creatureSpellForwardsXValueToBattlefieldEntry() {
             Card card = createCreature("Hydra");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                    new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+            card.addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
             StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of(), 3);
             gd.stack.addLast(entry);
@@ -532,8 +531,7 @@ class StackResolutionServiceTest {
         @DisplayName("Enchantment spell forwards the X paid to battlefield entry")
         void enchantmentSpellForwardsXValueToBattlefieldEntry() {
             Card card = createEnchantment("Iceberg-like");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                    new EnterWithCountersEffect(CounterType.ICE, new XValue()));
+            card.addStaticEffect(new EnterWithCountersEffect(CounterType.ICE, new XValue()));
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of(), 3);
             gd.stack.addLast(entry);
@@ -746,8 +744,7 @@ class StackResolutionServiceTest {
         @DisplayName("Artifact spell forwards the X paid to battlefield entry")
         void artifactSpellForwardsXValueToBattlefieldEntry() {
             Card card = createArtifact("X Counter Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                    new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+            card.addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of(), 5);
             gd.stack.addLast(entry);
@@ -777,7 +774,7 @@ class StackResolutionServiceTest {
         @DisplayName("ChooseCardNameOnEnterEffect defers resolution for name choice")
         void chooseCardNameOnEnterDefersResolution() {
             Card card = createArtifact("Pithing Needle");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect());
+            card.addStaticEffect(new ChooseCardNameOnEnterEffect());
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);
@@ -795,8 +792,7 @@ class StackResolutionServiceTest {
         @DisplayName("ChooseCardNameOnEnterEffect forwards a required card type")
         void chooseCardNameOnEnterForwardsRequiredType() {
             Card card = createArtifact("Petrified Hamlet");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                    new ChooseCardNameOnEnterEffect(CardType.LAND));
+            card.addStaticEffect(new ChooseCardNameOnEnterEffect(CardType.LAND));
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of());
             gd.stack.addLast(entry);

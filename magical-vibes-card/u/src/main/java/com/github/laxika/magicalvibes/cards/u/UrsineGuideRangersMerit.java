@@ -17,7 +17,7 @@ public class UrsineGuideRangersMerit extends Card {
     public UrsineGuideRangersMerit() {
         setBackFaceCard(new RangersMerit());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastFromOutsideStartingDeckTriggerEffect(List.of(
                         new ConjureCardToBattlefieldEffect("FDN", "552"),

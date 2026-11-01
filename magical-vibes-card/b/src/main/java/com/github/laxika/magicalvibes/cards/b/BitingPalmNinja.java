@@ -20,8 +20,7 @@ public class BitingPalmNinja extends Card {
     public BitingPalmNinja() {
         addNinjutsu("{2}{B}");
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MENACE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MENACE, new Fixed(1)));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.GreatestCreatureCountAmongPlayers;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -18,8 +17,7 @@ import java.util.List;
 public class InvestigatorsJournal extends Card {
 
     public InvestigatorsJournal() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SUSPECT, new GreatestCreatureCountAmongPlayers()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SUSPECT, new GreatestCreatureCountAmongPlayers()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

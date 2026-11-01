@@ -20,7 +20,7 @@ public class VanquishersBanner extends Card {
 
     public VanquishersBanner() {
         // As Vanquisher's Banner enters, choose a creature type.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         // Creatures you control of the chosen type get +1/+1.
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));

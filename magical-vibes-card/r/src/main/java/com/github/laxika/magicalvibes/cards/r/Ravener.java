@@ -20,8 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Ravener extends Card {
 
     public Ravener() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)), TriggerMode.INDEPENDENT);
 

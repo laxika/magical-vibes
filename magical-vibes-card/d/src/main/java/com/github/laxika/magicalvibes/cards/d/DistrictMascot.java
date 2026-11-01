@@ -25,8 +25,7 @@ import java.util.List;
 public class DistrictMascot extends Card {
 
     public DistrictMascot() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

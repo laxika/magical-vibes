@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class BoneDevourer extends Card {
 
     public BoneDevourer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
 

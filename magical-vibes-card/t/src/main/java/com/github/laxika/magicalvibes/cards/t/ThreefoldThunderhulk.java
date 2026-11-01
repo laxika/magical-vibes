@@ -24,8 +24,7 @@ import java.util.Set;
 public class ThreefoldThunderhulk extends Card {
 
     public ThreefoldThunderhulk() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
         CreateTokenEffect gnomeTokens = new CreateTokenEffect(
                 new SourcePower(),

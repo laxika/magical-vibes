@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 public class ChaliceOfTheVoid extends Card {
 
     public ChaliceOfTheVoid() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new CounterSpellIfManaValueEqualsSourceCountersEffect(CounterType.CHARGE));
     }

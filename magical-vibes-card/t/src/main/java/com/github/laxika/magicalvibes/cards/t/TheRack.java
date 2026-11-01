@@ -27,7 +27,7 @@ public class TheRack extends Card {
         // upkeep, this artifact deals X damage to that player, where X is 3 minus the number of
         // cards in their hand." Remember that player even if this artifact changes controllers.
         // X = max(0, 3 - cards in hand), floored so a full hand deals no damage.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(
                         new Max(new Fixed(0),

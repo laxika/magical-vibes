@@ -19,7 +19,7 @@ public class PrimeSpeakerZegana extends Card {
         // Prime Speaker Zegana enters with X +1/+1 counters on it, where X is the greatest power
         // among other creatures you control. The as-enters replacement runs before the permanent is
         // added to the battlefield, so GreatestPowerAmongControlled already sees only other creatures.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                 new GreatestPowerAmongControlled()));
 
         // When Prime Speaker Zegana enters, draw cards equal to its power.

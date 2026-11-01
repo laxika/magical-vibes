@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.r.RaiseDead;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 
 /**
@@ -20,7 +19,7 @@ public class CheerfulOsteomancerRaiseDead extends Card {
         setBackFaceCard(new RaiseDead());
 
         // This creature enters prepared.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
     }
 
     @Override

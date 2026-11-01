@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class DjinnOfWishes extends Card {
 
     public DjinnOfWishes() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.WISH, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.WISH, new Fixed(3)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}{U}",

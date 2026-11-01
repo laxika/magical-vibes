@@ -26,8 +26,7 @@ public class SerratedArrows extends Card {
 
     public SerratedArrows() {
         // This artifact enters with three arrowhead counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.ARROWHEAD, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.ARROWHEAD, new Fixed(3)));
 
         // At the beginning of your upkeep, if there are no arrowhead counters on this artifact,
         // sacrifice it.

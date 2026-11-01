@@ -19,8 +19,7 @@ public class SisterhoodOfKarn extends Card {
 
     public SisterhoodOfKarn() {
         // This creature enters with a +1/+1 counter on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
         // Paradox — Whenever you cast a spell from anywhere other than your hand, double the
         // number of +1/+1 counters on this creature.

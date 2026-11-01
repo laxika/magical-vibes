@@ -26,7 +26,7 @@ public class VesuvanShapeshifter extends Card {
                 new PermanentIsCreaturePredicate(),
                 List.of(LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, List.of(turnFaceDownMay))));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(),
                 List.of(
                         LegacySlots.triggered(EffectSlot.ON_TURNED_FACE_UP, List.of(turnFaceUpCopy)),

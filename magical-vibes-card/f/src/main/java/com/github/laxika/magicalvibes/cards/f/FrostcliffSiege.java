@@ -20,8 +20,7 @@ import java.util.Set;
 public class FrostcliffSiege extends Card {
 
     public FrostcliffSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of("Jeskai", "Temur")));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of("Jeskai", "Temur")));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(

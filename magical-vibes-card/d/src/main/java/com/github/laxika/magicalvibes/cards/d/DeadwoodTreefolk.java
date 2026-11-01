@@ -26,8 +26,7 @@ import java.util.List;
 public class DeadwoodTreefolk extends Card {
 
     public DeadwoodTreefolk() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 ConditionalEffect.atTriggerTime(new SourceCounterThreshold(1, CounterType.TIME),
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)));

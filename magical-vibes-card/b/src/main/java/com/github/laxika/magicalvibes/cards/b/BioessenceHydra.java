@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 public class BioessenceHydra extends Card {
 
     public BioessenceHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new PermanentCounterSum(
                         CounterType.LOYALTY,

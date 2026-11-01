@@ -21,7 +21,7 @@ import java.util.List;
 public class RavenousTyrannosaurus extends Card {
 
     public RavenousTyrannosaurus() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(3));
+        addStaticEffect(new DevourEffect(3));
 
         PermanentPredicate otherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

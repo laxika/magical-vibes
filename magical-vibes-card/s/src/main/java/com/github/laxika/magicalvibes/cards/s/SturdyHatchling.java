@@ -22,8 +22,7 @@ public class SturdyHatchling extends Card {
 
     public SturdyHatchling() {
         // This creature enters with four -1/-1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
 
         // {G/U}: This creature gains shroud until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{G/U}",

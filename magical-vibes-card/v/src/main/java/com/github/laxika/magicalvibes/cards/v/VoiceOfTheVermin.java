@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VoiceOfTheVermin extends Card {
 
     public VoiceOfTheVermin() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
 
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ATTACK, new SetBasePowerToughnessEffect(4, 4));

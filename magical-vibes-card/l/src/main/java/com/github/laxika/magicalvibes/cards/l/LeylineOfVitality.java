@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LeylineOfVitality extends Card {
 
     public LeylineOfVitality() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Vitality on the battlefield?"
         ));

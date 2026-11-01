@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -26,7 +25,7 @@ import java.util.List;
 public class GemstoneCaverns extends Card {
 
     public GemstoneCaverns() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new GemstoneCavernsStartOnBattlefieldEffect(),
                 "Begin the game with Gemstone Caverns on the battlefield?"));
 

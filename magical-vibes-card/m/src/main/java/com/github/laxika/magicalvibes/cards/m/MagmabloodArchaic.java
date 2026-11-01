@@ -19,8 +19,7 @@ public class MagmabloodArchaic extends Card {
     public MagmabloodArchaic() {
         // Converge — This creature enters with a +1/+1 counter on it for each color of mana spent
         // to cast it. Converge is loaded from Scryfall and supplies the stack entry's X value.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         // Whenever you cast an instant or sorcery spell, creatures you control get +1/+0 until end
         // of turn for each color of mana spent to cast that spell.

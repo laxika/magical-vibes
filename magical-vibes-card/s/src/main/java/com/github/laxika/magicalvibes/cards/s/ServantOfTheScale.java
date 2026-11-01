@@ -17,8 +17,7 @@ import java.util.List;
 public class ServantOfTheScale extends Card {
 
     public ServantOfTheScale() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
         addEffect(EffectSlot.ON_DEATH,
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(

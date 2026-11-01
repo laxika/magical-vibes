@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosen
 public class RunedHalo extends Card {
 
     public RunedHalo() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect());
+        addStaticEffect(new ChooseCardNameOnEnterEffect());
         addStaticEffect(new PlayerHasProtectionFromChosenNameEffect());
     }
 }

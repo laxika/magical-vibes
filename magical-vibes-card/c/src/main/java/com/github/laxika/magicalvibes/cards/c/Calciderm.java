@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class Calciderm extends Card {
 
     public Calciderm() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
         // Vanishing: the upkeep removal and the last-counter sacrifice are separate triggers
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),

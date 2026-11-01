@@ -228,7 +228,7 @@ class EtbTriggerServiceTest {
         land.setName("Color Land");
         land.setType(CardType.LAND);
         ChooseColorOnEnterEffect choice = new ChooseColorOnEnterEffect();
-        land.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, choice);
+        land.addStaticEffect(choice);
         Permanent permanent = new Permanent(land);
         gameData.playerBattlefields.get(controllerId).add(permanent);
 
@@ -244,7 +244,7 @@ class EtbTriggerServiceTest {
         land.setName("Basic Type Land");
         land.setType(CardType.LAND);
         ChooseBasicLandTypeOnEnterEffect choice = new ChooseBasicLandTypeOnEnterEffect();
-        land.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, choice);
+        land.addStaticEffect(choice);
         Permanent permanent = new Permanent(land);
         gameData.playerBattlefields.get(controllerId).add(permanent);
 
@@ -259,7 +259,7 @@ class EtbTriggerServiceTest {
         Card creature = new Card();
         creature.setName("Conditional Clone");
         creature.setType(CardType.CREATURE);
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalReplacementEffect(
+        creature.addStaticEffect(new ConditionalReplacementEffect(
                 new Raid(), new CopyPermanentOnEnterEffect(new PermanentIsCreaturePredicate(), "creature")));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
 

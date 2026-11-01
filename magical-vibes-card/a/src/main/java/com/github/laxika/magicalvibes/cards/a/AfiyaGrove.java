@@ -21,8 +21,7 @@ public class AfiyaGrove extends Card {
 
     public AfiyaGrove() {
         // "This enchantment enters with three +1/+1 counters on it."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
         // "At the beginning of your upkeep, move a +1/+1 counter from this enchantment onto target creature."
         target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"))

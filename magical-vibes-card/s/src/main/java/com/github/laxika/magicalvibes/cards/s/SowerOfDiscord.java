@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.OtherChosenPlayerLosesLifeEff
 public class SowerOfDiscord extends Card {
 
     public SowerOfDiscord() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChoosePlayerOnEnterEffect(2));
+        addStaticEffect(new ChoosePlayerOnEnterEffect(2));
         addEffect(EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE, new OtherChosenPlayerLosesLifeEffect());
     }
 }

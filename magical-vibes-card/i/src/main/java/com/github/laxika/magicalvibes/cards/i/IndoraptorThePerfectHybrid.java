@@ -19,8 +19,7 @@ import java.util.List;
 public class IndoraptorThePerfectHybrid extends Card {
 
     public IndoraptorThePerfectHybrid() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new DamageDealtToOpponentsThisTurn()));
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new DealDamageToRandomOpponentUnlessSacrificeEffect(

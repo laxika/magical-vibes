@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -22,10 +21,10 @@ public class ApocalypseHydra extends Card {
 
     public ApocalypseHydra() {
         // This creature enters with X +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new NotCondition(new SpellXAtLeast(5)),
+        addStaticEffect(new ConditionalEffect(new NotCondition(new SpellXAtLeast(5)),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())));
         // If X is 5 or more, it enters with an additional X +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new SpellXAtLeast(5),
+        addStaticEffect(new ConditionalEffect(new SpellXAtLeast(5),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Scaled(new XValue(), 2))));
 
         // {1}{R}, Remove a +1/+1 counter from this creature: It deals 1 damage to any target.

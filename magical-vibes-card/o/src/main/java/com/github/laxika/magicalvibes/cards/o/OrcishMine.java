@@ -25,7 +25,7 @@ public class OrcishMine extends Card {
         // Enchant land
         target(new PermanentPredicateTargetFilter(new PermanentIsLandPredicate(), "Target must be a land"));
         // This Aura enters with three ore counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.ORE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.ORE, new Fixed(3)));
         // At the beginning of your upkeep and whenever enchanted land becomes tapped, remove an ore
         // counter from this Aura.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterFromSourceEffect(CounterType.ORE, 1));

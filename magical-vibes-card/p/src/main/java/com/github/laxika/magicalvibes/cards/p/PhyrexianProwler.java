@@ -17,8 +17,7 @@ import java.util.List;
 public class PhyrexianProwler extends Card {
 
     public PhyrexianProwler() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(3)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubty
 public class KindredDiscovery extends Card {
 
     public KindredDiscovery() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSourceChosenSubtypePredicate(), new DrawCardEffect()));

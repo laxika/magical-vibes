@@ -2278,7 +2278,7 @@ public class GraveyardReturnSupport {
         }
         beforeEntry.accept(permanent);
         if (!losesAllAbilities) {
-            var typeEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            var typeEffect = card.getStaticEffects().stream()
                     .filter(com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect.class::isInstance)
                     .map(com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect.class::cast)
                     .findFirst().orElse(null);
@@ -2291,7 +2291,7 @@ public class GraveyardReturnSupport {
                         gameData, controllerId, card, typeEffect.excludedTypes(), permanent);
                 return permanent;
             }
-            var nameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            var nameEffect = card.getStaticEffects().stream()
                     .filter(com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect.class::isInstance)
                     .map(com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect.class::cast)
                     .findFirst().orElse(null);

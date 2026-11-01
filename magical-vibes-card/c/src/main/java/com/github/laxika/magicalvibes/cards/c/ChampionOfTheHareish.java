@@ -14,8 +14,7 @@ import java.util.List;
 public class ChampionOfTheHareish extends Card {
 
     public ChampionOfTheHareish() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new BuddyListOnEnterEffect(List.of(CardSubtype.RABBIT, CardSubtype.SOLDIER)));
+        addStaticEffect(new BuddyListOnEnterEffect(List.of(CardSubtype.RABBIT, CardSubtype.SOLDIER)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new ChampionOfTheHareishTriggerEffect());
     }

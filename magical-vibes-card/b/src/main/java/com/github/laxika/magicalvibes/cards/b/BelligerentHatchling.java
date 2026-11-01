@@ -18,8 +18,7 @@ public class BelligerentHatchling extends Card {
 
     public BelligerentHatchling() {
         // This creature enters with four -1/-1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
 
         // Whenever you cast a red spell, remove a -1/-1 counter from this creature.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,

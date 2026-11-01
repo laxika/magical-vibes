@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenLegacyWordSpellsEffect;
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenLegacy
 public class InspirationalAntelope extends Card {
 
     public InspirationalAntelope() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new ChooseLegacyWordEffect(),
                 "Choose a keyword or ability word for Inspirational Antelope?"));
         addStaticEffect(new ReduceCastCostForChosenLegacyWordSpellsEffect(1));

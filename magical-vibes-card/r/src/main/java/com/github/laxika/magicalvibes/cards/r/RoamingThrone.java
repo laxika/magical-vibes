@@ -22,7 +22,7 @@ public class RoamingThrone extends Card {
     public RoamingThrone() {
         // Ward {2}
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
         addStaticEffect(new AdditionalTriggeredAbilityEffect(
                 new PermanentAllOfPredicate(List.of(

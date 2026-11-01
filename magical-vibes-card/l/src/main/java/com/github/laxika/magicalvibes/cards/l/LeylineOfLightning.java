@@ -15,7 +15,7 @@ import java.util.List;
 public class LeylineOfLightning extends Card {
 
     public LeylineOfLightning() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Lightning on the battlefield?"
         ));

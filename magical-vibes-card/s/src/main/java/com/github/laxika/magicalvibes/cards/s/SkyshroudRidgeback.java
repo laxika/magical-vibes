@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfE
 public class SkyshroudRidgeback extends Card {
 
     public SkyshroudRidgeback() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(2)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));
     }

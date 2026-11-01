@@ -18,7 +18,7 @@ import java.util.Set;
 public class PiratedCopy extends Card {
 
     public PiratedCopy() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(),
                 "creature",
                 Set.of(CardSubtype.PIRATE),

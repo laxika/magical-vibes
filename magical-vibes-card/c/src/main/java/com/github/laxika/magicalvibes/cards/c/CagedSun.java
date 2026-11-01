@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 public class CagedSun extends Card {
 
     public CagedSun() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new BoostCreaturesOfChosenColorEffect(1, 1));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddExtraManaOfChosenColorOnLandTapEffect());
     }

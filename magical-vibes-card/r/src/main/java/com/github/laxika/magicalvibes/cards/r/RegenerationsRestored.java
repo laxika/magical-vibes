@@ -25,8 +25,7 @@ public class RegenerationsRestored extends Card {
 
     public RegenerationsRestored() {
         // This enchantment enters with twelve time counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(12)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(12)));
 
         // Vanishing: the upkeep removal and the last-counter sacrifice are separate triggers. The
         // sacrifice is added first so the card's own exile trigger sits above it on the stack and

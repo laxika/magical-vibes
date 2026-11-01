@@ -5,7 +5,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
 /**
- * Marker effect placed in ON_ENTER_BATTLEFIELD to indicate that this permanent
+ * Static as-enters ability (CR 614.1c) to indicate that this permanent
  * requires a basic land type choice as it enters the battlefield
  * ("As ~ enters, choose a basic land type." / "choose two basic land types.").
  *

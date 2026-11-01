@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -69,7 +68,7 @@ public class AsEntersDiscardSupport {
             return false;
         }
         DiscardCreatureCardsAsEntersForKeywordCountersEffect effect = entering.getCard()
-                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .getStaticEffects().stream()
                 .filter(DiscardCreatureCardsAsEntersForKeywordCountersEffect.class::isInstance)
                 .map(DiscardCreatureCardsAsEntersForKeywordCountersEffect.class::cast)
                 .findFirst().orElse(null);

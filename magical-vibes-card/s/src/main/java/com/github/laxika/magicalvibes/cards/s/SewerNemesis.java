@@ -19,7 +19,7 @@ import java.util.List;
 public class SewerNemesis extends Card {
 
     public SewerNemesis() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChoosePlayerOnEnterEffect());
+        addStaticEffect(new ChoosePlayerOnEnterEffect());
 
         CardsInGraveyard chosenPlayerGraveyard =
                 new CardsInGraveyard(null, CountScope.CHOSEN_PLAYER);

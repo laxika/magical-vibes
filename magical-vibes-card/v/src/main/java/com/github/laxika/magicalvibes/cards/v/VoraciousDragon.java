@@ -18,7 +18,7 @@ public class VoraciousDragon extends Card {
 
         // Devour 1 (As this creature enters, you may sacrifice any number of creatures.
         // It enters with that many +1/+1 counters on it.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(1));
+        addStaticEffect(new DevourEffect(1));
 
         // When this creature enters, it deals damage to any target equal to twice the number of
         // Goblins it devoured. (DealDamageToAnyTargetEffect declares its own any-target spec.)

@@ -27,7 +27,7 @@ public class BosssChauffeur extends Card {
     public BosssChauffeur() {
         PermanentCount otherCreatures = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Sum(new Fixed(1), otherCreatures)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new PutCountersOnSourceEffect(1, 1, 1));

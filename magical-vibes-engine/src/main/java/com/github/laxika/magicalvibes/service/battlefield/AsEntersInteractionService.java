@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGravey
 import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -192,7 +191,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean turnsOtherCreaturesFaceDown = card.getStaticEffects().stream()
                 .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
         if (turnsOtherCreaturesFaceDown && !gameQueryService.hasLostAllAbilities(gameData, enteringPermanent)) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
@@ -280,7 +279,7 @@ public class AsEntersInteractionService {
 
         // "As enters, put a phylactery counter on an artifact you control" (CR 614.1c). The artifact
         // is chosen as the permanent enters; it is not a target. With no artifact the ability does nothing.
-        boolean needsPhylacteryChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsPhylacteryChoice = card.getStaticEffects().stream()
                 .anyMatch(PutPhylacteryCounterOnTargetPermanentEffect.class::isInstance);
         if (needsPhylacteryChoice) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
@@ -306,7 +305,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        ChooseEquipmentAttachmentOnEnterEffect equipmentAttachment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseEquipmentAttachmentOnEnterEffect equipmentAttachment = card.getStaticEffects().stream()
                 .filter(ChooseEquipmentAttachmentOnEnterEffect.class::isInstance)
                 .map(ChooseEquipmentAttachmentOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -331,7 +330,7 @@ public class AsEntersInteractionService {
 
         // "As enters, choose another creature you control" — replacement effect (CR 614.1c),
         // not suppressed by Torpor Orb. Must happen before ETB triggers.
-        boolean needsCreatureChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsCreatureChoice = card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ChooseAnotherCreatureOnEnterEffect);
         if (needsCreatureChoice) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -349,7 +348,7 @@ public class AsEntersInteractionService {
             // No other creatures — bodyguard enters with no chosen creature
         }
 
-        boolean needsOpponentPermanentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsOpponentPermanentChoice = card.getStaticEffects().stream()
                 .anyMatch(ChooseOpponentPermanentOnEnterEffect.class::isInstance);
         if (needsOpponentPermanentChoice) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
@@ -371,7 +370,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        boolean needsNonlandPermanentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsNonlandPermanentChoice = card.getStaticEffects().stream()
                 .anyMatch(ChooseNonlandPermanentOnEnterEffect.class::isInstance);
         if (needsNonlandPermanentChoice) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
@@ -393,7 +392,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        boolean needsOpponentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsOpponentChoice = card.getStaticEffects().stream()
                 .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance);
         if (needsOpponentChoice) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
@@ -419,7 +418,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        ChoosePlayerOnEnterEffect playerChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChoosePlayerOnEnterEffect playerChoice = card.getStaticEffects().stream()
                 .filter(ChoosePlayerOnEnterEffect.class::isInstance)
                 .map(ChoosePlayerOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -447,7 +446,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        boolean needsTwoPlayerChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsTwoPlayerChoice = card.getStaticEffects().stream()
                 .anyMatch(TwoPlayerChoiceOnEnterEffect.class::isInstance);
         if (needsTwoPlayerChoice) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
@@ -464,7 +463,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        boolean needsPrimalClayFormChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsPrimalClayFormChoice = card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ChoosePrimalClayFormOnEnterEffect);
         if (needsPrimalClayFormChoice) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -473,7 +472,7 @@ public class AsEntersInteractionService {
             return;
         }
 
-        PowerToughnessFormChoiceEffect powerToughnessChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        PowerToughnessFormChoiceEffect powerToughnessChoice = card.getStaticEffects().stream()
                 .filter(PowerToughnessFormChoiceEffect.class::isInstance)
                 .map(PowerToughnessFormChoiceEffect.class::cast)
                 .findFirst().orElse(null);
@@ -485,7 +484,7 @@ public class AsEntersInteractionService {
             return;
         }
 
-        ChooseColorEffect colorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseColorEffect colorChoice = card.getStaticEffects().stream()
                 .filter(e -> e instanceof ChooseColorEffect)
                 .map(e -> (ChooseColorEffect) e)
                 .findFirst().orElse(null);
@@ -499,7 +498,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getStaticEffects().stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -514,7 +513,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseModeOnEnterEffect modeChoice = card.getStaticEffects().stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -540,7 +539,7 @@ public class AsEntersInteractionService {
 
         // "As this creature enters, choose a basic land type" — a choice made during entry
         // (CR 614.1c), before ETB triggers; the choice handler resumes them once made. Realmwright.
-        ChooseBasicLandTypeOnEnterEffect landTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseBasicLandTypeOnEnterEffect landTypeChoice = card.getStaticEffects().stream()
                 .filter(e -> e instanceof ChooseBasicLandTypeOnEnterEffect)
                 .map(e -> (ChooseBasicLandTypeOnEnterEffect) e)
                 .findFirst().orElse(null);
@@ -554,7 +553,7 @@ public class AsEntersInteractionService {
 
         // "As this creature enters, choose a creature type" — a choice made during entry
         // (CR 614.1c), before ETB triggers; the choice handler resumes them once made.
-        SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        SubtypeChoiceOnEnterEffect subtypeChoice = card.getStaticEffects().stream()
                 .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
@@ -570,7 +569,7 @@ public class AsEntersInteractionService {
             }
         }
 
-        if (card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        if (card.getStaticEffects().stream()
                 .anyMatch(ChooseManaValueParityOnEnterEffect.class::isInstance)) {
             Permanent entering = gameData.playerBattlefields.get(controllerId).getLast();
             playerInputService.beginManaValueParityChoice(gameData, controllerId,
@@ -584,7 +583,7 @@ public class AsEntersInteractionService {
         // permanent was cast with escape, so the counter choice is unwrapped from its escape gate here.
         boolean enteredWithEscape = !gameData.playerBattlefields.get(controllerId).isEmpty()
                 && gameData.playerBattlefields.get(controllerId).getLast().isEscaped();
-        ChooseCounterTypeOnEnterEffect counterTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseCounterTypeOnEnterEffect counterTypeChoice = card.getStaticEffects().stream()
                 .map(effect -> effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof SourceWasCastWithEscape
                         && enteredWithEscape ? conditional.wrapped() : effect)
@@ -604,7 +603,7 @@ public class AsEntersInteractionService {
         }
 
         MayReturnPermanentToHandAndEnterWithCountersEffect returnChoice =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(MayReturnPermanentToHandAndEnterWithCountersEffect.class::isInstance)
                         .map(MayReturnPermanentToHandAndEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
@@ -642,7 +641,7 @@ public class AsEntersInteractionService {
         // CR 702.82a: each devour instance (printed, then granted) is a separate replacement effect with
         // its own sacrifice choice; the entering permanent counts the instances already answered.
         List<DevourEffect> devourInstances = new ArrayList<>();
-        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        card.getStaticEffects().stream()
                 .filter(e -> e instanceof DevourEffect)
                 .map(e -> (DevourEffect) e)
                 .findFirst().ifPresent(devourInstances::add);
@@ -669,7 +668,7 @@ public class AsEntersInteractionService {
 
         // "As this creature enters, sacrifice any number of creatures. This creature's power becomes
         // their total power and its toughness their total toughness" (CR 614.1c, Dracoplasm).
-        boolean needsSacrificeForPowerToughness = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsSacrificeForPowerToughness = card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect);
         if (needsSacrificeForPowerToughness) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -690,7 +689,7 @@ public class AsEntersInteractionService {
         }
 
         SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect sacrificeForPowerToughness =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(e -> e instanceof SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect)
                         .map(SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect.class::cast)
                         .findFirst().orElse(null);
@@ -721,7 +720,7 @@ public class AsEntersInteractionService {
         // +1/+1 counters on it" (CR 614.1c, Shimatsu the Bloodcloaked). Resolved before ETB triggers;
         // the entering permanent itself isn't offered.
         SacrificePermanentsAsEntersForCountersEffect sacForCounters =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(e -> e instanceof SacrificePermanentsAsEntersForCountersEffect)
                         .map(e -> (SacrificePermanentsAsEntersForCountersEffect) e)
                         .findFirst().orElse(null);
@@ -752,7 +751,7 @@ public class AsEntersInteractionService {
         // "As this creature enters, pay any amount of life" (Minion of the Wastes). The payment is a
         // choice made during entry, before ETB triggers; the amount is stored on the permanent so a
         // characteristic-defining power/toughness can read it back.
-        PayAnyAmountOfLifeOnEnterEffect lifePayment = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        PayAnyAmountOfLifeOnEnterEffect lifePayment = card.getStaticEffects().stream()
                 .filter(PayAnyAmountOfLifeOnEnterEffect.class::isInstance)
                 .map(PayAnyAmountOfLifeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -775,7 +774,7 @@ public class AsEntersInteractionService {
         // "As this permanent enters, choose a number" (Shapeshifter) for a permanent put onto the battlefield
         // by an effect (a reanimation Aura, Show and Tell). A spell resolving normally already began this
         // choice in StackResolutionService, in which case the game is awaiting that answer here.
-        NumberChoiceEffect numberChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        NumberChoiceEffect numberChoice = card.getStaticEffects().stream()
                 .filter(NumberChoiceEffect.class::isInstance)
                 .map(NumberChoiceEffect.class::cast)
                 .findFirst().orElse(null);
@@ -792,7 +791,7 @@ public class AsEntersInteractionService {
         }
 
         AsEntersOpponentExileToGraveyardEffect opponentExileToGraveyard =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(AsEntersOpponentExileToGraveyardEffect.class::isInstance)
                         .map(AsEntersOpponentExileToGraveyardEffect.class::cast)
                         .findFirst().orElse(null);
@@ -821,7 +820,7 @@ public class AsEntersInteractionService {
         }
 
         RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect removeCountersForCounters =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(e -> e instanceof RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect)
                         .map(RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
@@ -852,17 +851,17 @@ public class AsEntersInteractionService {
         // As-enters graveyard exiles are tracked with the entering permanent so its continuous
         // effects can derive values from the exiled cards.
         ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect limitedGraveyardExile =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
                         .map(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
         ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect requiredGraveyardExile =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
                         .map(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
         AsEntersGraveyardExileEffect filteredGraveyardExile =
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                card.getStaticEffects().stream()
                         .filter(AsEntersGraveyardExileEffect.class::isInstance)
                         .map(AsEntersGraveyardExileEffect.class::cast)
                         .findFirst().orElse(null);

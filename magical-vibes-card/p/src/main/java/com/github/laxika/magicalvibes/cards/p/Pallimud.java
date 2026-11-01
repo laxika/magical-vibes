@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -18,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 public class Pallimud extends Card {
 
     public Pallimud() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(

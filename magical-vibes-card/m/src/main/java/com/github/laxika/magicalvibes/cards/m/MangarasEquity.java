@@ -21,8 +21,7 @@ public class MangarasEquity extends Card {
 
     public MangarasEquity() {
         // As this enchantment enters, choose black or red.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseColorOnEnterEffect(CardColor.BLACK, CardColor.RED));
+        addStaticEffect(new ChooseColorOnEnterEffect(CardColor.BLACK, CardColor.RED));
 
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {1}{W}.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

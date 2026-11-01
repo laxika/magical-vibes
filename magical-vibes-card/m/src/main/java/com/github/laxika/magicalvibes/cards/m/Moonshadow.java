@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 public class Moonshadow extends Card {
 
     public Moonshadow() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(6)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(6)));
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
                 new ConditionalEffect(

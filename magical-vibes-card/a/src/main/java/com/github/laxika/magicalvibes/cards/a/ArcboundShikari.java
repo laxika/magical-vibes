@@ -31,8 +31,7 @@ public class ArcboundShikari extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, otherArtifactCreature));

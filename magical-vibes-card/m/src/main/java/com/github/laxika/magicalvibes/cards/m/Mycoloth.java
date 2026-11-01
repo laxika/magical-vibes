@@ -27,7 +27,7 @@ public class Mycoloth extends Card {
     public Mycoloth() {
         // Devour 2 (As this creature enters, you may sacrifice any number of creatures.
         // It enters with twice that many +1/+1 counters on it.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(2));
+        addStaticEffect(new DevourEffect(2));
 
         // At the beginning of your upkeep, create a 1/1 green Saproling creature token
         // for each +1/+1 counter on this creature.

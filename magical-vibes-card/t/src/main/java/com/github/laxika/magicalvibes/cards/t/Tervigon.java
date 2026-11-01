@@ -21,8 +21,7 @@ import java.util.Set;
 public class Tervigon extends Card {
 
     public Tervigon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

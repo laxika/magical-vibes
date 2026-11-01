@@ -26,8 +26,7 @@ import java.util.List;
 public class Homarid extends Card {
 
     public Homarid() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIDE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIDE, new Fixed(1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.TIDE));
 
         addStaticEffect(new ConditionalEffect(

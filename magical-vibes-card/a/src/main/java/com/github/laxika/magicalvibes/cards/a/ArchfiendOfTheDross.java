@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class ArchfiendOfTheDross extends Card {
 
     public ArchfiendOfTheDross() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OIL, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(4)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new RemoveCounterFromSourceEffect(CounterType.OIL, 1),

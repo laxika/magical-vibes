@@ -23,7 +23,7 @@ public class RibtrussRoaster extends Card {
     public RibtrussRoaster() {
         // Devour 1 (As this creature enters, you may sacrifice any number of creatures.
         // It enters with that many +1/+1 counters on it.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(1));
+        addStaticEffect(new DevourEffect(1));
 
         // At the beginning of your end step, create a number of 1/1 black and green Pest
         // creature tokens equal to the number of +1/+1 counters on this creature. They have

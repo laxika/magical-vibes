@@ -27,8 +27,7 @@ public class FrontierSiege extends Card {
     private static final String DRAGONS = "Dragons";
 
     public FrontierSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new ConditionalEffect(

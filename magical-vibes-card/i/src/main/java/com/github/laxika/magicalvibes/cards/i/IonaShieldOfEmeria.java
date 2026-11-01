@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChosenColorEffect;
 
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChos
 public class IonaShieldOfEmeria extends Card {
 
     public IonaShieldOfEmeria() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
     }
 }

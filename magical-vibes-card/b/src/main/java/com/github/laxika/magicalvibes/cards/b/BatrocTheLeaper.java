@@ -24,8 +24,7 @@ public class BatrocTheLeaper extends Card {
 
     public BatrocTheLeaper() {
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{2}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new RepeatedAdditionalCostCount("{2}")));
 
         targetUpTo(new RepeatedAdditionalCostCount("{2}"), new AnyTargetPredicateTargetFilter(

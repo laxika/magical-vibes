@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class LatticeBladeMantis extends Card {
 
     public LatticeBladeMantis() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
 
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 ConditionalEffect.unless(

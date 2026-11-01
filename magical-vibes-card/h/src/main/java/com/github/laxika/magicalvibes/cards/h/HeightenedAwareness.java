@@ -11,7 +11,7 @@ public class HeightenedAwareness extends Card {
 
     public HeightenedAwareness() {
         // As this enchantment enters, discard your hand.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardHandAsEntersEffect());
+        addStaticEffect(new DiscardHandAsEntersEffect());
 
         // At the beginning of your draw step, draw an additional card.
         addEffect(EffectSlot.DRAW_TRIGGERED, new DrawCardEffect(1));

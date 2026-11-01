@@ -720,7 +720,7 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid card name for the required card types: " + colorName);
         }
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
-                && (ctx.nonbasicLandOnly() || ctx.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                && (ctx.nonbasicLandOnly() || ctx.card().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect choice
                                 && choice.excludeBasicLandNames()))
                 && !colorChoice.options().contains(colorName)) {
@@ -1841,7 +1841,7 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
             SubtypeChoiceOnEnterEffect subtypeChoice = perm.getCard()
-                    .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .getStaticEffects().stream()
                     .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                     .map(SubtypeChoiceOnEnterEffect.class::cast)
                     .findFirst()
@@ -4862,13 +4862,13 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
-        ChooseModeOnEnterEffect modeChoice = ctx.sourceCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseModeOnEnterEffect modeChoice = ctx.sourceCard().getStaticEffects().stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst()
                 .orElse(null);
         ChooseIndependentModesOnEnterEffect independentModeChoice = ctx.sourceCard()
-                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .getStaticEffects().stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
                 .findFirst()

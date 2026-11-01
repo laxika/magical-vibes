@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -20,9 +19,8 @@ import java.util.List;
 public class PersonalDecoy extends Card {
 
     public PersonalDecoy() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.LOYALTY, new ControllerLifeTotal()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileIfLeavesBattlefieldEffect());
+        addStaticEffect(new EnterWithCountersEffect(CounterType.LOYALTY, new ControllerLifeTotal()));
+        addStaticEffect(new ExileIfLeavesBattlefieldEffect());
         addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentTruePredicate())));
 

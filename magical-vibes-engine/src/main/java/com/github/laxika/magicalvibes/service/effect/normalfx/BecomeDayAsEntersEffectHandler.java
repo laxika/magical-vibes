@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.DayNight;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BecomeDayAsEntersEffect;
@@ -20,7 +19,7 @@ public class BecomeDayAsEntersEffectHandler {
     }
 
     public void applyIfPresent(GameData gameData, Permanent enteringPermanent) {
-        boolean applies = enteringPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean applies = enteringPermanent.getCard().getStaticEffects().stream()
                 .anyMatch(BecomeDayAsEntersEffect.class::isInstance);
         if (applies && gameData.dayNight == DayNight.NEITHER) {
             dayNightService.becomeDay(gameData);

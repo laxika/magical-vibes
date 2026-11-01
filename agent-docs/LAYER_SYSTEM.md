@@ -3,7 +3,9 @@
 > `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
 > `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
 > rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
-> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> "can't be countered" and "costs less to cast", the hand for splice, mulligan-time actions and opening-hand
+> actions (`MayEffect(PregameChoiceEffect)`), and the graveyard for dredge. "Enters with" and "as this enters"
+> abilities (CR 614.1c) are static abilities too, never `ON_ENTER_BATTLEFIELD`. An ability that states its
 > zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
 > copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
 > a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.

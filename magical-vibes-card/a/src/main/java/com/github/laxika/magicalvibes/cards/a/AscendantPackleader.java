@@ -20,7 +20,7 @@ import java.util.List;
 public class AscendantPackleader extends Card {
 
     public AscendantPackleader() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentMinManaValuePredicate(4)),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))
         ));

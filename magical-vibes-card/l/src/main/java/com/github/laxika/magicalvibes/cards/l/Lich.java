@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class Lich extends Card {
 
     public Lich() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEqualToLifeTotalAsEntersEffect());
+        addStaticEffect(new LoseLifeEqualToLifeTotalAsEntersEffect());
         addStaticEffect(new CantLoseGameFromLifeEffect());
         addStaticEffect(new NefariousLichLifeGainReplacementEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, new SacrificePermanentsOrLoseGameEffect(

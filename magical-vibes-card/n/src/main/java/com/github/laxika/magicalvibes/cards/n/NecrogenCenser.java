@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -18,7 +17,7 @@ public class NecrogenCenser extends Card {
 
     public NecrogenCenser() {
         // This artifact enters with two charge counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(2)));
 
         // {T}, Remove a charge counter from Necrogen Censer: Target player loses 2 life.
         addActivatedAbility(new ActivatedAbility(

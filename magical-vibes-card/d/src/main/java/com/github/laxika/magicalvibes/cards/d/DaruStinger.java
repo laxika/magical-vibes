@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
@@ -25,7 +24,7 @@ public class DaruStinger extends Card {
     public DaruStinger() {
         // Amplify 1 — This creature enters with a +1/+1 counter on it for each Soldier card
         // revealed from your hand.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmplifyEffect(
+        addStaticEffect(new AmplifyEffect(
                 1, new CardSubtypePredicate(CardSubtype.SOLDIER)));
 
         // {T}: This creature deals damage equal to the number of +1/+1 counters on it to target

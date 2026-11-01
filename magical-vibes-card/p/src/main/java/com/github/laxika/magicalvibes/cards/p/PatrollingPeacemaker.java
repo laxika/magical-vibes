@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 public class PatrollingPeacemaker extends Card {
 
     public PatrollingPeacemaker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
         addEffect(EffectSlot.ON_OPPONENT_COMMITS_CRIME, new ProliferateEffect());
     }
 }

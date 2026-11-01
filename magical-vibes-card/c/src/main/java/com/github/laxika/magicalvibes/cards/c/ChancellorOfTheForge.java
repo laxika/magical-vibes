@@ -22,7 +22,7 @@ public class ChancellorOfTheForge extends Card {
     public ChancellorOfTheForge() {
         // You may reveal this card from your opening hand. If you do, at the beginning of
         // the first upkeep, create a 1/1 red Phyrexian Goblin creature token with haste.
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new RegisterOpeningHandUpkeepTriggerEffect(new CreateTokenEffect(
                         "Phyrexian Goblin", 1, 1, CardColor.RED,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN),

@@ -17,7 +17,7 @@ public class LureboundScarecrow extends Card {
 
     public LureboundScarecrow() {
         // "As this creature enters, choose a color."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
 
         // "When you control no permanents of the chosen color, sacrifice this creature."
         // — State-triggered ability (MTG rule 603.8).

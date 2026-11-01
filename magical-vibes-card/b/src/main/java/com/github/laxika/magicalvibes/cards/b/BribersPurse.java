@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -17,8 +16,7 @@ import java.util.List;
 public class BribersPurse extends Card {
 
     public BribersPurse() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.GEM, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.GEM, new XValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

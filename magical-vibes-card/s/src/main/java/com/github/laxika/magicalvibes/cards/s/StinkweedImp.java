@@ -20,6 +20,6 @@ public class StinkweedImp extends Card {
         // Whenever this creature deals combat damage to a creature, destroy that creature.
         // The damaged creature is baked as targetId by ON_COMBAT_DAMAGE_TO_CREATURE (non-targeting).
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(5));
+        addStaticEffect(new DredgeEffect(5));
     }
 }

@@ -783,7 +783,7 @@ public class BattlefieldPlacementService {
         // CR 702.82a: each devour instance (printed, then granted) is its own replacement effect with
         // its own sacrifice choice; instances already answered are tracked on the entering permanent.
         var devourInstances = new ArrayList<com.github.laxika.magicalvibes.model.effect.DevourEffect>();
-        entering.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        entering.getCard().getStaticEffects().stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::cast)
                 .findFirst().ifPresent(devourInstances::add);
@@ -814,7 +814,7 @@ public class BattlefieldPlacementService {
     private void applyRandomNumberChoiceOnEnter(Permanent permanent) {
         if (permanent.isFaceDown()) return;
 
-        NumberChoiceEffect numberChoice = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        NumberChoiceEffect numberChoice = permanent.getCard().getStaticEffects().stream()
                 .filter(NumberChoiceEffect.class::isInstance)
                 .map(NumberChoiceEffect.class::cast)
                 .findFirst()
@@ -829,7 +829,7 @@ public class BattlefieldPlacementService {
         Permanent permanent = request.permanent();
         if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 || permanent.getAmplifyRevealedCards() != null) return false;
-        AmplifyEffect amplify = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        AmplifyEffect amplify = permanent.getCard().getStaticEffects().stream()
                 .filter(AmplifyEffect.class::isInstance).map(AmplifyEffect.class::cast)
                 .findFirst().orElse(null);
         if (amplify == null) return false;
@@ -1905,7 +1905,7 @@ public class BattlefieldPlacementService {
             return true;
         }
         ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect effect = permanent.getCard()
-                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .getStaticEffects().stream()
                 .filter(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
                 .map(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
                 .findFirst().orElse(null);
@@ -2097,11 +2097,9 @@ public class BattlefieldPlacementService {
 
         if (!permanent.isFaceDown()
                 && !gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
-            List<CardEffect> entryEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
             // A perpetual "this creature enters with ..." grant is stored as a static effect on
             // the runtime card so it survives zone changes.
-            entryEffects.addAll(card.getStaticEffects());
-            for (CardEffect effect : entryEffects) {
+            for (CardEffect effect : card.getStaticEffects()) {
                 EnterWithCountersEffect enterWith;
                 if (effect instanceof AmplifyEffect amplify) {
                     enterWith = new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
@@ -2173,7 +2171,7 @@ public class BattlefieldPlacementService {
                 || gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
             return;
         }
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             EnterWithKeywordEffect enterWith;
             if (effect instanceof EnterWithKeywordEffect direct) {
                 enterWith = direct;
@@ -2206,7 +2204,7 @@ public class BattlefieldPlacementService {
                 || gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
             return;
         }
-        for (CardEffect effect : new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))) {
+        for (CardEffect effect : new ArrayList<>(permanent.getCard().getStaticEffects())) {
             if (!(effect instanceof EnterWithTokenAttachedEffect enterWith)) {
                 continue;
             }
@@ -2245,9 +2243,7 @@ public class BattlefieldPlacementService {
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
-        List<CardEffect> entryEffects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
-        entryEffects.addAll(permanent.getCard().getStaticEffects());
-        for (CardEffect effect : entryEffects) {
+        for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue, kicked,
                     repeatedAdditionalCosts);
         }
@@ -2266,7 +2262,7 @@ public class BattlefieldPlacementService {
         Map<CounterType, Integer> countersBefore = new EnumMap<>(permanent.getCounters());
         int countersBeforeTotal = countersBefore.values().stream().mapToInt(Integer::intValue).sum();
         int loreCountersBefore = permanent.getCounterCount(CounterType.LORE);
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof EnterWithCountersEffect enterWith
                     && matchesEnterWithCountersPredicate(gameData, controllerId, permanent.getCard(), enterWith)
                     && isChosenSubtypeDependent(enterWith)) {

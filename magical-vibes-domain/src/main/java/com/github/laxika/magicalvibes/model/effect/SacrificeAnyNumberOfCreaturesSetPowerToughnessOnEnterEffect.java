@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * "As this creature enters, sacrifice any number of creatures. This creature's power becomes the
  * total power of those creatures and its toughness becomes their total toughness."
  * <p>
- * An as-enters replacement effect (CR 614.1c): placed in {@code EffectSlot.ON_ENTER_BATTLEFIELD}
+ * An as-enters replacement effect (CR 614.1c): a static ability ({@code addStaticEffect})
  * and handled during {@code BattlefieldEntryService.handleCreatureEnteredBattlefield} before ETB
  * triggers fire. The controller picks any number of their <em>other</em> creatures (zero is legal);
  * the totals are read from the sacrificed creatures' last known power/toughness on the battlefield

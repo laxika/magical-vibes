@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -26,7 +25,7 @@ public class GreymondAvacynsStalwart extends Card {
     private static final String VIGILANCE_LIFELINK = "Vigilance and lifelink";
 
     public GreymondAvacynsStalwart() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseModeOnEnterEffect(List.of(
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(
                 FIRST_STRIKE_VIGILANCE, FIRST_STRIKE_LIFELINK, VIGILANCE_LIFELINK)));
 
         PermanentHasSubtypePredicate human = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);

@@ -14,7 +14,7 @@ public class BloodlinePretender extends Card {
 
     public BloodlinePretender() {
         // As this creature enters, choose a creature type.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         // Whenever another creature you control of the chosen type enters, put a +1/+1 counter
         // on this creature.

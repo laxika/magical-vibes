@@ -18,8 +18,7 @@ import java.util.List;
 public class ArcboundWanderer extends Card {
 
     public ArcboundWanderer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue(), true));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue(), true));
 
         addEffect(EffectSlot.ON_DEATH,
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(

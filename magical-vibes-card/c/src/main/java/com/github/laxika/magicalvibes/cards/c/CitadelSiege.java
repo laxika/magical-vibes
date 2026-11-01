@@ -29,8 +29,7 @@ public class CitadelSiege extends Card {
     private static final String DRAGONS = "Dragons";
 
     public CitadelSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         var target = target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature"));

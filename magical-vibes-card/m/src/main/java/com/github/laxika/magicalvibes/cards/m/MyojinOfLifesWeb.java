@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -25,7 +24,7 @@ import java.util.List;
 public class MyojinOfLifesWeb extends Card {
 
     public MyojinOfLifesWeb() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastFromZone(Zone.HAND),
                 new EnterWithCountersEffect(CounterType.DIVINITY, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(

@@ -52,7 +52,7 @@ public class OverlordOfTheBalemurk extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, millThenReturn);
         addEffect(EffectSlot.ON_ATTACK, millThenReturn);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(5))));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(

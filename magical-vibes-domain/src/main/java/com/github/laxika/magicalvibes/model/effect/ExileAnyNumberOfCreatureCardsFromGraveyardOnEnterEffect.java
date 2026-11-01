@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 /**
  * "As this creature enters, exile any number of creature cards from your graveyard."
  * <p>
- * An as-enters replacement effect (CR 614.1c): placed in {@code EffectSlot.ON_ENTER_BATTLEFIELD}
+ * An as-enters replacement effect (CR 614.1c): a static ability ({@code addStaticEffect})
  * and handled during {@code BattlefieldEntryService.handleCreatureEnteredBattlefield} before ETB
  * triggers fire. The controller picks any number of creature cards from their own graveyard; the
  * chosen cards are exiled tracked with the entering permanent, so

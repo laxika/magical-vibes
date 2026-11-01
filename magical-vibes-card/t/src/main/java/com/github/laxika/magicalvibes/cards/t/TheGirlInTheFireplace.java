@@ -32,7 +32,7 @@ public class TheGirlInTheFireplace extends Card {
                 1, "Human Noble", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN, CardSubtype.NOBLE), Set.of(Keyword.VANISHING), Set.of(),
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.TIME, new Fixed(3))),
+                        StaticAbility.of(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3))),
                         LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)),
                         StaticAbility.of(new PreventAllDamageEffect()))));
 

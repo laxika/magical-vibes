@@ -21,8 +21,7 @@ import java.util.List;
 public class HollowmurkSiege extends Card {
 
     public HollowmurkSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of("Sultai", "Abzan")));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of("Sultai", "Abzan")));
 
         addEffect(EffectSlot.ON_ALLY_COUNTER_PUT_ON_CREATURE, new ConditionalEffect(
                 new SourceHasChosenMode("Sultai"),

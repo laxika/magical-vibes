@@ -14,8 +14,7 @@ public class Wiitigo extends Card {
 
     public Wiitigo() {
         // "This creature enters with six +1/+1 counters on it."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
 
         // "At the beginning of your upkeep, put a +1/+1 counter on this creature if it has blocked
         //  or been blocked since your last upkeep. Otherwise, remove a +1/+1 counter from it."

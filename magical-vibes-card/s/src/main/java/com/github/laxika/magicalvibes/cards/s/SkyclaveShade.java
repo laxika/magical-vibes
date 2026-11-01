@@ -21,8 +21,7 @@ public class SkyclaveShade extends Card {
     public SkyclaveShade() {
         addStaticEffect(new KickerEffect("{2}{B}"));
         addStaticEffect(new CantBlockEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                         new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new ConditionalEffect(new ControllerTurn(),

@@ -36,8 +36,7 @@ public class TheBeastDeathlessPrince extends Card {
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
 
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
         addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER, SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
                 new DrawCardEffect(1)));

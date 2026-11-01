@@ -26,7 +26,7 @@ public class ForsakenCrossroads extends Card {
         addStaticEffect(new EntersTappedEffect());
 
         // As Forsaken Crossroads enters the battlefield, choose a color.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
 
         // When Forsaken Crossroads enters the battlefield, scry 1. If you weren't the starting
         // player, you may untap Forsaken Crossroads instead.

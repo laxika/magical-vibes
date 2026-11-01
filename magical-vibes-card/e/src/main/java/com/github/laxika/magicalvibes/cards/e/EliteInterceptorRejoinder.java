@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.r.Rejoinder;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 
 /**
@@ -18,7 +17,7 @@ public class EliteInterceptorRejoinder extends Card {
         setBackFaceCard(new Rejoinder());
 
         // This creature enters prepared.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
     }
 
     @Override

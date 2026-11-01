@@ -17,7 +17,7 @@ public class FlametongueYearling extends Card {
 
     public FlametongueYearling() {
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{2}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{2}")));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SourcePermanentDealsPowerDamageToTargetCreatureEffect());

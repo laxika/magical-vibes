@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -16,7 +15,7 @@ import java.util.List;
 public class RingOfThreeWishes extends Card {
 
     public RingOfThreeWishes() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.WISH, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.WISH, new Fixed(3)));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}",

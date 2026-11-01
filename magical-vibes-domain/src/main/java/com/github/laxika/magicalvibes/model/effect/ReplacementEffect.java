@@ -8,9 +8,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * "enters the battlefield tapped", "enters with N counters", and
  * "enters as a copy of".
  * <p>
- * Effects registered in {@code EffectSlot.ON_ENTER_BATTLEFIELD} that implement
- * this interface are automatically excluded from the triggered-ability pipeline
- * and handled during the permanent entry process instead.
+ * A card's own replacement effects are static abilities ({@code addStaticEffect}); the
+ * ones that modify how the permanent enters (CR 614.1c) are applied during the
+ * permanent entry process.
  */
 public interface ReplacementEffect extends CardEffect {
 }

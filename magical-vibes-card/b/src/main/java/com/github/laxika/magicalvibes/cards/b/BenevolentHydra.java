@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToOtherCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -24,7 +23,7 @@ import java.util.List;
 public class BenevolentHydra extends Card {
 
     public BenevolentHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addStaticEffect(new AddOnePlusOneCountersToOtherCreaturesEffect());
 

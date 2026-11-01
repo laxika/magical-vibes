@@ -1009,9 +1009,9 @@ public class LayerSystemService {
         h = hashEnums(h, card.getKeywords());
         h = hashEnums(h, card.getAdditionalTypes());
         h = hashEnums(h, card.getSupertypes());
-        // Every ability, the static ones and the layer-6 chosen-as-enters protection seed (an
-        // ON_ENTER_BATTLEFIELD ability) included. Abilities are immutable and a change replaces
-        // one, so its identity covers its contents.
+        // Every ability, the static ones (the layer-6 chosen-colour protection seed among them)
+        // included. Abilities are immutable and a change replaces one, so its identity covers its
+        // contents.
         h = mix(h, card.getAbilities().size());
         for (Ability ability : card.getAbilities()) {
             h = mix(h, System.identityHashCode(ability));
@@ -2911,9 +2911,9 @@ public class LayerSystemService {
                     state.addProtectionColors(rewritten.colors());
                 }
             }
-            if (permanent.getChosenColor() != null && permanent.getCard()
-                    .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .anyMatch(ProtectionFromChosenColorEffect.class::isInstance)) {
+            if (permanent.getChosenColor() != null && permanent.getCard().getStaticEffects().stream()
+                    .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
+                            && protection.scope() == null)) {
                 state.addProtectionColors(Set.of(permanent.getChosenColor()));
             }
         }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
@@ -24,8 +23,7 @@ import java.util.Set;
 public class PeterParkersCamera extends Card {
 
     public PeterParkersCamera() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FILM, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FILM, new Fixed(3)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

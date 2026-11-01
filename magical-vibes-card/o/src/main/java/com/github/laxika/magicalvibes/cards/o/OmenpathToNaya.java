@@ -48,8 +48,7 @@ public class OmenpathToNaya extends Card {
     }
 
     public OmenpathToNaya() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         addActivatedAbility(new ActivatedAbility(

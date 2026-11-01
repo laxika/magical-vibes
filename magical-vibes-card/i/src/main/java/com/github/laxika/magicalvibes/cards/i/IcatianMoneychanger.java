@@ -25,8 +25,7 @@ import java.util.List;
 public class IcatianMoneychanger extends Card {
 
     public IcatianMoneychanger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CREDIT, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CREDIT, new Fixed(3)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.CREDIT));

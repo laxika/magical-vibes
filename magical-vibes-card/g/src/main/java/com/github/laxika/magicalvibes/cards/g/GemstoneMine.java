@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -22,8 +21,7 @@ import java.util.List;
 public class GemstoneMine extends Card {
 
     public GemstoneMine() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINING, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINING, new Fixed(3)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

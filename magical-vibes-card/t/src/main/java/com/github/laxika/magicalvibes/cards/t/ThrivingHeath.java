@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -26,8 +25,7 @@ public class ThrivingHeath extends Card {
 
     public ThrivingHeath() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseColorOnEnterEffect(CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
+        addStaticEffect(new ChooseColorOnEnterEffect(CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
 
         // "Add {W} or one mana of the chosen color" is modeled as two separate mana abilities.
         addActivatedAbility(new ActivatedAbility(

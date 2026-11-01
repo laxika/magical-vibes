@@ -12,7 +12,7 @@ public class CoalitionConstruct extends Card {
 
     public CoalitionConstruct() {
         // As Coalition Construct enters, choose a creature type.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         // Coalition Construct is the chosen type in addition to its other types.
         addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelf());

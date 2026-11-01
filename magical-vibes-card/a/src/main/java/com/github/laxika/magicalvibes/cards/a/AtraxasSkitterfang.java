@@ -19,8 +19,7 @@ import java.util.List;
 public class AtraxasSkitterfang extends Card {
 
     public AtraxasSkitterfang() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OIL, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(3)));
 
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
                 new RemoveCounterFromSourceThenEffect(CounterType.OIL,

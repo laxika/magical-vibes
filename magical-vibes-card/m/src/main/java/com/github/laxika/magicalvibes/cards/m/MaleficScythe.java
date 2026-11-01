@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class MaleficScythe extends Card {
 
     public MaleficScythe() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SOUL, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SOUL, new Fixed(1)));
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.SOUL),
                 new CountersOnSource(CounterType.SOUL),

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -19,7 +18,7 @@ public class TrigonOfCorruption extends Card {
 
     public TrigonOfCorruption() {
         // Trigon of Corruption enters the battlefield with three charge counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
 
         // {B}{B}, {T}: Put a charge counter on Trigon of Corruption.
         addActivatedAbility(new ActivatedAbility(

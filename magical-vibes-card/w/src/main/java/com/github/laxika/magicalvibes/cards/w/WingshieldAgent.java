@@ -21,8 +21,7 @@ import java.util.List;
 public class WingshieldAgent extends Card {
 
     public WingshieldAgent() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

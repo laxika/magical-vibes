@@ -16,7 +16,7 @@ public class ChancellorOfTheSpires extends Card {
     public ChancellorOfTheSpires() {
         // You may reveal this card from your opening hand. If you do, at the beginning of
         // the first upkeep, each opponent mills seven cards.
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new RegisterOpeningHandUpkeepTriggerEffect(new MillEffect(7, MillRecipient.EACH_OPPONENT)),
                 "Reveal this card from your opening hand?"
         ));

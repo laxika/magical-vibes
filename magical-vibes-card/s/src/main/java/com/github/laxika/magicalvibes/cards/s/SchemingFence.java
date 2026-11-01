@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfChosenPermanentEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPre
 public class SchemingFence extends Card {
 
     public SchemingFence() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNonlandPermanentOnEnterEffect());
+        addStaticEffect(new ChooseNonlandPermanentOnEnterEffect());
         addStaticEffect(new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(
                 new PermanentIsChosenPermanentPredicate()));
         addStaticEffect(new GainActivatedAbilitiesOfChosenPermanentEffect());

@@ -17,8 +17,7 @@ import java.util.List;
 public class NoosegrafMob extends Card {
 
     public NoosegrafMob() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null, List.of(
                         new RemoveCounterFromSourceThenEffect(

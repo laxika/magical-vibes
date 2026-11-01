@@ -16,8 +16,7 @@ public class RootsOfLife extends Card {
 
     public RootsOfLife() {
         // As this enchantment enters, choose Island or Swamp.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseBasicLandTypeOnEnterEffect(List.of(CardSubtype.ISLAND, CardSubtype.SWAMP)));
+        addStaticEffect(new ChooseBasicLandTypeOnEnterEffect(List.of(CardSubtype.ISLAND, CardSubtype.SWAMP)));
         // Whenever a land of the chosen type an opponent controls becomes tapped, you gain 1 life.
         // Mandatory twin of Thoughtleech; fires on any tap (for mana or forced), not just mana taps.
         addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED, new TriggeringPermanentConditionalEffect(

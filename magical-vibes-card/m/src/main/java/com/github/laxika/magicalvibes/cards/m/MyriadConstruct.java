@@ -34,7 +34,7 @@ public class MyriadConstruct extends Card {
         ));
 
         addStaticEffect(new KickerEffect("{3}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(nonbasicLand, CountScope.OPPONENTS))));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new SacrificeSelfEffect());

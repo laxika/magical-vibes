@@ -41,8 +41,7 @@ public class TheRuinousWreckingCrew extends Card {
         DestroyTargetPermanentEffect destroyToken = new DestroyTargetPermanentEffect(tokenPredicate);
         registerEffectTargetIndex(destroyToken, tokenTarget.getIndex());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(

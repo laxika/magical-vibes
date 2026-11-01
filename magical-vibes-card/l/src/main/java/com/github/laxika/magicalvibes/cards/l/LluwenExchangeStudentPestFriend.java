@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.PestFriend;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -19,7 +18,7 @@ public class LluwenExchangeStudentPestFriend extends Card {
     public LluwenExchangeStudentPestFriend() {
         setBackFaceCard(new PestFriend());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -16,8 +16,7 @@ import java.util.List;
 public class RampagingMonument extends Card {
 
     public RampagingMonument() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardIsMulticoloredPredicate(),
                         List.of(new PutCountersOnSourceEffect(1, 1, 1))));

@@ -17,8 +17,7 @@ import java.util.List;
 public class WildgrowthArchaic extends Card {
 
     public WildgrowthArchaic() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.CREATURE),

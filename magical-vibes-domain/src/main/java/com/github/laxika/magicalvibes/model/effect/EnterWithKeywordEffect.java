@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
  * does not have it (CR 707.2 — copies do not copy the grant).
  * <p>
  * Conditional variants ("If this creature was kicked, it enters with ... and with fear") wrap this in a
- * {@link ConditionalEffect} registered in {@code EffectSlot.ON_ENTER_BATTLEFIELD}. Handled in
+ * {@link ConditionalEffect} registered as a static ability. Handled in
  * {@code BattlefieldPlacementService} while the permanent enters; never goes on the stack.
  */
 public record EnterWithKeywordEffect(Keyword keyword) implements ReplacementEffect {

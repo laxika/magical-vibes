@@ -19,6 +19,6 @@ public class TheMasterFormedAnew extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new MayEffect(
                 new ExileControlledCreatureWithTakeoverCounterEffect(),
                 "Exile a creature you control and put a takeover counter on it?"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyCreatureCardInExileOnEnterEffect());
+        addStaticEffect(new CopyCreatureCardInExileOnEnterEffect());
     }
 }

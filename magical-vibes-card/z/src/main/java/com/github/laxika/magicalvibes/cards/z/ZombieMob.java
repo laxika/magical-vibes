@@ -18,7 +18,7 @@ public class ZombieMob extends Card {
     public ZombieMob() {
         // This creature enters with a +1/+1 counter on it for each creature card in your graveyard.
         // Applied as an as-enters replacement, so the count is taken before the exile trigger resolves.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
 

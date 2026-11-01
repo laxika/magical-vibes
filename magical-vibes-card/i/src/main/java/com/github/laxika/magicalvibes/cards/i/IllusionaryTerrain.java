@@ -15,7 +15,7 @@ public class IllusionaryTerrain extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{2}"));
 
         // As this enchantment enters, choose two basic land types.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect(2));
+        addStaticEffect(new ChooseBasicLandTypeOnEnterEffect(2));
 
         // Basic lands of the first chosen type are the second chosen type.
         addStaticEffect(new BasicLandsOfChosenTypesBecomeTypeEffect());

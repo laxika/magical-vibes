@@ -23,7 +23,7 @@ import java.util.List;
 public class ClayChampion extends Card {
 
     public ClayChampion() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new Scaled(new ColorManaPairsSpentToCast(ManaColor.GREEN), 3)));
 

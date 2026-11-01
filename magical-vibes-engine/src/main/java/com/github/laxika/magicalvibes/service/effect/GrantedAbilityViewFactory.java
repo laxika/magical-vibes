@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -158,9 +157,9 @@ public class GrantedAbilityViewFactory {
         if (permanent.getChosenColor() == null) {
             return null;
         }
-        boolean grantsChosenProtection = permanent.getCard()
-                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(ProtectionFromChosenColorEffect.class::isInstance);
+        boolean grantsChosenProtection = permanent.getCard().getStaticEffects().stream()
+                .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
+                        && protection.scope() == null);
         return grantsChosenProtection ? permanent.getChosenColor() : null;
     }
 

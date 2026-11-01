@@ -17,7 +17,7 @@ public class TarFiend extends Card {
     public TarFiend() {
         // Devour 2 (As this creature enters, you may sacrifice any number of creatures.
         // It enters with twice that many +1/+1 counters on it.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(2));
+        addStaticEffect(new DevourEffect(2));
 
         // When this creature enters, target player discards a card for each creature it devoured.
         target(new PlayerPredicateTargetFilter(

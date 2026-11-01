@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubty
 public class SpeciesSpecialist extends Card {
 
     public SpeciesSpecialist() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         var deathTrigger = new TriggeringPermanentConditionalEffect(
                 new PermanentHasSourceChosenSubtypePredicate(),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -22,7 +21,7 @@ public class HundredBattleVeteran extends Card {
         addStaticEffect(new ConditionalEffect(
                 new ControlledCreatureCounterKindsAtLeast(3),
                 new StaticBoostEffect(2, 4, GrantScope.SELF)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
                 new EnterWithCountersEffect(CounterType.FINALITY, new Fixed(1))));
     }

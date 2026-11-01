@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Player;
@@ -71,8 +70,7 @@ public class DredgeSupport {
     }
 
     private Optional<DredgeEffect> dredgeEffect(GameData gameData, Card card) {
-        return gameQueryService.getEffectiveGraveyardEffects(
-                        gameData, card, EffectSlot.GRAVEYARD_DRAW_REPLACEMENT).stream()
+        return gameQueryService.getEffectiveGraveyardStaticEffects(gameData, card).stream()
                 .filter(DredgeEffect.class::isInstance)
                 .map(DredgeEffect.class::cast)
                 .findFirst();

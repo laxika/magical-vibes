@@ -18,7 +18,7 @@ import java.util.Set;
 public class ProteanWarEngine extends Card {
 
     public ProteanWarEngine() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DraftProteanWarEngineSpellbookEffect());
+        addStaticEffect(new DraftProteanWarEngineSpellbookEffect());
         addEffect(EffectSlot.ON_SELF_BECOMES_CREWED,
                 new BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect(
                         Set.of(CardType.ARTIFACT), Set.of(CardSubtype.VEHICLE)));

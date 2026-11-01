@@ -20,8 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class Chronozoa extends Card {
 
     public Chronozoa() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
                         new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));

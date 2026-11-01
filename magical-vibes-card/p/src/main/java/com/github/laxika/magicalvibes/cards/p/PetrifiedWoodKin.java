@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -17,8 +16,7 @@ public class PetrifiedWoodKin extends Card {
 
     public PetrifiedWoodKin() {
         addStaticEffect(new CantBeCounteredEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new DamageDealtToOpponentsThisTurn()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new DamageDealtToOpponentsThisTurn()));
         addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT)));
     }
 }

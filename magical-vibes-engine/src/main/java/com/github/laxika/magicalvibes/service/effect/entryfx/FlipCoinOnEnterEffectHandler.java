@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.entryfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -81,7 +80,7 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
             return;
         }
         permanent.setEntryCoinFlipAwaitingChoice(null);
-        permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        permanent.getCard().getStaticEffects().stream()
                 .filter(FlipCoinOnEnterEffect.class::isInstance)
                 .map(FlipCoinOnEnterEffect.class::cast)
                 .findFirst()

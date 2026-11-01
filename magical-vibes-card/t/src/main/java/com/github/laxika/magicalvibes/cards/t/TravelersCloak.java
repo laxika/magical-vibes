@@ -17,8 +17,7 @@ public class TravelersCloak extends Card {
 
     public TravelersCloak() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new ChooseBasicLandTypeOnEnterEffect(CardSubtype.landTypes()))
+                .addStaticEffect(new ChooseBasicLandTypeOnEnterEffect(CardSubtype.landTypes()))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
                 .addStaticEffect(new GrantEffectEffect(
                         new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 public class DiamondKnight extends Card {
 
     public DiamondKnight() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect(1));
     }

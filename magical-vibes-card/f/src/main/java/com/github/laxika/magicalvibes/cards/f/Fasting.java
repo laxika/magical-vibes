@@ -21,7 +21,7 @@ public class Fasting extends Card {
                 new ConditionalEffect(new SourceCounterThreshold(5, CounterType.HUNGER),
                         new DestroyReferencedPermanentEffect(PermanentReference.SOURCE))));
 
-        addEffect(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW, new FastingEffect());
+        addStaticEffect(new FastingEffect());
 
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
                 new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));

@@ -18,7 +18,7 @@ import java.util.List;
 public class OminousLockbox extends Card {
 
     public OminousLockbox() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNumberOnEnterEffect(1, 20));
+        addStaticEffect(new ChooseNumberOnEnterEffect(1, 20));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(new SacrificeSelfThenEffect(new CopyTriggeringSpellEffect())),

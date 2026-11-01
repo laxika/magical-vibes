@@ -14,7 +14,7 @@ public class StrifeScholarAwakenTheAges extends Card {
 
     public StrifeScholarAwakenTheAges() {
         setBackFaceCard(new AwakenTheAges());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysLifeEffect(new Fixed(2)));
     }

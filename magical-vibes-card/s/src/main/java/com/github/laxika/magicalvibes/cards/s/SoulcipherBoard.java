@@ -37,8 +37,7 @@ public class SoulcipherBoard extends Card {
         setBackFaceCard(new CipherboundSpirit());
 
         // This artifact enters with three omen counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OMEN, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OMEN, new Fixed(3)));
 
         // {1}{U}, {T}: Look at the top two cards of your library. Put one of them into your graveyard.
         // No target — falls back to the controller's own library (same as Puresight Merrow).

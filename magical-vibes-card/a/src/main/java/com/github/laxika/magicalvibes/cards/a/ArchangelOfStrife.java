@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenPlayerModeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 
@@ -17,8 +16,7 @@ public class ArchangelOfStrife extends Card {
     private static final String PEACE = "Peace";
 
     public ArchangelOfStrife() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(WAR, PEACE), true));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(WAR, PEACE), true));
         addStaticEffect(new BoostCreaturesOfChosenPlayerModeEffect(WAR, 3, 0));
         addStaticEffect(new BoostCreaturesOfChosenPlayerModeEffect(PEACE, 0, 3));
     }

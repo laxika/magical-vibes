@@ -25,8 +25,7 @@ public class OutpostSiege extends Card {
     private static final String DRAGONS = "Dragons";
 
     public OutpostSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConditionalEffect(new SourceHasChosenMode(KHANS),

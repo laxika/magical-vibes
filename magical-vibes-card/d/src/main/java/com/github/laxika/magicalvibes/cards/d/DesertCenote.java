@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsStartingPlayer;
@@ -20,7 +19,7 @@ public class DesertCenote extends Card {
     public DesertCenote() {
         addStaticEffect(new ConditionalReplacementEffect(
                 new ControllerIsStartingPlayer(), new EntersTappedEffect()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseUpToTwoColorsFromHandOnEnterEffect());
+        addStaticEffect(new ChooseUpToTwoColorsFromHandOnEnterEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(AwardAnyColorManaEffect.fromSourceChosenColors()),

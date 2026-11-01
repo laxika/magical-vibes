@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DepartureResult;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -3752,7 +3751,7 @@ public class MultiPermanentChoiceHandlerService {
             entering.setDevourInstancesResolved(entering.getDevourInstancesResolved() + 1);
             // CR 702.82a: a granted devour is a separate instance from a printed one; ask for its
             // sacrifice before the entry continues.
-            int devourInstances = (context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            int devourInstances = (context.card().getStaticEffects().stream()
                     .anyMatch(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance) ? 1 : 0)
                     + (entering.getGrantedDevour() > 0 ? 1 : 0);
             if (entering.getDevourInstancesResolved() < devourInstances) {

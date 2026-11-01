@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 public class ThoughtSponge extends Card {
 
     public ThoughtSponge() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new GreatestOpponentCardsDrawnThisTurn()));
         addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(new SourcePower()));
     }

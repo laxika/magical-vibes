@@ -48,7 +48,7 @@ public class WerewhatSupport {
                                boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
                                List<UUID> targetIds) {
         Permanent entering = lastEnteredPermanent(gameData, controllerId);
-        if (entering == null || card.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD)
+        if (entering == null || card.getStaticEffects()
                 .stream().noneMatch(WerewhatOnEnterEffect.class::isInstance)) {
             return false;
         }

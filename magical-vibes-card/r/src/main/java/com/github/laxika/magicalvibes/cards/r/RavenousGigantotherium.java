@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RavenousGigantotherium extends Card {
 
     public RavenousGigantotherium() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(3));
+        addStaticEffect(new DevourEffect(3));
 
         targetUpTo(new SourcePower(), TargetFilters.creature(), 99)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

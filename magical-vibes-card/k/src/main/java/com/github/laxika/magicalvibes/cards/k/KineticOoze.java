@@ -30,8 +30,7 @@ import java.util.List;
 public class KineticOoze extends Card {
 
     public KineticOoze() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         PermanentPredicate artifactOrEnchantmentWithManaValueAtMostX = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

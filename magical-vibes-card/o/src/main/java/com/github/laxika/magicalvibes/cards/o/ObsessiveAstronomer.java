@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEf
 public class ObsessiveAstronomer extends Card {
 
     public ObsessiveAstronomer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE, new DiscardUpToThenDrawThatManyEffect(2));
     }
 }

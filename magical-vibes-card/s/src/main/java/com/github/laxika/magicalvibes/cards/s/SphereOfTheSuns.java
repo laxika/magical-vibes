@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
@@ -20,7 +19,7 @@ public class SphereOfTheSuns extends Card {
     public SphereOfTheSuns() {
         // Sphere of the Suns enters the battlefield tapped and with three charge counters on it.
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
 
         // {T}, Remove a charge counter from Sphere of the Suns: Add one mana of any color.
         addActivatedAbility(new ActivatedAbility(

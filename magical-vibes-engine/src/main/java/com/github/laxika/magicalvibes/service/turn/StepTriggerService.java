@@ -257,7 +257,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLo
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -433,15 +432,14 @@ public class StepTriggerService {
                                           UUID sourcePermanentId) {}
 
     /**
-     * Scans battlefields, graveyards, and (on turn 1) hands for upkeep-triggered
+     * Scans battlefields and graveyards for upkeep-triggered
      * abilities and pushes them onto the stack or queues may-ability prompts.
      *
      * <p>Handles slots: {@code UPKEEP_TRIGGERED}, {@code COMMAND_ZONE_UPKEEP_TRIGGERED},
      * {@code GRAVEYARD_UPKEEP_TRIGGERED},
      * {@code EACH_UPKEEP_TRIGGERED}, {@code OPPONENT_UPKEEP_TRIGGERED},
      * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED},
-     * {@code COMMAND_ZONE_UPKEEP_TRIGGERED}, and
-     * {@code ON_OPENING_HAND_REVEAL} (Chancellor cycle, turn 1 only).
+     * and {@code COMMAND_ZONE_UPKEEP_TRIGGERED}.
      *
      * @param gameData the current game state to modify
      */
@@ -986,12 +984,6 @@ public class StepTriggerService {
         }
 
         handleOpeningHandUpkeepTriggers(gameData);
-
-        // Chancellor cycle: at the beginning of the first upkeep, check all players' hands
-        // for cards with ON_OPENING_HAND_REVEAL effects (revealed from opening hand)
-        if (gameData.turnNumber == 1) {
-            handleOpeningHandTriggers(gameData);
-        }
 
         UUID activePlayerId = gameData.activePlayerId;
         gameData.untappedLandsAtTurnStart.computeIfAbsent(activePlayerId, ignored -> {
@@ -1798,8 +1790,7 @@ public class StepTriggerService {
                 if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
 
                 boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                        .anyMatch(effect -> effect instanceof RememberTargetPlayerEffect
-                                || effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect)
+                        .anyMatch(RememberTargetPlayerEffect.class::isInstance)
                         || perm.getCard().getStaticEffects().stream().anyMatch(
                                 com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
                 if (playerId.equals(activePlayerId) && !hasChosenPlayer) continue;
@@ -3038,45 +3029,6 @@ public class StepTriggerService {
         }
     }
 
-    private void handleOpeningHandTriggers(GameData gameData) {
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> hand = gameData.playerHands.get(playerId);
-            if (hand == null) continue;
-
-            for (Card card : hand) {
-                List<CardEffect> openingHandEffects = card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL);
-                if (openingHandEffects == null || openingHandEffects.isEmpty()) continue;
-
-                for (CardEffect effect : openingHandEffects) {
-                    // Pregame choices are handled during the pregame procedure
-                    // (MulliganService.startGame), not during the first upkeep.
-                    if (effect instanceof MayEffect may
-                            && may.wrapped() instanceof PregameChoiceEffect) {
-                        continue;
-                    }
-                    if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(card, playerId, may);
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                playerId,
-                                card.getName() + "'s opening hand ability",
-                                new ArrayList<>(List.of(effect))
-                        ));
-
-                        String playerName = gameData.playerIdToName.get(playerId);
-                        gameLogService.append(gameData,
-                                GameLog.textCardText(playerName + " reveals ", card, " from their opening hand."));
-                        log.info("Game {} - {} reveals {} from opening hand, trigger pushed onto stack",
-                                gameData.id, playerName, card.getName());
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * Executes the draw step: the active player draws a card (rule 504.1),
      * unless it is turn 1 for the starting player (rule 103.7a).
@@ -3186,8 +3138,8 @@ public class StepTriggerService {
         if (battlefield == null) return List.of();
         List<DrawStepReplacementSource> sources = new ArrayList<>();
         for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
-                if (effect instanceof MaySkipDrawReplacementEffect replacement) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
+                if (effect instanceof MaySkipDrawReplacementEffect replacement && replacement.drawStepOnly()) {
                     sources.add(new DrawStepReplacementSource(perm.getCard(), replacement.replacementKind()));
                 }
             }
@@ -4522,7 +4474,7 @@ public class StepTriggerService {
                 perm.setAttachedTo(primaryPermanent.getId());
             }
             var cardTypeChoice = returningCards.size() == 1
-                    ? card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    ? card.getStaticEffects().stream()
                     .filter(com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect.class::isInstance)
                     .map(com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect.class::cast)
                     .filter(choice -> !choice.lookAtOpponentHand())

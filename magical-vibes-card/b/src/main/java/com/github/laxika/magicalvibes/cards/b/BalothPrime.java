@@ -28,8 +28,7 @@ public class BalothPrime extends Card {
 
     public BalothPrime() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(

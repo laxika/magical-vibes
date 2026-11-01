@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -22,7 +21,7 @@ public class SigilOfDistinction extends Card {
 
     public SigilOfDistinction() {
         // This Equipment enters with X charge counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
 
         // Equipped creature gets +1/+1 for each charge counter on this Equipment.
         addStaticEffect(new AttachedBoostEffect(

@@ -16,8 +16,7 @@ import java.util.List;
 public class MarketbackWalker extends Card {
 
     public MarketbackWalker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

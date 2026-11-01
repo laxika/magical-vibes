@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,7 +23,7 @@ public class UnbreathingHorde extends Card {
         // other Zombie you control and each Zombie card in your graveyard.
         // (It isn't on the battlefield yet while the amount is evaluated, so the
         // battlefield count naturally covers only the *other* Zombies.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new Sum(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER),

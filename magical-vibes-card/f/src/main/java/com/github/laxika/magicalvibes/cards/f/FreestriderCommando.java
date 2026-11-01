@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
@@ -18,7 +17,7 @@ public class FreestriderCommando extends Card {
 
     public FreestriderCommando() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{G}"))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new NoManaSpentToCast(),
+        addStaticEffect(new ConditionalEffect(new NoManaSpentToCast(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
     }
 }

@@ -195,7 +195,7 @@ public class BattlefieldEntryBatchSupport {
     /** Resumes the native entry choices after the devour replacement choice has finished. */
     public void completeNativeDevourChoice(GameData gameData, Permanent permanent) {
         permanent.setDevourInstancesResolved(permanent.getDevourInstancesResolved() + 1);
-        int instances = (permanent.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        int instances = (permanent.getCard().getStaticEffects().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance) ? 1 : 0)
                 + (permanent.getGrantedDevour() > 0 ? 1 : 0);
         if (permanent.getDevourInstancesResolved() >= instances) {
@@ -349,7 +349,7 @@ public class BattlefieldEntryBatchSupport {
     }
 
     private boolean entersWithPlayerChoice(Permanent permanent) {
-        return permanent.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        return permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect number
                         && !number.chooseRandomly());

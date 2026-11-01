@@ -14,8 +14,7 @@ public class VastwoodHydra extends Card {
 
     public VastwoodHydra() {
         // This creature enters with X +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         // When this creature dies, you may distribute a number of +1/+1 counters equal to the number
         // of +1/+1 counters on this creature among any number of creatures you control.

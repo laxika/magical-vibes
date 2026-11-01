@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -257,8 +256,7 @@ class FlickerEffectHandlerTest {
         @DisplayName("Prepares a self-flickered copy-on-entry permanent for re-entry")
         void preparesCopyOnEntryBeforeSelfReturn() {
             Card targetCard = createCreatureCard("Clone");
-            targetCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                    new CopyPermanentOnEnterEffect(new PermanentIsCreaturePredicate(), "creature"));
+            targetCard.addStaticEffect(new CopyPermanentOnEnterEffect(new PermanentIsCreaturePredicate(), "creature"));
             Permanent target = new Permanent(targetCard);
             Card sourceCard = createCreatureCard("Flicker");
             FlickerEffect effect = new FlickerEffect(

@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.MimeoplasmCopyOnEnterEffect;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "136")
@@ -16,7 +14,6 @@ import java.util.Set;
 public class TheMimeoplasm extends Card {
 
     public TheMimeoplasm() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CopyCreatureCardInGraveyardOnEnterEffect(null, null, null, Set.of(), true));
+        addStaticEffect(new CopyCreatureCardInGraveyardOnEnterEffect(null, null, null, Set.of(), true));
     }
 }

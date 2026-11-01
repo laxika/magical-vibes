@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
@@ -88,8 +87,7 @@ class GrantedAbilityViewFactoryTest {
     void projectsOnlyProtectionBeyondPrintedText() {
         Card card = creatureCard("Voice");
         card.addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ProtectionFromChosenColorEffect());
+        card.addStaticEffect(new ProtectionFromChosenColorEffect());
         Permanent permanent = new Permanent(card);
         permanent.setChosenColor(CardColor.RED);
         permanent.getProtectionFromColorsUntilEndOfTurn().add(CardColor.GREEN);

@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 public class WatchfulBlisterzoa extends Card {
 
     public WatchfulBlisterzoa() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OIL, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(1)));
         addEffect(EffectSlot.ON_DEATH,
                 new DrawCardForEachDyingSourceCounterEffect(CounterType.OIL));
     }

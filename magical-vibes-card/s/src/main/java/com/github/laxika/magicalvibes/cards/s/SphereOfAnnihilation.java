@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceAndCreaturesAndPla
 public class SphereOfAnnihilation extends Card {
 
     public SphereOfAnnihilation() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.VOID, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.VOID, new XValue()));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ExileSourceAndCreaturesAndPlaneswalkersWithManaValueAtMostSourceCountersEffect(
                         CounterType.VOID));

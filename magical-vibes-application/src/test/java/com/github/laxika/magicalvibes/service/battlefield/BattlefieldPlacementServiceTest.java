@@ -157,8 +157,7 @@ class BattlefieldPlacementServiceTest {
         gd.playerIds.add(opponentId);
         Card card = new Card();
         card.setName("Opponent choice");
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect());
+        card.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect());
         Permanent entering = new Permanent(card);
 
         putPermanentOntoBattlefield(service, gd, player1Id, entering);
@@ -177,7 +176,7 @@ class BattlefieldPlacementServiceTest {
         Card card = new Card();
         card.setName("Life Note");
         card.setType(CardType.ENCHANTMENT);
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new NoteControllerLifeTotalEffect());
+        card.addStaticEffect(new NoteControllerLifeTotalEffect());
         Permanent entering = new Permanent(card);
 
         putPermanentOntoBattlefield(service, gd, player1Id, entering);
@@ -190,7 +189,7 @@ class BattlefieldPlacementServiceTest {
     void choosesRandomNumberWhenPermanentEnters() {
         Card card = new Card();
         card.setName("Random Number Permanent");
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseRandomNumberOnEnterEffect(2, 4));
+        card.addStaticEffect(new ChooseRandomNumberOnEnterEffect(2, 4));
         Permanent entering = new Permanent(card);
 
         putPermanentOntoBattlefield(service, gd, player1Id, entering);

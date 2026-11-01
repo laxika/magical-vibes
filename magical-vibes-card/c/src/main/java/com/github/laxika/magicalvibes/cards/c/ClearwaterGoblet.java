@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class ClearwaterGoblet extends Card {
 
     public ClearwaterGoblet() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new MayEffect(
                         new GainLifeEffect(new CountersOnSource(CounterType.CHARGE)),

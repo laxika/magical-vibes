@@ -23,8 +23,7 @@ import java.util.Set;
 public class DeadlyGrub extends Card {
 
     public DeadlyGrub() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(

@@ -21,8 +21,7 @@ public class EncumberedReejerey extends Card {
 
     public EncumberedReejerey() {
         // This creature enters with three -1/-1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(3)));
 
         // Whenever this creature becomes tapped while it has a -1/-1 counter on it, remove a
         // -1/-1 counter from it. The triggering permanent filter checks the counter when the

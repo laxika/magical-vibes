@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -12,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class ArsenalThresher extends Card {
 
     public ArsenalThresher() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new AmplifyEffect(1, new CardTypePredicate(CardType.ARTIFACT)));
+        addStaticEffect(new AmplifyEffect(1, new CardTypePredicate(CardType.ARTIFACT)));
     }
 }

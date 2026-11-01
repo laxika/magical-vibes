@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class BrimstoneVandal extends Card {
 
     public BrimstoneVandal() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE,
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }

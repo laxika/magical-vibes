@@ -20,7 +20,7 @@ public class PhylacteryLich extends Card {
         // "As Phylactery Lich enters, put a phylactery counter on an artifact you control."
         // This does NOT target — shroud/hexproof don't prevent it. The artifact is chosen
         // as the creature enters, not when the spell is cast (MTG rulings).
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutPhylacteryCounterOnTargetPermanentEffect());
+        addStaticEffect(new PutPhylacteryCounterOnTargetPermanentEffect());
 
         // "When you control no permanents with phylactery counters on them, sacrifice
         // Phylactery Lich." — State-triggered ability (MTG rule 603.8).

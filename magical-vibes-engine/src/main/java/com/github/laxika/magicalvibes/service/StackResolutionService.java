@@ -703,7 +703,7 @@ public class StackResolutionService {
 
     private boolean beginChooseCardNameOnEnter(
             GameData gameData, UUID controllerId, Card card, UUID attachedTo) {
-        ChooseCardNameOnEnterEffect effect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseCardNameOnEnterEffect effect = card.getStaticEffects().stream()
                 .filter(e -> e instanceof ChooseCardNameOnEnterEffect)
                 .map(e -> (ChooseCardNameOnEnterEffect) e)
                 .findFirst().orElse(null);
@@ -736,7 +736,7 @@ public class StackResolutionService {
     }
 
     private boolean beginChooseCardTypeOnEnter(GameData gameData, UUID controllerId, Card card) {
-        ChooseCardTypeOnEnterEffect effect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseCardTypeOnEnterEffect effect = card.getStaticEffects().stream()
                 .filter(e -> e instanceof ChooseCardTypeOnEnterEffect)
                 .map(e -> (ChooseCardTypeOnEnterEffect) e)
                 .findFirst().orElse(null);
@@ -854,7 +854,7 @@ public class StackResolutionService {
             logEnterBattlefield(gameData, enteredCard, controllerId);
         }
 
-        NumberChoiceEffect numberChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        NumberChoiceEffect numberChoice = enteredCard.getStaticEffects().stream()
                 .filter(NumberChoiceEffect.class::isInstance)
                 .map(NumberChoiceEffect.class::cast)
                 .findFirst()
@@ -904,7 +904,7 @@ public class StackResolutionService {
      * pick the entry log message; the counters themselves are applied during battlefield entry.
      */
     private boolean hasEnterWithCountersEffect(Card card, CounterType type) {
-        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(e -> (e instanceof EnterWithCountersEffect enterWith && enterWith.type() == type)
                         || (e instanceof ConditionalEffect conditional
                         && conditional.wrapped() instanceof EnterWithCountersEffect wrapped
@@ -1111,7 +1111,7 @@ public class StackResolutionService {
                 }
 
                 // Check if aura has "as enters, choose a color" (e.g. Prismatic Ward)
-                ChooseColorEffect auraColorChoice = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                ChooseColorEffect auraColorChoice = characteristics.getStaticEffects().stream()
                         .filter(e -> e instanceof ChooseColorEffect)
                         .map(e -> (ChooseColorEffect) e)
                         .findFirst().orElse(null);
@@ -1144,7 +1144,7 @@ public class StackResolutionService {
 
             // "As this enters, you and an opponent each choose a card name" (Null Chamber) — both
             // names are chosen before the permanent enters (CR 614.1c); the controller names first.
-            boolean dualNameChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            boolean dualNameChoice = card.getStaticEffects().stream()
                     .anyMatch(e -> e instanceof YouAndOpponentChooseCardNamesOnEnterEffect);
             if (dualNameChoice) {
                 playerInputService.beginDualCardNameChoice(gameData,
@@ -1173,7 +1173,7 @@ public class StackResolutionService {
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
 
-            boolean needsTwoPlayerChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            boolean needsTwoPlayerChoice = enteredCard.getStaticEffects().stream()
                     .anyMatch(TwoPlayerChoiceOnEnterEffect.class::isInstance);
             if (needsTwoPlayerChoice && gameData.orderedPlayerIds.size() >= 2) {
                 gameData.interaction.setPermanentChoiceContext(
@@ -1192,7 +1192,7 @@ public class StackResolutionService {
             }
 
             // Check if enchantment has "as enters" color choice
-            ChooseColorEffect enchantmentColorChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            ChooseColorEffect enchantmentColorChoice = enteredCard.getStaticEffects().stream()
                     .filter(e -> e instanceof ChooseColorEffect)
                     .map(e -> (ChooseColorEffect) e)
                     .findFirst().orElse(null);
@@ -1207,7 +1207,7 @@ public class StackResolutionService {
             maybeBeginBasicLandTypeChoice(gameData, controllerId, card);
 
             // Check if enchantment has "as enters" creature type choice (e.g. Xenograft)
-            SubtypeChoiceOnEnterEffect subtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            SubtypeChoiceOnEnterEffect subtypeChoice = enteredCard.getStaticEffects().stream()
                     .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                     .map(SubtypeChoiceOnEnterEffect.class::cast)
                     .findFirst()
@@ -1219,7 +1219,7 @@ public class StackResolutionService {
             }
 
             // Check if enchantment has "as enters, choose odd or even" (Ashling's Prerogative)
-            boolean needsParityChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            boolean needsParityChoice = enteredCard.getStaticEffects().stream()
                     .anyMatch(e -> e instanceof ChooseManaValueParityOnEnterEffect);
             if (needsParityChoice) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1326,7 +1326,7 @@ public class StackResolutionService {
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
 
         // Check if artifact has "as enters" color choice.
-        ChooseColorEffect artifactColorChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseColorEffect artifactColorChoice = enteredCard.getStaticEffects().stream()
                 .filter(e -> e instanceof ChooseColorEffect)
                 .map(e -> (ChooseColorEffect) e)
                 .findFirst().orElse(null);
@@ -1338,7 +1338,7 @@ public class StackResolutionService {
         }
 
         // Check if artifact has "as enters" creature type choice (e.g. Pillar of Origins)
-        SubtypeChoiceOnEnterEffect subtypeChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        SubtypeChoiceOnEnterEffect subtypeChoice = enteredCard.getStaticEffects().stream()
                 .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
@@ -1351,7 +1351,7 @@ public class StackResolutionService {
 
         // Check if artifact creature has "as this creature enters, it becomes your choice of ..."
         // shape choice (Primal Clay)
-        boolean needsPrimalClayFormChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean needsPrimalClayFormChoice = enteredCard.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ChoosePrimalClayFormOnEnterEffect);
         if (needsPrimalClayFormChoice) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1360,7 +1360,7 @@ public class StackResolutionService {
         }
 
         // Check if artifact has "as this enters, choose a number between X and Y" (Shapeshifter)
-        NumberChoiceEffect numberChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        NumberChoiceEffect numberChoice = enteredCard.getStaticEffects().stream()
                 .filter(e -> e instanceof NumberChoiceEffect)
                 .map(e -> (NumberChoiceEffect) e)
                 .findFirst().orElse(null);
@@ -2060,7 +2060,7 @@ public class StackResolutionService {
     }
 
     private boolean maybeBeginBasicLandTypeChoice(GameData gameData, UUID controllerId, Card characteristics) {
-        ChooseBasicLandTypeOnEnterEffect choose = characteristics.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseBasicLandTypeOnEnterEffect choose = characteristics.getStaticEffects().stream()
                 .filter(e -> e instanceof ChooseBasicLandTypeOnEnterEffect)
                 .map(e -> (ChooseBasicLandTypeOnEnterEffect) e)
                 .findFirst()

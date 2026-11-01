@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
@@ -18,8 +17,7 @@ import java.util.Set;
 public class FalcoSparaPactweaver extends Card {
 
     public FalcoSparaPactweaver() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(
                 Set.of(CardType.CREATURE, CardType.ARTIFACT, CardType.ENCHANTMENT, CardType.INSTANT,

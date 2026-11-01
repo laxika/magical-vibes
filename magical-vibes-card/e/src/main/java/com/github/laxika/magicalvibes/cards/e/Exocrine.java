@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class Exocrine extends Card {
 
     public Exocrine() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(
                         new SpellXAtLeast(5),

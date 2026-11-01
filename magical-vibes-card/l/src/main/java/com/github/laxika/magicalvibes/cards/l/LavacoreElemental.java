@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 public class LavacoreElemental extends Card {
 
     public LavacoreElemental() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
 

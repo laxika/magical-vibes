@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -20,8 +19,7 @@ public class Merseine extends Card {
 
     public Merseine() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new EnterWithCountersEffect(CounterType.NET, new Fixed(3)))
+                .addStaticEffect(new EnterWithCountersEffect(CounterType.NET, new Fixed(3)))
                 .addStaticEffect(DoesntUntapWithCounterEffect.enchanted(CounterType.NET));
 
         addActivatedAbility(new ActivatedAbility(

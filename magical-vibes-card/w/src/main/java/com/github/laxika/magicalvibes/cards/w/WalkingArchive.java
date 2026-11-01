@@ -17,8 +17,7 @@ import java.util.List;
 public class WalkingArchive extends Card {
 
     public WalkingArchive() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new DrawCardForTargetPlayerEffect(
                         new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), false, false));

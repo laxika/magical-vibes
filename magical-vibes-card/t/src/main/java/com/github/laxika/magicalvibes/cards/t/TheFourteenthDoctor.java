@@ -17,8 +17,7 @@ public class TheFourteenthDoctor extends Card {
         addEffect(EffectSlot.ON_SELF_CAST,
                 new RevealTopCardsMatchingToGraveyardRestToBottomRandomEffect(
                         14, new CardSubtypePredicate(CardSubtype.DOCTOR)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CopyCreatureCardInGraveyardOnEnterEffect(
+        addStaticEffect(new CopyCreatureCardInGraveyardOnEnterEffect(
                         null, null, null, Set.of(), new CardSubtypePredicate(CardSubtype.DOCTOR),
                         true, true, true, false));
     }

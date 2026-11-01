@@ -24,7 +24,7 @@ public class PhantasmalImage extends Card {
         // You may have this creature enter as a copy of any creature on the battlefield, except it's
         // an Illusion in addition to its other types and it has "When this creature becomes the
         // target of a spell or ability, sacrifice it."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature",
                 Set.of(CardSubtype.ILLUSION),
                 List.of(LegacySlots.triggered(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, List.<CardEffect>of(new SacrificeSelfEffect())))

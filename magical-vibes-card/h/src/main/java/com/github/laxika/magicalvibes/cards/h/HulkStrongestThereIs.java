@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class HulkStrongestThereIs extends Card {
 
     public HulkStrongestThereIs() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new DoublePlusOneCountersOnControlledCreaturesEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.GAMMA)));

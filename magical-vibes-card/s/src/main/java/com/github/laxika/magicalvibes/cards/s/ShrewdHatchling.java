@@ -23,8 +23,7 @@ public class ShrewdHatchling extends Card {
 
     public ShrewdHatchling() {
         // This creature enters with four -1/-1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
 
         // {U/R}: Target creature can't block this creature this turn.
         addActivatedAbility(new ActivatedAbility(false, "{U/R}", List.of(new CantBlockSourceEffect(null)),

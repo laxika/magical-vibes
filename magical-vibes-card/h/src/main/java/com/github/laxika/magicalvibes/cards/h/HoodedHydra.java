@@ -21,8 +21,7 @@ import java.util.Set;
 public class HoodedHydra extends Card {
 
     public HoodedHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_DEATH, new CreateTokensForEachDyingSourceCounterEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,

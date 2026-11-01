@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class RigoStreetwiseMentor extends Card {
 
     public RigoStreetwiseMentor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER,
                 new ConditionalEffect(
                         new HasAttacker(new PermanentPowerAtMostPredicate(1)),

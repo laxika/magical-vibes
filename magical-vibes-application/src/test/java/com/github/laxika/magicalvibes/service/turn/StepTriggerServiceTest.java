@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardW
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
-import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -1465,64 +1464,6 @@ class StepTriggerServiceTest {
                     (DealDamageToPlayersEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
             assertThat(effect.recipient()).isEqualTo(DamageRecipient.ENCHANTED_PLAYER);
             assertThat(effect.attachedCountFilter()).isEqualTo(predicate);
-        }
-
-        @Test
-        @DisplayName("Opening hand triggers fire on turn 1 and push to stack")
-        void openingHandTriggersFireOnTurn1() {
-            gd.turnNumber = 1;
-            Card card = createCardWithName("Chancellor");
-            card.addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new GainLifeEffect(7));
-            gd.playerHands.get(player1Id).add(card);
-
-            sut.handleUpkeepTriggers(gd);
-
-            assertThat(gd.stack).isNotEmpty();
-            assertThat(gd.stack.getFirst().getDescription()).contains("Chancellor");
-        }
-
-        @Test
-        @DisplayName("Opening hand MayEffect queues may ability on turn 1")
-        void openingHandMayEffectQueuesMayAbility() {
-            gd.turnNumber = 1;
-            Card card = createCardWithName("Chancellor May");
-            card.addEffect(EffectSlot.ON_OPENING_HAND_REVEAL,
-                    new MayEffect(new GainLifeEffect(1), "Do something?"));
-            gd.playerHands.get(player1Id).add(card);
-
-            sut.handleUpkeepTriggers(gd);
-
-            // queueMayAbility adds to stack
-            assertThat(gd.stack).isNotEmpty();
-        }
-
-        @Test
-        @DisplayName("Opening hand Leyline MayEffect is skipped (handled during pregame)")
-        void openingHandLeylineSkipped() {
-            gd.turnNumber = 1;
-            Card card = createCardWithName("Leyline");
-            card.addEffect(EffectSlot.ON_OPENING_HAND_REVEAL,
-                    new MayEffect(new LeylineStartOnBattlefieldEffect(), "Put onto battlefield?"));
-            gd.playerHands.get(player1Id).add(card);
-
-            sut.handleUpkeepTriggers(gd);
-
-            // Leyline effects are skipped, stack should be empty
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Opening hand triggers do not fire on turn 2+")
-        void openingHandTriggersDoNotFireOnTurn2() {
-            gd.turnNumber = 2;
-            Card card = createCardWithName("Chancellor");
-            card.addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new GainLifeEffect(7));
-            gd.playerHands.get(player1Id).add(card);
-
-            sut.handleUpkeepTriggers(gd);
-
-            // Turn 2 — handleOpeningHandTriggers is not called
-            assertThat(gd.stack).isEmpty();
         }
 
         @Test

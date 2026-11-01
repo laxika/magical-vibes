@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class PurestrainGenestealer extends Card {
 
     public PurestrainGenestealer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new RemoveCounterFromSourceThenEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1,

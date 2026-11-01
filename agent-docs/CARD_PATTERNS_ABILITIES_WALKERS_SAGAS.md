@@ -3,7 +3,9 @@
 > `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
 > `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
 > rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
-> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> "can't be countered" and "costs less to cast", the hand for splice, mulligan-time actions and opening-hand
+> actions (`MayEffect(PregameChoiceEffect)`), and the graveyard for dredge. "Enters with" and "as this enters"
+> abilities (CR 614.1c) are static abilities too, never `ON_ENTER_BATTLEFIELD`. An ability that states its
 > zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
 > copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
 > a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
@@ -78,9 +80,9 @@ All paths relative to `cards/`.
 | Reveal until chosen creature type to battlefield | `r/RiptideShapeshifter.java` | `SacrificeSelfCost` + `RevealUntilChosenCreatureTypeToBattlefieldEffect` — chooses the type on resolution, puts the first matching creature (including Changeling) onto the battlefield, then shuffles the other reveals |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
-| Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE), false)` |
-| Land (choose subtype + tap for any color restricted to chosen creature type, and that spell can't be countered) | `c/CavernOfSouls.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE)` |
-| Land (restricted chosen-type spells or abilities) | `e/EclipsedRealms.java` | ON_ENTER_BATTLEFIELD `ChooseSubtypeOnEnterEffect(allowedTypes)` + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_SPELL_OR_ABILITY).withAbilitiesOfSourcesInAnyZone()` (wording covers abilities of matching cards in hand/graveyard too, e.g. cycling; omit it for Primal Beyond-style wording, which only pays abilities of permanents) |
+| Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | STATIC ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE), false)` |
+| Land (choose subtype + tap for any color restricted to chosen creature type, and that spell can't be countered) | `c/CavernOfSouls.java` | STATIC ChooseSubtypeOnEnterEffect + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE)` |
+| Land (restricted chosen-type spells or abilities) | `e/EclipsedRealms.java` | STATIC `ChooseSubtypeOnEnterEffect(allowedTypes)` + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_SPELL_OR_ABILITY).withAbilitiesOfSourcesInAnyZone()` (wording covers abilities of matching cards in hand/graveyard too, e.g. cycling; omit it for Primal Beyond-style wording, which only pays abilities of permanents) |
 | Mana dork (tap for N any color, creature spells only) | `s/SomberwaldSage.java` | `(true, null, AwardAnyColorManaEffect(3, CREATURE_SPELL_ONLY), false)` |
 | Land (tap for any color restricted to multicolored spells) | `p/PillarOfTheParuns.java` | `(true, null, AwardAnyColorManaEffect(1, MULTICOLORED_SPELLS), false)` |
 | Mana dork | `l/LlanowarElves.java` | `addActivatedAbility(ManaAbilities.tapFor(color))` |

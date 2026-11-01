@@ -17,8 +17,7 @@ public class FamishedWorldsire extends Card {
     public FamishedWorldsire() {
         // Ward {3}
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(3));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new SacrificePermanentsAsEntersForCountersEffect(new PermanentIsLandPredicate(), 3));
+        addStaticEffect(new SacrificePermanentsAsEntersForCountersEffect(new PermanentIsLandPredicate(), 3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.mayPutAnyNumberMatchingOntoBattlefieldTappedShuffleRest(
                         new SourcePower(), new CardTypePredicate(CardType.LAND)));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardOnEnterEffect;
@@ -20,8 +19,7 @@ import java.util.Set;
 public class Dermotaxi extends Card {
 
     public Dermotaxi() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileCardFromGraveyardOnEnterEffect(
+        addStaticEffect(new ExileCardFromGraveyardOnEnterEffect(
                         new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.ALL_GRAVEYARDS));
 
         addActivatedAbility(new ActivatedAbility(

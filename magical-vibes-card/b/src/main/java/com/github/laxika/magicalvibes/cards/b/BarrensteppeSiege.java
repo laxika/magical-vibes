@@ -20,8 +20,7 @@ import java.util.List;
 public class BarrensteppeSiege extends Card {
 
     public BarrensteppeSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of("Abzan", "Mardu")));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of("Abzan", "Mardu")));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new SourceHasChosenMode("Abzan"),

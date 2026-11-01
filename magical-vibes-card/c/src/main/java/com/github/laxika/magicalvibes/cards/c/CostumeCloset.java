@@ -23,8 +23,7 @@ import java.util.List;
 public class CostumeCloset extends Card {
 
     public CostumeCloset() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

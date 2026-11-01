@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 public class VigeanHydropon extends Card {
 
     public VigeanHydropon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new MoveCounterFromSourceToEnteringCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addStaticEffect(new MatchingCreaturesCantAttackOrBlockEffect(

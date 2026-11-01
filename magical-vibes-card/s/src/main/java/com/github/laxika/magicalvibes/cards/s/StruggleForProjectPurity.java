@@ -28,8 +28,7 @@ public class StruggleForProjectPurity extends Card {
     private static final String ENCLAVE = "Enclave";
 
     public StruggleForProjectPurity() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(BROTHERHOOD, ENCLAVE)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(BROTHERHOOD, ENCLAVE)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new SourceHasChosenMode(BROTHERHOOD),

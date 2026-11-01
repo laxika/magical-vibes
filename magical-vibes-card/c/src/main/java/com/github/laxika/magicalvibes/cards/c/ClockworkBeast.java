@@ -31,8 +31,7 @@ public class ClockworkBeast extends Card {
 
     public ClockworkBeast() {
         // This creature enters with seven +1/+0 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(7)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(7)));
 
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+0 counter
         // from it. Scheduling only from ON_ATTACK/ON_BLOCK encodes the "attacked or blocked" condition.

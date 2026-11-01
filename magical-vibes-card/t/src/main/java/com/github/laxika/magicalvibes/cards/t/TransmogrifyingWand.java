@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -22,8 +21,7 @@ import java.util.Set;
 public class TransmogrifyingWand extends Card {
 
     public TransmogrifyingWand() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

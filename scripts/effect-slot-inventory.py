@@ -759,7 +759,9 @@ def render(data, args):
     for step, title in FAMILIES.items():
         members = [c for c in constants if step_of(c) == step]
         bucket = by_step[step]
-        row = f'| [{title}](#{anchor(title)}) | {len(members)} | {len(bucket["cards"])} | {len(bucket["tests"])} |'
+        # A finished step's constants are gone from EffectSlot, so it has no section to link to.
+        label = f'[{title}](#{anchor(title)})' if members else f'{title} (done)'
+        row = f'| {label} | {len(members)} | {len(bucket["cards"])} | {len(bucket["tests"])} |'
         if results:
             row += f' {sum(1 for _, t in bucket["tests"] if t in results[1])} |'
         out(row)
@@ -840,7 +842,11 @@ def render(data, args):
     out('')
     out('## Baseline')
     out('')
-    if args.all_passed:
+    kept = OUTPUT.read_text().split('## Baseline\n', 1) if args.keep_baseline and OUTPUT.exists() else None
+    if kept and len(kept) == 2:
+        out(kept[1].strip('\n'))
+        out('')
+    elif args.all_passed:
         out(f'Full card-test run at `{data["commit"]}`: every card test class passed, as reported by the user '
             '(the JUnit reports were not on this machine). So "fail exactly as at the baseline" means that no '
             'card test fails. Card test classes of each step\'s cards:')
@@ -892,6 +898,9 @@ def main():
     parser.add_argument('--gradle-args', metavar='STEP', help='print the Gradle arguments for a step\'s card tests')
     parser.add_argument('--check', action='store_true', help='fail when the classification misses a constant')
     parser.add_argument('--no-write', action='store_true', help='do not rewrite effect-slot-inventory.md')
+    parser.add_argument('--keep-baseline', action='store_true',
+                        help='keep the Baseline section of the current effect-slot-inventory.md (a later step '
+                             'regenerating the inventory without a new full card-test run)')
     args = parser.parse_args()
     data = build()
     if args.json:

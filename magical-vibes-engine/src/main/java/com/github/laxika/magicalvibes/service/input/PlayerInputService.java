@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -2529,7 +2528,7 @@ public class PlayerInputService {
                 return false;
             }
             prompt = "Choose the name of a revealed card.";
-        } else if (card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        } else if (card.getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect choice
                         && choice.excludeBasicLandNames())) {
             cardNames = collectNonbasicCardNamesInGame(gameData);

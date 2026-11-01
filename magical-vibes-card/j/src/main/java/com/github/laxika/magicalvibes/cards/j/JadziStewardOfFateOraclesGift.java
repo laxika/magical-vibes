@@ -15,7 +15,7 @@ public class JadziStewardOfFateOraclesGift extends Card {
     public JadziStewardOfFateOraclesGift() {
         setBackFaceCard(new OraclesGift());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardEffect(2, DiscardRecipient.CONTROLLER));
     }

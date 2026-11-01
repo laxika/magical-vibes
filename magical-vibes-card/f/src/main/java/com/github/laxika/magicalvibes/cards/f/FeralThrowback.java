@@ -22,7 +22,7 @@ import java.util.List;
 public class FeralThrowback extends Card {
 
     public FeralThrowback() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmplifyEffect(
+        addStaticEffect(new AmplifyEffect(
                 2, new CardSubtypePredicate(CardSubtype.BEAST)));
 
         target(new PermanentPredicateTargetFilter(

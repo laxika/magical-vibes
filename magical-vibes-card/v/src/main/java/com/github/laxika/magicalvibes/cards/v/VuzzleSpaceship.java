@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOne
 public class VuzzleSpaceship extends Card {
 
     public VuzzleSpaceship() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
 
         // Thrusters [6] → Flying.
         addStaticEffect(new ConditionalEffect(

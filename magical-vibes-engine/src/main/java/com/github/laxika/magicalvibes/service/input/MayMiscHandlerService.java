@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -853,7 +852,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} starts with {} on the battlefield (leyline)",
                     gameData.id, player.getUsername(), card.getName());
 
-            SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            SubtypeChoiceOnEnterEffect subtypeChoice = card.getStaticEffects().stream()
                     .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                     .map(SubtypeChoiceOnEnterEffect.class::cast)
                     .findFirst()

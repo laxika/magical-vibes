@@ -20,8 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 public class GatewatchBeacon extends Card {
 
     public GatewatchBeacon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.LOYALTY, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.LOYALTY, new Fixed(3)));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
 

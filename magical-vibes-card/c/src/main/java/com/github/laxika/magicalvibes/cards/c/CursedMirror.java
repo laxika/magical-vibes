@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,7 +24,7 @@ public class CursedMirror extends Card {
 
     public CursedMirror() {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CopyPermanentOnEnterEffect.temporaryCopy(
+        addStaticEffect(CopyPermanentOnEnterEffect.temporaryCopy(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(Keyword.HASTE)));
     }
 }

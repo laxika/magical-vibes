@@ -13,8 +13,7 @@ public class GriefTyrant extends Card {
 
     public GriefTyrant() {
         // This creature enters with four -1/-1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(4)));
 
         // When this creature dies, put a -1/-1 counter on target creature for each -1/-1 counter on it.
         addEffect(EffectSlot.ON_DEATH,

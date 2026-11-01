@@ -12,6 +12,6 @@ public class GolgariBrownscale extends Card {
 
     public GolgariBrownscale() {
         addEffect(EffectSlot.GRAVEYARD_ON_SELF_RETURNED_TO_HAND, new GainLifeEffect(2));
-        addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(2));
+        addStaticEffect(new DredgeEffect(2));
     }
 }

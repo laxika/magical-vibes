@@ -19,8 +19,7 @@ import java.util.List;
 public class JoltingMerfolk extends Card {
 
     public JoltingMerfolk() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(4)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));

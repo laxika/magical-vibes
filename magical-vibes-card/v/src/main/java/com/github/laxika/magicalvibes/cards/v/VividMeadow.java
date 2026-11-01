@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -27,7 +26,7 @@ public class VividMeadow extends Card {
     public VividMeadow() {
         // This land enters tapped with two charge counters on it.
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(2)));
 
         // {T}: Add {W}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));

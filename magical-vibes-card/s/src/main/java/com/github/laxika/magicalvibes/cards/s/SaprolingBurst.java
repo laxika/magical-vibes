@@ -23,8 +23,7 @@ import java.util.Set;
 public class SaprolingBurst extends Card {
 
     public SaprolingBurst() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(7)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(7)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));
 

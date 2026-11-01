@@ -17,7 +17,7 @@ import java.util.List;
 public class TalionTheKindlyLord extends Card {
 
     public TalionTheKindlyLord() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNumberOnEnterEffect(1, 10));
+        addStaticEffect(new ChooseNumberOnEnterEffect(1, 10));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER), new DrawCardEffect(1)),

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
@@ -26,8 +25,7 @@ public class ArachnePsionicWeaver extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}"),
                 new ReturnPermanentsCost(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsTappedPredicate()))))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCardTypeOnEnterEffect(List.of(CardType.CREATURE), true));
+        addStaticEffect(new ChooseCardTypeOnEnterEffect(List.of(CardType.CREATURE), true));
         addStaticEffect(new IncreaseSpellCostEffect(new CardHasSourceChosenCardTypePredicate(), 1,
                         CostModificationScope.ALL));
     }

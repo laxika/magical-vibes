@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class FellBeastOfMordor extends Card {
 
     public FellBeastOfMordor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(1));
+        addStaticEffect(new DevourEffect(1));
 
         var targetOpponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

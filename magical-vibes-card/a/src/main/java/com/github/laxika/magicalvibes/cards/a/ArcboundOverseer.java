@@ -20,8 +20,7 @@ import java.util.List;
 public class ArcboundOverseer extends Card {
 
     public ArcboundOverseer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new PutCounterOnEachControlledPermanentEffect(

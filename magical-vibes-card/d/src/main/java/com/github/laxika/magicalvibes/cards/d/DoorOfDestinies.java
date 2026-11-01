@@ -23,7 +23,7 @@ public class DoorOfDestinies extends Card {
 
     public DoorOfDestinies() {
         // As Door of Destinies enters, choose a creature type.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         // Whenever you cast a spell of the chosen type, put a charge counter on Door of Destinies.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ChosenSubtypeSpellCastTriggerEffect(

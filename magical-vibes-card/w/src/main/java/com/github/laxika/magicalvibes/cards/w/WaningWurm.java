@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 public class WaningWurm extends Card {
 
     public WaningWurm() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(2)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
     }

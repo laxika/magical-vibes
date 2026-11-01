@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -29,7 +28,7 @@ import java.util.Set;
 public class MyojinOfBloomingDawn extends Card {
 
     public MyojinOfBloomingDawn() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastFromZone(Zone.HAND),
                 new EnterWithCountersEffect(CounterType.INDESTRUCTIBLE, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(

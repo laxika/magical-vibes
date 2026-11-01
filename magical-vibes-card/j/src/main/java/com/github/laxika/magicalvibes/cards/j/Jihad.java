@@ -32,8 +32,8 @@ public class Jihad extends Card {
 
     public Jihad() {
         // As this enchantment enters, choose a color and an opponent.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
 
         // White creatures get +2/+1 while the chosen player controls a matching nontoken permanent.
         // In the two-player engine, the chosen player is the single opponent.

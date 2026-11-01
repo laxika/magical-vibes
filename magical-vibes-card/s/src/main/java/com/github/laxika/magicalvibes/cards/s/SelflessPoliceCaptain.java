@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SelflessPoliceCaptain extends Card {
 
     public SelflessPoliceCaptain() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new PutCounterOnTargetForEachLeavingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));

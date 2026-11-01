@@ -16,7 +16,7 @@ public class ChancellorOfTheAnnex extends Card {
 
         // You may reveal this card from your opening hand. If you do, when each opponent
         // casts their first spell of the game, counter that spell unless that player pays {1}.
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new RegisterDelayedCounterTriggerEffect(1),
                 "Reveal this card from your opening hand?"
         ));

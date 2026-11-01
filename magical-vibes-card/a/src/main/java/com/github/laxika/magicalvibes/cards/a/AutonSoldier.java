@@ -20,7 +20,7 @@ import java.util.Set;
 public class AutonSoldier extends Card {
 
     public AutonSoldier() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
+        addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(),
                 "creature",
                 null,

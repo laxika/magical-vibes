@@ -25,6 +25,6 @@ public class Necroplasm extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentManaValueEqualsSourceCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)
                 ))));
-        addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(2));
+        addStaticEffect(new DredgeEffect(2));
     }
 }

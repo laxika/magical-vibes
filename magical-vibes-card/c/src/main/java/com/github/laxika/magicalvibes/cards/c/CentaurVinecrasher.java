@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class CentaurVinecrasher extends Card {
 
     public CentaurVinecrasher() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.ANY_PLAYER)));
 

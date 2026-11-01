@@ -23,8 +23,7 @@ public class KappaTechWrecker extends Card {
     public KappaTechWrecker() {
         addNinjutsu("{1}{G}");
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.DEATHTOUCH, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.DEATHTOUCH, new Fixed(1)));
 
         PermanentAllOfPredicate artifactOrEnchantmentControlledByDefendingPlayer = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

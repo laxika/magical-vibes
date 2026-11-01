@@ -22,8 +22,7 @@ public class CrovaxTheCursed extends Card {
 
     public CrovaxTheCursed() {
         // Crovax enters with four +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         // At the beginning of your upkeep, you may sacrifice a creature. If you do, put a +1/+1
         // counter on Crovax. If you don't, remove a +1/+1 counter from Crovax.

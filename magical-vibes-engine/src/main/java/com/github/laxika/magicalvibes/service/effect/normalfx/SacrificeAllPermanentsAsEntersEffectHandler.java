@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsAsEntersEffect;
@@ -17,7 +16,7 @@ public class SacrificeAllPermanentsAsEntersEffectHandler {
 
     public void applyIfPresent(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
         SacrificeAllPermanentsAsEntersEffect effect = enteringPermanent.getCard()
-                .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .getStaticEffects().stream()
                 .filter(SacrificeAllPermanentsAsEntersEffect.class::isInstance)
                 .map(SacrificeAllPermanentsAsEntersEffect.class::cast)
                 .findFirst()

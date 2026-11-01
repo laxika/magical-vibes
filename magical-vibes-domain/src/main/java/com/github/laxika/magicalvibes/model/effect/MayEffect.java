@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 
@@ -49,6 +50,12 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return wrappedSpec != TargetSpec.NONE || elseEffect == null
                 ? wrappedSpec
                 : elseEffect.targetSpec();
+    }
+
+    /** A static "you may" functions from the zones of the ability it offers (an opening-hand action: the hand). */
+    @Override
+    public AbilityZones staticAbilityZones() {
+        return wrapped.staticAbilityZones();
     }
 
     @Override

@@ -3281,7 +3281,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         entering.setChosenPermanentId(chosenPermanentId);
-        context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        context.card().getStaticEffects().stream()
                 .filter(ChooseOpponentPermanentOnEnterEffect.class::isInstance)
                 .map(ChooseOpponentPermanentOnEnterEffect.class::cast)
                 .map(ChooseOpponentPermanentOnEnterEffect::whenChosenPermanentPutIntoGraveyard)
@@ -3313,7 +3313,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen player no longer exists");
         }
 
-        boolean opponentOnly = context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean opponentOnly = context.card().getStaticEffects().stream()
                 .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance);
         if (opponentOnly && chosenPlayerId.equals(context.controllerId())) {
             throw new IllegalStateException("Choose an opponent");
@@ -3428,7 +3428,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
             return;
         }
-        if (context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(
+        if (context.card().getStaticEffects().stream().anyMatch(
                 com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect.class::isInstance)) {
             if (chosen == null || !context.controllerId().equals(
                     gameQueryService.findPermanentController(gameData, chosenPermanentId))

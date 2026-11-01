@@ -9,8 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * the intrinsic mana ability of the new basic land type. Nonbasic lands and basics lacking the
  * first chosen type are unaffected. Does not add or remove the snow supertype.
  *
- * <p>Pair with {@link ChooseBasicLandTypeOnEnterEffect}{@code choicesRequired = 2}) in
- * {@code ON_ENTER_BATTLEFIELD}. Used by Illusionary Terrain.
+ * <p>Pair with a static {@link ChooseBasicLandTypeOnEnterEffect} ({@code choicesRequired = 2}). Used by Illusionary Terrain.
  */
 public record BasicLandsOfChosenTypesBecomeTypeEffect() implements CardEffect {
 }

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFrom
 public class NineLivesFamiliar extends Card {
 
     public NineLivesFamiliar() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addStaticEffect(new ConditionalEffect(new WasCast(),
                 new EnterWithCountersEffect(CounterType.REVIVAL, new Fixed(8))));
         addEffect(EffectSlot.ON_DEATH,
                 new RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect(CounterType.REVIVAL));

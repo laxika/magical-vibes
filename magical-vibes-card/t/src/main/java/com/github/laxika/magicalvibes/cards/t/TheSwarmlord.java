@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 public class TheSwarmlord extends Card {
 
     public TheSwarmlord() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new Scaled(new CommanderCastsFromCommandZoneThisGame(), 2)));
 
         TriggeringPermanentConditionalEffect drawForCounterBearer =

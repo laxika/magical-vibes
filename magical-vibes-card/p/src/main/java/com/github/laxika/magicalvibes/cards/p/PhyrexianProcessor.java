@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
@@ -22,7 +21,7 @@ public class PhyrexianProcessor extends Card {
 
     public PhyrexianProcessor() {
         // As this artifact enters, pay any amount of life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PayAnyAmountOfLifeOnEnterEffect());
+        addStaticEffect(new PayAnyAmountOfLifeOnEnterEffect());
 
         // {4}, {T}: Create an X/X black Phyrexian Minion creature token, where X is the life paid
         // as this artifact entered.

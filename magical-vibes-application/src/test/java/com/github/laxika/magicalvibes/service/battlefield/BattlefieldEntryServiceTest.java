@@ -30,8 +30,7 @@ class BattlefieldEntryServiceTest {
         UUID controllerId = UUID.randomUUID();
         Card land = new Card();
         land.setType(com.github.laxika.magicalvibes.model.CardType.LAND);
-        land.addEffect(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD,
-                new com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect(
+        land.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect(
                         com.github.laxika.magicalvibes.model.CardType.LAND));
         org.mockito.Mockito.when(input.beginCardNameChoice(gameData, controllerId, land,
                 java.util.List.of(), false, false, null, com.github.laxika.magicalvibes.model.CardType.LAND,

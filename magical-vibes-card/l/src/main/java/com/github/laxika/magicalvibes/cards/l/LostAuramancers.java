@@ -21,8 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class LostAuramancers extends Card {
 
     public LostAuramancers() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(

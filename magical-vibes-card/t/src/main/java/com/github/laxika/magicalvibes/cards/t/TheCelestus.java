@@ -22,7 +22,7 @@ import java.util.List;
 public class TheCelestus extends Card {
 
     public TheCelestus() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         addActivatedAbility(ManaAbilities.tapForAnyColor());
         addActivatedAbility(new ActivatedAbility(
                 true,

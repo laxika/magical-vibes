@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate
 public class OmarthisGhostfireInitiate extends Card {
 
     public OmarthisGhostfireInitiate() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsColorlessPredicate(),

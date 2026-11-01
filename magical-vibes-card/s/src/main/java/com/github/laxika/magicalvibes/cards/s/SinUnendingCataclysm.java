@@ -21,8 +21,7 @@ import java.util.List;
 public class SinUnendingCataclysm extends Card {
 
     public SinUnendingCataclysm() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect(
+        addStaticEffect(new RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate(),

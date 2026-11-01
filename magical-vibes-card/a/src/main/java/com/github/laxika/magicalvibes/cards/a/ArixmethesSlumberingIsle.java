@@ -32,8 +32,7 @@ public class ArixmethesSlumberingIsle extends Card {
 
     public ArixmethesSlumberingIsle() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SLUMBER, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SLUMBER, new Fixed(5)));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SLUMBER),
                 new SetCardTypesEffect(Set.of(CardType.LAND), GrantScope.SELF)));

@@ -26,7 +26,7 @@ public class TitanOfLittjara extends Card {
 
     public TitanOfLittjara() {
         // As this creature enters, choose a creature type.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
         // This creature is the chosen type in addition to its other types.
         addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelf());

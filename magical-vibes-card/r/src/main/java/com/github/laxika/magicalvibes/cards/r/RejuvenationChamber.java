@@ -16,8 +16,7 @@ import java.util.List;
 public class RejuvenationChamber extends Card {
 
     public RejuvenationChamber() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(2)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));

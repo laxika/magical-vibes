@@ -31,8 +31,7 @@ public class MirrodinBesieged extends Card {
     private static final String PHYREXIAN = "Phyrexian";
 
     public MirrodinBesieged() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of(MIRRAN, PHYREXIAN)));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of(MIRRAN, PHYREXIAN)));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ConditionalEffect(
                 new SourceHasChosenMode(MIRRAN),

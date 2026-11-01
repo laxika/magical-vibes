@@ -5,12 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.PutSourcePermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndLockTargetPermanentWhileTappedEffect;
@@ -30,8 +28,7 @@ public class BraidedNet extends Card {
     public BraidedNet() {
         setBackFaceCard(new BraidedQuipu());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.NET, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.NET, new Fixed(3)));
 
         PermanentPredicate anotherNonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),

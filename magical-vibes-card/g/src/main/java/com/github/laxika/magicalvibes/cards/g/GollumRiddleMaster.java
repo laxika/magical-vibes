@@ -21,7 +21,7 @@ import java.util.List;
 public class GollumRiddleMaster extends Card {
 
     public GollumRiddleMaster() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseManaValueParityOnEnterEffect());
+        addStaticEffect(new ChooseManaValueParityOnEnterEffect());
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(new ChooseModeNotYetChosenEffect(List.of(

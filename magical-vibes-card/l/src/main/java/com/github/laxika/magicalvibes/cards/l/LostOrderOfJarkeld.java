@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -20,7 +19,7 @@ public class LostOrderOfJarkeld extends Card {
         // Lost Order of Jarkeld's power and toughness are each equal to 1 plus the
         // number of creatures the chosen player controls.
         // The choice is remembered on the permanent, so a change of control keeps the original player.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
         var pt = new Sum(
                 new Fixed(1),
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CHOSEN_PLAYER));

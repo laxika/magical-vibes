@@ -16,8 +16,7 @@ public class BristlebaneBattler extends Card {
 
     public BristlebaneBattler() {
         // This creature enters with five -1/-1 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(5)));
 
         // Whenever another creature you control enters while this creature has a -1/-1 counter on
         // it, remove a -1/-1 counter from this creature.

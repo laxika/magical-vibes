@@ -16,7 +16,7 @@ import java.util.Set;
 public class TyrannicalPitlord extends Card {
 
     public TyrannicalPitlord() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseAnotherCreatureOnEnterEffect());
+        addStaticEffect(new ChooseAnotherCreatureOnEnterEffect());
         addStaticEffect(new StaticBoostEffect(
                 3, 3, Set.of(Keyword.FLYING), GrantScope.ALL_CREATURES,
                 new PermanentIsChosenPermanentPredicate()));

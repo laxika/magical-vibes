@@ -29,7 +29,7 @@ public class DawnBlessedPennant extends Card {
             CardSubtype.TREEFOLK);
 
     public DawnBlessedPennant() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect(CHOOSABLE_TYPES));
+        addStaticEffect(new ChooseSubtypeOnEnterEffect(CHOOSABLE_TYPES));
         addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSourceChosenSubtypePredicate(), new GainLifeEffect(1)));

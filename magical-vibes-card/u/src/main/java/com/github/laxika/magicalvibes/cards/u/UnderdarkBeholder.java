@@ -20,8 +20,7 @@ import java.util.List;
 public class UnderdarkBeholder extends Card {
 
     public UnderdarkBeholder() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.EYEBALL, new Fixed(10)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.EYEBALL, new Fixed(10)));
         addStaticEffect(new PreventDamageByRemovingCountersOrSacrificeEffect(CounterType.EYEBALL));
         addEffect(EffectSlot.ON_ATTACK, new RevealUntilCardPredicateMayCastWithoutPayingManaEffect(
                 new CardAllOfPredicate(List.of(

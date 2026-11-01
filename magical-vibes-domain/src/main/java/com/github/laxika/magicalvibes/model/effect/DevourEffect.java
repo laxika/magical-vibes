@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * It enters with {@code multiplier} times that many +1/+1 counters on it." The multiplier may
  * itself be dynamic for cards such as Thromok the Insatiable.
  * <p>
- * An as-enters replacement effect (MTG rule 614): placed in {@code EffectSlot.ON_ENTER_BATTLEFIELD}
- * and handled during {@code BattlefieldEntryService.handleCreatureEnteredBattlefield} before ETB
+ * An as-enters replacement effect (CR 614.1c), a static ability ({@code addStaticEffect}),
+ * handled during {@code BattlefieldEntryService.handleCreatureEnteredBattlefield} before ETB
  * triggers fire. The controller chooses which of their other creatures to sacrifice; the entering
  * creature receives {@code multiplier * sacrificedCount} +1/+1 counters and records the number of
  * creatures devoured on the permanent (read by {@code CreaturesDevoured}).

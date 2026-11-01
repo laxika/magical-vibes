@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class FavoredEnemy extends Card {
 
     public FavoredEnemy() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new NoteMostPrevalentCreatureTypeOnEnterEffect());
+        addStaticEffect(new NoteMostPrevalentCreatureTypeOnEnterEffect());
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)

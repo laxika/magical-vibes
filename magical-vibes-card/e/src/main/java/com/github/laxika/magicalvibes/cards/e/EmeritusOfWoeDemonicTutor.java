@@ -15,7 +15,7 @@ public class EmeritusOfWoeDemonicTutor extends Card {
     public EmeritusOfWoeDemonicTutor() {
         setBackFaceCard(new DemonicTutor());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new TwoOrMoreCreaturesDiedThisTurn(), new BecomePreparedEffect()));
     }

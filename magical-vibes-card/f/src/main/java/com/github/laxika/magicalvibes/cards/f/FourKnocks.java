@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 public class FourKnocks extends Card {
 
     public FourKnocks() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new DrawCardEffect(1));

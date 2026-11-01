@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class CelestusSanctifier extends Card {
 
     public CelestusSanctifier() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE,
                 LookAtTopCardsEffect.putOneIntoGraveyardRestOnTop(2));
     }

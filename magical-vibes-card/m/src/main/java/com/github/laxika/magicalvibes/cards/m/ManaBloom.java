@@ -22,8 +22,7 @@ public class ManaBloom extends Card {
 
     public ManaBloom() {
         // This enchantment enters with X charge counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
 
         // Remove a charge counter from this enchantment: Add one mana of any color.
         // Activate only once each turn.

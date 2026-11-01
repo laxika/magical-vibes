@@ -16,7 +16,7 @@ public class EmeritusOfAbundanceRegrowth extends Card {
     public EmeritusOfAbundanceRegrowth() {
         setBackFaceCard(new Regrowth());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new ControlsPermanentCount(8, new PermanentIsLandPredicate()),
                 new BecomePreparedEffect()));

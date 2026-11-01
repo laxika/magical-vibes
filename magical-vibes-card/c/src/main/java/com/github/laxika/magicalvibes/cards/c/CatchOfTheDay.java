@@ -34,7 +34,7 @@ public class CatchOfTheDay extends Card {
     private static final String TWO_SIX = "2/6";
 
     public CatchOfTheDay() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseIndependentModesOnEnterEffect(List.of(
+        addStaticEffect(new ChooseIndependentModesOnEnterEffect(List.of(
                 List.of(VIGILANCE, WARD, ISLANDWALK),
                 List.of(SCRY, GOAD, TAP),
                 List.of(SIX_TWO, FOUR_FOUR, TWO_SIX))));

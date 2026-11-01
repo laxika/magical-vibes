@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Marker for a permanent that notes the mana value of every card as it enters exile.
- * The note is held by the permanent for the current turn.
+ * Static ability: "Note the mana value of each card as it's put into exile" (Bell Borca, Spectral Sergeant).
+ * {@code GameData} records the note on the permanent for the current turn as each card is exiled.
  */
 public record NoteManaValueOfExiledCardsEffect() implements CardEffect {
 

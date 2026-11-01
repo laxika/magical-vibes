@@ -30,7 +30,7 @@ public class OmerKingOfRohan extends Card {
 
     public OmerKingOfRohan() {
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN),

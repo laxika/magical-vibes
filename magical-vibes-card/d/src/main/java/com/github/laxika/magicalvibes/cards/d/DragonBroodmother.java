@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 
@@ -33,7 +33,7 @@ public class DragonBroodmother extends Card {
                 Set.of(),
                 false,
                 false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(2))),
+                List.of(StaticAbility.of(new DevourEffect(2))),
                 List.of(),
                 false,
                 false,

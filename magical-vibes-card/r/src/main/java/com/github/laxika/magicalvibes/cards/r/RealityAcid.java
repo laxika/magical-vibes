@@ -16,8 +16,7 @@ public class RealityAcid extends Card {
 
     public RealityAcid() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)))
+                .addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)))
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME))
                 .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,

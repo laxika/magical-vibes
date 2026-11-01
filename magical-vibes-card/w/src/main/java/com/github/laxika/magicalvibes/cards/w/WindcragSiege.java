@@ -20,8 +20,7 @@ import java.util.Set;
 public class WindcragSiege extends Card {
 
     public WindcragSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of("Mardu", "Jeskai")));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of("Mardu", "Jeskai")));
 
         addStaticEffect(AdditionalTriggeredAbilityEffect.forAttackTriggers(
                         new PermanentTruePredicate(), new SourceHasChosenMode("Mardu")));

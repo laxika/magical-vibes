@@ -7,10 +7,15 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DredgeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SerumPowderEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
@@ -82,6 +87,33 @@ class CardAbilitiesTest {
         assertThat(card.getStaticEffects(Zone.BATTLEFIELD)).containsExactly(GAIN_ONE);
         assertThat(card.getStaticEffects(Zone.COMMAND)).containsExactly(GAIN_ONE);
         assertThat(card.getStaticEffects()).containsExactly(kicker, splice, conditionalReduction, GAIN_ONE);
+    }
+
+    @Test
+    void dredgeMulliganAndOpeningHandActionsFunctionFromTheZonesTheirRulesName() {
+        DredgeEffect dredge = new DredgeEffect(2);
+        SerumPowderEffect powder = new SerumPowderEffect();
+        MayEffect leyline = new MayEffect(new LeylineStartOnBattlefieldEffect(), "Begin the game with it?");
+        card.addStaticEffect(dredge);
+        card.addStaticEffect(powder);
+        card.addStaticEffect(leyline);
+
+        assertThat(card.getStaticEffects(Zone.GRAVEYARD)).containsExactly(dredge);
+        assertThat(card.getStaticEffects(Zone.HAND)).containsExactly(powder, leyline);
+        assertThat(card.getStaticEffects(Zone.BATTLEFIELD)).isEmpty();
+        for (EffectSlot slot : EffectSlot.values()) {
+            assertThat(card.getEffects(slot)).isEmpty();
+        }
+    }
+
+    @Test
+    void anEntersWithAbilityIsAStaticAbilityOfTheBattlefield() {
+        EnterWithCountersEffect counters = new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2));
+        card.addStaticEffect(counters);
+
+        assertThat(card.getAbilities()).containsExactly(new StaticAbility(List.of(counters)));
+        assertThat(card.getStaticEffects(Zone.BATTLEFIELD)).containsExactly(counters);
+        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).isEmpty();
     }
 
     @Test

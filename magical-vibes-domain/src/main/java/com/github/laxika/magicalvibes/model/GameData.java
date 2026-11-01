@@ -4785,7 +4785,7 @@ public class GameData {
         int manaValue = faceDown ? 0 : card.getManaValue();
         playerBattlefields.values().stream()
                 .flatMap(List::stream)
-                .filter(permanent -> permanent.getCard().getEffects(EffectSlot.ON_ANY_CARD_EXILED).stream()
+                .filter(permanent -> permanent.getCard().getStaticEffects().stream()
                         .anyMatch(CardEffect::notesManaValueOfExiledCards))
                 .forEach(permanent -> greatestManaValueNotedForPermanentThisTurn.merge(
                         permanent.getId(), manaValue, Math::max));

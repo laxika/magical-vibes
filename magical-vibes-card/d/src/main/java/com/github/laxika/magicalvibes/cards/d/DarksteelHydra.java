@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class DarksteelHydra extends Card {
 
     public DarksteelHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.OIL, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new XValue()));
 
         CountersOnSource oilCounters = new CountersOnSource(CounterType.OIL);
         Scaled twiceOilCounters = new Scaled(oilCounters, 2);

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceCardWithSuspendCou
 public class Epochrasite extends Card {
 
     public Epochrasite() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new NotCondition(new CastFromZone(Zone.HAND)),
+        addStaticEffect(new ConditionalEffect(new NotCondition(new CastFromZone(Zone.HAND)),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
         addEffect(EffectSlot.ON_DEATH, new ExileSourceCardWithSuspendCountersEffect(3));
     }

@@ -49,6 +49,15 @@ class SanctumPrelateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing the number as Sanctum Prelate enters puts no ability on the stack")
+    void numberChoiceIsNotATriggeredAbility() {
+        castPrelate(2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Sanctum Prelate").getChosenNumber()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Blocks matching noncreature spells for every player")
     void blocksMatchingNoncreatureSpellsForEveryPlayer() {
         castPrelate(1);

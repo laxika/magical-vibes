@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class EmbalmedBrawler extends Card {
 
     public EmbalmedBrawler() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmplifyEffect(
+        addStaticEffect(new AmplifyEffect(
                 1, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
 
         addEffect(EffectSlot.ON_ATTACK,

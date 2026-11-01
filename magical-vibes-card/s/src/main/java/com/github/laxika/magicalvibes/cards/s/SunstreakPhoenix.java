@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class SunstreakPhoenix extends Card {
 
     public SunstreakPhoenix() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayAsEntersEffect());
+        addStaticEffect(new BecomeDayAsEntersEffect());
         addEffect(EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE,
                 new MayPayManaEffect(
                         "{1}{R}",

@@ -18,7 +18,7 @@ import java.util.Set;
 public class ReflectionsOfLittjara extends Card {
 
     public ReflectionsOfLittjara() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect());
         // "Whenever you cast a spell of the chosen type, copy that spell." The Oracle text grants no
         // new-target choice, so the copy keeps its targets (CR 707.10c).
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new CopyControllerCastSpellOnSpellCastEffect(

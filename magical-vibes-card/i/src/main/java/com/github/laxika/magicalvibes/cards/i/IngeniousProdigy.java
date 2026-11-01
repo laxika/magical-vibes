@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class IngeniousProdigy extends Card {
 
     public IngeniousProdigy() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConditionalEffect(

@@ -31,7 +31,7 @@ public class CruelAdministrator extends Card {
             List.of(), false, false, false, 0, Set.of());
 
     public CruelAdministrator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Raid(),
+        addStaticEffect(new ConditionalEffect(new Raid(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addEffect(EffectSlot.ON_ATTACK, SOLDIER_TOKEN);
     }

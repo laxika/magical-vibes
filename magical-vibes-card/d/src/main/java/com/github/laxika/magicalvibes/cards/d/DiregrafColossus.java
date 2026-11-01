@@ -25,7 +25,7 @@ public class DiregrafColossus extends Card {
 
     public DiregrafColossus() {
         // This creature enters with a +1/+1 counter on it for each Zombie card in your graveyard.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER)));
 

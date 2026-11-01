@@ -21,8 +21,7 @@ import java.util.List;
 public class ParallaxNexus extends Card {
 
     public ParallaxNexus() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FADE, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(5)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));

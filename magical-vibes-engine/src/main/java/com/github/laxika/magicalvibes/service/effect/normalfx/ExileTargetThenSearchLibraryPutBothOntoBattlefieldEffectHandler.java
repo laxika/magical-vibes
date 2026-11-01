@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetThenSearchLibraryPutBothOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -64,7 +63,7 @@ public class ExileTargetThenSearchLibraryPutBothOntoBattlefieldEffectHandler imp
         List<Card> leaving = target.cardsLeavingBattlefield();
         Card card = target.getOriginalCard();
         if (leaving.size() != 1 || card.isToken() || card.isAura()
-                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                || card.getStaticEffects().stream()
                 .anyMatch(CopyPermanentOnEnterEffect.class::isInstance)) {
             flickerEffectHandler.resolve(gameData, entry, FlickerEffect.flickerTargetUnderYourControl());
             StackEntry parked = gameData.pendingEffectResolutionEntry;

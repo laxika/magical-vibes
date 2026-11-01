@@ -19,8 +19,7 @@ import java.util.List;
 public class RoyalTalonFighterJet extends Card {
 
     public RoyalTalonFighterJet() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         CountersOnSource plusOnePlusOneCounters = new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.whiteSoldier(plusOnePlusOneCounters));

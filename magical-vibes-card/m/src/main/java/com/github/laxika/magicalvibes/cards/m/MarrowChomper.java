@@ -14,7 +14,7 @@ public class MarrowChomper extends Card {
     public MarrowChomper() {
         // Devour 2 (As this creature enters, you may sacrifice any number of creatures.
         // It enters with twice that many +1/+1 counters on it.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(2));
+        addStaticEffect(new DevourEffect(2));
 
         // When this creature enters, you gain 2 life for each creature it devoured.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

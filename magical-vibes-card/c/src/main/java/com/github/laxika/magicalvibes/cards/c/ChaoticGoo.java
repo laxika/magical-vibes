@@ -17,8 +17,7 @@ public class ChaoticGoo extends Card {
 
     public ChaoticGoo() {
         // "This creature enters with three +1/+1 counters on it."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
         // "At the beginning of your upkeep, you may flip a coin. If you win the flip, put a +1/+1
         //  counter on this creature. If you lose the flip, remove a +1/+1 counter from this creature."

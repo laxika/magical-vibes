@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class LeylineOfCombustion extends Card {
 
     public LeylineOfCombustion() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Combustion on the battlefield?"
         ));

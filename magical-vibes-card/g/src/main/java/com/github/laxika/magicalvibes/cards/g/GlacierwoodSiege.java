@@ -20,8 +20,7 @@ import java.util.List;
 public class GlacierwoodSiege extends Card {
 
     public GlacierwoodSiege() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseModeOnEnterEffect(List.of("Temur", "Sultai")));
+        addStaticEffect(new ChooseModeOnEnterEffect(List.of("Temur", "Sultai")));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ConditionalEffect(
                 new SourceHasChosenMode("Temur"),

@@ -19,8 +19,7 @@ public class Tidewalker extends Card {
     public Tidewalker() {
         PermanentCount islandsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, islandsYouControl));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, islandsYouControl));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         CountersOnSource timeCounters = new CountersOnSource(CounterType.TIME);

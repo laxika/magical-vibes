@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEf
 public class DivineIntervention extends Card {
 
     public DivineIntervention() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.INTERVENTION, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.INTERVENTION, new Fixed(2)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterFromSourceThenEffect(
                         CounterType.INTERVENTION, new DrawGameEffect(), true));

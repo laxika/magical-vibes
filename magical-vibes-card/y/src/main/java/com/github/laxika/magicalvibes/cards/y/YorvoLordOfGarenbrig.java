@@ -20,8 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 public class YorvoLordOfGarenbrig extends Card {
 
     public YorvoLordOfGarenbrig() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         CardEffect counterSequence = SequenceEffect.of(
                 new PutCountersOnSourceEffect(1, 1, 1),

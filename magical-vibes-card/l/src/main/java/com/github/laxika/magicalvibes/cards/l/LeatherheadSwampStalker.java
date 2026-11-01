@@ -22,8 +22,7 @@ import java.util.List;
 public class LeatherheadSwampStalker extends Card {
 
     public LeatherheadSwampStalker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.HEXPROOF, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.HEXPROOF, new Fixed(1)));
 
         PermanentAllOfPredicate artifactOrEnchantmentControlledByDefendingPlayer = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

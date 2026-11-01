@@ -27,6 +27,6 @@ public class GolgariThug extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(4));
+        addStaticEffect(new DredgeEffect(4));
     }
 }

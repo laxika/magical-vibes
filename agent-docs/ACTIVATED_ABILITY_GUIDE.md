@@ -1068,10 +1068,15 @@ A spell's own effects are not in a slot: `addSpellEffect(e)` (or `target(f).addS
 to its spell ability, which resolves with the instant or sorcery. Additional costs to cast it go in with
 `addCastingCost(c)`.
 
+Abilities that aren't triggered aren't in a slot either; each is `addStaticEffect(e)`, functioning from the
+zones its effect names (CR 113.6b): "enters with" and "as this enters" abilities (CR 614.1c), dredge
+(`DredgeEffect`, the graveyard), mulligan-time actions (`SerumPowderEffect`, `NoRegretsEgretEffect`: the hand),
+opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and "spells you cast have cascade"
+(`GrantCastTriggerToSpellsEffect`).
+
 | Slot | Fires when |
 |------|------------|
 | `ON_ENTER_BATTLEFIELD` | Permanent enters the battlefield (ETB) |
-| `MULLIGAN_ACTION` | Special action offered while deciding whether to mulligan |
 | `STATIC` | Continuous effect, always active while on battlefield |
 | `UPKEEP_TRIGGERED` | Controller's upkeep. Supports any-target routing (creature/planeswalker/battle/player) when an effect is true "any target" (`targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `targetSpec().playerTargetCount() >= 2`) |
 | `COMMAND_ZONE_UPKEEP_TRIGGERED` | Controller's upkeep while the source card is in their command zone; use an intervening `SourceCardInCommandZone` condition when leaving the command zone before resolution should stop the effect. A face-up scheme (CR 314.4) also fires its ordinary `UPKEEP_TRIGGERED` effects from here, with no source permanent (Fear My Authority) |
@@ -1238,7 +1243,6 @@ to its spell ability, which resolves with the instant or sorcery. Additional cos
 | `GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD` | Like ON_ALLY_LAND_ENTERS_BATTLEFIELD but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect(new CardSubtypePredicate(...), wrapped)` to filter by the entering land, and wrap the inner effect in `MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).build(), ...)` for "you may return this card from your graveyard to your hand". Scanned over the land controller's graveyard in `TriggerCollectionService.checkAllyLandEntersTriggers`. Used by Reach of Branches ("whenever a Forest you control enters") |
 | `ON_OPPONENT_CREATURE_DIES` | An opponent's creature dies |
 | `ON_DEALT_DAMAGE` | This creature is dealt damage (combat or non-combat). The damage amount is snapshotted onto the queued entry's `eventValue`, so "it deals that much damage" effects can read it with an `EventValue` amount (Stuffy Doll) |
-| `ON_OPENING_HAND_REVEAL` | First upkeep, cards in hand (Chancellor cycle). Wrap with `MayEffect` |
 | `ON_OPPONENT_LOSES_LIFE` | Opponent loses life (damage or direct) |
 | `ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD` | An Equipment enters under your control |
 | `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` | An opponent's creature enters |

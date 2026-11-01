@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -28,7 +27,7 @@ public class Degavolver extends Card {
         addStaticEffect(new KickerEffect("{1}{B}"));
         addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addStaticEffect(new ConditionalEffect(new Kicked(), new GrantActivatedAbilityEffect(
                 new ActivatedAbility(false, null,
@@ -36,7 +35,7 @@ public class Degavolver extends Card {
                         "Pay 3 life: Regenerate Degavolver."),
                 GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{R}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{R}"),

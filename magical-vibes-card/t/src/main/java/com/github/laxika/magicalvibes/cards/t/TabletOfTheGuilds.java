@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpe
 public class TabletOfTheGuilds extends Card {
 
     public TabletOfTheGuilds() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect(2));
+        addStaticEffect(new ChooseColorOnEnterEffect(2));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new GainLifeForEachChosenColorSpellCastEffect());
     }
 }

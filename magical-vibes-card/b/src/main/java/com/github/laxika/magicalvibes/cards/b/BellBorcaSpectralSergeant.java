@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class BellBorcaSpectralSergeant extends Card {
 
     public BellBorcaSpectralSergeant() {
-        addEffect(EffectSlot.ON_ANY_CARD_EXILED, new NoteManaValueOfExiledCardsEffect());
+        addStaticEffect(new NoteManaValueOfExiledCardsEffect());
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new GreatestManaValueNotedForSourceThisTurn(), new Fixed(5)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardMayPlayThisTurnEffect(false));

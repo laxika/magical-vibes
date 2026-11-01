@@ -34,8 +34,7 @@ public class BlasterMoraleBooster extends Card {
                 new PermanentNotPredicate(
                         new PermanentIsSourcePermanentPredicate())));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
         addEffect(EffectSlot.ON_DEATH, new PutCounterOnTargetForEachDyingSourceCounterEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, true,
                 new PermanentAllOfPredicate(List.of(

@@ -1396,12 +1396,12 @@ public class DrawService {
             if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effect instanceof MaySkipDrawReplacementEffect replacement) {
+                if (effect instanceof MaySkipDrawReplacementEffect replacement && !replacement.drawStepOnly()) {
                     return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                 }
             }
             if (gameData.currentStep == TurnStep.DRAW && playerId.equals(gameData.activePlayerId)) {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof IslandSanctuaryEffect replacement) {
                         return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                     }

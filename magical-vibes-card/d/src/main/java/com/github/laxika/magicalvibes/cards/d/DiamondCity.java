@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -24,8 +23,7 @@ import java.util.List;
 public class DiamondCity extends Card {
 
     public DiamondCity() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 

@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class QuarantineField extends Card {
 
     public QuarantineField() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.ISOLATION, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.ISOLATION, new XValue()));
 
         targetUpTo(new CountersOnSource(CounterType.ISOLATION),
                 TargetFilters.nonlandPermanentAnOpponentControls(), 99)

@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class Karstoderm extends Card {
 
     public Karstoderm() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
         addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardTypePredicate(CardType.ARTIFACT),

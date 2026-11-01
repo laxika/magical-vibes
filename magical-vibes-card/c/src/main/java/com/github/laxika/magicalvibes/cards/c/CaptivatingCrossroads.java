@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
@@ -24,7 +23,7 @@ public class CaptivatingCrossroads extends Card {
                         new ControllerOwnTurnCountAtMost(3))),
                 new EntersTappedEffect()));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

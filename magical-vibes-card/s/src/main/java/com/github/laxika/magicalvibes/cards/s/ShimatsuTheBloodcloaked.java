@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
@@ -16,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class ShimatsuTheBloodcloaked extends Card {
 
     public ShimatsuTheBloodcloaked() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new SacrificePermanentsAsEntersForCountersEffect(new PermanentTruePredicate(), 1));
+        addStaticEffect(new SacrificePermanentsAsEntersForCountersEffect(new PermanentTruePredicate(), 1));
     }
 }

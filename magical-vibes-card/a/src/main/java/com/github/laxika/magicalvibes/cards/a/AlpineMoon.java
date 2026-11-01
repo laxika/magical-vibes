@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -18,8 +17,7 @@ public class AlpineMoon extends Card {
 
     public AlpineMoon() {
         var chosenName = new PermanentHasSourceChosenNamePredicate();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCardNameOnEnterEffect(List.of(), ChooseCardNameOnEnterEffect.HandAccess.NONE, true));
+        addStaticEffect(new ChooseCardNameOnEnterEffect(List.of(), ChooseCardNameOnEnterEffect.HandAccess.NONE, true));
         addStaticEffect(new LoseAllLandTypesEffect(GrantScope.OPPONENT_LANDS, chosenName));
         addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.OPPONENT_LANDS, chosenName));
         addStaticEffect(new GrantActivatedAbilityEffect(

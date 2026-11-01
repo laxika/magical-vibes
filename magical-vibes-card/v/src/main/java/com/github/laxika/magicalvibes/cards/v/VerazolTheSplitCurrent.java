@@ -17,8 +17,7 @@ import java.util.List;
 public class VerazolTheSplitCurrent extends Card {
 
     public VerazolTheSplitCurrent() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new ManaSpentToCast()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new ManaSpentToCast()));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new KickedSpellCastTriggerEffect(List.of(
                         new RemoveCounterFromSourceThenEffect(

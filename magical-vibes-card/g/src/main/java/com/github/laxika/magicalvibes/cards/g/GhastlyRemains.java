@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class GhastlyRemains extends Card {
 
     public GhastlyRemains() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmplifyEffect(
+        addStaticEffect(new AmplifyEffect(
                 1, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new SourceCardInGraveyard(),

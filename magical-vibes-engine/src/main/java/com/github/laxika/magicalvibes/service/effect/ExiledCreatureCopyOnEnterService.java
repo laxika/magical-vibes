@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CloneOperationState;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -91,7 +90,7 @@ public class ExiledCreatureCopyOnEnterService {
     }
 
     private CopyCreatureCardInExileOnEnterEffect findCopyEffect(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof CopyCreatureCardInExileOnEnterEffect copyEffect) {
                 return copyEffect;
             }

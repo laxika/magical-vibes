@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
@@ -36,7 +35,7 @@ public class EverflowingChalice extends Card {
 
     public EverflowingChalice() {
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{2}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
+        addStaticEffect(new EnterWithCountersEffect(
                 CounterType.CHARGE, new RepeatedAdditionalCostCount("{2}")));
 
         addActivatedAbility(new ActivatedAbility(

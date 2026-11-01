@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 /**
  * STATIC: creatures you control with {@code recipientSubtype} have protection from creatures of the
  * creature type chosen for the source permanent ({@code Permanent.getChosenSubtype()}). Pair with
- * {@link ChooseSubtypeOnEnterEffect} in {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_ENTER_BATTLEFIELD}
+ * a static {@link ChooseSubtypeOnEnterEffect}
  * for the choice (Riders of Gavony).
  *
  * <p>The grant covers the source permanent itself when it also has {@code recipientSubtype}, and is

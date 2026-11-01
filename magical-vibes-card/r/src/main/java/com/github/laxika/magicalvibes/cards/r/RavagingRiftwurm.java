@@ -16,9 +16,8 @@ public class RavagingRiftwurm extends Card {
 
     public RavagingRiftwurm() {
         addStaticEffect(new KickerEffect("{4}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.TIME, new Fixed(2)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(2)));
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(3))));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));

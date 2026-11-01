@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeForEachChosenColorSpe
 public class DiamondMare extends Card {
 
     public DiamondMare() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
+        addStaticEffect(new ChooseColorOnEnterEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new GainLifeForEachChosenColorSpellCastEffect());
     }
 }

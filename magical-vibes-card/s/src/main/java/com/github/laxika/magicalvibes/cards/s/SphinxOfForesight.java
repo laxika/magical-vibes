@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class SphinxOfForesight extends Card {
 
     public SphinxOfForesight() {
-        addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
+        addStaticEffect(new MayEffect(
                 new RegisterOpeningHandUpkeepTriggerEffect(new ScryEffect(3), true),
                 "Reveal this card from your opening hand?"
         ));

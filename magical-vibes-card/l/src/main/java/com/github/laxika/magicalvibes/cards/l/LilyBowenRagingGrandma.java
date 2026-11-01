@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 public class LilyBowenRagingGrandma extends Card {
 
     public LilyBowenRagingGrandma() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new DoublePlusOneCountersOrKeepOneAndGainLifeEffect(16));
     }

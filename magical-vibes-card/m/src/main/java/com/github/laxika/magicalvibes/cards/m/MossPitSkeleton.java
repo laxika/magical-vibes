@@ -18,8 +18,7 @@ public class MossPitSkeleton extends Card {
 
     public MossPitSkeleton() {
         addStaticEffect(new KickerEffect("{3}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                         new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE,
                 new MayEffect(

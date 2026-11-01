@@ -49,6 +49,15 @@ class TalionTheKindlyLordTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing the number as Talion enters puts no ability on the stack")
+    void numberChoiceIsNotATriggeredAbility() {
+        castTalion(3);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Talion, the Kindly Lord").getChosenNumber()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Matching mana value, power, or toughness makes the opponent lose life and draws a card")
     void matchingSpellTriggersTalion() {
         Card drawCard = new SuntailHawk();

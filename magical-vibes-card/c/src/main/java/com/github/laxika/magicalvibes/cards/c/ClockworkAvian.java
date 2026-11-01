@@ -24,8 +24,7 @@ public class ClockworkAvian extends Card {
 
     public ClockworkAvian() {
         // This creature enters with four +1/+0 counters on it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(4)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(4)));
 
         addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),

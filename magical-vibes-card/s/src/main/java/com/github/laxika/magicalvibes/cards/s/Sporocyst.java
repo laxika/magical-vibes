@@ -20,8 +20,7 @@ public class Sporocyst extends Card {
     public Sporocyst() {
         // Ravenous — this creature enters with X +1/+1 counters on it. If X is 5 or more,
         // draw a card when it enters.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)), TriggerMode.INDEPENDENT);
 

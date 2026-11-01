@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class MorlunDevourerOfSpiders extends Card {
 
     public MorlunDevourerOfSpiders() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

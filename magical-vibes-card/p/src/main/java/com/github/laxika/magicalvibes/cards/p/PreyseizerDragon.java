@@ -15,7 +15,7 @@ public class PreyseizerDragon extends Card {
     public PreyseizerDragon() {
         // Devour 2 (As this creature enters, you may sacrifice any number of creatures.
         // It enters with twice that many +1/+1 counters on it.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(2));
+        addStaticEffect(new DevourEffect(2));
 
         // Whenever this creature attacks, it deals damage to any target equal to the number
         // of +1/+1 counters on it.
