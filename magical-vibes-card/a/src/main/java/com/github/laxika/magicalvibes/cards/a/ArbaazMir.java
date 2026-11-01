@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class ArbaazMir extends Card {
         // Whenever Arbaaz Mir or another nontoken historic permanent you control enters,
         // Arbaaz Mir deals 1 damage to each opponent and you gain 1 life.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggerEffect());
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsHistoricPredicate(),

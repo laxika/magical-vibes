@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "4")
@@ -36,7 +38,7 @@ public class EyeOfSingularity extends Card {
 
         // Whenever a permanent other than a basic land enters, destroy all other permanents with
         // that name. They can't be regenerated.
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY), new TriggeringCardConditionalEffect(
                 new CardNotPredicate(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.LAND),
                         new CardSupertypePredicate(CardSupertype.BASIC)))),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WWK", collectorNumber = "94")
 public class TuktukScrapper extends Card {
@@ -24,7 +25,7 @@ public class TuktukScrapper extends Card {
         PermanentCount allies = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER);
 
-        target(TargetFilters.artifact()).addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        target(TargetFilters.artifact()).addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
                         new MayEffect(DestroyTargetPermanentThenEffect.ifDiesThisWay(
                                 EventStat.NONE,

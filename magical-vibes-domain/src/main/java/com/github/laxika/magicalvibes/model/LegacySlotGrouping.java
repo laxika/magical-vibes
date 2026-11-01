@@ -24,8 +24,6 @@ enum LegacySlotGrouping {
 
     private static final Set<EffectSlot> ALL_SLOTS = EnumSet.of(
             EffectSlot.ON_SELF_TAPPED_FOR_MANA,
-            EffectSlot.ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
-            EffectSlot.ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD,
             EffectSlot.ON_BLOCK,
             EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
             EffectSlot.ON_SELF_CYCLED,
@@ -38,7 +36,6 @@ enum LegacySlotGrouping {
             EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
             EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE,
             EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE,
-            EffectSlot.ON_EQUIPPED_CREATURE_TRANSFORMS,
             EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY,
             EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
             EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
@@ -94,7 +91,6 @@ enum LegacySlotGrouping {
             EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL,
             EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY,
             EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY,
-            EffectSlot.ON_TURNED_FACE_UP,
             EffectSlot.ON_CREATURES_ATTACK_YOU,
             EffectSlot.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL,
             EffectSlot.ON_ANY_CREATURE_ATTACKS,

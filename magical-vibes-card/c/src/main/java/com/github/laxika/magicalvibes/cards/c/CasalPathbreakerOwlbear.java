@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 public class CasalPathbreakerOwlbear extends Card {
@@ -23,9 +25,8 @@ public class CasalPathbreakerOwlbear extends Card {
                 legendary,
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
-        addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE,
-                new BoostAllOwnCreaturesEffect(2, 2, otherLegendary));
-        addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE,
+        addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
+                new BoostAllOwnCreaturesEffect(2, 2, otherLegendary),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, legendary));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new TransformSelfEffect());
     }

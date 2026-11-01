@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.OmenCast;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "136")
 public class BloomvineRegent extends Card {
@@ -17,7 +19,7 @@ public class BloomvineRegent extends Card {
         setBackFaceCard(new ClaimTerritory());
         addCastingOption(new OmenCast());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DRAGON),
                         new GainLifeEffect(3)));

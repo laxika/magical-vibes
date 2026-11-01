@@ -10,13 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "222")
 public class ClericOfLifesBond extends Card {
 
     public ClericOfLifesBond() {
         // Whenever another Cleric you control enters, you gain 1 life.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.CLERIC),
                         new GainLifeEffect(1)));
 

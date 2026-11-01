@@ -26,7 +26,7 @@ re-check them with a grep before acting on them.
 | 10a | Trigger index and the generic trigger pipeline; the pilot in shadow mode | done |
 | 10b | Switch the pilot to the pipeline, convert its cards, delete its slots | done |
 | 11 | Creature-death triggers and self-inclusion | done |
-| 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | open |
+| 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | open |
 | 13 | Remaining event families (repeatable) | open |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
@@ -2802,9 +2802,14 @@ that (below).
   `TurnCleanupServiceTest` / `EnterTriggerCollectorServiceTest`, which fail there too.
 - The full suite was not run here.
 
-### Step 12a (in progress)
+### Step 12a
 
-Work log while 12a is under way; rewritten as the step's findings when it is done.
+12a moved every zone-change slot but `ON_ENTER_BATTLEFIELD` to the trigger pipeline, in two parts (two commits). Part 1
+moved the sacrifice, put-into-a-graveyard-from-the-battlefield, leaves-the-battlefield / exiled / returned-to-hand and
+outside-the-battlefield families; part 2 the phasing / transform / turned-face-up family and the "another object
+enters" family. `EffectSlot` keeps `ON_ENTER_BATTLEFIELD` for 12b and no other zone-change constant.
+
+#### Part 1
 
 **The bridge.** Each moved slot becomes a `ZoneChangeWatch` constant of the same name (engine, `service/trigger`),
 listing the trigger conditions its cards were converted to (`Key`: trigger, zone the ability functions from,
@@ -2819,9 +2824,9 @@ judged it by the effect (`ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
 the body still does. Exception: the sacrifice family was classified by Oracle wording (`RELATION` in
 `scripts/step12a-zone-change-triggers.py`), because its collector used a card-text heuristic ("sacrifices another").
 
-**Families done:** sacrifice, put into a graveyard from the battlefield (with step 11's three owner-keyed slots),
-leaves the battlefield / exiled from it / returned to hand, moves outside the battlefield (graveyard, library, hand,
-exile, command zone). **Left:** phasing / transform / face up, other objects entering.
+**Families:** sacrifice, put into a graveyard from the battlefield (with step 11's three owner-keyed slots), leaves
+the battlefield / exiled from it / returned to hand, moves outside the battlefield (graveyard, library, hand, exile,
+command zone). Part 2 below moved the rest.
 
 **Engine changes so far.**
 
@@ -2889,6 +2894,144 @@ replacement-order choice (The Water Crystal plus Bruvac) closes its batch at the
 are milled" trigger fires for the cards milled before the pause and again for the rest. The old code held the trigger
 until the journal replay; the pipeline needs a batch that survives the pause (the same holds for any effect that
 stops for a choice mid-event).
+
+
+#### Part 2: phasing, transforming, turning face up
+
+Twelve constants are gone: `ON_SELF_PHASES_OUT`, `ON_ANY_OTHER_PERMANENT_PHASES_OUT`, `ON_SELF_PHASES_IN`,
+`ON_TRANSFORM_TO_BACK_FACE`, `ON_TRANSFORM_TO_FRONT_FACE`, `ON_EQUIPPED_CREATURE_TRANSFORMS`, `ON_ALLY_PERMANENT_TRANSFORMS`,
+`ON_TURNED_FACE_UP`, `ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP`, `ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP`,
+`ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP` and `GRAVEYARD_ON_ALLY_PERMANENT_TURNS_FACE_UP`. None of these is a zone change
+(CR 702.26d); they moved with the family because step 12 lists them.
+
+- **Events.** `PermanentChangeEvent` (part 1's type, now with the X paid to turn a permanent face up) is emitted at the
+  choke points: `PhasingService` (a phase-out before the permanent leaves the battlefield list, with a copy, all of one
+  phasing event in one batch; a phase-in after it is back), `AnimationSupport.transformed` (both directions and Olag's
+  copy toggle), and `TurnFaceUpCopyService.turnedFaceUp`, which both face-up paths (`GameService.finishTurningFaceUp`,
+  `TurnFaceUpCopyService.finishTurnFaceUp`) call where they collected triggers.
+- **Matching.** `RulesEventPipeline.triggerPermanentChanges`: `TriggerIndex.permanentChangeCandidates` lists the
+  battlefield after the event (the changed permanent included), a phased-out permanent's own abilities as it last
+  existed (CR 603.10b), and graveyard cards; `TriggerMatcher.matchedPermanentChange` checks the change, zones, relation
+  (`THIS`, the "you control" / "another" relations, `EQUIPPED` / `ENCHANTED`) and filter. "One or more" abilities trigger
+  once for the batch first, then each event's observers and the changed permanent's own abilities.
+- **Bridge.** The constants are `ZoneChangeWatch` entries (keyed by `PermanentChangeTrigger`);
+  `TriggeredAbilityStackService.triggerPermanentChange` checks options and calls
+  `TriggerCollectionService.triggerPermanentChange`, which runs each old collector's per-source body. The bodies of the
+  source's own transform and face-up abilities moved out of the choke points: `AnimationSupport.putTransformAbilityOnStack`
+  and `TurnFaceUpCopyService.putTurnedFaceUpAbilityOnStack` (GameService's version, which counted additional-trigger
+  copies; the copy-choice path's narrower duplicate is gone).
+- **Replacements out of the slot.** "As this is turned face up" (CR 614.1e: megamorph and negamorph counters, Vesuvan
+  Shapeshifter's copy, Gift of Doom's Aura, the power/toughness form choice) are static abilities now, read from
+  `getStaticEffects()`. "As this transforms into [this face]" is the new static `AsTransformsIntoThisEffect` (Sephiroth's
+  emblem, Olag's copy), applied by `AnimationSupport.transformed` before the event.
+- **Grouping.** The registrations the old collectors put on the stack as one object are one ability: seven face-up cards
+  (Riptide Survivor, Rattleclaw Mystic, Maelstrom Djinn, Greenbelt Radical, Essence of Antiquity, Coveted Falcon with two
+  target groups bound by `bindEffect`, Alley Assailant), Casal Pathbreaker Owlbear, Avacyn the Purifier and Huntmaster
+  of the Fells' transform ability.
+- **Behaviour changes:** a permanent that lost all its abilities no longer triggers its own transform or face-up ability
+  (the old transform collector didn't check), nor an Equipment's "when equipped creature transforms"; a phase-out
+  trigger is matched when the phasing event ends.
+- **Cards** by `scripts/step12a-permanent-change-triggers.py` (185 files; Acid-Spewer Dragon and Aquamorph Entity are in
+  its `MANUAL` table: a fully qualified megamorph replacement, and a P/T form choice already static for "as this enters").
+
+#### Part 2: another object entering
+
+The other 38 entering constants are gone (`ON_ALLY_CREATURE_ENTERS_BATTLEFIELD`, the creature, nontoken, artifact, token,
+land, Equipment, enchantment, opponent, enchanted-player, "from a graveyard" / "from exile", "enters transformed" and
+graveyard / command-zone variants, and `ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD`, which only a spell's
+registered ability used).
+
+- **Relations.** Each slot keeps its collector's self-inclusion (`ZoneChangeWatch`): the "ally" slots
+  `ANOTHER_YOU_CONTROL`, the "self or ally" slots `YOU_CONTROL`, `ON_ANY_OTHER_…` `ANOTHER`, landfall `YOU_CONTROL` with
+  the collector's "a printed land doesn't see itself unless gated on the entering permanent" check left in its body.
+  `scripts/step12a-enters-scan.py` lists every registration with its Oracle wording: 65 cards say "this or another" on an
+  "another" slot and also have their own `ON_ENTER_BATTLEFIELD` copy of the ability, and 20 say "a [type] you control"
+  where the collector excluded the source (Arcades, Brainstealer Dragon, Faramir, Pollywog Prodigy, the Trials, …).
+  12b, which moves those cards' own enters abilities, is where they merge into one ability with the Oracle relation.
+- **Matching at the old choke point.** An entry's batch closing doesn't match the entering abilities (except the
+  token watches): `EtbTriggerService.collectEntersTriggers` calls `RulesEventPipeline.triggerEnteringObservers` as the
+  entering permanent's own enters abilities are processed, which is where the old collectors ran. The entry event is
+  the one the rules log still holds for the permanent (or one built from it once drained), with the permanent as it is
+  then (`PermanentRemovalService.snapshotEffectivePermanentCard`), and the filters are judged on that copy. Matching at
+  batch close was tried first and broke three things the old timing gets right: the mass-entry paths that place a
+  group across several choices (Ghoul's Night Out, Another Round) and process its enters abilities once all of it is on
+  the battlefield, so its members see one another; a permanent's "enters transformed" or "as it enters" state, which
+  is set after placement (Corruption of Towashi); and the stack order, the entering permanent's own enters abilities
+  below the ones its entry triggers.
+- **Candidates.** For an entry `TriggerIndex.otherMoveCandidates` also lists the permanents that entered in the batch,
+  for their enters abilities only (CR 603.6a: the newcomers are checked, the entering permanent itself included), and
+  the cards in command zones. `TriggerMatcher` matches a newcomer's own entry through the observer path (never as the
+  moving object): `THIS` and the self-inclusive relations for itself, the "another" relations never.
+- **"One or more."** While `collectingSimultaneousCreatureEntryTriggers` marks an event, a "one or more" ability that
+  already triggered for it names the next entrant on its stack objects instead of triggering again (the old
+  collectors' mechanism, now keyed by the ability). One token creation sets it too (`PermanentControlSupport`), as the
+  old token path grouped "one or more creatures" over a creation's tokens.
+- **Bridge.** `TriggerCollectionService.triggerEntry` runs each old collector's per-source body (`ZoneChangeWatch.entering()`
+  routes there). The token watches get the creation's whole batch (a per-token ability is `EACH`, and an effect with a
+  resolution condition still triggers per token). The choke point keeps what isn't a card ability: evolve, watchers,
+  boons, emblems, the abilities a spell registered until end of turn (keyed by trigger now), planes
+  (`ZoneChangeWatch.effectsOf`) and exiled voyages; its stack window still taxes what the entry triggered (Strict
+  Proctor). One token creation is one rules batch.
+- **"Whenever you create one or more tokens"** isn't an enters trigger: a token's entry has the new zone-change cause
+  `CREATE` (CR 701.7a; a token enters the battlefield only by being created), and `Triggers.tokensCreated` watches it, so
+  Elesh Norn neither doubles nor suppresses it (Staff of the Storyteller, Akim the Soaring Wind).
+- **"Enters from a graveyard"** is an enters ability, checked after the event (CR 603.6a), not a look-back
+  leaves-the-graveyard one: `ZoneChangeTrigger.looksBack()` is false for a move to the battlefield, so
+  `entersFrom(GRAVEYARD, …, THIS)` functions from the battlefield (Phyrexian Dragon Engine, Treacherous Pit-Dweller,
+  Canoptek Tomb Sentinel).
+- **A part 1 regression fixed.** The pipeline's additional-trigger count for a dying creature's own ability passed no
+  trigger context, so a "creature you control with power 2 or less" doubler (Delney, Streetwise Lookout) didn't see the
+  dying creature as its controller's; it now passes a creature-death context as the old self-death collector did.
+  `DelneyStreetwiseLookoutTest` (two cases) and `ChiefOfTheWildsTest` (one) failed at part 1's commit and pass now.
+- **Other engine changes.** `BecomeCopyOfTargetCreatureEffect.retainingItsAbility()` keeps the triggered ability holding
+  the copy effect (Protean Thaumaturge); `BecomeCopyOfEnteringCreatureEffectHandler` re-adds the copy ability as an
+  ability; the exile-until-leaves helper reads `ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD.effectsOf`.
+- **Cards** by `scripts/step12a-enters-triggers.py` (967 files): the `TriggerMode`s became multiplicities, consecutive
+  landfall and Curse registrations without `INDEPENDENT` merged into one ability (20 landfall cards), and `MANUAL` covers
+  Down in the Valley, Protean Thaumaturge, Staff of the Storyteller and Akim.
+- **Docs.** `scripts/step12a-docs.py` rewrote agent-docs and the skills for both part 2 families (387 lines); the face-up
+  and as-transforms replacement rows were fixed by hand, and the skills describe the new triggers.
+
+**For later steps.**
+
+- 12b: the 65 "this or another" cards above merge their `ON_ENTER_BATTLEFIELD` copy into the ability with
+  `THIS_OR_ANOTHER_YOU_CONTROL`; the 20 plain-wording cards need their relation checked. The source's own enters
+  abilities and `triggerEnteringObservers` both run at `collectEntersTriggers`, so 12b can move them together and keep
+  the old order (its own below the others').
+- Cleanup: `TriggerCollectionService.checkAllyTokenEntersTriggers` only collects boons.
+- Step 14: the wrappers the entry bodies read (`TriggeringCardConditionalEffect`, `EnterCreatureConditionalEffect`,
+  `OncePerTurnTriggerEffect`, the intervening "if"s) and landfall's self-exclusion become filters and options.
+
+**Tests changed.**
+
+- `EnterTriggerCollectorServiceTest` (mock-wired): drives the entry bodies through `triggerZoneChange`, doing the
+  pipeline's relation and type match itself; the remaining choke-point collectors are still called where the old one
+  did both. Three of its cases failed before on test bugs (an unstubbed toughness query, a predicate stubbed on the card
+  rather than its effective characteristics, an outdated assertion on Sigil Captain's re-checked condition) and are
+  fixed; the Naban case stubs the additional-trigger count the body now computes.
+- `TriggerPipelineTest`: a "creature you control enters" ability triggers for its own entry and an "another" one doesn't
+  (CR 603.6a); a "one or more tokens" ability triggers once for Raise the Alarm's two tokens (CR 603.2c).
+- `ValleyMightcallerTest`, `IchorplateGolemTest`, `HonoredDreyleaderTest` put a permanent on the battlefield and then
+  called an old entry collector directly; they call the new `GameTestHarness.announceEntry`, which emits the entry
+  event and matches it as the engine does.
+
+**Test runs.**
+
+- Card, permanent-change family: the converted cards and every card that morphs, disguises, manifests, cloaks,
+  phases or transforms (1,243 classes): 3 failures at first (two replacements the script missed), then none.
+- Card, both families: the converted cards, every card test that constructs one, and the selection above (2,914
+  classes, 24,947 tests). The first runs failed in 36 classes, from the causes this section describes (entries
+  matched at batch close, "enters from a graveyard" looking back, the token-creation trigger, the slot-style dispatch
+  of "enters transformed", tests calling the old collectors) plus the part 1 regression; the final run had no failure.
+  An earlier run also showed ~100 Spring start-up errors caused by a second Gradle build rebuilding a card jar under
+  the running tests, not by the change.
+- Application: the pipeline, rules-event, trigger-model, copy and freeze tests, `EnterTriggerCollectorServiceTest`, and
+  every test of a changed service (`EtbTriggerServiceTest`, `BattlefieldPlacementServiceTest`, `PermanentRemovalServiceTest`,
+  `StepTriggerServiceTest`, `TurnCleanupServiceTest`, `GameLifecycleEventSequenceTest`, `CombatDecisionRetryEventTest`,
+  …; 1,400 tests). The failures are the same tests that fail at HEAD (checked in a HEAD worktree): mock wiring in the
+  mock-wired classes and the known ones in the two architecture tests.
+- AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 11.
+- The full suite was not run here.
 
 ## Prompt
 

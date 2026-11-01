@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class HonoredDreyleader extends Card {
                 EachPermanentScope.ALL_PLAYERS));
 
         // Whenever another Squirrel or Food you control enters, put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 squirrelOrFood,

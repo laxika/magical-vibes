@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -12,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
@@ -28,20 +26,14 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.ManaChoiceNarrowingService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
@@ -50,8 +42,6 @@ import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -60,10 +50,8 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -97,12 +85,10 @@ public class GameService {
     private final CardRevealService cardRevealService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
-    private final ConditionEvaluationService conditionEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final TriggerCollectionService triggerCollectionService;
     private final CastingCostService castingCostService;
     private final PotentialManaService potentialManaService;
-    private final GraveyardTargetingService graveyardTargetingService;
     private final TurnFaceUpCopyService turnFaceUpCopyService;
 
     @Autowired
@@ -115,12 +101,10 @@ public class GameService {
                        ManaChoiceNarrowingService manaChoiceNarrowingService,
                        CardRevealService cardRevealService, PredicateEvaluationService predicateEvaluationService,
                        AmountEvaluationService amountEvaluationService,
-                       ConditionEvaluationService conditionEvaluationService,
                        PermanentCounterSupport permanentCounterSupport,
                        TriggerCollectionService triggerCollectionService,
                        CastingCostService castingCostService,
                        PotentialManaService potentialManaService,
-                       @Lazy GraveyardTargetingService graveyardTargetingService,
                        TurnFaceUpCopyService turnFaceUpCopyService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
@@ -137,12 +121,10 @@ public class GameService {
         this.cardRevealService = cardRevealService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.amountEvaluationService = amountEvaluationService;
-        this.conditionEvaluationService = conditionEvaluationService;
         this.permanentCounterSupport = permanentCounterSupport;
         this.triggerCollectionService = triggerCollectionService;
         this.castingCostService = castingCostService;
         this.potentialManaService = potentialManaService;
-        this.graveyardTargetingService = graveyardTargetingService;
         this.turnFaceUpCopyService = turnFaceUpCopyService;
     }
 
@@ -157,7 +139,7 @@ public class GameService {
         this(gameQueryService, gameLogService, combatService, turnProgressionService,
                 interactionHandlerRegistry, spellCastingService, stackResolutionService,
                 abilityActivationService, mulliganService, gameOutcomeService, mutationCoordinator,
-                manaChoiceNarrowingService, null, null, null, null, null, null, null, null, null, null);
+                manaChoiceNarrowingService, null, null, null, null, null, null, null, null);
     }
 
     private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
@@ -1887,7 +1869,7 @@ public class GameService {
         gameData.playersWhoTurnedPermanentsFaceUpThisTurn.add(controllerId);
         gameData.permanentsTurnedFaceUpThisTurn.add(permanent.getId());
         List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
-                .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                .getStaticEffects().stream()
                 .filter(TurnFaceUpReplacementEffect.class::isInstance)
                 .map(TurnFaceUpReplacementEffect.class::cast)
                 .toList();
@@ -1906,129 +1888,8 @@ public class GameService {
         }
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is turned face up."));
 
-        if (triggerCollectionService != null) {
-            triggerCollectionService.checkSelfOrAnyPermanentTurnsFaceUpTriggers(
-                    gameData, controllerId, permanent);
-            triggerCollectionService.checkSelfOrAllyPermanentTurnsFaceUpTriggers(
-                    gameData, controllerId, permanent);
-            triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(
-                    gameData, controllerId, permanent);
-            triggerCollectionService.checkGraveyardAllyPermanentTurnsFaceUpTriggers(
-                    gameData, controllerId, permanent);
-        }
-
-        List<CardEffect> effects = new java.util.ArrayList<>(
-                permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP));
-        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
-        List<CardEffect> grantedEffects = new java.util.ArrayList<>(
-                permanent.getPersistentTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
-        effects.addAll(grantedEffects);
-        if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
-            effects.clear();
-            grantedEffects.clear();
-        }
-        effects = effects.stream()
-                .filter(effect -> !(effect instanceof com.github.laxika.magicalvibes.model.effect.ReplacementEffect))
-                .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
-                .toList();
-        List<CardEffect> triggeringEffects = effects;
-        grantedEffects.removeIf(effect -> !triggeringEffects.contains(effect));
-        if (!effects.isEmpty()) {
-            int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                    gameData, controllerId, permanent, false,
-                    new TriggerContext.PermanentTurnsFaceUp(permanent, controllerId));
-            if (effects.size() == 1 && effects.getFirst() instanceof ChooseOneEffect modal) {
-                for (int copy = 0; copy < triggerCopies; copy++) {
-                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            permanent.getCard(), controllerId, modal, permanent.getId()));
-                }
-                if (autoPass) {
-                    turnProgressionService.resolveAutoPass(gameData);
-                }
-                return;
-            }
-            BattlefieldAndGraveyardCardChoosingEffect mixedZoneChoice = effects.stream()
-                    .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
-                    .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
-                    .findFirst().orElse(null);
-            if (mixedZoneChoice != null && graveyardTargetingService != null) {
-                graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(
-                        gameData, controllerId, permanent.getCard(), effects, permanent.getId(),
-                        mixedZoneChoice, xValue != null ? xValue : 0);
-                if (autoPass) {
-                    turnProgressionService.resolveAutoPass(gameData);
-                }
-                return;
-            }
-            boolean targetsSpell = effects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
-            boolean targetsGraveyard = effects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-            boolean targetsPlayer = effects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            boolean targetsPermanent = effects.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-            if (targetsGraveyard) {
-                int minimumGraveyardTargets = effects.stream()
-                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                        .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
-                for (int copy = 0; copy < triggerCopies; copy++) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            permanent.getCard(), controllerId, effects, null,
-                            minimumGraveyardTargets, xValue != null ? xValue : 0));
-                }
-                triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-                if (autoPass) {
-                    turnProgressionService.resolveAutoPass(gameData);
-                }
-                return;
-            } else if (targetsSpell) {
-                StackEntryPredicate spellFilter = null;
-                boolean includeAbilities = false;
-                if (permanent.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
-                    spellFilter = filter.predicate();
-                    includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
-                }
-                for (int copy = 0; copy < triggerCopies; copy++) {
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                            permanent.getCard(), controllerId, effects, spellFilter, includeAbilities,
-                            permanent.getId()));
-                }
-            } else if (targetsPlayer || targetsPermanent
-                    || effects.stream().anyMatch(permanent.getCard()::hasEffectTargetIndex)) {
-                boolean multiTarget = permanent.getCard().getTargetGroups().size() > 1
-                        || permanent.getCard().getTargetGroups().stream()
-                        .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
-                                || group.getDynamicMinTargets() != null);
-                if (multiTarget) {
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                permanent.getCard(), controllerId, effects, permanent.getId(), List.of(), 0, 0));
-                    }
-                } else {
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                                permanent.getCard(), controllerId, effects,
-                                !targetsPermanent, permanent.getCard().getTargetFilter(), 0, permanent.getId()));
-                    }
-                }
-            } else {
-                List<List<CardEffect>> abilities = new java.util.ArrayList<>();
-                List<CardEffect> ownEffects = new java.util.ArrayList<>(effects);
-                grantedEffects.forEach(ownEffects::remove);
-                if (!ownEffects.isEmpty()) {
-                    abilities.add(ownEffects);
-                }
-                grantedEffects.forEach(granted -> abilities.add(List.of(granted)));
-                for (List<CardEffect> ability : abilities) {
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
-                                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                                permanent.getCard(), controllerId, permanent.getCard().getName() + "'s ability",
-                                ability, xValue != null ? xValue : 0, permanent.getId()));
-                    }
-                }
-            }
+        if (turnFaceUpCopyService != null) {
+            turnFaceUpCopyService.turnedFaceUp(gameData, permanent, controllerId, xValue != null ? xValue : 0);
         }
         if (autoPass) {
             turnProgressionService.resolveAutoPass(gameData);
@@ -2042,16 +1903,6 @@ public class GameService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TurnFaceUpXValueChoice(
                 player.getId(), permanent.getId(), morphCost, maxX, prompt,
                 permanent.getCard().getName()));
-    }
-
-    private boolean turnedFaceUpTriggerConditionIsMet(GameData gameData, Permanent source, UUID controllerId,
-                                                      CardEffect effect) {
-        if (!(effect instanceof ConditionalEffect conditional) || !conditional.interveningIf()
-                || conditionEvaluationService == null) {
-            return true;
-        }
-        return conditionEvaluationService.isMet(gameData, conditional.condition(),
-                ConditionContext.forPermanent(source, controllerId));
     }
     private String morphRevealLabel(RevealCardsFromHandCastingCost cost) {
         return cost.label() != null ? cost.label() + " card" : "a card";

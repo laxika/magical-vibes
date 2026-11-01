@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -45,8 +44,8 @@ public class FaceUpTriggerCollectorService {
         this.gameQueryService = gameQueryService;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
-            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class,
+            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
     private boolean handleTurnedCreatureDealsPowerDamageToEachOpponent(TriggerMatchContext match,
                                                                          DealDamageToPlayersEffect effect,
                                                                          TriggerContext ctx) {
@@ -86,9 +85,9 @@ public class FaceUpTriggerCollectorService {
         return characteristics;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP)
     private boolean handleCreatureTurnsFaceUp(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentTurnsFaceUp faceUp = (TriggerContext.PermanentTurnsFaceUp) ctx;
         Card sourceCard = match.permanent().getCard();

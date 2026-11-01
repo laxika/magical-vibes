@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -30,9 +32,9 @@ public class NaturesWrath extends Card {
         // Whenever a player puts an Island or blue permanent onto the battlefield, that player
         // sacrifices an Island or blue permanent of their choice. Same for Swamp/black permanents.
         // A basic Island is colorless (CR 202.2), so both halves of each clause are needed.
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 sacrificeTrigger(CardSubtype.ISLAND, CardColor.BLUE));
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 sacrificeTrigger(CardSubtype.SWAMP, CardColor.BLACK));
     }
 

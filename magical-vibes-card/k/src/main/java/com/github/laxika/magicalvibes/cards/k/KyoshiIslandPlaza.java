@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "184")
 public class KyoshiIslandPlaza extends Card {
@@ -23,7 +25,7 @@ public class KyoshiIslandPlaza extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SearchLibraryEffect(shrinesYouControl, CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SHRINE),
                         new SearchLibraryEffect(CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED)));

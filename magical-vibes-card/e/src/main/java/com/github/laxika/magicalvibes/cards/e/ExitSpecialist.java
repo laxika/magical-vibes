@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,6 +34,6 @@ public class ExitSpecialist extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature"
-        )).addEffect(EffectSlot.ON_TURNED_FACE_UP, ReturnToHandEffect.target());
+        )).addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), ReturnToHandEffect.target());
     }
 }

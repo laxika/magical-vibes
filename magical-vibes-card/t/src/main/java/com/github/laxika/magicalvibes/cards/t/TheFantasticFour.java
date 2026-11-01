@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class TheFantasticFour extends Card {
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect()));
 
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardIsSelfPredicate(),
                         new ChooseModeNotYetChosenThisTurnEffect(options)));

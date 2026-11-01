@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class DawnBlessedPennant extends Card {
 
     public DawnBlessedPennant() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect(CHOOSABLE_TYPES));
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSourceChosenSubtypePredicate(), new GainLifeEffect(1)));
 

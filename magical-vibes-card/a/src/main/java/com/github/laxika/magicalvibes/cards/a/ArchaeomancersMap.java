@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class ArchaeomancersMap extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SearchLibraryEffect(new Fixed(2), basicPlains, LibrarySearchDestination.HAND));
 
-        addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS),
                 new ConditionalEffect(
                         new TargetPlayerControlsMoreLandsThanController(),
                         new MayEffect(

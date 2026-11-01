@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,8 @@ public class BatColony extends Card {
                 new CaveManaSpentToCast(), "Bat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.BAT), Set.of(Keyword.FLYING), Set.of()));
 
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.enters(Triggers.LAND,
+                ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.CAVE),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }

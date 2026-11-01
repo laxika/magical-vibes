@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "118")
 @CardRegistration(set = "FDC", collectorNumber = "172")
@@ -30,7 +32,7 @@ public class SarkhanDragonAscendant extends Card {
                         new MayEffect(
                                 new BeholdEffect(CardSubtype.DRAGON, CreateTokenEffect.ofTreasureToken(1)),
                                 "Behold a Dragon?")));
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 TriggeringCardConditionalEffect.gatingSource(
                         new CardSubtypePredicate(CardSubtype.DRAGON),
                         SequenceEffect.of(

@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.springframework.context.ApplicationContext;
 
@@ -81,6 +82,7 @@ public class GameTestHarness {
     private static GameSetupService staticGameSetupService;
     private static LegendRuleService staticLegendRuleService;
     private static PermanentRemovalService staticPermanentRemovalService;
+    private static RulesEventPipeline staticRulesEventPipeline;
     private static StackResolutionService staticStackResolutionService;
     private static DrawService staticDrawService;
     private static PlayerInputService staticPlayerInputService;
@@ -120,6 +122,7 @@ public class GameTestHarness {
         staticGameSetupService = context.getBean(GameSetupService.class);
         staticLegendRuleService = context.getBean(LegendRuleService.class);
         staticPermanentRemovalService = context.getBean(PermanentRemovalService.class);
+        staticRulesEventPipeline = context.getBean(RulesEventPipeline.class);
         staticStackResolutionService = context.getBean(StackResolutionService.class);
         staticDrawService = context.getBean(DrawService.class);
         staticPlayerInputService = context.getBean(PlayerInputService.class);
@@ -431,6 +434,18 @@ public class GameTestHarness {
      */
     public void inMutationScope(Runnable serviceCall) {
         mutationCoordinator.mutate(gameData, serviceCall);
+    }
+
+    /**
+     * Reports {@code permanent}, already on {@code controllerId}'s battlefield, as having just entered it: emits the
+     * entry event the engine emits as a permanent is put onto the battlefield, and has the trigger pipeline trigger
+     * the "whenever [an object] enters" abilities that see it (CR 603.6a), as the engine does once the permanent's
+     * own enters abilities are processed. For a test that set the permanent up with {@link #addToBattlefieldAndReturn}
+     * and then wants its entry to count. Call it inside a mutation scope.
+     */
+    public void announceEntry(UUID controllerId, Permanent permanent) {
+        gameData.rulesEvents.entered(permanent, gameData.ownerOf(permanent.getOriginalCard()), controllerId);
+        staticRulesEventPipeline.triggerEnteringObservers(gameData, permanent, controllerId);
     }
 
     /**

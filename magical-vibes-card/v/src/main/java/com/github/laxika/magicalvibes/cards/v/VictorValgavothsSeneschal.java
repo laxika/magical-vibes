@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "238")
 public class VictorValgavothsSeneschal extends Card {
@@ -31,7 +33,7 @@ public class VictorValgavothsSeneschal extends Card {
                                 .mandatory(true)
                                 .build())
         );
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, eerie);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie);
         addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
     }
 }

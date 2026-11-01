@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPred
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "82")
 @CardRegistration(set = "WHO", collectorNumber = "382")
@@ -25,7 +27,8 @@ public class DonnaNoble extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Donna Noble with another unpaired creature you control?"));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SoulbondPairWithEnteringEffect());
 
         DealDamageToPlayersEffect reflectedDamage = new DealDamageToPlayersEffect(
                 new EventValue(), DamageRecipient.TARGET_PLAYER)

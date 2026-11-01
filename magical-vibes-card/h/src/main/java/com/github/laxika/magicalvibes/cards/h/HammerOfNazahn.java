@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "2098")
 @CardRegistration(set = "2XM", collectorNumber = "260")
@@ -29,7 +31,7 @@ public class HammerOfNazahn extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(),
                                 "Attach Hammer of Nazahn to target creature you control?"))
-                .addEffect(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.EQUIPMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                         new MayEffect(new AttachTriggeringEquipmentToTargetCreatureEffect(),
                                 "Attach that Equipment to target creature you control?"));
 

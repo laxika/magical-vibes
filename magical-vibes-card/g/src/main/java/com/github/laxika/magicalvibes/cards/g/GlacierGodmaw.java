@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,9 +41,8 @@ public class GlacierGodmaw extends Card {
 
     public GlacierGodmaw() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, LANDER);
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                new BoostAllOwnCreaturesEffect(1, 1));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE),
                         GrantScope.ALL_OWN_CREATURES));
     }

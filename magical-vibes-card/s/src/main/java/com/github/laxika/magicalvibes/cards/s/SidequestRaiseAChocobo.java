@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +41,9 @@ public class SidequestRaiseAChocobo extends Card {
     }
 
     private static CreateTokenEffect birdToken() {
-        List<Ability> tokenEffects = List.of(LegacySlots.triggered(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new BoostSelfEffect(1, 0)));
+        List<Ability> tokenEffects = List.of(new TriggeredAbility(Triggers.enters(Triggers.LAND,
+                ObjectRelation.YOU_CONTROL),
+                new BoostSelfEffect(1, 0)));
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Bird", 2, 2,
                 CardColor.GREEN, null, List.of(CardSubtype.BIRD), Set.of(), Set.of(),

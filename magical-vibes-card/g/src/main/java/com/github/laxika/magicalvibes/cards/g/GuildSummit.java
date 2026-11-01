@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsThenD
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GRN", collectorNumber = "41")
 @CardRegistration(set = "PIO", collectorNumber = "56")
@@ -22,7 +24,7 @@ public class GuildSummit extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.GATE)));
 
         // Whenever a Gate you control enters, draw a card.
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.GATE),
                         new DrawCardEffect()));
     }

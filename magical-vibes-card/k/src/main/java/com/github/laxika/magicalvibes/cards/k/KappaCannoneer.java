@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "108")
 @CardRegistration(set = "NEC", collectorNumber = "14")
@@ -26,7 +28,7 @@ public class KappaCannoneer extends Card {
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GrantStaticEffectToSourceUntilEndOfTurnEffect(new CantBeBlockedEffect()));
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantStaticEffectToSourceUntilEndOfTurnEffect(new CantBeBlockedEffect())));
     }

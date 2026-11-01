@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhasesAfterMainEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByAttackCountEffect;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "150")
 @CardRegistration(set = "EOC", collectorNumber = "89")
@@ -18,7 +19,7 @@ public class MoraugFuryOfAkoum extends Card {
 
     public MoraugFuryOfAkoum() {
         addStaticEffect(new BoostByAttackCountEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new ConditionalEffect(new ControllerMainPhase(),
                         new AdditionalCombatPhasesAfterMainEffect(1,
                                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED,

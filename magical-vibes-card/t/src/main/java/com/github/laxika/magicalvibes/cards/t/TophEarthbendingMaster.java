@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLE", collectorNumber = "145")
 @CardRegistration(set = "TLE", collectorNumber = "209")
 public class TophEarthbendingMaster extends Card {
 
     public TophEarthbendingMaster() {
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new ExperienceCountersEffect(1));
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ExperienceCountersEffect(1));
 
         target(TargetFilters.landYouControl())
                 .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,

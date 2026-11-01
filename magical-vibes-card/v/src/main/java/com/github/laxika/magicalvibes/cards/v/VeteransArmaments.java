@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEnd
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOR", collectorNumber = "146")
 public class VeteransArmaments extends Card {
@@ -29,7 +31,7 @@ public class VeteransArmaments extends Card {
                 new BoostEquippedCreatureUntilEndOfTurnEffect(attackingCreatures, attackingCreatures));
 
         // Whenever a Soldier creature enters, you may attach this Equipment to it.
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SOLDIER),
                         new AttachSourceEquipmentToEnteringCreatureEffect()));
 

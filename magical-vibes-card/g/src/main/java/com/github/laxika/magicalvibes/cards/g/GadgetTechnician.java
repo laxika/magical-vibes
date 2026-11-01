@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,6 +22,6 @@ public class GadgetTechnician extends Card {
                 List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, thopter);
         addMorph("{U/R}{U/R}");
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, thopter);
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), thopter);
     }
 }

@@ -159,8 +159,7 @@ class HonoredDreyleaderTest extends BaseCardTest {
     }
 
     private void triggerPermanentEntry(Player controller, Permanent enteringPermanent) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAnyPermanentEntersTriggers(gd, controller.getId(), enteringPermanent.getCard()));
+        harness.inMutationScope(() -> harness.announceEntry(controller.getId(), enteringPermanent));
         resolveAllTriggers();
     }
 }

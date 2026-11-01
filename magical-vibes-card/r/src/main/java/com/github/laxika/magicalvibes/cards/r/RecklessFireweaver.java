@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KLD", collectorNumber = "126")
 @CardRegistration(set = "SLD", collectorNumber = "1526")
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class RecklessFireweaver extends Card {
 
     public RecklessFireweaver() {
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }
 }

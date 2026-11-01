@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -57,7 +59,9 @@ public class ChocoboCamp extends Card {
                 "{T}: Add {G}. When you next cast a Bird creature spell this turn, it enters with an additional +1/+1 counter on it."
         ));
 
-        List<Ability> birdTokenEffects = List.of(LegacySlots.triggered(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new BoostSelfEffect(1, 0)));
+        List<Ability> birdTokenEffects = List.of(new TriggeredAbility(Triggers.enters(Triggers.LAND,
+                ObjectRelation.YOU_CONTROL),
+                new BoostSelfEffect(1, 0)));
         CreateTokenEffect birdToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Bird", 2, 2,
                 CardColor.GREEN, null, List.of(CardSubtype.BIRD), Set.of(), Set.of(),

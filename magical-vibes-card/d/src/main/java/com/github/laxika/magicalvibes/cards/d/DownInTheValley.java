@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,8 +36,8 @@ public class DownInTheValley extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantEffectToTargetEffect(
-                EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ELF_TOKEN, EffectDuration.PERMANENT, false,
-                GrantScope.SELF));
+                new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ELF_TOKEN),
+                EffectDuration.PERMANENT, false, GrantScope.SELF));
         addBuffChapter(EffectSlot.SAGA_CHAPTER_III);
         addBuffChapter(EffectSlot.SAGA_CHAPTER_IV);
     }

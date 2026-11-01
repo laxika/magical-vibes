@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MID", collectorNumber = "7")
 @CardRegistration(set = "DBL", collectorNumber = "7")
@@ -16,7 +18,7 @@ public class BrutalCathar extends Card {
 
         target(TargetFilters.creatureAnOpponentControls());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect());
-        addEffect(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE,
+        addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS),
                 new ExileTargetPermanentUntilSourceLeavesEffect());
 
     }

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class SanguineSavior extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be another creature you control"
-        )).addEffect(EffectSlot.ON_TURNED_FACE_UP,
+        )).addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
     }
 }

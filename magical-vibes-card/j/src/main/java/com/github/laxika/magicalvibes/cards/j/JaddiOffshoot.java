@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "176")
 @CardRegistration(set = "IMA", collectorNumber = "171")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class JaddiOffshoot extends Card {
 
     public JaddiOffshoot() {
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new GainLifeEffect(1));
     }
 }

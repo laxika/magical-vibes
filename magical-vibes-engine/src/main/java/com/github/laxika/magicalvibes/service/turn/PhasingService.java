@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
+import com.github.laxika.magicalvibes.model.rules.PermanentChange;
+import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreparedSupport;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -53,7 +54,6 @@ public class PhasingService {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final PreparedSupport preparedSupport;
 
     /**
@@ -323,7 +323,8 @@ public class PhasingService {
             }
         }
         preparedSupport.recreatePreparedCopyOnPhaseIn(gameData, permanent, controllerId);
-        triggerCollectionService.checkPhasesInTriggers(gameData, permanent, controllerId);
+        gameData.rulesEvents.emit(new PermanentChangeEvent(PermanentChange.PHASED_IN, new Permanent(permanent),
+                controllerId));
     }
 
     private UUID phaseInController(GameData gameData, Permanent permanent, UUID phasedOutUnder) {
@@ -341,29 +342,35 @@ public class PhasingService {
      * from combat).
      */
     private void movePhasedOut(GameData gameData, Set<Permanent> phasingOut) {
-        if (!phasingOut.isEmpty()) {
-            triggerCollectionService.checkOtherPermanentPhasesOutTriggers(gameData, List.copyOf(phasingOut));
+        // One phasing event (CR 603.2c); its abilities look back to just before it (CR 603.10b).
+        gameData.rulesEvents.beginBatch();
+        try {
+            phasingOut.forEach(permanent -> movePhasedOut(gameData, permanent));
+        } finally {
+            gameData.rulesEvents.endBatch();
         }
-        phasingOut.forEach(permanent -> {
-            UUID controllerId = controllerOf(gameData, permanent);
-            if (controllerId == null) {
-                return;
-            }
-            triggerCollectionService.checkPhasesOutTriggers(gameData, permanent, controllerId);
-            if (gameData.currentStep != null && gameData.currentStep.isCombatPhase()) {
-                permanent.rollOverCombatAttackRecord();
-            }
-            permanent.clearCombatState();
-            permanent.clearUntilEndOfCombatAnimation();
-            preparedSupport.releasePreparedCopyOnPhaseOut(gameData, permanent);
-            gameData.playerBattlefields.get(controllerId).remove(permanent);
-            phasedOutList(gameData, controllerId).add(permanent);
-            // CR 702.26f: "for as long as" durations tracking this permanent end when it phases out.
-            UUID phasedOutId = permanent.getId();
-            gameData.forEachPermanent((ownerId, other) -> {
-                other.getUntapPreventedWhileSourceOnBattlefieldIds().remove(phasedOutId);
-                other.getUntapPreventedByPermanentIds().remove(phasedOutId);
-            });
+    }
+
+    private void movePhasedOut(GameData gameData, Permanent permanent) {
+        UUID controllerId = controllerOf(gameData, permanent);
+        if (controllerId == null) {
+            return;
+        }
+        gameData.rulesEvents.emit(new PermanentChangeEvent(PermanentChange.PHASED_OUT, new Permanent(permanent),
+                controllerId));
+        if (gameData.currentStep != null && gameData.currentStep.isCombatPhase()) {
+            permanent.rollOverCombatAttackRecord();
+        }
+        permanent.clearCombatState();
+        permanent.clearUntilEndOfCombatAnimation();
+        preparedSupport.releasePreparedCopyOnPhaseOut(gameData, permanent);
+        gameData.playerBattlefields.get(controllerId).remove(permanent);
+        phasedOutList(gameData, controllerId).add(permanent);
+        // CR 702.26f: "for as long as" durations tracking this permanent end when it phases out.
+        UUID phasedOutId = permanent.getId();
+        gameData.forEachPermanent((ownerId, other) -> {
+            other.getUntapPreventedWhileSourceOnBattlefieldIds().remove(phasedOutId);
+            other.getUntapPreventedByPermanentIds().remove(phasedOutId);
         });
     }
 

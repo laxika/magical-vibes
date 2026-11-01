@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardsInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,8 +27,8 @@ import java.util.List;
 public class AdvancedFloralInvocations extends Card {
 
     public AdvancedFloralInvocations() {
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                new MillEffect(2, MillRecipient.CONTROLLER), TriggerMode.INDEPENDENT);
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                new MillEffect(2, MillRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -50,9 +51,9 @@ public class AdvancedFloralInvocations extends Card {
                 new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1)), TriggerMode.INDEPENDENT);
+                new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1)));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),

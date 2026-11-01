@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,9 +41,8 @@ public class GladiolusAmicitia extends Card {
         // Whenever a land you control enters, another target creature you control gets +2/+2 and gains trample until end of turn.
         target(new PermanentPredicateTargetFilter(anotherCreatureYouControl,
                 "Target must be another creature you control"))
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                        new BoostTargetCreatureEffect(2, 2, anotherCreatureYouControl))
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                        new BoostTargetCreatureEffect(2, 2, anotherCreatureYouControl),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, anotherCreatureYouControl));
     }
 }

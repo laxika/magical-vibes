@@ -2,7 +2,7 @@
 
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` uses `TriggerMode.PER_COUNTER` for abilities that trigger for each individual counter, such as Bloodcrazed Hoplite. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. The default mode still fires once per placement event.
 
-`ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` uses `TriggerMode.PER_TOKEN` for abilities that trigger for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
+`Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` uses `TriggerMode.PER_TOKEN` for abilities that trigger for each token entering, such as Junk Winder's "whenever a token you control enters". The token-enter collector queues one dispatch per entering token, each seeing only that token. The default mode still fires once per token-creation event.
 
 `MultiTargetConstraint.ONE_PER_OPPONENT` requires one legal permanent target controlled by every opponent, even when an opponent has no legal targets. Spells using it cannot be cast without satisfying every opponent's target requirement. `ONE_PER_CONTROLLER_IF_ABLE` retains its optional omission for opponents without legal targets. `ONE_PER_OPPONENT_IF_ABLE` is the same optional omission applied to opponents only, with the controller never required (Sylvan Primordial, "for each opponent").
 
@@ -107,7 +107,7 @@ cast path type-checks the target automatically; an effect that targets a permane
 
 Legend: ✅ = supported, ❌ = not supported, — = no shared Options entry.
 
-`ON_ANY_PERMANENT_ENTERS_BATTLEFIELD` effects with a permanent target use `EntersTriggerTarget` and choose the target as the trigger is put on the stack. The entering permanent is preserved as the first exchange participant and as `FilterContext.sourcePermanentSnapshot`; its controller is the player who chooses the target, even when that player differs from the source permanent's controller.
+`Triggers.enters(null, ObjectRelation.ANY)` effects with a permanent target use `EntersTriggerTarget` and choose the target as the trigger is put on the stack. The entering permanent is preserved as the first exchange participant and as `FilterContext.sourcePermanentSnapshot`; its controller is the player who chooses the target, even when that player differs from the source permanent's controller.
 
 ---
 
@@ -129,17 +129,17 @@ combat damage step is processed.
 | `Triggers.creatureDies(EQUIPPED)` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
 | `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
 | `ON_ENCHANTED_PLAYER_DEALT_DAMAGE` | `TriggerCollectionService.checkEnchantedPlayerDealtDamageTriggers` + `DamageTriggerCollectorService.handleEnchantedPlayerDealtDamage` | Damage (non-targeting) |
-| `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
+| `Triggers.transforms(null, ObjectRelation.EQUIPPED)` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_EQUIPMENT_ATTACHED_TO_CREATURE` | `TriggerCollectionService.checkEquipmentAttachedTriggers` (non-targeting; called by `EquipSupport.attachEquipment` and for permanents entering already attached) | Attachment |
-| `ON_ALLY_PERMANENT_TRANSFORMS` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
+| `Triggers.transforms(null, ObjectRelation.YOU_CONTROL)` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) | Death |
 | `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
 | `POSTCOMBAT_MAIN_TRIGGERED` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`; non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
 | `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
 | `Triggers.dies(ObjectRelation.ENCHANTED)` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
-| `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
-| `ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkEnchantedPlayerLandEntersTriggers` scans player-enchanting Curses attached to the entering land's controller | Non-targeting |
+| `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
+| `Triggers.enters(Triggers.LAND, ObjectRelation.ENCHANTED_PLAYER_CONTROLS)` | `TriggerCollectionService.checkEnchantedPlayerLandEntersTriggers` scans player-enchanting Curses attached to the entering land's controller | Non-targeting |
 | `Triggers.nontokenCreatureDies(ENCHANTED_PLAYER_CONTROLS)` | The trigger pipeline matches player-enchanting Curses attached to the dying creature's controller; `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ENCHANTED_PLAYER_NONTOKEN`) | Non-targeting |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ALLY_CREATURES_ATTACK` (targeting variants) | `CombatAttackService.declareAttackers` queues `AttackTriggerTarget`; non-targeting variants keep the direct stack-entry path. The target collector sees the attacking battlefield state, so restrictions such as "target attacking Goblin you control" are enforced | Attack |
@@ -185,8 +185,8 @@ combat damage step is processed.
 | `EXILED_UPKEEP_TRIGGERED` | `StepTriggerService` scans cards in exile during their owners' upkeeps | Non-targeting; the effect should recheck `SourceCardInExile` when resolution depends on the card remaining exiled |
 | `ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE` | `TriggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers` dispatches the slot when the source card loses a time counter in exile; targeted effects use the shared self-trigger target queue | Non-targeting unless an effect declares a player/permanent target; source card is the suspended exiled card; Benalish Commander (`PLC`), Roiling Horror (`PLC`) |
 | `ON_SELF_TIME_COUNTERS_REMOVED` | `TriggerCollectionService.checkLoyaltyCounterRemovalTriggers` dispatches the slot after a permanent's tracked time-counter removals are drained | Non-targeting; source permanent is carried on the triggered stack entry; Regenerations Restored (`WHO`) |
-| `ON_SELF_PHASES_IN` (permanent-target effects) | `TriggerCollectionService.enqueuePhasingTriggers` → `PhasesInTriggerTarget` (queued during the untap-step phasing action when `targetSpec()` includes permanents, e.g. Shimmering Efreet's "target creature phases out"); drained at upkeep start via `StepTriggerService.processNextPhasesInTriggerTarget` (also AutoPass). Honours the card's `PermanentPredicateTargetFilter`. | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
-| `ON_ANY_OTHER_PERMANENT_PHASES_OUT` | `TriggerCollectionService.checkOtherPermanentPhasesOutTriggers` dispatches before the phased-out permanent leaves the battlefield; the watcher that phased out is excluded. | Non-targeting; the phased-out permanent is carried only in `TriggerContext.PermanentPhasedOut` |
+| `Triggers.phasesIn(null, ObjectRelation.THIS)` (permanent-target effects) | `TriggerCollectionService.enqueuePhasingTriggers` → `PhasesInTriggerTarget` (queued during the untap-step phasing action when `targetSpec()` includes permanents, e.g. Shimmering Efreet's "target creature phases out"); drained at upkeep start via `StepTriggerService.processNextPhasesInTriggerTarget` (also AutoPass). Honours the card's `PermanentPredicateTargetFilter`. | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
+| `Triggers.phasesOut(null, ObjectRelation.ANOTHER)` | `TriggerCollectionService.checkOtherPermanentPhasesOutTriggers` dispatches before the phased-out permanent leaves the battlefield; the watcher that phased out is excluded. | Non-targeting; the phased-out permanent is carried only in `TriggerContext.PermanentPhasedOut` |
 | `Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANY)` | `GameData`'s non-token card-exile listener dispatches `TriggerCollectionService.checkAnyCardExiledTriggers` after a card enters exile, regardless of its previous zone. | Non-targeting |
 | `Triggers.exiledFrom(Set.of(Zone.HAND), null, ObjectRelation.YOU_OWN)` | Hand-exile paths dispatch `TriggerCollectionService.checkControllerCardsExiledFromHandTriggers` after one or more cards leave the controller's hand for exile. | Non-targeting |
 | `Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU)` | `PermanentRemovalService` dispatches `TriggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers` after a battlefield permanent is exiled by the resolving controller's spell or ability. | Non-targeting |
@@ -239,13 +239,13 @@ combat damage step is processed.
 | `GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
 | `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `ON_OPPONENT_DRAWS` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
-| `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
-| `ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (targeting effects) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects on `ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` also queue this choice because the entering player's identity is not a default target; other player-targeting enter effects may use their pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — permanents honouring the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`; true "any target" effects are narrowed by evaluating `TargetPredicates.anyTarget()`) |
-| `GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyPermanentEntersTriggers` scans the controller's graveyard for each permanent entering under that controller's control; `TriggeringPermanentConditionalEffect` filters the entering permanent and `MayEffect` is queued as a may-ability. | None (graveyard-resident, non-targeting) |
-| `ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token | Token creation (non-targeting) |
-| `ON_ALLY_TOKEN_ENTERS_BATTLEFIELD` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token. Permanent-targeting effects queue `EntersTriggerTarget` for target choice before the trigger is put on the stack. | Token creation |
-| `ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` → `EntersTriggerTarget` (queued when the resolved effect's `targetSpec()` includes permanents — including a `MayEffect` wrapper, whose spec delegates to the wrapped effect; Oath of the Ancient Wood's "you may put a +1/+1 counter on target creature"). Non-targeting effects still push straight to the stack with `triggeringCardId` set. | Enters (same `Options.ATTACK` target list; honours the card's `PermanentPredicateTargetFilter`) |
-| `GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` scans the entering player's graveyard; a `MayEffect` is queued as a may-ability and other effects are pushed onto the stack. | None (graveyard-resident, non-targeting) |
+| `Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.ANY)` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
+| `Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL)` / `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` / `Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)` / `Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS)` / `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)` / `Triggers.enters(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL)` (targeting effects) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects on `Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)` also queue this choice because the entering player's identity is not a default target; other player-targeting enter effects may use their pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — permanents honouring the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`; true "any target" effects are narrowed by evaluating `TargetPredicates.anyTarget()`) |
+| `Triggers.enters(null, ObjectRelation.ANY)` | `TriggerCollectionService.checkAllyPermanentEntersTriggers` scans the controller's graveyard for each permanent entering under that controller's control; `TriggeringPermanentConditionalEffect` filters the entering permanent and `MayEffect` is queued as a may-ability. | None (graveyard-resident, non-targeting) |
+| `Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token | Token creation (non-targeting) |
+| `Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)` | `PermanentControlSupport.applyCreateToken` → `BattlefieldEntryService.checkAllyTokenEntersTriggers` → `TriggerCollectionService.checkAllyTokenEntersTriggers`; ordinary effects fire once per token-creation batch and snapshot the batch count into `eventValue`, while effects branching on ability resolution count fire once per token. Permanent-targeting effects queue `EntersTriggerTarget` for target choice before the trigger is put on the stack. | Token creation |
+| `Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL)` (permanent-targeting effects only) | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` → `EntersTriggerTarget` (queued when the resolved effect's `targetSpec()` includes permanents — including a `MayEffect` wrapper, whose spec delegates to the wrapped effect; Oath of the Ancient Wood's "you may put a +1/+1 counter on target creature"). Non-targeting effects still push straight to the stack with `triggeringCardId` set. | Enters (same `Options.ATTACK` target list; honours the card's `PermanentPredicateTargetFilter`) |
+| `Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.YOU_CONTROL)` | `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` scans the entering player's graveyard; a `MayEffect` is queued as a may-ability and other effects are pushed onto the stack. | None (graveyard-resident, non-targeting) |
 | `ON_AURA_ATTACHED_TO_SELF` (non-targeting only) | `TriggerCollectionService.checkAuraAttachedTriggers` — called after `setAttachedTo` from `StackResolutionService` (Aura spell resolving, incl. reanimation Auras), `AttachSourceAuraToTargetCreatureEffectHandler`, `AttachTargetAuraToTargetCreatureEffectHandler`, and the Aura-move player choices in `PermanentChoiceBattlefieldHandlerService` (Aura Graft, attach-all-Auras, reattach-after-sacrifice). Fires on the newly enchanted permanent for **its** controller, so an opponent's Aura triggers it. Brood Keeper. | — (pushes a non-targeting entry straight to the stack) |
 | `ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT` (non-targeting only) | `TriggerCollectionService.checkAuraAttachedTriggers` — uses the Aura permanent's current controller, the newly enchanted permanent's current controller, effective land type, and mana values at the attachment event. Scans the Aura controller's battlefield for the slot and stores the Aura as `sourcePermanentId` plus the enchanted permanent as `targetId`; Eriette the Beguiler. | — (pushes a non-targeting entry straight to the stack) |
 | `GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER` | `CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers` — fires from the graveyard of every player dealt combat damage this step, directly or on a planeswalker they control. The only targeting graveyard slot: it queues an `AttackTriggerTarget` whose `sourceCard` is the graveyard card (no source permanent), and `CombatDamageService` drains it before the damage step ends so "attacking creature" target filters still see the attackers. Vengeful Pharaoh. | Attack |
@@ -275,7 +275,7 @@ permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the 
 `DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS` (only the
 non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget` pipeline),
 `ON_ENCHANTED_PLAYER_DRAWS`, `ON_OPPONENT_DISCARDS`,
-`ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD`,
+`Triggers.enters(Triggers.LAND, ObjectRelation.ENCHANTED_PLAYER_CONTROLS)`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
 `Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)`, `Triggers.sacrificed(null, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificing player as a non-targeting player reference), `Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_CREWS_VEHICLE`,
@@ -357,19 +357,19 @@ triggered entry so an effect can use that controller even if the permanent leave
 only. The ally slot fires on every permanent with it on the renowned creature's controller's battlefield,
 including that creature itself; wrap in `TriggeringPermanentConditionalEffect` to filter by the renowned
 creature),
-`ON_SELF_PHASES_OUT` / `ON_SELF_PHASES_IN` (Teferi's Imp; fired from `PhasingService` via
+`Triggers.phasesOut(null, ObjectRelation.THIS)` / `Triggers.phasesIn(null, ObjectRelation.THIS)` (Teferi's Imp; fired from `PhasingService` via
 `TriggerCollectionService.checkPhasesOutTriggers` / `checkPhasesInTriggers` — phase-out triggers are collected
 before the permanent leaves the battlefield, since they look back in time (CR 603.10b). Non-targeting
 phase triggers cover the untap-step turn-based action and effect-driven phase-outs. **Targeted**
-`ON_SELF_PHASES_IN` effects — when `targetSpec().admits(Kind.PERMANENT)` — queue a
+`Triggers.phasesIn(null, ObjectRelation.THIS)` effects — when `targetSpec().admits(Kind.PERMANENT)` — queue a
 `PhasesInTriggerTarget` instead and are drained at upkeep start via
 `StepTriggerService.processNextPhasesInTriggerTarget` (Shimmering Efreet's "target creature phases out";
 reuses `TriggerTargetCollector.Options.END_STEP`)),
-`ON_ANY_OTHER_PERMANENT_PHASES_OUT` (The War Doctor; global non-targeting watcher dispatched before
+`Triggers.phasesOut(null, ObjectRelation.ANOTHER)` (The War Doctor; global non-targeting watcher dispatched before
 the phased-out permanent is removed), and `Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANY)` (The War Doctor; global non-targeting
 watcher dispatched after a non-token card enters exile),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
-`ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
+`Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)`, `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)`,
 `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
 `ON_ANY_PLAYER_SHUFFLES_LIBRARY`,
 `ON_OPPONENT_SEARCHES_LIBRARY` (Ob Nixilis, Unshackled; fired by `LibrarySearchTriggerHelper` from
@@ -379,12 +379,12 @@ too. Only a player searching **their own** library counts (`params.targetPlayerI
 prevented by Leonin Arbiter never happens and does not fire. Non-targeting, but the searching player is
 baked in as the trigger's `targetId`, so `TARGET_PLAYER`-scoped effects act on them),
 `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED`, `ENCHANTED_PLAYER_UPKEEP_TRIGGERED`,
-`ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD`,
-`ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` (Trial of Solidarity; "Whenever an enchantment enters under
+`Triggers.enters(Triggers.EQUIPMENT, ObjectRelation.ANOTHER_YOU_CONTROL)`,
+`Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL)` (Trial of Solidarity; "Whenever an enchantment enters under
 your control" — checked in `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` from
 `BattlefieldEntryService.processCreatureETBEffects`, skips the entering permanent itself; gate by subtype
 with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Whenever a Cartouche you control enters"),
-`ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD`,
+`Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS)`,
 `ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE`, `GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER`,
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER`,
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT`,
@@ -476,18 +476,18 @@ counters were placed at once; non-targeting — the Snake creation is a plain `C
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`, `GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
 `Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` (Infesting Radroach; scans each owner's graveyard and
 fires once per nonland card milled by an opponent),
-`GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` (graveyard mirror of `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD`;
+`Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL)` (graveyard mirror of `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)`;
 `TriggeringCardConditionalEffect` subtype-gate + `MayPayManaEffect` pay-to-return — Unconventional Tactics),
-`GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` (graveyard mirror of
-`ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD`; use `TriggeringPermanentConditionalEffect` for a commander or
+`Triggers.enters(null, ObjectRelation.ANY)` (graveyard mirror of
+`Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)`; use `TriggeringPermanentConditionalEffect` for a commander or
 other permanent predicate — Endless Ranks of HYDRA),
 `Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.ANY)` (graveyard watcher for any non-token land card entering any graveyard from any zone; `MayPayManaEffect` pay-to-return — Centaur Vinecrasher),
-`GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD` (graveyard watcher for any creature entering;
+`Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY)` (graveyard watcher for any creature entering;
 `TriggeringCardConditionalEffect` can gate on the entering card's mana value — Dragon Scales),
-`GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD` (scans each graveyard for
+`Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER)` (scans each graveyard for
 creatures that entered from that graveyard or were cast from it; Prized Amalgam),
 `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
-`ON_TRANSFORM_TO_BACK_FACE`, `ON_TRANSFORM_TO_FRONT_FACE`,
+`Triggers.transformsToBackFace(ObjectRelation.THIS)`, `Triggers.transformsToFrontFace(ObjectRelation.THIS)`,
 `ON_CONTROLLER_ACTIVATES_ABILITY` (Ceaseless Searblades; fires on every permanent with this slot on
 the activating player's battlefield, once per activated-ability activation incl. mana abilities;
 wrap in `TriggeringPermanentConditionalEffect` to filter by the permanent whose ability was activated),

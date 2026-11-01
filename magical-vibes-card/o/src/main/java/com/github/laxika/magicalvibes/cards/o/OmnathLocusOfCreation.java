@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,15 +30,15 @@ public class OmnathLocusOfCreation extends Card {
     public OmnathLocusOfCreation() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
 
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ConditionalEffect.unless(
-                new NthAbilityResolutionThisTurn(1), new GainLifeEffect(4)));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ConditionalEffect.unless(
+                new NthAbilityResolutionThisTurn(1), new GainLifeEffect(4)),
+                ConditionalEffect.unless(
                 new NthAbilityResolutionThisTurn(2), SequenceEffect.of(
                         new AwardManaEffect(ManaColor.RED),
                         new AwardManaEffect(ManaColor.GREEN),
                         new AwardManaEffect(ManaColor.WHITE),
-                        new AwardManaEffect(ManaColor.BLUE))));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ConditionalEffect.unless(
+                        new AwardManaEffect(ManaColor.BLUE))),
+                ConditionalEffect.unless(
                 new NthAbilityResolutionThisTurn(3), SequenceEffect.of(
                         new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT),
                         new DealDamageToEachMatchingPermanentEffect(4,

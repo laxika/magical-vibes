@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceDownEffect;
@@ -29,9 +30,9 @@ public class VesuvanShapeshifter extends Card {
         addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(),
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_TURNED_FACE_UP, List.of(turnFaceUpCopy)),
+                        StaticAbility.of(turnFaceUpCopy),
                         LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, List.of(turnFaceDownMay)))));
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, turnFaceUpCopy);
+        addStaticEffect(turnFaceUpCopy);
         addMorph("{1}{U}");
     }
 }

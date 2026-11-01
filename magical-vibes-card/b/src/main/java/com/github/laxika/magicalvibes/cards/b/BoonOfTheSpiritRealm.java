@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "720")
 @CardRegistration(set = "CMM", collectorNumber = "753")
@@ -15,7 +17,7 @@ public class BoonOfTheSpiritRealm extends Card {
     public BoonOfTheSpiritRealm() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCountersOnSelfEffect(CounterType.BLESSING));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new PutCountersOnSelfEffect(CounterType.BLESSING));
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, CounterType.BLESSING));
     }

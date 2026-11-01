@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "158")
 @CardRegistration(set = "MKM", collectorNumber = "351")
@@ -16,7 +18,7 @@ public class CulvertAmbusher extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BLOCK))
-                .addEffect(EffectSlot.ON_TURNED_FACE_UP,
+                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BLOCK));
     }
 }

@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.DyingCreatureAttachmentSnapshot;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -3573,7 +3574,7 @@ public class PermanentRemovalService {
         boolean leaveReturnsAreTriggered = removedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)
                 .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect.class::isInstance);
         if (pendingReturns != null && (leaveReturnsAreTriggered
-                || removedPermanent.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
+                || ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD.effectsOf(removedPermanent.getCard())
                 .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect.class::isInstance))) {
             // Portcullis: each exile created its own delayed "return that card when this leaves the
             // battlefield" ability, so every exiled card returns through its own triggered ability.
@@ -3624,9 +3625,11 @@ public class PermanentRemovalService {
             pendingReturns = List.of();
         }
 
-        boolean returnsThroughLeavesTrigger = java.util.stream.Stream.of(
-                        EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.ON_TURNED_FACE_UP, EffectSlot.ON_SELF_TRAINS)
-                .flatMap(slot -> removedPermanent.getCard().getEffects(slot).stream()).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect
+        boolean returnsThroughLeavesTrigger = java.util.stream.Stream.concat(java.util.stream.Stream.of(
+                        EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.ON_SELF_TRAINS)
+                .flatMap(slot -> removedPermanent.getCard().getEffects(slot).stream()),
+                        removedPermanent.getCard().getTriggerEffects(
+                                Triggers.turnedFaceUp(null, ObjectRelation.THIS)).stream()).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect
                         || (effect instanceof MayEffect may ? may.wrapped() : effect)
                         instanceof ExileTargetPermanentUntilSourceLeavesEffect leaveTriggerExile
                         && leaveTriggerExile.returnsOnSourceLeavesTrigger()

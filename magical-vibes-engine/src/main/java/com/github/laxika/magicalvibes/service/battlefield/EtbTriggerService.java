@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -102,6 +103,7 @@ public class EtbTriggerService {
     private DraftProteanWarEngineSpellbookEffectHandler proteanWarEngineSpellbookDraft;
     private DraftCardFromSpellbookToExileEffectHandler spellbookDraft;
     private FlipCoinOnEnterEffectHandler flipCoinOnEnterEffectHandler;
+    private RulesEventPipeline rulesEventPipeline;
 
     public EtbTriggerService(GameQueryService gameQueryService,
                              GameLogService gameLogService,
@@ -140,6 +142,11 @@ public class EtbTriggerService {
     @Autowired
     void setSpellbookDraft(@Lazy DraftCardFromSpellbookToExileEffectHandler draft) {
         this.spellbookDraft = draft;
+    }
+
+    @Autowired
+    void setRulesEventPipeline(@Lazy RulesEventPipeline rulesEventPipeline) {
+        this.rulesEventPipeline = rulesEventPipeline;
     }
 
     @Autowired
@@ -727,37 +734,30 @@ public class EtbTriggerService {
         }
     }
 
+    /**
+     * What the entering permanent triggers: the card abilities that see it enter, matched by the trigger pipeline,
+     * then evolve, watchers, boons, emblems, abilities a spell registered until end of turn, face-up planes and
+     * exiled voyages.
+     */
     private void collectEntersTriggers(GameData gameData, UUID controllerId, Card card,
                                        int extraEtbTriggers, boolean faceDown) {
+        Permanent entering = findEnteringPermanent(gameData, card);
+        if (entering != null && rulesEventPipeline != null) {
+            rulesEventPipeline.triggerEnteringObservers(gameData, entering, controllerId);
+        }
         triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAllyPermanentEntersTransformedTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
-        triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
         if (!faceDown || enteringPermanent != null && gameQueryService.isArtifact(gameData, enteringPermanent)) {
             triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
-            triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
-        }
-        if (!faceDown) {
-            triggerCollectionService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
-            triggerCollectionService.checkAllyEnchantmentEntersTriggers(gameData, controllerId, card);
         }
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
         triggerCollectionService.checkPlanarCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPlanarAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkCreatureEntersThisTurnTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyPermanentEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkPermanentEntersFromExileTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
-        triggerCollectionService.checkGraveyardCreatureEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (!faceDown && (enteringPermanent == null ? card.hasType(CardType.LAND)
                 : gameQueryService.isLand(gameData, enteringPermanent))) {
-            triggerCollectionService.checkEnchantedPlayerLandEntersTriggers(gameData, controllerId, card);
-            triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkPlanarLandEntersTriggers(gameData, controllerId, card);
         }
@@ -1426,7 +1426,11 @@ public class EtbTriggerService {
                 && targetSpec.admits(TargetPredicate.Kind.SPELL);
     }
 
-    private void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
+    /**
+     * Each triggered ability a permanent entering caused is taxed like its own enters ability by abilities such as
+     * Strict Proctor's ("counter it unless its controller pays").
+     */
+    public void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
                 for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {

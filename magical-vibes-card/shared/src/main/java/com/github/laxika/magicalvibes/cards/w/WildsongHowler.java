@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class WildsongHowler extends Card {
 
@@ -12,6 +14,6 @@ public class WildsongHowler extends Card {
         LookAtTopCardsEffect lookAtTopCards = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                 6, new CardTypePredicate(CardType.CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, lookAtTopCards);
-        addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE, lookAtTopCards);
+        addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS), lookAtTopCards);
     }
 }

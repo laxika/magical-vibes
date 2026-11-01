@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileControllingSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class PossibilityTechnician extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileTopCardMayPlayWhileControllingSubtypeEffect(CardSubtype.KAVU));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.KAVU),
                         new ExileTopCardMayPlayWhileControllingSubtypeEffect(CardSubtype.KAVU)));

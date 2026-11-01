@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class RiverKelpie extends Card {
         // Persist is auto-loaded as a keyword from Scryfall; its return mechanic is handled by the engine.
 
         // Whenever this creature or another permanent enters from a graveyard, draw a card.
-        addEffect(EffectSlot.ON_PERMANENT_ENTERS_FROM_GRAVEYARD, new DrawCardEffect());
+        addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.ANY), new DrawCardEffect());
 
         // Whenever a player casts a spell from a graveyard, draw a card.
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(

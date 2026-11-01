@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHand
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,6 +29,6 @@ public class ChocoSeekerOfParadise extends Card {
                         1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
                         new LookAtTopCardsChooseOneToHandThenLandsToBattlefieldTappedEffect(
                                 new EventValue())));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new BoostSelfEffect(1, 0));
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new BoostSelfEffect(1, 0));
     }
 }

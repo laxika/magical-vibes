@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "206")
 @CardRegistration(set = "FDN", collectorNumber = "247")
@@ -18,7 +19,7 @@ public class TatyovaBenthicDruid extends Card {
 
     public TatyovaBenthicDruid() {
         // Landfall — Whenever a land you control enters, you gain 1 life and draw a card.
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new GainLifeEffect(1),
+                new DrawCardEffect());
     }
 }

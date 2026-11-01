@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Flying and phasing are keyword-driven. The phase-in trigger targets a creature to phase out;
@@ -16,6 +17,6 @@ public class ShimmeringEfreet extends Card {
 
     public ShimmeringEfreet() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_SELF_PHASES_IN, new PhaseOutEffect(PhaseOutSubject.TARGET));
+                .addTrigger(Triggers.phasesIn(null, ObjectRelation.THIS), new PhaseOutEffect(PhaseOutSubject.TARGET));
     }
 }

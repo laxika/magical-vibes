@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class ArchfiendsVessel extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD, true),
                         new ExileSelfAndCreateTokenEffect(demon)));
-        addEffect(EffectSlot.ON_SELF_ENTERS_FROM_GRAVEYARD,
+        addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.THIS),
                 new ConditionalEffect(new EnteredFromZone(Zone.GRAVEYARD, true),
                         new ExileSelfAndCreateTokenEffect(demon)));
     }

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOT", collectorNumber = "22")
 @CardRegistration(set = "WOT", collectorNumber = "69")
@@ -20,7 +22,7 @@ public class KindredDiscovery extends Card {
 
     public KindredDiscovery() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSourceChosenSubtypePredicate(), new DrawCardEffect()));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,

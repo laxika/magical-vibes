@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffe
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Vildin-Pack Alpha — back face of Geier Reach Bandit.
@@ -20,7 +22,7 @@ public class VildinPackAlpha extends Card {
 
     public VildinPackAlpha() {
         // Whenever a Werewolf you control enters, you may transform it.
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.WEREWOLF),
                         new TransformEnteringCreatureEffect()));

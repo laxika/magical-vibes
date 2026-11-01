@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JOU", collectorNumber = "66")
 @CardRegistration(set = "SOC", collectorNumber = "212")
@@ -18,7 +20,7 @@ public class DoomwakeGiant extends Card {
         // creatures your opponents control get -1/-1 until end of turn.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostAllCreaturesEffect(-1, -1,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new BoostAllCreaturesEffect(-1, -1,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }

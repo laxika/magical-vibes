@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMT", collectorNumber = "23")
 public class QuintessentialKatana extends Card {
@@ -27,7 +29,7 @@ public class QuintessentialKatana extends Card {
                         new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
                         new GainLifeEffect(2)),
                 GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.NINJA),
                         new AttachSourceEquipmentToEnteringCreatureEffect()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

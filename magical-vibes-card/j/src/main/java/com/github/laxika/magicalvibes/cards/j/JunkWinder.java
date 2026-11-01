@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -13,6 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH2", collectorNumber = "48")
 @CardRegistration(set = "MOC", collectorNumber = "225")
@@ -25,11 +28,11 @@ public class JunkWinder extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsTokenPredicate(), CountScope.CONTROLLER)));
 
-        target(TargetFilters.nonlandPermanentAnOpponentControls()).addEffect(
-                EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
+        target(TargetFilters.nonlandPermanentAnOpponentControls()).addTrigger(
+                new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)),
+                TriggerOptions.DEFAULT,
                 SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)),
-                TriggerMode.PER_TOKEN);
+                        new SkipNextUntapEffect(TapUntapScope.TARGET)));
     }
 }

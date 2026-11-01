@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "223")
 public class MoonGirlAndDevilDinosaur extends Card {
@@ -18,7 +20,7 @@ public class MoonGirlAndDevilDinosaur extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, SequenceEffect.of(
                 new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new OncePerTurnTriggerEffect(new DrawCardEffect()));
     }
 }

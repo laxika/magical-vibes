@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ORI", collectorNumber = "39")
 @CardRegistration(set = "A25", collectorNumber = "38")
@@ -13,6 +14,7 @@ public class ValorInAkros extends Card {
 
     public ValorInAkros() {
         // Whenever a creature you control enters, creatures you control get +1/+1 until end of turn.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new BoostAllOwnCreaturesEffect(1, 1));
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new BoostAllOwnCreaturesEffect(1, 1));
     }
 }

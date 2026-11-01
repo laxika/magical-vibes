@@ -21,7 +21,7 @@ public class UnwillingVessel extends Card {
 
     public UnwillingVessel() {
         PutCountersOnSelfEffect possessionCounter = new PutCountersOnSelfEffect(CounterType.POSSESSION);
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, possessionCounter);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), possessionCounter);
         addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, possessionCounter);
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenWithDyingSourceCounterPTEffect(

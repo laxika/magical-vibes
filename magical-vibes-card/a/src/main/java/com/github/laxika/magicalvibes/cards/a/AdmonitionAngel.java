@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -29,7 +28,7 @@ public class AdmonitionAngel extends Card {
     public AdmonitionAngel() {
         target(new PermanentPredicateTargetFilter(TARGET,
                 "Target must be another nonland permanent"))
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new MayEffect(new ExileTargetPermanentAndTrackWithSourceEffect(),
                                 "Exile target nonland permanent other than Admonition Angel?"));
 

@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONS", collectorNumber = "183")
 @CardRegistration(set = "DMR", collectorNumber = "109")
 public class WretchedAnurid extends Card {
 
     public WretchedAnurid() {
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, new LoseLifeEffect(1));
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER), new LoseLifeEffect(1));
     }
 }

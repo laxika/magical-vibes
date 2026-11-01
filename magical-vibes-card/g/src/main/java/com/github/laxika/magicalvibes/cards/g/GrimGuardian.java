@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JOU", collectorNumber = "73")
 public class GrimGuardian extends Card {
@@ -14,7 +16,7 @@ public class GrimGuardian extends Card {
         // each opponent loses 1 life.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }
 }

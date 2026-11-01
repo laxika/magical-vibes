@@ -24,7 +24,8 @@ public class BreathkeeperSeraph extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Breathkeeper Seraph with another unpaired creature you control?"));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SoulbondPairWithEnteringEffect());
 
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),

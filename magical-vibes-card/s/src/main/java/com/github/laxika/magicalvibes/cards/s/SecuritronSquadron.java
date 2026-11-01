@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreature
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class SecuritronSquadron extends Card {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}")));
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardIsTokenPredicate(),
                         new PutCountersOnEnteringCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false)));
     }

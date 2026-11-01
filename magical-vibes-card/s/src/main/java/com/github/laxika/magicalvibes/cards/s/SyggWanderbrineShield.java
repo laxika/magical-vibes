@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorsUnti
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
 
@@ -20,7 +22,7 @@ public class SyggWanderbrineShield extends Card {
         // Whenever this creature transforms into Sygg, Wanderbrine Shield, target creature you control
         // gains protection from each color until your next turn.
         target(TargetFilters.creatureYouControl());
-        addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE,
+        addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
                 new GrantProtectionFromColorsUntilYourNextTurnEffect(EnumSet.allOf(CardColor.class)));
 
         // At the beginning of your first main phase, you may pay {U}. If you do, transform Sygg.

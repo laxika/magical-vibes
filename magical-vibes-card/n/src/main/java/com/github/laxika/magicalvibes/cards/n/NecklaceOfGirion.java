@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class NecklaceOfGirion extends Card {
                         TargetFilters.creatureYouControl()));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new TriggeringCardConditionalEffect(
                                 new CardSubtypePredicate(CardSubtype.FOREST),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));

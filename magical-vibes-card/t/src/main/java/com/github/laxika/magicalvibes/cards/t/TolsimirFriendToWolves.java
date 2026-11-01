@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class TolsimirFriendToWolves extends Card {
                 List.of(), List.of(), false, false, true, 0, Set.of()));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.WOLF),
                                 SequenceEffect.of(

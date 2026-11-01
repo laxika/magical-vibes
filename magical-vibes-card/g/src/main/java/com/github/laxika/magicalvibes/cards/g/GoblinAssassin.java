@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerFlipsCoinAndTailsSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LGN", collectorNumber = "95")
 public class GoblinAssassin extends Card {
@@ -15,7 +17,7 @@ public class GoblinAssassin extends Card {
         EachPlayerFlipsCoinAndTailsSacrificesCreatureEffect effect =
                 new EachPlayerFlipsCoinAndTailsSacrificesCreatureEffect();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.GOBLIN), effect));
     }

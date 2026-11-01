@@ -11,17 +11,17 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FUT", collectorNumber = "39")
 public class MaelstromDjinn extends Card {
 
     public MaelstromDjinn() {
         addMorph("{2}{U}");
-        addEffect(EffectSlot.ON_TURNED_FACE_UP,
-                new PutCountersOnSelfEffect(CounterType.TIME, 2));
-        addEffect(EffectSlot.ON_TURNED_FACE_UP,
-                new GrantKeywordEffect(Keyword.VANISHING, GrantScope.SELF, GrantDuration.INDEFINITE));
-        addEffect(EffectSlot.ON_TURNED_FACE_UP,
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
+                new PutCountersOnSelfEffect(CounterType.TIME, 2),
+                new GrantKeywordEffect(Keyword.VANISHING, GrantScope.SELF, GrantDuration.INDEFINITE),
                 new GrantEffectToSourceEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)));
     }

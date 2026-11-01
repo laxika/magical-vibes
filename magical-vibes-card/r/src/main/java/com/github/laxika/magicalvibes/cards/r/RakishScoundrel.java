@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "225")
 public class RakishScoundrel extends Card {
@@ -21,7 +23,7 @@ public class RakishScoundrel extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_TURNED_FACE_UP,
+                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.AsTransformsIntoThisEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,6 +33,8 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.rules.PermanentChange;
+import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1004,10 +1006,10 @@ public class AnimationSupport {
                 && "Olag, Ludevic's Hubris".equals(self.getCard().getName());
     }
 
-    private boolean toggleLudevicCopy(GameData gameData, Permanent self, boolean transformed, EffectSlot slot) {
+    private boolean toggleLudevicCopy(GameData gameData, Permanent self, boolean transformed) {
         self.setTransformed(transformed);
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " transforms."));
-        fireTransformTriggers(gameData, self, self.getCard(), slot);
+        transformed(gameData, self, self.getCard(), transformed);
         return true;
     }
 
@@ -1025,7 +1027,7 @@ public class AnimationSupport {
         }
         if (isLudevicCopy(self)) {
             return !dayNightTransition && !self.isTransformed()
-                    && toggleLudevicCopy(gameData, self, true, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
+                    && toggleLudevicCopy(gameData, self, true);
         }
 
         if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
@@ -1053,9 +1055,7 @@ public class AnimationSupport {
         gameLogService.append(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
         log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
 
-        fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
-        fireEquipmentTransformTriggers(gameData, self);
-        fireAllyPermanentTransformTriggers(gameData, self, backFace);
+        transformed(gameData, self, backFace, true);
         return true;
     }
 
@@ -1070,7 +1070,7 @@ public class AnimationSupport {
     private boolean transformToFrontFace(GameData gameData, Permanent self, boolean dayNightTransition) {
         if (isLudevicCopy(self)) {
             return !dayNightTransition && self.isTransformed()
-                    && toggleLudevicCopy(gameData, self, false, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
+                    && toggleLudevicCopy(gameData, self, false);
         }
         if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
                 && isDayNightBound(self)) {
@@ -1090,9 +1090,7 @@ public class AnimationSupport {
         gameLogService.append(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
         log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
 
-        fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
-        fireEquipmentTransformTriggers(gameData, self);
-        fireAllyPermanentTransformTriggers(gameData, self, originalCard);
+        transformed(gameData, self, originalCard, false);
         return true;
     }
 
@@ -1101,75 +1099,47 @@ public class AnimationSupport {
                 || permanent.getCard().getKeywords().contains(Keyword.NIGHTBOUND);
     }
 
-    private void fireAllyPermanentTransformTriggers(GameData gameData, Permanent transformed, Card transformedCard) {
-        UUID controllerId = gameQueryService.findPermanentController(gameData, transformed.getId());
-        triggerCollectionService.checkAllyPermanentTransformsTriggers(
-                gameData, controllerId, transformed, transformedCard);
-    }
-
     /**
-     * Fires {@link EffectSlot#ON_EQUIPPED_CREATURE_TRANSFORMS} abilities on every Equipment attached to
-     * the permanent that just transformed ("When equipped creature transforms, ..." — Neglected Heirloom).
+     * After {@code self} transformed into {@code face}: the face's "as this transforms into" abilities apply while it
+     * transforms, without using the stack, and the transformation is a rules event the trigger pipeline matches
+     * ("when this transforms into", "when equipped creature transforms", "whenever a permanent you control
+     * transforms").
      */
-    private void fireEquipmentTransformTriggers(GameData gameData, Permanent transformed) {
-        gameData.forEachPermanent((controllerId, equipment) -> {
-            if (!transformed.getId().equals(equipment.getAttachedTo())) {
-                return;
-            }
-            if (!equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
-                return;
-            }
-
-            Card equipmentCard = equipment.getCard();
-            List<CardEffect> effects = equipmentCard.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_TRANSFORMS);
-            if (effects.isEmpty()) {
-                return;
-            }
-
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    equipmentCard,
-                    controllerId,
-                    equipmentCard.getName() + "'s transform ability",
-                    effects,
-                    null,
-                    equipment.getId()
-            );
-            entry.setSourcePermanentSnapshot(new Permanent(equipment));
-            gameData.stack.add(entry);
-            gameLogService.append(gameData, GameLog.cardThen(equipmentCard, "'s transform ability triggers."));
-            log.info("Game {} - {} transform trigger pushed onto stack (equipped creature transformed)",
-                    gameData.id, equipmentCard.getName());
-        });
-    }
-
-    /**
-     * Fires triggered abilities from transform trigger slots after a permanent transforms.
-     */
-    private void fireTransformTriggers(GameData gameData, Permanent self, Card triggerCard, EffectSlot slot) {
-        List<CardEffect> effects = triggerCard.getEffects(slot);
-        if (effects.isEmpty()) {
-            return;
-        }
-
+    private void transformed(GameData gameData, Permanent self, Card face, boolean toBackFace) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, self.getId());
         if (controllerId == null) {
             return;
         }
-
-        for (CardEffect e : effects) {
-            if (e instanceof ApplyLudevicCopyEffect) {
+        for (CardEffect effect : face.getStaticEffects()) {
+            if (!(effect instanceof AsTransformsIntoThisEffect asTransforms)) {
+                continue;
+            }
+            if (asTransforms.effect() instanceof ApplyLudevicCopyEffect) {
                 ludevicCopySupport.resolveAfterTransform(gameData, self);
-                continue;
-            }
-            if (e instanceof CreateEmblemEffect && slot == EffectSlot.ON_TRANSFORM_TO_BACK_FACE) {
-                // "As this creature transforms into X, you get an emblem" (Super Nova) is not a triggered
-                // ability: the emblem exists as the transformation happens, without using the stack.
+            } else if (asTransforms.effect() instanceof CreateEmblemEffect emblem) {
                 createEmblemEffectHandler.resolve(gameData, new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, triggerCard, controllerId,
-                        triggerCard.getName() + "'s transform ability", List.of(e), null, self.getId()), e);
-                continue;
+                        StackEntryType.TRIGGERED_ABILITY, face, controllerId,
+                        face.getName() + "'s transform ability", List.of(emblem), null, self.getId()), emblem);
             }
+        }
+        gameData.rulesEvents.emit(new PermanentChangeEvent(toBackFace ? PermanentChange.TRANSFORMED_TO_BACK
+                : PermanentChange.TRANSFORMED_TO_FRONT, new Permanent(self), controllerId));
+    }
+
+    /**
+     * Puts {@code self}'s "when this transforms into [this face]" ability, of {@code effects}, on the stack, as the
+     * trigger pipeline matched it: a "may" ability without targets waits for its choice; a targeted one chooses its
+     * targets now; otherwise all of it goes on the stack as one ability.
+     *
+     * @return whether it triggered
+     */
+    public boolean putTransformAbilityOnStack(GameData gameData, Permanent self, Card triggerCard,
+                                              List<CardEffect> effects) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, self.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        for (CardEffect e : effects) {
             if (e instanceof MayEffect may
                     && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     && !e.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
@@ -1201,7 +1171,7 @@ public class AnimationSupport {
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard,
                         "'s transform ability triggers - choose target opponent."));
                 log.info("Game {} - {} transform trigger awaiting opponent target", gameData.id, triggerCard.getName());
-                return;
+                return true;
             } else if (e instanceof ReturnCardFromGraveyardEffect returnEffect
                     && returnEffect.targetGraveyard()) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -1211,7 +1181,7 @@ public class AnimationSupport {
                 if (!gameData.interaction.isAwaitingInput()) {
                     triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
                 }
-                return;
+                return true;
             } else if (e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                 TriggerTargetCollector.Result result = triggerTargetCollector.collect(
@@ -1222,7 +1192,7 @@ public class AnimationSupport {
                             "'s transform ability has no valid target."));
                     log.info("Game {} - {} transform trigger skipped (no valid targets)",
                             gameData.id, triggerCard.getName());
-                    return;
+                    return false;
                 }
                 PermanentChoiceContext.TransformTriggerTarget context =
                         new PermanentChoiceContext.TransformTriggerTarget(
@@ -1239,7 +1209,7 @@ public class AnimationSupport {
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard,
                         "'s transform ability triggers - choose a target."));
                 log.info("Game {} - {} transform trigger awaiting target", gameData.id, triggerCard.getName());
-                return;
+                return true;
             } else {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -1252,8 +1222,9 @@ public class AnimationSupport {
                 ));
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());
-                return;
+                return true;
             }
         }
+        return true;
     }
 }

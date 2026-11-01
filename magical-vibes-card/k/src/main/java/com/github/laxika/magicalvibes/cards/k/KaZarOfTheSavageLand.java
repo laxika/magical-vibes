@@ -8,10 +8,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +29,8 @@ public class KaZarOfTheSavageLand extends Card {
                 CardType.CREATURE, 1, "Zabu", 2, 2,
                 CardColor.GREEN, null, List.of(CardSubtype.CAT), Set.of(), Set.of(),
                 false, false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                List.of(new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
                 List.of(), false, false, true, 0, Set.of()));
     }
 }

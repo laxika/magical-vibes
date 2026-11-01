@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEf
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFromGraveyardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "1")
 @CardRegistration(set = "FIC", collectorNumber = "167")
@@ -19,7 +23,8 @@ public class CelesRuneKnight extends Card {
     public CelesRuneKnight() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DiscardUpToThenDrawThatManyEffect(DiscardUpToThenDrawThatManyEffect.ANY_NUMBER, 1));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
+        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE,
                 new EnteringCreatureFromGraveyardConditionalEffect(
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())));

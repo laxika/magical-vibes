@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,8 +22,8 @@ import java.util.List;
 public class NissaResurgentAnimist extends Card {
 
     public NissaResurgentAnimist() {
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new AwardAnyColorManaEffect());
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new AwardAnyColorManaEffect(),
+                ConditionalEffect.unless(
                 new NthAbilityResolutionThisTurn(2),
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
                         new CardAnyOfPredicate(List.of(

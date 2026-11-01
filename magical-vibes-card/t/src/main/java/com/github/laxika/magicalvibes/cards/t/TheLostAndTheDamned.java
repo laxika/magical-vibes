@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringLandNotFromHandConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +20,7 @@ public class TheLostAndTheDamned extends Card {
     public TheLostAndTheDamned() {
         CreateTokenEffect spawn = new CreateTokenEffect(
                 "Spawn", 3, 3, CardColor.RED, List.of(CardSubtype.SPAWN), Set.of(), Set.of());
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new EnteringLandNotFromHandConditionalEffect(spawn));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new PlayFromOutsideHandTriggerEffect(List.of(spawn)));

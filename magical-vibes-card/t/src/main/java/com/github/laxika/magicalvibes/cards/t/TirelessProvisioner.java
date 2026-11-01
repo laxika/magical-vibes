@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,8 @@ public class TirelessProvisioner extends Card {
     public TirelessProvisioner() {
         // Landfall — Whenever a land you control enters, create a Food token or a Treasure token.
         // The Food-or-Treasure choice is not modal, so it is made as the trigger resolves.
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Create a Food token", foodToken()),
                 new ChooseOneEffect.ChooseOneOption("Create a Treasure token",
                         CreateTokenEffect.ofTreasureToken(1))

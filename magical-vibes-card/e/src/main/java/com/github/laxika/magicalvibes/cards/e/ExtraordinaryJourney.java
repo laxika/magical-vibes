@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFromExileCond
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOE", collectorNumber = "48")
 @CardRegistration(set = "WOE", collectorNumber = "331")
@@ -21,8 +23,8 @@ public class ExtraordinaryJourney extends Card {
         // The draw trigger also sees Extraordinary Journey's own entry when it is a creature (Opalescence).
         // The any-other slot skips the source, so the self-or-ally slot covers that entry; the once-each-turn
         // limit keeps the two from both drawing.
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, drawWhenCreatureEntersFromExile());
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, drawWhenCreatureEntersFromExile());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER), drawWhenCreatureEntersFromExile());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL), drawWhenCreatureEntersFromExile());
     }
 
     private static EnteringCreatureFromExileConditionalEffect drawWhenCreatureEntersFromExile() {

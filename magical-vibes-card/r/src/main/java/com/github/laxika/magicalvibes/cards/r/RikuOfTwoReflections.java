@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,8 @@ public class RikuOfTwoReflections extends Card {
 
         // Whenever another nontoken creature you control enters, you may pay {G}{U}. If you do,
         // create a token that's a copy of that creature.
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, new MayPayManaEffect(
+        addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new MayPayManaEffect(
                 "{G}{U}",
                 new CreateTokenCopyOfTargetPermanentEffect(),
                 "Pay {G}{U} to create a token that's a copy of that creature?"

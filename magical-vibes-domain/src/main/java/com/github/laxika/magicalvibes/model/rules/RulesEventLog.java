@@ -286,8 +286,10 @@ public final class RulesEventLog {
             consumeDeparture(cardId, null);
             cardZones.put(cardId, Zone.BATTLEFIELD);
         }
+        // A token enters the battlefield only by being created (CR 701.7a).
+        ZoneChangeCause defaultCause = permanent.getCard().isToken() ? ZoneChangeCause.CREATE : ZoneChangeCause.OTHER;
         emit(new ZoneChangeEvent(card, ownerOr(ownerId, card), from, Zone.BATTLEFIELD,
-                causes.getOrDefault(permanent.getId(), ZoneChangeCause.OTHER),
+                causes.getOrDefault(permanent.getId(), defaultCause),
                 new Permanent(permanent), controllerId).withCauseController(resolvingController.get()));
     }
 

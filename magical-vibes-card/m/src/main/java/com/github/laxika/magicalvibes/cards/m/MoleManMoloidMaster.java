@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class MoleManMoloidMaster extends Card {
     public MoleManMoloidMaster() {
         addStaticEffect(new PlayLandsFromGraveyardEffect());
 
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Moloid", 1, 1,
                 CardColor.GREEN, Set.of(CardColor.GREEN),
                 List.of(CardSubtype.MINION), Set.of(), Set.of(),

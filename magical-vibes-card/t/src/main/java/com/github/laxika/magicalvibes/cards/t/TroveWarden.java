@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -22,7 +21,7 @@ public class TroveWarden extends Card {
                 new CardIsPermanentPredicate(),
                 new CardMaxManaValuePredicate(3)));
 
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(
                         permanentWithManaValueAtMostThree,
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD));

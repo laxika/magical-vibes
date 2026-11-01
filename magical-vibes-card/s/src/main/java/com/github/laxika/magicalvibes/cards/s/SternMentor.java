@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,8 @@ public class SternMentor extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Stern Mentor with another unpaired creature you control?"));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SoulbondPairWithEnteringEffect());
 
         // As long as this creature is paired with another creature, each of those creatures has
         // "{T}: Target player mills two cards."

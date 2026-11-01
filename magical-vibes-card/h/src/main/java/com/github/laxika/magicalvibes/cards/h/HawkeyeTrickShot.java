@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "506")
 public class HawkeyeTrickShot extends Card {
@@ -18,7 +20,7 @@ public class HawkeyeTrickShot extends Card {
         // Whenever Hawkeye or another Hero you control enters, it deals damage equal to the
         // number of Heroes you control to any target.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, heroDamage());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.HERO), heroDamage()));
     }

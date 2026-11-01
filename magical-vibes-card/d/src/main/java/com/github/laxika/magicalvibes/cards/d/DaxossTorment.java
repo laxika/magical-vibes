@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,6 +21,6 @@ public class DaxossTorment extends Card {
         AnimatePermanentsEffect animation = new AnimatePermanentsEffect(
                 5, 5, List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING, Keyword.HASTE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, animation);
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, animation);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), animation);
     }
 }

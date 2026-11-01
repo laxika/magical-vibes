@@ -133,13 +133,13 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RobotDomination.java`
 
 - "Whenever one or more lands enter under your control":
-  - `addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, effect, TriggerMode.ONCE_PER_BATCH)` — lands entering in one simultaneous event share one trigger, listed in `StackEntry.triggeringPermanentIds`
+  - `addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), effect, TriggerMode.ONCE_PER_BATCH)` — lands entering in one simultaneous event share one trigger, listed in `StackEntry.triggeringPermanentIds`
   - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MythweaverPoq.java`
 
 - "Create a X token, a Y token, and a Z token" is one creation event (Esix, token doublers): use `new CreateTokenEffect(X...).withSimultaneousTokens(List.of(Y, Z))`, never separate `CreateTokenEffect`s (Mascot Exhibition, Bestial Menace)
 
 - "Whenever you create one or more tokens" (a token-creation event, not an enter trigger):
-  - `addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, effect, TriggerMode.TOKEN_CREATION)` fires once per creation event and is neither doubled nor suppressed by Elesh Norn, Mother of Machines
+  - `addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)), TriggerOptions.ONE_OR_MORE, effect, TriggerMode.TOKEN_CREATION)` fires once per creation event and is neither doubled nor suppressed by Elesh Norn, Mother of Machines
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/StaffOfTheStoryteller.java`
 
 - Predicate-based targeting:

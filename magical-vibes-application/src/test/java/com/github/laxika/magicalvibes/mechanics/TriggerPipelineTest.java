@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoonlitWake;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
+import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Abilities with a real trigger go through the trigger pipeline: matched against the rules events of their
- * source's own zone changes, or of another object's death, and put on the stack with their options and targets.
+ * source's own zone changes, of another object dying or entering, and put on the stack with their options and
+ * targets.
  */
 class TriggerPipelineTest extends BaseCardTest {
 
@@ -252,6 +254,44 @@ class TriggerPipelineTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    void aCreatureYouControlEntersAbilityTriggersForItsOwnEntryAndAnAnotherOneDoesNot() {
+        Card self = new GrizzlyBears();
+        self.addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL), GAIN);
+        Card other = new GrizzlyBears();
+        other.addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), DRAW);
+        harness.setHand(player1, List.of(self, other));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        // CR 603.6a: the permanent that entered is checked for enters abilities too.
+        assertThat(triggersOf(self)).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(self)).hasSize(1);
+        assertThat(triggersOf(other)).isEmpty();
+    }
+
+    @Test
+    @CardUsed(RaiseTheAlarm.class)
+    void aOneOrMoreTokensAbilityTriggersOnceForTheTokensOneCreationMakes() {
+        Card watcher = new GrizzlyBears();
+        watcher.addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE, GAIN);
+        harness.addToBattlefield(player1, watcher);
+        harness.setHand(player1, List.of(new RaiseTheAlarm()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        // CR 603.2c: the two tokens enter in one event.
+        onlyTriggerOf(watcher);
     }
 
     /** Moves {@code card} straight between two of {@code player}'s zone lists, which report the move. */

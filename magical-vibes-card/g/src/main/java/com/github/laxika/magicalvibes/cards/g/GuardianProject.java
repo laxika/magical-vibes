@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfEnteringCreatureHasUniqueNameEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RNA", collectorNumber = "130")
 @CardRegistration(set = "SLD", collectorNumber = "2172")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardIfEnteringCreatureHas
 public class GuardianProject extends Card {
 
     public GuardianProject() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new DrawCardIfEnteringCreatureHasUniqueNameEffect());
     }
 }

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class NissaVastwoodSeer extends Card {
         // Whenever a land you control enters, if you control seven or more lands, exile Nissa,
         // then return her to the battlefield transformed under her owner's control.
         // The land that triggered this has already entered, so it counts toward the seven.
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
                 new ControlsPermanentCount(7, new PermanentIsLandPredicate()),
                 new ExileSelfAndReturnTransformedEffect()));
     }

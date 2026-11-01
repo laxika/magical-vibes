@@ -71,10 +71,12 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
     /**
      * Whether the game looks back in time for it (CR 603.10a): leaving the battlefield or a graveyard, and a
      * sacrifice. The ability then triggers as its object existed just before the move, so the source's own move
-     * triggers it from the zone it left.
+     * triggers it from the zone it left. An enters ability, "when this enters from a graveyard" included, is checked
+     * after the event instead (CR 603.6a).
      */
     public boolean looksBack() {
-        return from.size() == 1 && (from.contains(Zone.BATTLEFIELD) || from.contains(Zone.GRAVEYARD));
+        return from.size() == 1 && (from.contains(Zone.BATTLEFIELD) || from.contains(Zone.GRAVEYARD))
+                && !entersBattlefield();
     }
 
     /** Whether it watches a permanent leave the battlefield, for any destination or one (CR 603.6c). */

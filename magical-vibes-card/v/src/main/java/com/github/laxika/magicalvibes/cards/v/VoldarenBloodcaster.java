@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.b.BloodbatSummoner;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -43,7 +42,8 @@ public class VoldarenBloodcaster extends Card {
 
         // Whenever you create a Blood token, if you control five or more Blood tokens, transform.
         // Blood tokens are artifacts — gated via TriggeringCardConditionalEffect on ally-artifact ETB.
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new TriggeringCardConditionalEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsTokenPredicate(),
                         new CardSubtypePredicate(CardSubtype.BLOOD)

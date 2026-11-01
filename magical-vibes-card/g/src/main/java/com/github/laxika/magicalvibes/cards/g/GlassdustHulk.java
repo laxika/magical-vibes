@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
 @CardRegistration(set = "ARB", collectorNumber = "7")
@@ -16,7 +17,7 @@ public class GlassdustHulk extends Card {
     public GlassdustHulk() {
         // Whenever another artifact you control enters, this creature gets +1/+1 until end of turn
         // and can't be blocked this turn. Both effects are self-scoped (sourcePermanentId).
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
                 new BoostSelfEffect(1, 1),
                 new MakeCreatureUnblockableEffect(true)));
 

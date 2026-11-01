@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "21")
 @CardRegistration(set = "MSC", collectorNumber = "135")
@@ -18,7 +20,7 @@ public class IngeniousSmith extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(4,
                         new CardTypePredicate(CardType.ARTIFACT)));
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new OncePerTurnTriggerEffect(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }

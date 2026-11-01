@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "72")
 public class TheSpiritOasis extends Card {
@@ -18,7 +20,7 @@ public class TheSpiritOasis extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DrawCardEffect(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SHRINE),
                         new DrawCardEffect(1)));
     }

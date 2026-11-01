@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "72")
 public class ForerunnerOfTheCoalition extends Card {
@@ -21,7 +23,7 @@ public class ForerunnerOfTheCoalition extends Card {
                         LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a Pirate card, reveal it, then shuffle and put that card on top?"));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PIRATE),
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
     }

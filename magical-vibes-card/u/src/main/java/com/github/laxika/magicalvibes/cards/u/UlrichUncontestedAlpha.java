@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class UlrichUncontestedAlpha extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a non-Werewolf creature you don't control"
-        )).addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE, new MayEffect(
+        )).addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS), new MayEffect(
                 new SourceFightsTargetCreatureEffect(),
                 "Have Ulrich fight target creature?"
         ));

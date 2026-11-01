@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreature
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ public class GeralfTheFleshwright extends Card {
                 new PermanentsEnteredBattlefieldThisTurn(
                         new CardSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER),
                 new Fixed(-1));
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ZOMBIE),
                         new PutCountersOnEnteringCreatureEffect(otherZombiesEnteredThisTurn, false)));

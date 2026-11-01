@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +31,8 @@ import java.util.List;
 public class CaretakersTalent extends Card {
 
     public CaretakersTalent() {
-        addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
+        addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE,
                 new OncePerTurnTriggerEffect(new DrawCardEffect()));
 
         addActivatedAbility(new ActivatedAbility(

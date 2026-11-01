@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -22,6 +23,10 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,7 +53,8 @@ public class VivisPersistence extends Card {
                         .build(),
                 "Pay {2} to return this card from your graveyard to your hand?");
 
-        addEffect(EffectSlot.GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(new TriggerCondition(Triggers.enters(null, ObjectRelation.ANY),
+                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCommanderPredicate(true), returnToHand));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,

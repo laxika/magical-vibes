@@ -14,8 +14,12 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.rules.PermanentChange;
+import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,7 +57,10 @@ import java.util.UUID;
  * <p>The other objects that may see a permanent die ({@link #observerCandidates}) are listed as they were just
  * before the event (CR 603.10a): the permanents on the battlefield, those that left in the same event as their
  * last-known copies, and the cards in graveyards and face up in exile that were there before it (the haunting
- * cards among them, CR 702.55c). Abilities their owner perpetually lost are left out everywhere.
+ * cards among them, CR 702.55c). For another kind of move they are listed as they are after it, and a permanent
+ * that entered is listed for its enters abilities (CR 603.6a); cards in command zones are listed too. Abilities their
+ * owner perpetually lost are left out everywhere. {@link #permanentChangeCandidates} lists the abilities that see a
+ * permanent phase, transform or be turned face up.
  */
 @Service
 public class TriggerIndex {
@@ -121,10 +128,29 @@ public class TriggerIndex {
             if (!movedTogether.contains(permanent.getCard().getId())
                     && !movedTogether.contains(permanent.getOriginalCard().getId())) {
                 battlefieldCandidates(gameData, batch, false, permanent, controllerId, into);
+            } else if (enteredCardIds(batch).contains(permanent.getOriginalCard().getId())) {
+                // CR 603.6a: the permanents that entered are checked for enters abilities too, their own entry
+                // included; they are new objects (CR 400.7) that saw no other part of the move.
+                List<TriggerCandidate> own = new ArrayList<>();
+                battlefieldCandidates(gameData, batch, false, permanent, controllerId, own);
+                own.stream().filter(candidate -> candidate.ability().conditions().stream()
+                        .anyMatch(condition -> condition.trigger() instanceof ZoneChangeTrigger trigger
+                                && trigger.entersBattlefield())).forEach(into::add);
             }
         });
         graveyardCandidates(gameData, batch, into);
         exileCandidates(gameData, batch, into);
+        commandZoneCandidates(gameData, into);
+    }
+
+    /** The cards in command zones, under their owners' control, with the abilities that function there. */
+    private void commandZoneCandidates(GameData gameData, List<TriggerCandidate> into) {
+        gameData.playerCommandZones.forEach((ownerId, commandZone) -> {
+            for (Card card : List.copyOf(commandZone)) {
+                addCandidates(ZoneChangeTrigger.class, card, null, ownerId, Zone.COMMAND,
+                        withoutLost(gameData, card.getId(), card.getTriggeredAbilities()), into);
+            }
+        });
     }
 
     /**
@@ -282,12 +308,73 @@ public class TriggerIndex {
     private static void addZoneChangeCandidates(Card sourceCard, Permanent sourcePermanent, UUID controllerId,
                                                 Zone zone, List<TriggeredAbility> abilities,
                                                 List<TriggerCandidate> into) {
+        addCandidates(ZoneChangeTrigger.class, sourceCard, sourcePermanent, controllerId, zone, abilities, into);
+    }
+
+    /** The {@code abilities} with a trigger condition of {@code kind} that functions from {@code zone}. */
+    private static void addCandidates(Class<? extends Trigger> kind, Card sourceCard, Permanent sourcePermanent,
+                                      UUID controllerId, Zone zone, List<TriggeredAbility> abilities,
+                                      List<TriggerCandidate> into) {
         for (TriggeredAbility ability : abilities) {
-            if (ability.conditions().stream().anyMatch(condition -> condition.trigger() instanceof ZoneChangeTrigger
+            if (ability.conditions().stream().anyMatch(condition -> kind.isInstance(condition.trigger())
                     && condition.zones().functionsIn(zone))) {
                 into.add(new TriggerCandidate(sourceCard, sourcePermanent, controllerId, zone, ability));
             }
         }
+    }
+
+    /**
+     * The triggered abilities that may see {@code event}, a permanent phasing, transforming or being turned face up,
+     * with a permanent-change trigger condition: those of the permanents on the battlefield after the event, the
+     * changed one included (CR 603.10), and of the cards in graveyards. A permanent that phased out is treated as
+     * though it doesn't exist (CR 702.26b), so it and the others that phased out with it are no longer on the
+     * battlefield to see it; its own abilities look back in time and trigger as it last existed (CR 603.10b).
+     */
+    public List<TriggerCandidate> permanentChangeCandidates(GameData gameData, PermanentChangeEvent event) {
+        List<TriggerCandidate> candidates = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+            boolean lostAll = permanent.isLosesAllAbilitiesUntilEndOfTurn() || staticBonus.losesAllAbilities()
+                    || staticBonus.losesAllNonManaAbilities();
+            List<TriggeredAbility> abilities = new ArrayList<>();
+            if (!lostAll && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
+                        permanent.getCard().getTriggeredAbilities()));
+            }
+            if (!lostAll) {
+                abilities.addAll(permanent.getPersistentTriggeredAbilities());
+                abilities.addAll(grantedTriggeredAbilitySupport.grantedPermanentChangeAbilities(gameData, permanent));
+            }
+            abilities.addAll(permanent.getTemporaryTriggeredAbilities());
+            addCandidates(PermanentChangeTrigger.class, permanent.getCard(), permanent, controllerId,
+                    Zone.BATTLEFIELD, abilities, candidates);
+        });
+        if (event.change() == PermanentChange.PHASED_OUT) {
+            Permanent lastKnown = event.permanent();
+            List<TriggeredAbility> abilities = new ArrayList<>();
+            if (!lastKnown.isLosesAllAbilitiesUntilEndOfTurn()) {
+                if (!lastKnown.isFaceDown()) {
+                    abilities.addAll(withoutLost(gameData, lastKnown.getCard().getId(),
+                            lastKnown.getCard().getTriggeredAbilities()));
+                }
+                abilities.addAll(lastKnown.getPersistentTriggeredAbilities());
+            }
+            abilities.addAll(lastKnown.getTemporaryTriggeredAbilities());
+            addCandidates(PermanentChangeTrigger.class, lastKnown.getCard(), lastKnown, event.controllerId(),
+                    Zone.BATTLEFIELD, abilities, candidates);
+        }
+        if (!gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+            gameData.playerGraveyards.forEach((ownerId, graveyard) -> {
+                for (Card card : List.copyOf(graveyard)) {
+                    List<TriggeredAbility> abilities = new ArrayList<>(withoutLost(gameData, card.getId(),
+                            card.getTriggeredAbilities()));
+                    triggered(gameData.perpetualAbilities(card.getId()), abilities);
+                    addCandidates(PermanentChangeTrigger.class, card, null, ownerId, Zone.GRAVEYARD, abilities,
+                            candidates);
+                }
+            });
+        }
+        return candidates;
     }
 
     /** The triggered abilities of the object that moved in {@code event}. */

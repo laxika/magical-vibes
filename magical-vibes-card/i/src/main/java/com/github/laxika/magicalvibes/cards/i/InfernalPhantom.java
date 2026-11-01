@@ -14,7 +14,7 @@ public class InfernalPhantom extends Card {
 
     public InfernalPhantom() {
         BoostSelfEffect eerie = new BoostSelfEffect(2, 0);
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, eerie);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie);
         addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
         addTrigger(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(new SourcePower()));
     }

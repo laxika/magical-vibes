@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JOU", collectorNumber = "85")
 public class ThoughtrenderLamia extends Card {
@@ -14,7 +16,7 @@ public class ThoughtrenderLamia extends Card {
         // each opponent discards a card.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
     }
 }

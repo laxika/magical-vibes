@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantingPermanentAwareEffect;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -72,6 +73,17 @@ public class GrantedTriggeredAbilitySupport {
                 gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null),
                 ability -> ability.conditions().stream().anyMatch(condition ->
                         condition.trigger() instanceof ZoneChangeTrigger));
+    }
+
+    /**
+     * The triggered abilities other permanents' static abilities grant {@code permanent} that trigger on it or
+     * another permanent phasing, transforming or being turned face up.
+     */
+    public List<TriggeredAbility> grantedPermanentChangeAbilities(GameData gameData, Permanent permanent) {
+        return grantedTriggeredAbilities(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null),
+                ability -> ability.conditions().stream().anyMatch(condition ->
+                        condition.trigger() instanceof PermanentChangeTrigger));
     }
 
     private List<TriggeredAbility> grantedTriggeredAbilities(GameData gameData, Permanent permanent,

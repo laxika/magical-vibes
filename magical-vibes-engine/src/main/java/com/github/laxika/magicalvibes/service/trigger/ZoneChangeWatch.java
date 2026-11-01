@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +19,8 @@ import java.util.Set;
 
 /**
  * Which of the old zone-change slot collectors puts a triggered ability on the stack, now that the trigger pipeline
- * decides whether it triggers (effect-slot-refactor.md step 12a). Each constant is named after the slot whose
+ * decides whether it triggers (effect-slot-refactor.md step 12a). The family includes a permanent phasing,
+ * transforming and being turned face up, which aren't zone changes (CR 702.26d) but moved with it. Each constant is named after the slot whose
  * collector it stands for and lists the trigger conditions the cards of that slot were converted to: their trigger,
  * the zone the ability functions from and its multiplicity. Its {@link CollectsWatchTrigger} handlers bind the
  * event data the effects need and choose how the ability reaches the stack, as the slot's collector did, until steps
@@ -319,7 +324,158 @@ public enum ZoneChangeWatch {
             TriggerMultiplicity.ONE_OR_MORE)),
     /** "Whenever one or more artifact cards leave your graveyard". */
     ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD(battlefield(
-            Triggers.leavesGraveyard(Triggers.ARTIFACT, ObjectRelation.YOU_OWN), TriggerMultiplicity.ONE_OR_MORE));
+            Triggers.leavesGraveyard(Triggers.ARTIFACT, ObjectRelation.YOU_OWN), TriggerMultiplicity.ONE_OR_MORE)),
+    /** "When this phases out". */
+    ON_SELF_PHASES_OUT(battlefield(Triggers.phasesOut(null, ObjectRelation.THIS))),
+    /** "Whenever one or more other permanents phase out". */
+    ON_ANY_OTHER_PERMANENT_PHASES_OUT(battlefield(Triggers.phasesOut(null, ObjectRelation.ANOTHER),
+            TriggerMultiplicity.ONE_OR_MORE)),
+    /** "When this phases in". */
+    ON_SELF_PHASES_IN(battlefield(Triggers.phasesIn(null, ObjectRelation.THIS))),
+    /** "When this transforms into [its back face]". */
+    ON_TRANSFORM_TO_BACK_FACE(battlefield(Triggers.transformsToBackFace(ObjectRelation.THIS))),
+    /** "When this transforms into [its front face]". */
+    ON_TRANSFORM_TO_FRONT_FACE(battlefield(Triggers.transformsToFrontFace(ObjectRelation.THIS))),
+    /** "When equipped creature transforms". */
+    ON_EQUIPPED_CREATURE_TRANSFORMS(battlefield(Triggers.transforms(null, ObjectRelation.EQUIPPED))),
+    /** "Whenever a permanent you control transforms". */
+    ON_ALLY_PERMANENT_TRANSFORMS(battlefield(Triggers.transforms(null, ObjectRelation.YOU_CONTROL))),
+    /** "When this is turned face up". */
+    ON_TURNED_FACE_UP(battlefield(Triggers.turnedFaceUp(null, ObjectRelation.THIS))),
+    /** "Whenever this creature or another creature you control is turned face up", "a creature you control". */
+    ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP(
+            battlefield(Triggers.turnedFaceUp(Triggers.CREATURE, ObjectRelation.YOU_CONTROL))),
+    /** "Whenever this permanent or another permanent is turned face up", "a permanent". */
+    ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP(battlefield(Triggers.turnedFaceUp(null, ObjectRelation.ANY))),
+    /** "Whenever this permanent or another permanent you control is turned face up", "a permanent you control". */
+    ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP(
+            battlefield(Triggers.turnedFaceUp(null, ObjectRelation.YOU_CONTROL))),
+    /** "Whenever a permanent you control is turned face up", from the graveyard. */
+    GRAVEYARD_ON_ALLY_PERMANENT_TURNS_FACE_UP(
+            in(Zone.GRAVEYARD, Triggers.turnedFaceUp(null, ObjectRelation.YOU_CONTROL))),
+    /** "Whenever another creature you control enters". */
+    ON_ALLY_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
+            ObjectRelation.ANOTHER_YOU_CONTROL))),
+    /** "Whenever one or more other creatures you control enter". */
+    ON_ALLY_CREATURES_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
+            ObjectRelation.ANOTHER_YOU_CONTROL), TriggerMultiplicity.ONE_OR_MORE)),
+    /** "Whenever this creature or another creature you control enters", "a creature you control". */
+    ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
+            ObjectRelation.YOU_CONTROL))),
+    /** "Whenever this creature and/or one or more other creatures you control enter". */
+    ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
+            ObjectRelation.YOU_CONTROL), TriggerMultiplicity.ONE_OR_MORE)),
+    /** "Whenever another nontoken creature you control enters". */
+    ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.NONTOKEN_CREATURE,
+            ObjectRelation.ANOTHER_YOU_CONTROL))),
+    /** "Whenever this creature or another nontoken creature you control enters". */
+    ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.NONTOKEN_CREATURE,
+            ObjectRelation.YOU_CONTROL))),
+    /** "Whenever a nontoken creature you control enters", from the command zone. */
+    COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD(in(Zone.COMMAND,
+            Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_CONTROL))),
+    /** "Whenever another artifact you control enters". */
+    ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.ARTIFACT,
+            ObjectRelation.ANOTHER_YOU_CONTROL))),
+    /** "Whenever this or another artifact you control enters", "an artifact you control". */
+    ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.ARTIFACT,
+            ObjectRelation.YOU_CONTROL))),
+    /** "Whenever another nontoken artifact you control enters". */
+    ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.NONTOKEN_ARTIFACT,
+            ObjectRelation.ANOTHER_YOU_CONTROL))),
+    /** "Whenever this or another nontoken artifact you control enters". */
+    ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.NONTOKEN_ARTIFACT,
+            ObjectRelation.YOU_CONTROL))),
+    /**
+     * "Whenever one or more tokens you control enter", "whenever you create one or more tokens", and "whenever a
+     * token you control enters" for each token.
+     */
+    ON_ALLY_TOKEN_ENTERS_BATTLEFIELD(
+            battlefield(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL), TriggerMultiplicity.ONE_OR_MORE),
+            battlefield(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)),
+            battlefield(Triggers.tokensCreated(null, ObjectRelation.YOU_CONTROL), TriggerMultiplicity.ONE_OR_MORE)),
+    /** "Whenever one or more tokens an opponent controls enter", and "a token" for each token. */
+    ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD(
+            battlefield(Triggers.enters(Triggers.TOKEN, ObjectRelation.OPPONENT_CONTROLS),
+                    TriggerMultiplicity.ONE_OR_MORE),
+            battlefield(Triggers.enters(Triggers.TOKEN, ObjectRelation.OPPONENT_CONTROLS))),
+    /** "Whenever another creature enters". */
+    ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER))),
+    /** "Whenever a creature enters". */
+    ON_ANY_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY))),
+    /** "Whenever a creature enters under enchanted player's control" (a Curse). */
+    ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
+            ObjectRelation.ENCHANTED_PLAYER_CONTROLS))),
+    /** "Whenever a land enters under enchanted player's control" (a Curse). */
+    ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.LAND,
+            ObjectRelation.ENCHANTED_PLAYER_CONTROLS))),
+    /** "Whenever a permanent you control enters transformed". */
+    ON_ALLY_PERMANENT_ENTERS_TRANSFORMED(battlefield(Triggers.enters(Triggers.TRANSFORMED,
+            ObjectRelation.YOU_CONTROL))),
+    /** "Whenever a land an opponent controls enters". */
+    ON_OPPONENT_LAND_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.LAND,
+            ObjectRelation.OPPONENT_CONTROLS))),
+    /**
+     * Landfall: "whenever a land you control enters", and "one or more lands". The collector judges whether a land's
+     * own entry counts.
+     */
+    ON_ALLY_LAND_ENTERS_BATTLEFIELD(
+            battlefield(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)),
+            battlefield(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), TriggerMultiplicity.ONE_OR_MORE)),
+    /** "Whenever another Equipment you control enters". */
+    ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.EQUIPMENT,
+            ObjectRelation.ANOTHER_YOU_CONTROL))),
+    /** Constellation: "whenever another enchantment you control enters". */
+    ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.ENCHANTMENT,
+            ObjectRelation.ANOTHER_YOU_CONTROL))),
+    /** Constellation: "whenever this or another enchantment you control enters". */
+    ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.ENCHANTMENT,
+            ObjectRelation.YOU_CONTROL))),
+    /** "Whenever a creature an opponent controls enters". */
+    ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(Triggers.CREATURE,
+            ObjectRelation.OPPONENT_CONTROLS))),
+    /** "Whenever a creature enters from your graveyard"; the collector checks the graveyard. */
+    ON_CREATURE_ENTERS_FROM_GRAVEYARD(battlefield(Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE,
+            ObjectRelation.ANY))),
+    /** "Whenever this or another permanent enters from a graveyard". */
+    ON_PERMANENT_ENTERS_FROM_GRAVEYARD(battlefield(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.ANY))),
+    /** "Whenever a permanent you control enters from exile". */
+    ON_PERMANENT_ENTERS_FROM_EXILE(battlefield(Triggers.entersFrom(Zone.EXILE, null, ObjectRelation.YOU_CONTROL))),
+    /** "When this enters from a graveyard". */
+    ON_SELF_ENTERS_FROM_GRAVEYARD(battlefield(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.THIS))),
+    /** "Whenever a permanent enters", and "one or more permanents". */
+    ON_ANY_PERMANENT_ENTERS_BATTLEFIELD(
+            battlefield(Triggers.enters(null, ObjectRelation.ANY)),
+            battlefield(Triggers.enters(null, ObjectRelation.ANY), TriggerMultiplicity.ONE_OR_MORE)),
+    /** "Whenever another permanent you control enters". */
+    ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD(battlefield(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL))),
+    /** Landfall from the graveyard. */
+    GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD(in(Zone.GRAVEYARD,
+            Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL))),
+    /** "Whenever a creature you control enters", from the graveyard. */
+    GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD(in(Zone.GRAVEYARD,
+            Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL))),
+    /**
+     * "Whenever a permanent you control enters", and "whenever your commander enters", from the graveyard; the
+     * collector checks who controls it.
+     */
+    GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD(in(Zone.GRAVEYARD, Triggers.enters(null, ObjectRelation.ANY))),
+    /** "Whenever a creature enters", from the graveyard. */
+    GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD(in(Zone.GRAVEYARD,
+            Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY))),
+    /**
+     * "Whenever another creature enters from your graveyard or is cast from your graveyard", from the graveyard; the
+     * collector checks the graveyard.
+     */
+    GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD(in(Zone.GRAVEYARD,
+            Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER))),
+    /** "Whenever an artifact you control enters", from the graveyard. */
+    GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD(in(Zone.GRAVEYARD,
+            Triggers.enters(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL))),
+    /** "Whenever an enchantment you control enters", from the graveyard. */
+    GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD(in(Zone.GRAVEYARD,
+            Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.YOU_CONTROL)));
+
 
     /**
      * One trigger condition a watch accepts.
@@ -348,6 +504,29 @@ public enum ZoneChangeWatch {
 
     ZoneChangeWatch(Key... keys) {
         this.keys = List.of(keys);
+    }
+
+    /** Whether this watch is one of the "whenever [an object] enters" collectors (CR 603.6a). */
+    public boolean entering() {
+        return keys.getFirst().trigger() instanceof ZoneChangeTrigger trigger && trigger.entersBattlefield();
+    }
+
+    /**
+     * The triggered abilities of {@code card} with a trigger condition this watch accepts, for code that reads a card's
+     * abilities of a family rather than having them matched: a face-up plane's, an ability a copy keeps.
+     */
+    public List<TriggeredAbility> abilitiesOf(Card card) {
+        return card.getTriggeredAbilities().stream()
+                .filter(ability -> ability.conditions().stream().anyMatch(condition -> keys.stream()
+                        .anyMatch(key -> key.trigger().equals(condition.trigger()))))
+                .toList();
+    }
+
+    /** The effects of {@link #abilitiesOf}. */
+    public List<CardEffect> effectsOf(Card card) {
+        return abilitiesOf(card).stream()
+                .flatMap(ability -> ability.effects().stream().map(EffectRegistration::effect))
+                .toList();
     }
 
     /** The trigger conditions this watch accepts. */

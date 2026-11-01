@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +23,8 @@ import java.util.Set;
 public class AkimTheSoaringWind extends Card {
 
     public AkimTheSoaringWind() {
-        addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
+        addTrigger(new TriggerCondition(Triggers.tokensCreated(null, ObjectRelation.YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE,
                 OncePerTurnTriggerEffect.firstTokenCreation(new CreateTokenEffect(
                         1, "Bird", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));

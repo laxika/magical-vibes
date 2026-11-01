@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "90")
 public class DashingBloodsucker extends Card {
@@ -16,7 +18,7 @@ public class DashingBloodsucker extends Card {
         SequenceEffect eerie = SequenceEffect.of(
                 new BoostSelfEffect(2, 0),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, eerie);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie);
         addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
     }
 }

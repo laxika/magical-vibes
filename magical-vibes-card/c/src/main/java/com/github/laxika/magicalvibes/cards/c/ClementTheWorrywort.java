@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanSourceManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,8 @@ public class ClementTheWorrywort extends Card {
                 bounceFilter,
                 "Target must be a creature you control with lesser mana value"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target())
-                .addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, ReturnToHandEffect.target());
+                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                        ReturnToHandEffect.target());
 
         PermanentPredicate frogFilter = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FROG));
         addStaticEffect(new GrantActivatedAbilityEffect(

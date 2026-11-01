@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "9")
 public class ForerunnerOfTheLegion extends Card {
@@ -21,7 +23,8 @@ public class ForerunnerOfTheLegion extends Card {
                         LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a Vampire card?"));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(Triggers.CREATURE,
+                ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.VAMPIRE),
                         new BoostTargetCreatureEffect(1, 1)));
     }

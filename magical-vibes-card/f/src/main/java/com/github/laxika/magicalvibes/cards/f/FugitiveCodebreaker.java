@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,6 +25,6 @@ public class FugitiveCodebreaker extends Card {
         )), CountScope.CONTROLLER);
 
         addMorph("{5}{R}", instantSorceryCount);
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, new DiscardOwnHandThenDrawEffect(new Fixed(3)));
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new DiscardOwnHandThenDrawEffect(new Fixed(3)));
     }
 }

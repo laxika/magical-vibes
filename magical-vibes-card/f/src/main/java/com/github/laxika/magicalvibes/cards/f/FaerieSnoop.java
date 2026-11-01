@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "203")
 public class FaerieSnoop extends Card {
@@ -15,7 +17,7 @@ public class FaerieSnoop extends Card {
         addMorph("{1}{U/B}{U/B}");
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
-        addEffect(EffectSlot.ON_TURNED_FACE_UP,
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                 LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
     }
 }

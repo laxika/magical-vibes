@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZEN", collectorNumber = "168")
 @CardRegistration(set = "ZNR", collectorNumber = "193")
@@ -13,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 public class LotusCobra extends Card {
 
     public LotusCobra() {
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new AwardAnyColorManaEffect());
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new AwardAnyColorManaEffect());
     }
 }

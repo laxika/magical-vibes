@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCrea
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class RavagerOfTheFells extends Card {
 
     public RavagerOfTheFells() {
         // Whenever this creature transforms into Ravager of the Fells, it deals 2 damage
         // to target opponent and 2 damage to up to one target creature that player controls.
-        addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE,
+        addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
                 new DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect(2, 2, 1, false, false));
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn,

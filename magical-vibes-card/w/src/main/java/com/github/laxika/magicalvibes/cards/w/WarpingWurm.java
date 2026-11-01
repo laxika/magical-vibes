@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,6 +30,6 @@ public class WarpingWurm extends Card {
                         new PayManaCost("{2}{G}{U}"),
                         List.of(new PhaseOutEffect(PhaseOutSubject.SOURCE)),
                         true));
-        addEffect(EffectSlot.ON_SELF_PHASES_IN, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.phasesIn(null, ObjectRelation.THIS), new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

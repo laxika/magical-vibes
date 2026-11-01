@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMC", collectorNumber = "33")
 @CardRegistration(set = "TMC", collectorNumber = "94")
@@ -38,7 +40,8 @@ public class RocksteadyMutantMarauder extends Card {
                 MayChoicePlayer.TARGET_PLAYER
         ));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE,
+                ObjectRelation.ANOTHER_YOU_CONTROL),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

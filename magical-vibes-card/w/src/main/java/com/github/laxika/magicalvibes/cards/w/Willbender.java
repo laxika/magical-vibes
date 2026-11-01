@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class Willbender extends Card {
                         new StackEntryIsSingleTargetPredicate()
                 )),
                 "Target must be a spell or ability with a single target."
-        )).addEffect(EffectSlot.ON_TURNED_FACE_UP,
+        )).addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                 new ChangeTargetOfTargetSpellWithSingleTargetEffect());
     }
 }

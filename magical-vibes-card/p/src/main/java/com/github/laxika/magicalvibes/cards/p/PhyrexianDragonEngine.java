@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -10,12 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BRO", collectorNumber = "163")
 public class PhyrexianDragonEngine extends Card {
 
     public PhyrexianDragonEngine() {
-        addEffect(EffectSlot.ON_SELF_ENTERS_FROM_GRAVEYARD, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, null, ObjectRelation.THIS), ConditionalEffect.atTriggerTime(
                 new EnteredFromZone(Zone.GRAVEYARD, true),
                 new MayEffect(
                         SequenceEffect.of(new DiscardHandEffect(), new DrawCardEffect(3)),

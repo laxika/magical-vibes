@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Werewolf Ransacker — back face of Afflicted Deserter.
@@ -26,7 +28,7 @@ public class WerewolfRansacker extends Card {
 
         // Whenever this creature transforms into Werewolf Ransacker, you may destroy target artifact.
         // If that artifact is put into a graveyard this way, deal 3 damage to that artifact's controller.
-        addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE, new MayEffect(
+        addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS), new MayEffect(
                 new DestroyTargetPermanentAndDamageControllerIfDestroyedEffect(3),
                 "Destroy target artifact?"
         ));

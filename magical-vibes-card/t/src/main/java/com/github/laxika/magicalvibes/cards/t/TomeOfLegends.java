@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class TomeOfLegends extends Card {
 
         PutCountersOnSelfEffect addPageCounter = new PutCountersOnSelfEffect(CounterType.PAGE);
         PermanentIsCommanderPredicate yourCommander = new PermanentIsCommanderPredicate(true);
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter, true));
         addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(yourCommander, addPageCounter));

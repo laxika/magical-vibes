@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "102")
 public class ForerunnerOfTheEmpire extends Card {
@@ -21,7 +23,7 @@ public class ForerunnerOfTheEmpire extends Card {
                         LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a Dinosaur card, reveal it, then shuffle and put that card on top?"));
 
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
                         new MayEffect(new MassDamageEffect(1),
                                 "Have Forerunner of the Empire deal 1 damage to each creature?")));

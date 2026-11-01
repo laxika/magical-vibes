@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOU", collectorNumber = "52")
 @CardRegistration(set = "AKR", collectorNumber = "85")
@@ -23,7 +25,7 @@ public class UneshCriosphinxSovereign extends Card {
         // library. An opponent separates those cards into two piles. Put one pile into your hand
         // and the other into your graveyard. Two slots: Unesh's own ETB, plus other Sphinxes.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RevealTopCardsAndSeparateEffect(4));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SPHINX),
                         new RevealTopCardsAndSeparateEffect(4)));
     }

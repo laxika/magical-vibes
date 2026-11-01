@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ScryBeforeExploreReplacementE
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "217")
 public class TwistsAndTurns extends Card {
@@ -21,7 +23,7 @@ public class TwistsAndTurns extends Card {
         addStaticEffect(new ScryBeforeExploreReplacementEffect());
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExploreEffect(true));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new ConditionalEffect(new ControlsPermanentCount(7, new PermanentIsLandPredicate()),
                         new TransformSelfEffect()));
     }

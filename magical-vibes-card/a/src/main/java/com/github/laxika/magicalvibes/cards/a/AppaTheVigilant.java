@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -22,7 +24,7 @@ public class AppaTheVigilant extends Card {
                 new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE),
                         GrantScope.ALL_OWN_CREATURES)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
                         SequenceEffect.of(
                                 new BoostAllOwnCreaturesEffect(1, 1),

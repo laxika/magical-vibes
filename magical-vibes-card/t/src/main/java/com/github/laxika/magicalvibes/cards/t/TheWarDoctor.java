@@ -32,7 +32,7 @@ import java.util.Set;
 public class TheWarDoctor extends Card {
 
     public TheWarDoctor() {
-        addEffect(EffectSlot.ON_ANY_OTHER_PERMANENT_PHASES_OUT,
+        addTrigger(new TriggerCondition(Triggers.phasesOut(null, ObjectRelation.ANOTHER)), TriggerOptions.ONE_OR_MORE,
                 new PutCountersOnSelfEffect(CounterType.TIME));
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANOTHER)),
                 TriggerOptions.ONE_OR_MORE, new PutCountersOnSelfEffect(CounterType.TIME));

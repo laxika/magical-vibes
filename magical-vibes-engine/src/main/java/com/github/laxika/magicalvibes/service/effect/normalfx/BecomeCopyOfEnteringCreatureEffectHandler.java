@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import java.util.List;
 import java.util.Set;
 
@@ -56,9 +56,10 @@ public class BecomeCopyOfEnteringCreatureEffectHandler implements NormalEffectHa
         }
 
         String originalName = source.getCard().getName();
-        List<EffectRegistration> copyAbilityRegistrations = source.getCard()
-                .getEffectRegistrations(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD).stream()
-                .filter(reg -> reg.effect() instanceof BecomeCopyOfEnteringCreatureEffect)
+        List<TriggeredAbility> copyAbilities = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD
+                .abilitiesOf(source.getCard()).stream()
+                .filter(ability -> ability.effects().stream()
+                        .anyMatch(registration -> registration.effect() instanceof BecomeCopyOfEnteringCreatureEffect))
                 .toList();
         Card enteringCard = entering.getCard();
         if (entering.isFaceDown()) {
@@ -73,9 +74,7 @@ public class BecomeCopyOfEnteringCreatureEffectHandler implements NormalEffectHa
         // "except it has this ability" — re-grant the copy ability this permanent had before copying,
         // which may come from a copy effect (e.g. Clone) rather than the printed card.
         Card copiedCard = source.getCard();
-        for (EffectRegistration reg : copyAbilityRegistrations) {
-            copiedCard.addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, reg.effect(), reg.triggerMode());
-        }
+        copyAbilities.forEach(copiedCard::addTriggeredAbility);
 
         gameLogService.append(gameData, GameLog.textCardText(originalName + " becomes a copy of ", enteringCard, "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, enteringCard.getName());

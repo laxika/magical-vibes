@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOn
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "217")
 @CardRegistration(set = "SLD", collectorNumber = "1257")
@@ -22,7 +24,7 @@ public class RisenReef extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
                         new CardTypePredicate(CardType.LAND), true));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ELEMENTAL),
                         new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(

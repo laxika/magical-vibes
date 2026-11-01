@@ -21,7 +21,9 @@ public enum ZoneChangeCause {
     /** Exiled to pay the cost of a craft ability, as the permanent with it or as a material (CR 702.167a). */
     CRAFT,
     /** A resolving instant or sorcery spell put into its owner's graveyard as the last step of its resolution. */
-    RESOLUTION;
+    RESOLUTION,
+    /** A token put onto the battlefield by being created (CR 701.7a). */
+    CREATE;
 
     /** The zone-change cause of a battlefield departure performed for {@code cause}. */
     public static ZoneChangeCause of(DepartureCause cause) {

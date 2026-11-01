@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPowerUpAbilityConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "743")
 public class MarvelBoyNohVarr extends Card {
 
     public MarvelBoyNohVarr() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY,
                 new TriggeringPowerUpAbilityConditionalEffect(

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -49,11 +50,10 @@ public class EmeriaShepherd extends Card {
         // permanent card to the battlefield instead. The land is checked as it entered.
         target(new GraveyardCardPredicateTargetFilter(
                 nonlandPermanent, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new TriggeringPermanentConditionalEffect(plains,
                                 new MayEffect(returnToBattlefield,
-                                        "Return that card to the battlefield instead?", mayReturnToHand)))
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+                                        "Return that card to the battlefield instead?", mayReturnToHand)),
                         new TriggeringPermanentConditionalEffect(new PermanentNotPredicate(plains),
                                 mayReturnToHand));
     }

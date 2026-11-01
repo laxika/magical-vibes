@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class Dermoplasm extends Card {
         CardAllOfPredicate creatureWithMorph = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
                 new CardHasMorphAbilityPredicate()));
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, new MayEffect(
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new MayEffect(
                 new PutCardToBattlefieldThenEffect(
                         creatureWithMorph, "creature with a morph ability", null,
                         ReturnToHandEffect.self()),

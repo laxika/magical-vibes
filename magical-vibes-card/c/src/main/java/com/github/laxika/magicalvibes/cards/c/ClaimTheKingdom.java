@@ -11,13 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "163")
 public class ClaimTheKingdom extends Card {
 
     public ClaimTheKingdom() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, SequenceEffect.of(
+                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new PutCountersOnSelfEffect(CounterType.PLAN)));
 

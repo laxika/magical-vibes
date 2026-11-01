@@ -58,6 +58,12 @@ public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneC
         hauntedBy = List.copyOf(hauntedBy);
     }
 
+    /** This zone change, with {@code permanent} as the copy of the permanent that moved. */
+    public ZoneChangeEvent withPermanent(Permanent permanent) {
+        return new ZoneChangeEvent(card, ownerId, from, to, cause, permanent, controllerId, grantedAbilities,
+                deathTriggersSuppressed, costOf, attachments, hauntedBy, causeControllerId);
+    }
+
     /** A zone change with no granted abilities. */
     public ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause,
                            Permanent permanent, UUID controllerId) {

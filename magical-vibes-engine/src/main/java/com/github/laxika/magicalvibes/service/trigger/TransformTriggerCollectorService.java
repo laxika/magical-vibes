@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -26,7 +25,7 @@ public class TransformTriggerCollectorService {
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_TRANSFORMS)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_TRANSFORMS)
     private boolean handleAllyPermanentTransform(TriggerMatchContext match, CardEffect effect,
                                                   TriggerContext context) {
         TriggerContext.PermanentTransforms transforms = (TriggerContext.PermanentTransforms) context;

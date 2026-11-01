@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprin
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NPH", collectorNumber = "87")
 public class InvaderParasite extends Card {
@@ -19,7 +21,7 @@ public class InvaderParasite extends Card {
 
         // Whenever a land with the same name as the exiled card enters the battlefield
         // under an opponent's control, Invader Parasite deals 2 damage to that player.
-        addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS),
                 new ConditionalEffect(new ImprintedCardNameMatchesEnteringPermanent(), 
                         new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER)
                 ));

@@ -159,6 +159,28 @@ public class PermanentControlSupport {
      * simultaneous tokens and every addition and Academy Manufactor replacement.
      */
     private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, List<Ability> additionalAbilities, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
+        // The tokens one creation puts onto the battlefield enter in one event (CR 603.2c): a "one or more" ability
+        // that sees them triggers once.
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
+        if (!alreadyCollectingEntries) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
+        gameData.rulesEvents.beginBatch();
+        try {
+            return createTokens(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
+                    applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalAbilities,
+                    orderedAmount, orderedAddedTokens);
+        } finally {
+            gameData.rulesEvents.endBatch();
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
+        }
+    }
+
+    private List<UUID> createTokens(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, List<Ability> additionalAbilities, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
         boolean ordered = orderedAddedTokens != null;
         boolean fixedAdditions = applyAdditionalReplacements && !ordered;
         List<UUID> createdIds = new ArrayList<>();

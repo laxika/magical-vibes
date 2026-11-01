@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1863")
@@ -25,11 +29,11 @@ public class StaffOfTheStoryteller extends Card {
     public StaffOfTheStoryteller() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.whiteSpirit(1));
 
-        addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
+        addTrigger(new TriggerCondition(Triggers.tokensCreated(null, ObjectRelation.YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE,
                 new TriggeringCardConditionalEffect(
                         new CardTypePredicate(CardType.CREATURE),
-                        new PutCountersOnSelfEffect(CounterType.STORY)),
-                TriggerMode.TOKEN_CREATION);
+                        new PutCountersOnSelfEffect(CounterType.STORY)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

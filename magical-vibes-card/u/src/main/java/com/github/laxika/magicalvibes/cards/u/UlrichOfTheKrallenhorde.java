@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "191")
 @CardRegistration(set = "SIR", collectorNumber = "246")
@@ -18,7 +20,7 @@ public class UlrichOfTheKrallenhorde extends Card {
 
         target(TargetFilters.creature());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(4, 4));
-        addEffect(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE, new BoostTargetCreatureEffect(4, 4));
+        addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), new BoostTargetCreatureEffect(4, 4));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));

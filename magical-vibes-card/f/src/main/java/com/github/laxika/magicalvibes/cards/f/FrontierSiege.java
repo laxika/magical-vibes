@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,7 +41,7 @@ public class FrontierSiege extends Card {
                         new AwardManaEffect(ManaColor.GREEN, 2)));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                                 new ConditionalEffect(

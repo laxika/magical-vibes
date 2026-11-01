@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.rules.PermanentChange;
+import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
@@ -50,6 +55,55 @@ final class TriggerMatcher {
     }
 
     /**
+     * The first of the ability's trigger conditions that {@code event}, a permanent phasing, transforming or being
+     * turned face up, meets, or {@code null}: a permanent-change trigger for that change, functioning from the
+     * candidate's zone (CR 113.6), whose permanent relates to the source as it says. The permanent is judged as it is
+     * after the change, except one that phased out, which is judged as it last existed (CR 603.10b).
+     */
+    static PermanentChangeTrigger matchedPermanentChange(GameData gameData, PredicateEvaluationService predicates,
+                                                         TriggerCandidate candidate, PermanentChangeEvent event) {
+        for (TriggerCondition condition : candidate.ability().conditions()) {
+            if (condition.trigger() instanceof PermanentChangeTrigger trigger
+                    && condition.zones().functionsIn(candidate.zone())
+                    && trigger.changes().contains(event.change())
+                    && relatesToChange(gameData, predicates, trigger, candidate, event)) {
+                return trigger;
+            }
+        }
+        return null;
+    }
+
+    private static boolean relatesToChange(GameData gameData, PredicateEvaluationService predicates,
+                                           PermanentChangeTrigger trigger, TriggerCandidate candidate,
+                                           PermanentChangeEvent event) {
+        Permanent source = candidate.sourcePermanent();
+        Permanent changed = event.permanent();
+        boolean self = source != null && source.getId().equals(changed.getId());
+        boolean controlled = candidate.controllerId().equals(event.controllerId());
+        boolean related = switch (trigger.relation()) {
+            case THIS -> self;
+            case YOU_CONTROL -> controlled;
+            case ANY -> true;
+            case ANOTHER_YOU_CONTROL -> !self && controlled;
+            case ANOTHER -> !self;
+            case THIS_OR_ANOTHER_YOU_CONTROL -> self || controlled;
+            case THIS_OR_ANOTHER -> true;
+            case OPPONENT_CONTROLS -> event.controllerId() != null && !controlled;
+            case ENCHANTED, EQUIPPED -> source != null && changed.getId().equals(source.getAttachedTo())
+                    && source.getCard().getSubtypes().contains(trigger.relation() == ObjectRelation.EQUIPPED
+                    ? CardSubtype.EQUIPMENT : CardSubtype.AURA);
+            default -> false;
+        };
+        if (!related || trigger.filter() == null || self && trigger.relation().thisAlwaysMatches()) {
+            return related;
+        }
+        FilterContext context = event.change() == PermanentChange.PHASED_OUT ? null : FilterContext.of(gameData)
+                .withSourceCardId(candidate.sourceCard().getId())
+                .withSourceControllerId(candidate.controllerId());
+        return predicates.matchesPermanentPredicate(changed, trigger.filter(), context);
+    }
+
+    /**
      * Whether the moving object's own ability sees its own move. "When this dies" does. So does an ability whose
      * object may be the source itself, as the object last existed on the battlefield (CR 603.10a): "whenever a
      * creature you control dies" on a creature that dies, or on an enchantment that was animated; "whenever this
@@ -59,6 +113,10 @@ final class TriggerMatcher {
                                            ZoneChangeTrigger trigger, TriggerCandidate candidate,
                                            ZoneChangeEvent event) {
         ObjectRelation relation = trigger.relation();
+        if (trigger.entersBattlefield()) {
+            // The permanent that entered sees its own entry from the battlefield, with the other observers.
+            return false;
+        }
         if (relation == ObjectRelation.THIS) {
             return true;
         }
@@ -88,8 +146,24 @@ final class TriggerMatcher {
                                    ZoneChangeTrigger trigger, TriggerCandidate candidate, ZoneChangeEvent event) {
         Permanent source = candidate.sourcePermanent();
         Permanent moved = event.permanent();
+        // A permanent that entered is checked for enters abilities too (CR 603.6a), its own entry included.
+        boolean self = trigger.entersBattlefield() && source != null && moved != null
+                && source.getId().equals(moved.getId());
+        if (self) {
+            if (!trigger.relation().includesThis()) {
+                return false;
+            }
+            if (trigger.relation().thisAlwaysMatches()) {
+                return true;
+            }
+        } else if (trigger.relation() == ObjectRelation.ANOTHER_YOU_CONTROL || trigger.relation() == ObjectRelation.ANOTHER
+                || trigger.relation() == ObjectRelation.ANOTHER_YOU_OWN) {
+            if (source != null && moved != null && source.getId().equals(moved.getId())) {
+                return false;
+            }
+        }
         boolean related = switch (trigger.relation()) {
-            case THIS -> false;
+            case THIS -> self;
             case YOU_CONTROL, ANOTHER_YOU_CONTROL, THIS_OR_ANOTHER_YOU_CONTROL ->
                     candidate.controllerId().equals(event.controllerId());
             case ANY, ANOTHER, THIS_OR_ANOTHER -> true;
@@ -126,7 +200,8 @@ final class TriggerMatcher {
 
     /**
      * Whether the moving object passes the trigger's filter. A departed object is judged by its last-known copy,
-     * whose card holds the types, colors and keywords it left with (CR 603.10a), so no layered query runs on it:
+     * whose card holds the types, colors and keywords it left with (CR 603.10a), and an entered one by its copy with
+     * the characteristics it has as its enters abilities are processed (CR 603.6a), so no layered query runs on it:
      * one would read the game as it is after the departure.
      */
     private static boolean filterMatches(GameData gameData, PredicateEvaluationService predicates,

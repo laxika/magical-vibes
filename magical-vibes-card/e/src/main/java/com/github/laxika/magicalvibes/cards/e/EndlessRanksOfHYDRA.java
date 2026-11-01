@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,6 +19,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +45,8 @@ public class EndlessRanksOfHYDRA extends Card {
                         .build(),
                 "Pay {1}{B} to return this card from your graveyard to your hand?");
 
-        addEffect(EffectSlot.GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(new TriggerCondition(Triggers.enters(null, ObjectRelation.ANY),
+                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCommanderPredicate(true), returnToHand));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "145")
 @CardRegistration(set = "DDH", collectorNumber = "3")
@@ -14,6 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class EssenceWarden extends Card {
 
     public EssenceWarden() {
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER), new GainLifeEffect(1));
     }
 }

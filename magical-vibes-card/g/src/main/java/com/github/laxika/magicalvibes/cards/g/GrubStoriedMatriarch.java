@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECL", collectorNumber = "105")
 @CardRegistration(set = "ECL", collectorNumber = "289")
@@ -24,7 +26,7 @@ public class GrubStoriedMatriarch extends Card {
                 .upTo(true)
                 .build();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnGoblin);
-        addEffect(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE, returnGoblin);
+        addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), returnGoblin);
 
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new MayPayManaEffect("{R}", new TransformSelfEffect(),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -20,7 +19,7 @@ public class MarkovEnforcer extends Card {
         // Whenever this creature or another Vampire you control enters, this creature fights up to
         // one target creature an opponent controls.
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
                         new TriggeringCardConditionalEffect(
                                 new CardSubtypePredicate(CardSubtype.VAMPIRE),
                                 new SourceFightsTargetCreatureEffect()));

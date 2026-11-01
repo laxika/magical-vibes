@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoHandAndDiscardAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDSK", collectorNumber = "3")
 public class MothlightProcessionist extends Card {
@@ -18,7 +20,7 @@ public class MothlightProcessionist extends Card {
 
         ConjureCardIntoHandAndDiscardAtNextEndStepEffect eerie =
                 new ConjureCardIntoHandAndDiscardAtNextEndStepEffect("YDSK", "3");
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, eerie);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie);
         addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
     }
 }

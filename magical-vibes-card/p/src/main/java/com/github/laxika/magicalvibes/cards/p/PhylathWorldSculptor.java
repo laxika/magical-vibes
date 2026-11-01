@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class PhylathWorldSculptor extends Card {
                 new PermanentControlledBySourceControllerPredicate()));
         target(new PermanentPredicateTargetFilter(plantYouControl,
                 "Target must be a Plant you control"))
-                .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+                .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                 CounterType.PLUS_ONE_PLUS_ONE, 4, plantYouControl));
     }

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatur
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "FEM", collectorNumber = "76")
@@ -25,7 +27,7 @@ public class ThelonsChant extends Card {
 
         // Whenever a player puts a Swamp onto the battlefield, this enchantment deals 3 damage
         // to that player unless they put a -1/-1 counter on a creature they control.
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.SWAMP),
                         ForcedCostOrElseEffect.enchantedControllerMayPay(

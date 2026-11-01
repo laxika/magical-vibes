@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect;
@@ -16,6 +15,7 @@ public class AshcloudPhoenix extends Card {
     public AshcloudPhoenix() {
         addMorph("{4}{R}{R}");
         addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect());
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_PLAYER));
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_PLAYER));
     }
 }

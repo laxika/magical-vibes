@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerToughnessPr
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +29,8 @@ public class BessSoulNourisher extends Card {
             new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
     public BessSoulNourisher() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
+        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE,
                 new TriggeringPermanentConditionalEffect(OTHER_BASE_ONE_ONE,
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
         addEffect(EffectSlot.ON_ATTACK,

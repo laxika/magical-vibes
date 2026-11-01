@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "723")
 @CardRegistration(set = "CMM", collectorNumber = "756")
@@ -15,7 +16,7 @@ public class OnduSpiritdancer extends Card {
     public OnduSpiritdancer() {
         // Whenever an enchantment you control enters, you may create a token that's a copy of it.
         // Do this only once each turn; only accepting the copy uses up the turn (ruling 2023-07-28).
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.YOU_CONTROL),
                 new OncePerTurnTriggerEffect(new MayEffect(
                         new CreateTokenCopyOfEnteringPermanentEffect(),
                         "Create a token that's a copy of that enchantment?"), true));

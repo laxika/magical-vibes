@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantActivatedAbil
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SeekCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class GitrogHorrorOfZhava extends Card {
                                 new SeekCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), true))));
 
         // Whenever a land enters under your control, it perpetually gains the activated ability.
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new PerpetuallyGrantActivatedAbilityToTriggeringCardEffect(landSacrificeDrawAbility()));
     }
 

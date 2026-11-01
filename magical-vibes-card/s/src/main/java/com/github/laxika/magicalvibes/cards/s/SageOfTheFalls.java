@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ELD", collectorNumber = "63")
 public class SageOfTheFalls extends Card {
@@ -22,7 +24,7 @@ public class SageOfTheFalls extends Card {
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "You may draw a card. If you do, discard a card.");
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loot);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)), loot));
     }

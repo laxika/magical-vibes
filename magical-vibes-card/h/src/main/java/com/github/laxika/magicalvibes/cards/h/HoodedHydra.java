@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -29,6 +28,6 @@ public class HoodedHydra extends Card {
                 new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.SNAKE), Set.of(), Set.of())));
         addMorph("{3}{G}{G}");
-        addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(5));
+        addStaticEffect(new PutCountersOnTurnFaceUpEffect(5));
     }
 }

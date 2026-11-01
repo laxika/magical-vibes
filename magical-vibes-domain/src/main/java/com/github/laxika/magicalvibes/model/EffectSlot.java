@@ -19,67 +19,6 @@ public enum EffectSlot {
     ON_SELF_BECOMES_CONTROLLED,
     /** Triggers when this permanent changes control away from its current controller. */
     ON_SELF_LOSES_CONTROL,
-ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-    ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
-    /** "Whenever a creature or enchantment enters under your control" for a turn-scoped global trigger. */
-    ON_ALLY_CREATURE_OR_ENCHANTMENT_ENTERS_BATTLEFIELD,
-    /** "Whenever another permanent you control enters"; excludes the watcher's own entry. */
-    ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
-    /** "Whenever this creature or another creature you control enters, …" — like
-     *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
-     *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})
-     *  without the self-exclusion. The entering permanent rides along as the trigger's
-     *  {@code triggeringPermanentId} so an effect like
-     *  {@code EnteringCreatureFightsTargetCreatureEffect} knows which creature "that creature" is.
-     *  Used by Gruul Ragebeast. */
-    ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-    /** "Whenever one or more creatures you control enter, …" counting this permanent's own entry. Batched
-     *  like {@link #ON_ALLY_CREATURES_ENTERS_BATTLEFIELD} (one trigger per entering batch), but the source
-     *  itself also counts as an entering creature. Used by Kotis, Sibsig Champion. */
-    ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD,
-    /** "Whenever a nontoken creature enters under your control" (excludes this permanent and tokens).
-     *  Like {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the entering permanent's id is preserved on
-     *  any queued may-pay ability (mirrors {@link #ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD}), so a
-     *  "you may pay {N}. If you do, create a token that's a copy of that creature" effect
-     *  ({@code CreateTokenCopyOfTargetPermanentEffect}) knows which creature to copy. Checked in
-     *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. Used by Minion Reflector. */
-    ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
-    /** "Whenever a nontoken creature enters under your control" (no "another"): also triggers when the
-     *  source is a nontoken creature as it enters (CR 603.6a), e.g. The Great Henge made a creature by
-     *  March of the Machines. Checked in {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}
-     *  without the self-exclusion. */
-    ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
-    /** "Whenever a nontoken creature enters under your control" for an Eminence ability whose
-     *  source card is in the controller's command zone. Checked in
-     *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. */
-    COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
-    ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-    /** "Whenever an artifact you control enters" with no "another" wording, so the source's own entry
-     *  also triggers it when the source is an artifact as it enters (CR 603.6a: all permanents on the
-     *  battlefield, including the newcomers, are checked). Scanned in
-     *  {@code TriggerCollectionService.checkAllyArtifactEntersTriggers} without the self-exclusion. */
-    ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-    /** "Whenever one or more tokens you control enter the battlefield." */
-    ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
-    ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
-    /** "Whenever a nontoken artifact you control enters" (no "another"): also triggers when the source is a
-     *  nontoken artifact as it enters (CR 603.6a). Scanned in
-     *  {@code TriggerCollectionService.checkAllyNontokenArtifactEntersTriggers} without the self-exclusion. */
-    ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
-    ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
-    /** "Whenever a creature enters" (any controller, including the source itself, e.g. as a creature
-     *  through Opalescence). Use {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} for "another creature". */
-    ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
-    /** Aura slot for player-enchanting Curses: "Whenever a creature enchanted player controls enters, …".
-     *  Fires once per matching Curse attached to the entering creature's controller. The enchanted player
-     *  is baked as the (non-targeting) {@code targetId} so a {@code LoseLifeEffect(TARGET_PLAYER)} lands on
-     *  them while an accompanying {@code GainLifeEffect} feeds the Aura's controller ("you"). Checked in
-     *  {@code TriggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers}. Used by Trespasser's Curse. */
-    ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
-    /** Aura slot for player-enchanting Curses: "Whenever a land enchanted player controls enters".
-     *  Fires once per matching Curse attached to the entering land's controller. The enchanted
-     *  player's id is baked as the non-targeting {@code targetId}. */
-    ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
     /** Triggers at the beginning of its controller's upkeep while the source card is in the command zone. */
@@ -350,25 +289,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURE_BECOMES_RENOWNED,
     /** Triggers whenever this creature becomes monstrous for the first time. */
     ON_SELF_BECOMES_MONSTROUS,
-    /** Triggers whenever this permanent phases out — from the untap step's phasing turn-based action
-     *  (CR 702.26a) or from an effect that phases it out. Fires only on the permanent that phased
-     *  out, driven from {@code PhasingService} via
-     *  {@code TriggerCollectionService.checkPhasesOutTriggers}. The trigger is collected before the
-     *  permanent leaves the battlefield, because abilities that trigger on phasing out look back in
-     *  time (CR 603.10b) — the permanent is "treated as though it does not exist" once phased out
-     *  (CR 702.26b). Queued as a non-targeting triggered ability whose {@code sourcePermanentId} is
-     *  the phased-out permanent. Used by Teferi's Imp ({@code DiscardEffect}). */
-    ON_SELF_PHASES_OUT,
-    /** Triggers whenever one or more other permanents phase out. Checked before the phased-out
-     *  permanent leaves the battlefield, and fires on every permanent with this slot except the
-     *  permanent that phased out. */
-    ON_ANY_OTHER_PERMANENT_PHASES_OUT,
-    /** Triggers whenever this permanent phases in during its controller's untap step (CR 702.26a).
-     *  Fires only on the permanent that phased in, driven from {@code PhasingService} via
-     *  {@code TriggerCollectionService.checkPhasesInTriggers} after it is back on the battlefield.
-     *  Queued as a non-targeting triggered ability whose {@code sourcePermanentId} is the phased-in
-     *  permanent. Used by Teferi's Imp ({@code DrawCardEffect}). */
-    ON_SELF_PHASES_IN,
     /** Triggers whenever a permanent an <em>opponent</em> of the controller controls becomes tapped.
      *  Fires on every permanent with this slot controlled by a player other than the tapped
      *  permanent's controller. Wrap the effect in {@code TriggeringPermanentConditionalEffect} to
@@ -405,22 +325,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers on an Equipment whenever the creature it is attached to deals combat damage to anything. */
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
     ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
-    /** Triggers on an Equipment whenever the creature it is attached to transforms, in either
-     *  direction. Fired by {@code AnimationSupport.fireEquipmentTransformTriggers} right after the
-     *  equipped creature's own transform triggers. Used by Neglected Heirloom. */
-    ON_EQUIPPED_CREATURE_TRANSFORMS,
-    /** Triggers whenever a permanent controlled by this permanent's controller transforms. */
-    ON_ALLY_PERMANENT_TRANSFORMS,
     /** Triggers whenever the game changes between day and night. */
     ON_DAY_NIGHT_CHANGE,
     /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
     GRAVEYARD_ON_DAY_NIGHT_CHANGE,
-    /** Triggers whenever a permanent controlled by this permanent's controller enters transformed. */
-    ON_ALLY_PERMANENT_ENTERS_TRANSFORMED,
-    ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
-    /** Triggers whenever a land the controller controls enters the battlefield.
-     *  Checked in {@code BattlefieldEntryService.checkAllyLandEntersTriggers}. */
-    ON_ALLY_LAND_ENTERS_BATTLEFIELD,
     ON_DEALT_DAMAGE,
     /** Triggers whenever this permanent is dealt noncombat damage. The amount is snapshotted onto
      *  the triggered ability's event value. */
@@ -473,16 +381,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (non-targeting) {@code targetId} so a {@code MillEffect(TARGET_PLAYER)} lands on them. Checked in
      *  {@code StepTriggerService.handleEndStepTriggers}. Used by Fraying Sanity. */
     ENCHANTED_PLAYER_END_STEP_TRIGGERED,
-    ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
-    /** "Whenever an enchantment enters under your control" (excludes this permanent). Filter by
-     *  subtype with a {@code TriggeringCardConditionalEffect}. Checked in
-     *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. Used by Trial of Solidarity. */
-    ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
-    /** "Whenever an enchantment you control enters" without "another": like
-     *  {@link #ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD} but the source sees its own entry when it enters as an
-     *  enchantment (Ondu Spiritdancer with Enchanted Evening). Checked in
-     *  {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. */
-    ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
     /** Triggers whenever the controller fully unlocks a Room. */
     ON_ALLY_ROOM_FULLY_UNLOCKED,
     /** Triggers whenever the controller fully unlocks a Room while this card is in the controller's
@@ -490,44 +388,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED,
     /** Triggers whenever this Room's specified door becomes unlocked. */
     ON_SELF_ROOM_DOOR_UNLOCKED,
-    ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
-    /** Triggers whenever this creature or another creature enters the battlefield from the
-     *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}
-     *  after a creature enters, using the {@code enteredFromGraveyardOwnerId} flag on the entering
-     *  permanent. Targeting effects use the any-target pipeline
-     *  ({@code EnteringPermanentAnyTargetTrigger} interactions); entering-creature attachment effects
-     *  use the enter-trigger collector's baked-in creature instead. Used by Flayer of the Hatebound
-     *  and Dredging Claw. */
-    ON_CREATURE_ENTERS_FROM_GRAVEYARD,
-    /** "Whenever this creature or another permanent enters from a graveyard" — fires for ANY permanent
-     *  (not just creatures) entering the battlefield from ANY graveyard, checked via the
-     *  {@code enteredFromGraveyardOwnerId} flag. Queues the resolved effects as a non-targeting stack
-     *  entry for the source's controller. Used by River Kelpie. */
-    ON_PERMANENT_ENTERS_FROM_GRAVEYARD,
-    /** Triggers whenever a permanent controlled by this permanent's controller enters the
-     *  battlefield directly from exile. Checked after the permanent enters, using the
-     *  {@code enteredFromExile} flag on the entering permanent. */
-    ON_PERMANENT_ENTERS_FROM_EXILE,
-    /** "When this creature enters from a graveyard" — fires only for the entering permanent itself
-     *  (not for other permanents), checked via the {@code enteredFromGraveyardOwnerId} flag in
-     *  {@code TriggerCollectionService.checkSelfEntersFromGraveyardTriggers}. A targeting effect
-     *  chooses its target as the trigger goes on the stack (CR 603.3b) through the shared
-     *  {@code ETBTokenTargetTrigger} pipeline, using the card's {@code target(...)} filter; a
-     *  non-targeting effect is queued directly. Deliberately separate from
-     *  {@code ON_ENTER_BATTLEFIELD} so a normal cast never asks for a target.
-     *  Used by Treacherous Pit-Dweller. */
-    ON_SELF_ENTERS_FROM_GRAVEYARD,
-    /** "Whenever a player puts a permanent onto the battlefield" — fires for EVERY permanent entering
-     *  under ANY player's control (including the source itself), once per entering permanent, for every
-     *  permanent on any battlefield carrying this slot. Checked in
-     *  {@code TriggerCollectionService.checkAnyPermanentEntersTriggers}. The entering permanent's
-     *  controller is baked in as the non-targeting {@code targetId}, so a player-directed effect
-     *  (e.g. {@code SacrificePermanentsEffect(…, SacrificeRecipient.TARGET_PLAYER)}) acts on "that
-     *  player". The entering permanent's id / card id are stamped on {@code triggeringPermanentId} /
-     *  {@code triggeringCardId} for effects that act on "that permanent" or its name (Eye of
-     *  Singularity). Filter which permanents trigger it with a {@code TriggeringCardConditionalEffect}
-     *  wrapper. Used by Nature's Wrath / Eye of Singularity. */
-    ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
     /** Triggers whenever any player gains one or more life. */
     ON_ANY_PLAYER_GAINS_LIFE,
     ON_CONTROLLER_GAINS_LIFE,
@@ -682,9 +542,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controller's graveyard. Checked per-card inside
      *  {@code TriggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard}. */
     GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
-    /** Triggers whenever a permanent the controller controls is turned face up, while this card
-     *  is in the controller's graveyard. */
-    GRAVEYARD_ON_ALLY_PERMANENT_TURNS_FACE_UP,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's command zone (Eminence — e.g. Edgar Markov). Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if
@@ -725,37 +582,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the {@code AttackTriggerTarget} pending-choice pipeline, so the card's {@code target(...)}
      *  filter narrows the legal targets. Used by Vengeful Pharaoh. */
     GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER,
-    /** Triggers whenever a land the controller controls enters the battlefield, while this card is
-     *  in the controller's graveyard. Like {@link #ON_ALLY_LAND_ENTERS_BATTLEFIELD} but fired from
-     *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
-     *  entering land (e.g. Reach of Branches — "whenever a Forest you control enters"). Checked in
-     *  {@code TriggerCollectionService.checkAllyLandEntersTriggers}. */
-    GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-    /** Triggers whenever a creature the controller controls enters the battlefield, while this card is
-     *  in the controller's graveyard. Like {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but fired from
-     *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
-     *  entering creature (e.g. Unconventional Tactics — "whenever a Zombie you control enters"). Checked
-     *  in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
-    GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-    /** Triggers whenever any permanent the controller controls enters the battlefield while this card
-     *  is in the controller's graveyard. Checked in
-     *  {@code TriggerCollectionService.checkAllyPermanentEntersTriggers}. */
-    GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
-    /** Triggers whenever any creature enters the battlefield, while this card is in its owner's
-     *  graveyard. Like {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} but fired from the graveyard.
-     *  Checked in {@code TriggerCollectionService.checkAllyCreatureEntersTriggers}. */
-    GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
-    /** Triggers from a graveyard when a creature enters from that graveyard or is cast from it. */
-    GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD,
-    /** Triggers whenever an artifact the controller controls enters the battlefield, while this card is
-     *  in the controller's graveyard. Like {@link #ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD} but fired from
-     *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
-     *  entering artifact. Checked in {@code TriggerCollectionService.checkAllyArtifactEntersTriggers}. */
-    GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-    /** Triggers whenever an enchantment the controller controls enters the battlefield, while this card
-     *  is in the controller's graveyard. Like {@link #ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD} but fired
-     *  from the graveyard. Checked in {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. */
-    GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
     /** "Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red
      *  planeswalker you control" — fired from the controller's graveyard (Chandra's Phoenix). Checked in
      *  {@code TriggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers}, called from
@@ -982,22 +808,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}.
      *  Used by Wild Defiance. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY,
-    /** Triggers when this permanent transforms from its front face to its back face.
-     *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
-     *  permanent's card reference is switched to the back face. */
-    ON_TRANSFORM_TO_BACK_FACE,
-    /** Triggers when this permanent transforms from its back face to its front face.
-     *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
-     *  permanent's card reference is switched back to the original front face. */
-    ON_TRANSFORM_TO_FRONT_FACE,
-    /** Holds abilities and replacement effects that apply when a face-down permanent is turned face up. */
-    ON_TURNED_FACE_UP,
-    /** Fires when this creature or another creature its controller controls is turned face up. */
-    ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP,
-    /** Fires when this permanent or another permanent is turned face up. */
-    ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP,
-    /** Fires when this permanent or another permanent its controller controls is turned face up. */
-    ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP,
     /** Triggers once per attacking creature whenever a creature attacks the controller of this
      *  permanent or a planeswalker they control. Fires on the defending player's permanents.
      *  The attacking creature's permanent ID is set as the (non-targeting) targetId on the stack
@@ -1300,7 +1110,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     GRAVEYARD_ON_OPPONENT_GAINS_LIFE,
     /** Triggers whenever this card's owner gains life while this card is in that owner's graveyard. */
     GRAVEYARD_ON_CONTROLLER_GAINS_LIFE,
-    ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_COMMITS_CRIME,
     ON_OPPONENT_COMMITS_CRIME,
     GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME,

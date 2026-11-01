@@ -163,8 +163,8 @@ public class EnterTriggerCollectorService {
         this.conditionEvaluationService = conditionEvaluationService;
     }
 
-    @CollectsTrigger(value = ManaEchoesEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ManaEchoesEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleManaEchoesEnter(TriggerMatchContext match, ManaEchoesEffect effect,
                                           TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -211,8 +211,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChampionOfTheHareishTriggerEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChampionOfTheHareishTriggerEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleChampionOfTheHareishEnter(TriggerMatchContext match,
                                                      ChampionOfTheHareishTriggerEffect effect,
                                                      TriggerContext ctx) {
@@ -265,8 +265,8 @@ public class EnterTriggerCollectorService {
      * "Whenever a permanent you control enters tapped, untap it" (Amulet of Vigor). The entering
      * permanent is fixed by the event and therefore is not chosen as a target.
      */
-    @CollectsTrigger(value = UntapEnteringPermanentEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = UntapEnteringPermanentEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAnyPermanentEnterUntapEntering(TriggerMatchContext match,
                                                            UntapEnteringPermanentEffect effect,
                                                            TriggerContext ctx) {
@@ -304,7 +304,7 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAnyPermanentEnterDefault(TriggerMatchContext match, CardEffect effect,
                                                     TriggerContext ctx) {
         return enqueueAnyPermanentEnter(match, effect, (TriggerContext.PermanentEnters) ctx);
@@ -343,8 +343,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAnyPermanentEnterCardConditional(TriggerMatchContext match,
                                                              TriggeringCardConditionalEffect conditional,
                                                              TriggerContext ctx) {
@@ -389,8 +389,8 @@ public class EnterTriggerCollectorService {
         return characteristics;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAnyPermanentEnterPermanentConditional(TriggerMatchContext match,
                                                                   TriggeringPermanentConditionalEffect conditional,
                                                                   TriggerContext ctx) {
@@ -421,8 +421,8 @@ public class EnterTriggerCollectorService {
         return enqueueAnyPermanentEnter(match, conditional.wrapped(), pe);
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAllyPermanentEnterPermanentConditional(TriggerMatchContext match,
                                                                    TriggeringPermanentConditionalEffect conditional,
                                                                    TriggerContext ctx) {
@@ -601,23 +601,21 @@ public class EnterTriggerCollectorService {
                 .orElse(null);
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_TRANSFORMED),
-    })
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_TRANSFORMED)
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         while (effect instanceof TriggeringCardConditionalEffect conditional) {
@@ -715,8 +713,8 @@ public class EnterTriggerCollectorService {
      * checked here when the trigger fires (CR 603.4), and the entering card's name is captured on the
      * effect so the resolution-time recheck still has it after the creature has left the battlefield.
      */
-    @CollectsTrigger(value = DrawCardIfEnteringCreatureHasUniqueNameEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DrawCardIfEnteringCreatureHasUniqueNameEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleUniqueNameDrawOnEntering(TriggerMatchContext match,
             DrawCardIfEnteringCreatureHasUniqueNameEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -752,8 +750,8 @@ public class EnterTriggerCollectorService {
                 .anyMatch(card -> card.hasType(CardType.CREATURE) && enteringName.equals(card.getName()));
     }
 
-    @CollectsTrigger(value = PerpetuallyGainKeywordsOfTriggeringCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = PerpetuallyGainKeywordsOfTriggeringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handlePerpetuallyGainKeywordsOfEnteringCreature(
             TriggerMatchContext match, PerpetuallyGainKeywordsOfTriggeringCreatureEffect effect,
             TriggerContext ctx) {
@@ -796,8 +794,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChooseModeNotYetChosenEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChooseModeNotYetChosenEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEnterModal(TriggerMatchContext match,
                                                    ChooseModeNotYetChosenEffect effect,
                                                    TriggerContext ctx) {
@@ -811,14 +809,14 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
-            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEnterModalAtTriggerTime(TriggerMatchContext match,
                                                                ChooseOneAtTriggerTimeEffect effect,
                                                                TriggerContext ctx) {
@@ -834,10 +832,10 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
-            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
+            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEnterTurnScopedModal(TriggerMatchContext match,
                                                    ChooseModeNotYetChosenThisTurnEffect effect,
                                                    TriggerContext ctx) {
@@ -851,8 +849,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EndureEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = EndureEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyNontokenCreatureEndure(TriggerMatchContext match,
                                                      EndureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -881,12 +879,10 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = ReturnTargetCardsFromGraveyardToHandEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = ReturnTargetCardsFromGraveyardToHandEffect.class,
-                    slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = ReturnTargetCardsFromGraveyardToHandEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnTargetCardsFromGraveyardToHandEffect.class,
+                    watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleCreatureEnterReturnToHand(TriggerMatchContext match,
                                                      ReturnTargetCardsFromGraveyardToHandEffect effect,
                                                      TriggerContext ctx) {
@@ -900,12 +896,10 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = ExileGraveyardCardsEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = ExileGraveyardCardsEffect.class,
-                    slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = ExileGraveyardCardsEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ExileGraveyardCardsEffect.class,
+                    watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleCreatureEnterExileGraveyardCard(TriggerMatchContext match,
                                                            ExileGraveyardCardsEffect effect,
                                                            TriggerContext ctx) {
@@ -919,14 +913,12 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
-                    slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = AnimatePermanentsEffect.class,
-                    slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = BecomeSaddledUntilEndOfTurnEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = AnimatePermanentsEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
     private boolean handleEnteringPermanentSelfEffect(TriggerMatchContext match, CardEffect effect,
                                                        TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -958,8 +950,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleAllyTokenEnterCardConditional(TriggerMatchContext match,
                                                          TriggeringCardConditionalEffect conditional,
                                                          TriggerContext ctx) {
@@ -975,10 +967,8 @@ public class EnterTriggerCollectorService {
         return false;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleTokenEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
         Card sourceCard = match.permanent().getCard();
@@ -1008,8 +998,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-            slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleOpponentTokenEnterCreateCopies(TriggerMatchContext match,
             CreateTokenCopyOfTargetPermanentEffect effect, TriggerContext ctx) {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
@@ -1044,12 +1034,10 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
-                    slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
-                    slot = EffectSlot.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
+                    watch = ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleTokenEnterCopyForTargetPlayer(TriggerMatchContext match,
                                                          CreateTokenCopyOfEnteringTokenForTargetPlayerEffect effect,
                                                          TriggerContext ctx) {
@@ -1071,8 +1059,8 @@ public class EnterTriggerCollectorService {
      * The "any other creature enters" default queues the trigger directly when it needs no target
      * and routes targeted effects through the normal enter-trigger target choice.
      */
-    @CollectsTrigger(value = SacrificeSelfThenEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SacrificeSelfThenEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureSacrificeSelfThen(TriggerMatchContext match,
                                                         SacrificeSelfThenEffect effect,
                                                         TriggerContext ctx) {
@@ -1091,8 +1079,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         boolean needsTargetChoice = isTargeting(effect);
@@ -1112,7 +1100,7 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CREATURE_ENTERS_FROM_GRAVEYARD)
     private boolean handleCreatureEnterFromGraveyardDefault(TriggerMatchContext match,
                                                              CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1129,8 +1117,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureSacrificeSelfCreateTokens(
             TriggerMatchContext match,
             SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect effect,
@@ -1156,8 +1144,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SacrificeSelfThenDealDamageToEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SacrificeSelfThenDealDamageToEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureSacrificeSelfDealDamage(
             TriggerMatchContext match,
             SacrificeSelfThenDealDamageToEnteringCreatureEffect effect,
@@ -1192,17 +1180,15 @@ public class EnterTriggerCollectorService {
 
     // ── "May" wrappers (queued as a may-ability, not unwrapped onto the stack) ──────────
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
-    })
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         if (suppressesTriggerForEnteringPermanent(match, may, pe)) {
@@ -1301,7 +1287,7 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
     private boolean handleTokenEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         if (!mayInterveningIfIsMet(match, may, null)) {
             return false;
@@ -1328,9 +1314,9 @@ public class EnterTriggerCollectorService {
         return conditionEvaluationService.isMet(match.gameData(), conditional.condition(), context);
     }
 
-    @CollectsTrigger(value = MayEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         if (may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.CONTROLLER
                 || may.targetSpec() != TargetSpec.NONE) {
@@ -1378,8 +1364,8 @@ public class EnterTriggerCollectorService {
      * The source controller makes the choice, even when the entering creature is controlled by an
      * opponent, and the source must still have a counter when the trigger is created.
      */
-    @CollectsTrigger(value = MoveCounterFromSourceToEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MoveCounterFromSourceToEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureMoveCounterToEntering(TriggerMatchContext match,
                                                             MoveCounterFromSourceToEnteringCreatureEffect effect,
                                                             TriggerContext ctx) {
@@ -1420,8 +1406,8 @@ public class EnterTriggerCollectorService {
     }
 
     /** Handles a controller's choice of which counter to move onto an entering creature. */
-    @CollectsTrigger(value = MoveChosenCounterFromSourceToEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MoveChosenCounterFromSourceToEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureMoveChosenCounterToEntering(
             TriggerMatchContext match, MoveChosenCounterFromSourceToEnteringCreatureEffect effect,
             TriggerContext ctx) {
@@ -1455,8 +1441,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SearchLibraryForCreatureWithSameTotalPowerToughnessEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SearchLibraryForCreatureWithSameTotalPowerToughnessEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureSearchSameTotalPowerToughness(
             TriggerMatchContext match,
             SearchLibraryForCreatureWithSameTotalPowerToughnessEffect effect,
@@ -1501,20 +1487,18 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = MayPayManaEffect.class,
-                    slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class,
-                    slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
-    })
+    @CollectsWatchTrigger(value = MayPayManaEffect.class,
+                    watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
@@ -1600,15 +1584,15 @@ public class EnterTriggerCollectorService {
 
     // ── Value-materialising effects ─────────────────────────────────────────────────────
 
-    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = GainLifeEffect.class, watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureGainLife(TriggerMatchContext match, GainLifeEffect gainLife, TriggerContext ctx) {
         int amount = amountEvaluationService.evaluate(match.gameData(), gainLife.amount(),
                 new AmountContext(match.controllerId(), match.permanent(), null, 0, 0));
         return enqueueGainLife(match, ctx, amount);
     }
 
-    @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DrawCardForTargetPlayerEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureDrawEnteringController(TriggerMatchContext match,
             DrawCardForTargetPlayerEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1617,7 +1601,7 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GainLifeEqualToToughnessEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = GainLifeEqualToToughnessEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureGainLifeEqualToToughness(TriggerMatchContext match,
             GainLifeEqualToToughnessEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1654,8 +1638,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExploreEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ExploreEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureExplore(TriggerMatchContext match,
                                                ExploreEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1681,10 +1665,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
-    })
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class, watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)
     private boolean handleDealDamageToEnteringController(TriggerMatchContext match,
             DealDamageToPlayersEffect damageEffect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1711,8 +1693,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handlePowerToughnessDifferenceLifeLoss(TriggerMatchContext match,
             TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1735,8 +1717,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = LoseLifeEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleLifeLossToEnteringController(TriggerMatchContext match,
             LoseLifeEffect lifeLoss, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1754,8 +1736,8 @@ public class EnterTriggerCollectorService {
      * queue it with the entering creature's controller as the sacrificing player, mirroring the
      * damage-to-entering-controller handler above.
      */
-    @CollectsTrigger(value = SacrificePermanentsEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SacrificePermanentsEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureSacrifice(TriggerMatchContext match,
             SacrificePermanentsEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1781,8 +1763,8 @@ public class EnterTriggerCollectorService {
      * {@link DealDamageToTargetCreatureEffect} with that id baked in as the target — the source being
      * this permanent, so prevention/protection/damage-triggers all key off it.
      */
-    @CollectsTrigger(value = DealDamageToTargetCreatureEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToTargetCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureDealDamageToEntering(TriggerMatchContext match,
             DealDamageToTargetCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1814,8 +1796,8 @@ public class EnterTriggerCollectorService {
      * Queues Marauding Raptor-style damage to the creature that caused the ally-creature trigger.
      * The entering creature is fixed by the event, so no target choice is presented.
      */
-    @CollectsTrigger(value = DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureDealDamageThenBoost(TriggerMatchContext match,
             DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1849,8 +1831,8 @@ public class EnterTriggerCollectorService {
      * that is what {@code SourcePower} and the damage pipeline read at resolution. The permanent-targeting
      * default would instead bind this enchantment and offer no player targets.
      */
-    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToAnyTargetEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEntersDealsPowerDamage(TriggerMatchContext match,
             DealDamageToAnyTargetEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1882,8 +1864,8 @@ public class EnterTriggerCollectorService {
      * The entering permanent is the damage source, while the permanent carrying the trigger remains
      * the source of the triggered ability itself.
      */
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureDealsPowerDamageToEachOpponent(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1924,20 +1906,18 @@ public class EnterTriggerCollectorService {
      * the permanent-targeting default would use. Subtype gating (e.g. Zombie) is applied upstream
      * by {@code TriggeringCardConditionalEffect}; tokens are already excluded by the slot.
      */
-    @CollectsTriggers({
-            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
-                    slot = EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    watch = ZoneChangeWatch.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyNontokenCreatureCreateTokenCopy(TriggerMatchContext match,
             CreateTokenCopyOfTargetPermanentEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -1973,8 +1953,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleOpponentCreatureCreateTokenCopyThenExileOthers(TriggerMatchContext match,
             CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2009,8 +1989,8 @@ public class EnterTriggerCollectorService {
      * Faerie Artisans: exile its previously created tokens before making the new entering-creature
      * copy. The entering creature is fixed at trigger time rather than chosen on resolution.
      */
-    @CollectsTrigger(value = ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleOpponentCreatureExileTrackedTokensAndCreateTokenCopy(
             TriggerMatchContext match, ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect effect,
             TriggerContext ctx) {
@@ -2047,8 +2027,8 @@ public class EnterTriggerCollectorService {
      * creature, except it has this ability." The entering permanent's id is baked in at trigger time
      * and the source permanent rides along as the stack entry's self-target.
      */
-    @CollectsTrigger(value = BecomeCopyOfEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = BecomeCopyOfEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureBecomeCopyOfEntering(TriggerMatchContext match,
             BecomeCopyOfEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2075,8 +2055,8 @@ public class EnterTriggerCollectorService {
      * temporary and does not retain the source's ability, so accepting the may choice also models
      * the parenthetical loss of the ability for the rest of the turn.
      */
-    @CollectsTrigger(value = BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyBecomeCopyOfEnteringUntilEndOfTurn(TriggerMatchContext match,
             BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2106,10 +2086,10 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTriggeringCreatureUntilSourceLeavesEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = ExileTriggeringCreatureUntilSourceLeavesEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ExileTriggeringCreatureUntilSourceLeavesEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ExileTriggeringCreatureUntilSourceLeavesEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureExileUntilSourceLeaves(TriggerMatchContext match,
             ExileTriggeringCreatureUntilSourceLeavesEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2139,8 +2119,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCastCreatureExileUntilSourceLeavesAndReturnOthers(
             TriggerMatchContext match,
             ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect effect,
@@ -2174,8 +2154,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEqualToEnteringPowerEffect.class,
-            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = PutCountersOnSourceEqualToEnteringPowerEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreaturePutCountersEqualToPower(TriggerMatchContext match,
             PutCountersOnSourceEqualToEnteringPowerEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2216,8 +2196,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = IntensifySourceByEnteringPowerEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = IntensifySourceByEnteringPowerEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureIntensifiesSource(TriggerMatchContext match,
             IntensifySourceByEnteringPowerEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2257,8 +2237,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyMayPayLifeAndPutCountersOnEnteringCreature(
             TriggerMatchContext match,
             MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect effect,
@@ -2299,10 +2279,10 @@ public class EnterTriggerCollectorService {
      * the entering permanent and either queue a "you may" ({@code optional}) or bake a mandatory
      * transform onto the stack — both whose {@code targetId} is that creature.
      */
-    @CollectsTrigger(value = TransformEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = TransformEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TransformEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TransformEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyTransformEntering(TriggerMatchContext match,
             TransformEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2340,8 +2320,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EvolveTriggerEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = EvolveTriggerEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyEvolve(TriggerMatchContext match,
             EvolveTriggerEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2393,12 +2373,12 @@ public class EnterTriggerCollectorService {
      * "you may" ({@code optional}) or bake a mandatory counter placement onto the stack — both whose
      * {@code targetId} is that creature, resolved via {@link PutCounterOnTargetPermanentEffect}.
      */
-    @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = PutCountersOnEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = PutCountersOnEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = PutCountersOnEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyPutCountersOnEntering(TriggerMatchContext match,
             PutCountersOnEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2462,8 +2442,8 @@ public class EnterTriggerCollectorService {
     /**
      * Queues a single branch effect for an entering creature whose power is checked at resolution.
      */
-    @CollectsTrigger(value = EnteringCreaturePowerBranchEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = EnteringCreaturePowerBranchEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyEnteringCreaturePowerBranch(TriggerMatchContext match,
                                                             EnteringCreaturePowerBranchEffect effect,
                                                             TriggerContext ctx) {
@@ -2497,8 +2477,8 @@ public class EnterTriggerCollectorService {
      * Queues a single branch effect for an entering creature whose power is compared with the
      * source permanent's power at resolution.
      */
-    @CollectsTrigger(value = EnteringCreatureSourcePowerBranchEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = EnteringCreatureSourcePowerBranchEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyEnteringCreatureSourcePowerBranch(
             TriggerMatchContext match,
             EnteringCreatureSourcePowerBranchEffect effect,
@@ -2544,10 +2524,10 @@ public class EnterTriggerCollectorService {
      * until end of turn" (Ogre Battledriver). Resolves the entering permanent and bakes a mandatory
      * boost (plus keyword grant) onto the stack with that creature as {@code targetId}.
      */
-    @CollectsTrigger(value = BoostEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsTrigger(value = BoostEnteringCreatureEffect.class,
-            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = BoostEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = BoostEnteringCreatureEffect.class,
+            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyBoostEntering(TriggerMatchContext match,
             BoostEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2586,8 +2566,8 @@ public class EnterTriggerCollectorService {
      * permanent and the entering creature are unpaired creatures under the controller. Queues a may
      * with the entering permanent baked as {@code targetId}.
      */
-    @CollectsTrigger(value = SoulbondPairWithEnteringEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SoulbondPairWithEnteringEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllySoulbondPairWithEntering(TriggerMatchContext match,
             SoulbondPairWithEnteringEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2619,8 +2599,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyLookAtTopEqualToEnteringPower(TriggerMatchContext match,
             LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2652,14 +2632,12 @@ public class EnterTriggerCollectorService {
      * markers queue the existing may-attach flow; mandatory markers queue a non-targeting stack
      * entry with the entering permanent already identified.
      */
-    @CollectsTriggers({
-            @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
-                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
-                    slot = EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD)
-    })
+    @CollectsWatchTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
+                    watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
+                    watch = ZoneChangeWatch.ON_CREATURE_ENTERS_FROM_GRAVEYARD)
     private boolean handleCreatureAttachEquipment(TriggerMatchContext match,
             AttachSourceEquipmentToEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2706,12 +2684,10 @@ public class EnterTriggerCollectorService {
      * queue the existing may-attach flow; mandatory markers queue a non-targeting stack entry with
      * the entering permanent already identified.
      */
-    @CollectsTriggers({
-            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
-                    slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
-                    slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsWatchTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+                    watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleCreatureAttachAura(TriggerMatchContext match,
             AttachSourceAuraToEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;

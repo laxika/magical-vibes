@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -46,12 +48,11 @@ public class FlavorDisaster extends Card {
 
     public FlavorDisaster() {
         addMorph("{1}{G}");
-        addEffect(EffectSlot.ON_TURNED_FACE_UP,
-                new PutCountersOnTurnFaceUpEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, false));
+        addStaticEffect(new PutCountersOnTurnFaceUpEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, false));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()))
-                .addEffect(EffectSlot.ON_TURNED_FACE_UP,
+                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()));
     }
 }

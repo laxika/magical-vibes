@@ -12,8 +12,9 @@ import java.util.UUID;
  * @param permanent    a copy of the permanent: as it was just before it phased out (CR 603.10b), and as it is
  *                     after the change otherwise
  * @param controllerId its controller
+ * @param xValue       the X paid to turn it face up, or 0
  */
-public record PermanentChangeEvent(PermanentChange change, Permanent permanent, UUID controllerId)
+public record PermanentChangeEvent(PermanentChange change, Permanent permanent, UUID controllerId, int xValue)
         implements RulesEvent {
 
     public PermanentChangeEvent {
@@ -21,8 +22,13 @@ public record PermanentChangeEvent(PermanentChange change, Permanent permanent, 
         Objects.requireNonNull(permanent, "permanent");
     }
 
+    /** A change no X was paid for. */
+    public PermanentChangeEvent(PermanentChange change, Permanent permanent, UUID controllerId) {
+        this(change, permanent, controllerId, 0);
+    }
+
     @Override
     public PermanentChangeEvent deepCopy() {
-        return new PermanentChangeEvent(change, new Permanent(permanent), controllerId);
+        return new PermanentChangeEvent(change, new Permanent(permanent), controllerId, xValue);
     }
 }

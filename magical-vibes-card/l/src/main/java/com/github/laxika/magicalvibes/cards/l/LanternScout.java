@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "37")
 public class LanternScout extends Card {
@@ -16,7 +18,7 @@ public class LanternScout extends Card {
     public LanternScout() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES)));
     }

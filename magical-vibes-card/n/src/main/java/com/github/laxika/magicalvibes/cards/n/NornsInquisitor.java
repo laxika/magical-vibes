@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class NornsInquisitor extends Card {
 
     public NornsInquisitor() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorToken());
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_TRANSFORMS,
+        addTrigger(Triggers.transforms(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PHYREXIAN),
                         new PutCounterOnReferencedPermanentEffect(
                                 PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE)));

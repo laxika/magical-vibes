@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandMayCastOr
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "101")
 @CardRegistration(set = "FDC", collectorNumber = "141")
@@ -17,7 +19,7 @@ public class BreachingDragonstorm extends Card {
     public BreachingDragonstorm() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileTopUntilNonlandMayCastOrPutIntoHandEffect(new Fixed(8)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON),
                         ReturnToHandEffect.self()));
     }

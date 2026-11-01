@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOW", collectorNumber = "46")
 @CardRegistration(set = "DBL", collectorNumber = "313")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 public class WelcomingVampire extends Card {
 
     public WelcomingVampire() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new EnteringCreatureMaxPowerConditionalEffect(2,
                         new OncePerTurnTriggerEffect(new DrawCardEffect(1))));
     }

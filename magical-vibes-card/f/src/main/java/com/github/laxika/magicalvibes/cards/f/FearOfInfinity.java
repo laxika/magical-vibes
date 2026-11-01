@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -8,6 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "214")
 public class FearOfInfinity extends Card {
@@ -22,7 +27,9 @@ public class FearOfInfinity extends Card {
                         .returnAll(true)
                         .build(),
                 "Return Fear of Infinity from your graveyard to your hand?");
-        addEffect(EffectSlot.GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, returnToHand);
+        addTrigger(new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
+                ObjectRelation.YOU_CONTROL), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
+                returnToHand);
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED, returnToHand);
     }
 }

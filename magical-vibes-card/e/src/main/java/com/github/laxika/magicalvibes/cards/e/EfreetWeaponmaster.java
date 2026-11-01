@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,6 +28,6 @@ public class EfreetWeaponmaster extends Card {
                 )),
                 "Target must be another creature you control"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(3, 0))
-                .addEffect(EffectSlot.ON_TURNED_FACE_UP, new BoostTargetCreatureEffect(3, 0));
+                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new BoostTargetCreatureEffect(3, 0));
     }
 }

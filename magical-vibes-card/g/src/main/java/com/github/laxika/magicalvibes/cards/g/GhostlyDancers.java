@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlockControlledRoomDoorEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class GhostlyDancers extends Card {
         CreateTokenEffect spiritToken = new CreateTokenEffect(
                 "Spirit", 3, 1, CardColor.WHITE,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of());
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, spiritToken);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), spiritToken);
         addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, spiritToken);
     }
 }

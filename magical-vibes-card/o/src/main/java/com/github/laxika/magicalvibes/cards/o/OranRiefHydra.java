@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "181")
 @CardRegistration(set = "DDR", collectorNumber = "16")
@@ -21,9 +22,9 @@ public class OranRiefHydra extends Card {
         // subtypes are checked as the ability triggers, so a land that is exiled in response still
         // counts as whatever it was on the battlefield (Blood Moon makes a nonbasic land a Mountain).
         PermanentHasSubtypePredicate isForest = new PermanentHasSubtypePredicate(CardSubtype.FOREST);
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new TriggeringPermanentConditionalEffect(
-                isForest, new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
+                isForest, new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
+                new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(isForest), new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

@@ -105,8 +105,7 @@ class ValleyMightcallerTest extends BaseCardTest {
     }
 
     private void triggerPermanentEntry(Player controller, Permanent enteringPermanent) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyCreatureEntersTriggers(gd, controller.getId(), enteringPermanent.getCard(), 0));
+        harness.inMutationScope(() -> harness.announceEntry(controller.getId(), enteringPermanent));
         resolveAllTriggers();
     }
 }

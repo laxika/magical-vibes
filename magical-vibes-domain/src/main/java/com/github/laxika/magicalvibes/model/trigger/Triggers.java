@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
@@ -78,6 +79,13 @@ public final class Triggers {
     public static final PermanentPredicate TOKEN = new PermanentIsTokenPredicate();
     /** A nontoken permanent. */
     public static final PermanentPredicate NONTOKEN = new PermanentNotPredicate(new PermanentIsTokenPredicate());
+    /** An Equipment. */
+    public static final PermanentPredicate EQUIPMENT = new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT);
+    /** A creature or an enchantment. */
+    public static final PermanentPredicate CREATURE_OR_ENCHANTMENT = new PermanentAnyOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(), new PermanentIsEnchantmentPredicate()));
+    /** A permanent showing its transformed face. */
+    public static final PermanentPredicate TRANSFORMED = new PermanentIsTransformedPredicate();
 
     /** Every zone but the battlefield and the graveyard: "from anywhere other than the battlefield". */
     private static final Set<Zone> NOT_BATTLEFIELD = EnumSet.complementOf(EnumSet.of(Zone.BATTLEFIELD, Zone.GRAVEYARD));
@@ -271,6 +279,14 @@ public final class Triggers {
     /** "Whenever [a filter permanent] enters" (CR 603.6a). */
     public static ZoneChangeTrigger enters(PermanentPredicate filter, ObjectRelation relation) {
         return new ZoneChangeTrigger(relation, filter, Set.of(), Zone.BATTLEFIELD, Set.of());
+    }
+
+    /**
+     * "Whenever [a player] creates one or more [filter] tokens": the tokens a creation puts onto the battlefield
+     * (CR 701.7a). Unlike "whenever a token enters", it isn't caused by the tokens entering.
+     */
+    public static ZoneChangeTrigger tokensCreated(PermanentPredicate filter, ObjectRelation relation) {
+        return new ZoneChangeTrigger(relation, filter, Set.of(), Zone.BATTLEFIELD, Set.of(ZoneChangeCause.CREATE));
     }
 
     /** "Whenever [a filter permanent] enters from [zone]". */

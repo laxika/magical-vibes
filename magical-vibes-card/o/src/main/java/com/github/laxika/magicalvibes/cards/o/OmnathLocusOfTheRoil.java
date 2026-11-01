@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -45,7 +47,7 @@ public class OmnathLocusOfTheRoil extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
                 "Target must be an Elemental you control"
-        )).addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, SequenceEffect.of(
+        )).addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 ConditionalEffect.unless(
                         new ControlsPermanentCount(8, new PermanentIsLandPredicate()),

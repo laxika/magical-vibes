@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WWK", collectorNumber = "130")
 @CardRegistration(set = "DDP", collectorNumber = "29")
@@ -20,7 +21,7 @@ public class SeersSundial extends Card {
 
     public SeersSundial() {
         // Landfall — Whenever a land you control enters, you may pay {2}. If you do, draw a card.
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new MayPayManaEffect("{2}", new DrawCardEffect(), "Pay {2} to draw a card?"));
     }
 }

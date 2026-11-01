@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTJ", collectorNumber = "108")
 public class TinybonesJoinsUp extends Card {
@@ -20,7 +22,7 @@ public class TinybonesJoinsUp extends Card {
     public TinybonesJoinsUp() {
         target(0, 99).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
-        target(0, 99).addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        target(0, 99).addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         SequenceEffect.of(

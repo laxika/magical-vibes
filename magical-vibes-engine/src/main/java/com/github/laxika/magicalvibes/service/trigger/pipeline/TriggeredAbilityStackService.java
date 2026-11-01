@@ -13,8 +13,10 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.trigger.CreatureDeath;
 import com.github.laxika.magicalvibes.service.trigger.CreatureDeathWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -175,6 +178,39 @@ public class TriggeredAbilityStackService {
     }
 
     /**
+     * Triggers {@code candidate}'s ability once for {@code events}, the permanents phasing, transforming or being
+     * turned face up in one batch that met its trigger condition {@code trigger}: one event for an ability that
+     * triggers for each, all of them for "one or more". Its options are checked as for any ability; its effects go
+     * on the stack the way the old slot collector of its {@link ZoneChangeWatch} put them there.
+     */
+    public void triggerPermanentChange(GameData gameData, TriggerCandidate candidate, List<PermanentChangeEvent> events,
+                                       PermanentChangeTrigger trigger) {
+        ZoneChangeWatch watch = ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone());
+        if (watch == null) {
+            return;
+        }
+        TriggerOptions options = candidate.ability().options();
+        Condition interveningIf = options.interveningIf();
+        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
+                ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId()))) {
+            return;
+        }
+        UUID sourceId = candidate.sourceObjectId();
+        String limitKey = limitKey(candidate);
+        if (limitReached(gameData, options.limit(), sourceId, limitKey)) {
+            return;
+        }
+        List<CardEffect> effects = new ArrayList<>();
+        for (EffectRegistration registration : candidate.ability().effects()) {
+            effects.add(interveningIf == null ? registration.effect()
+                    : new ConditionalEffect(interveningIf, registration.effect(), true));
+        }
+        if (triggerCollectionService.triggerPermanentChange(gameData, watch, candidate, effects, events)) {
+            markLimit(gameData, options.limit(), sourceId, limitKey);
+        }
+    }
+
+    /**
      * An ability of one effect, as the old slot collectors put it on the stack: its wrappers taken off, its event
      * data bound and its targets or mode chosen by {@link LegacyTriggerBindings}.
      */
@@ -298,8 +334,12 @@ public class TriggeredAbilityStackService {
         Permanent source = candidate.sourceAsPermanent();
         boolean creatureDied = event.died() && event.permanent() != null
                 && event.permanent().getCard().hasType(CardType.CREATURE);
+        // A creature dying is told apart, so "a creature you control" doublers (Delney, Streetwise Lookout) judge the
+        // creature by its last-known controller, and see one that died in the same event (CR 603.10a).
+        TriggerContext context = creatureDied ? new TriggerContext.CreatureDeath(event.permanent().getCard(),
+                event.controllerId(), 0, 0, event.permanent().getId(), event.permanent()) : null;
         int additional = gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                gameData, candidate.controllerId(), source, false, null);
+                gameData, candidate.controllerId(), source, false, context);
         if (creatureDied && kind != LegacyTriggerBindings.Kind.SACRIFICED) {
             additional += gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
                     gameData, candidate.controllerId(), source);

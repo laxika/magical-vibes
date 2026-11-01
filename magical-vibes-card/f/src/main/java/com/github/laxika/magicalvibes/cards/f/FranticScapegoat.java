@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectChosenOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "126")
 @CardRegistration(set = "MKM", collectorNumber = "347")
@@ -16,7 +20,8 @@ public class FranticScapegoat extends Card {
 
     public FranticScapegoat() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SuspectEffect(GrantScope.SELF));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE, new ConditionalEffect(
                 new SourceIsSuspected(),
                 new MayEffect(new SuspectChosenOtherCreatureEffect(),
                         "Suspect another creature and stop suspecting this creature?")));

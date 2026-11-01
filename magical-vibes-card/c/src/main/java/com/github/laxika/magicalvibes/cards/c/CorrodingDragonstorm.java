@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "75")
 public class CorrodingDragonstorm extends Card {
@@ -20,7 +22,7 @@ public class CorrodingDragonstorm extends Card {
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(2));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON),
                         ReturnToHandEffect.self()));
     }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -791,7 +792,14 @@ public class MayCopyHandlerService {
                 .findFirst()
                 .orElseThrow();
         EffectSlot retainedEffectSlot = copyEffect.retainedEffectSlot();
-        CardEffect retainedAbility = sourcePermanent.getCard().getEffects(retainedEffectSlot).stream()
+        TriggeredAbility retainedTrigger = retainedEffectSlot != null ? null
+                : sourcePermanent.getCard().getTriggeredAbilities().stream()
+                .filter(candidate -> candidate.effects().stream()
+                        .anyMatch(registration -> registration.effect().equals(copyEffect)))
+                .findFirst()
+                .orElse(null);
+        CardEffect retainedAbility = retainedEffectSlot == null ? copyEffect
+                : sourcePermanent.getCard().getEffects(retainedEffectSlot).stream()
                 .filter(candidate -> candidate.equals(copyEffect)
                         || candidate instanceof SpellCastTriggerEffect trigger
                         && trigger.resolvedEffects().contains(copyEffect))
@@ -803,7 +811,11 @@ public class MayCopyHandlerService {
                 List.of(), copyEffect.copyColor());
 
         Card copiedCard = sourcePermanent.getCard();
-        copiedCard.addEffect(retainedEffectSlot, retainedAbility);
+        if (retainedEffectSlot != null) {
+            copiedCard.addEffect(retainedEffectSlot, retainedAbility);
+        } else if (retainedTrigger != null) {
+            copiedCard.addTriggeredAbility(retainedTrigger);
+        }
 
         String targetName = targetPerm.getCard().getName();
         

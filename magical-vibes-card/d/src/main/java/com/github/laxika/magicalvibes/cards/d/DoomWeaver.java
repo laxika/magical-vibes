@@ -25,7 +25,8 @@ public class DoomWeaver extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Doom Weaver with another unpaired creature you control?"));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SoulbondPairWithEnteringEffect());
 
         // While paired, both creatures have "When this creature dies, draw cards equal to its power."
         addStaticEffect(new ConditionalEffect(

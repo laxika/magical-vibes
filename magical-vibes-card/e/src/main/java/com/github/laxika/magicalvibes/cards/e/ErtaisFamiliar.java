@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
@@ -28,7 +27,7 @@ import java.util.List;
 public class ErtaisFamiliar extends Card {
 
     public ErtaisFamiliar() {
-        addEffect(EffectSlot.ON_SELF_PHASES_OUT, new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.phasesOut(null, ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new MillEffect(3, MillRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(false, "{U}",

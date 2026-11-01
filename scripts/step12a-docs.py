@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """EffectSlot refactor step 12a: rewrites agent-docs and the card skills for the zone-change slots that left
-EffectSlot.
+EffectSlot, the phasing, transform, turned-face-up and "another object enters" slots of part 2 included.
 
 Usage: step12a-docs.py FILE...
 
@@ -10,7 +10,9 @@ Each line that names one of the moved slots gets the trigger its cards were conv
 - ``addEffect(EffectSlot.<slot>, x)`` becomes ``addTrigger(<trigger>, x)``, or
   ``addTrigger(new TriggerCondition(<trigger>, AbilityZones.<zone>), TriggerOptions.<options>, x)`` for a slot that
   functions from another zone or triggers once for one or more;
-- any other mention becomes the trigger.
+- any other mention becomes the trigger;
+- an "as this is turned face up" replacement that was registered in the turned-face-up slot, and an "as this
+  transforms into" effect, become static abilities (``addStaticEffect``), as the cards did.
 
 Every rewritten line is printed with its file and line number for a person to check.
 """
@@ -27,6 +29,15 @@ spec.loader.exec_module(triggers)
 SLOTS = {}
 for family in triggers.FAMILIES.values():
     SLOTS.update(family)
+for script in ('step12a-permanent-change-triggers.py', 'step12a-enters-triggers.py'):
+    part2_spec = importlib.util.spec_from_file_location(script[:-3].replace('-', '_'), HERE / script)
+    part2 = importlib.util.module_from_spec(part2_spec)
+    part2_spec.loader.exec_module(part2)
+    SLOTS.update(part2.FAMILY)
+STATIC = re.compile(r'\baddEffect\(\s*(?:EffectSlot\.)?(?:ON_TURNED_FACE_UP\s*,\s*(?=new (?:PutCountersOnTurnFaceUpEffect|'
+                    r'TurnFaceUpAttachAuraEffect|TurnFaceUpCopyEffect|PowerToughnessFormChoiceEffect|'
+                    r'ChoosePowerToughnessFormEffect)\b)|ON_TRANSFORM_TO_BACK_FACE\s*,\s*(?=new (?:CreateEmblemEffect|'
+                    r'ApplyLudevicCopyEffect)\b))')
 NAMES = '|'.join(sorted(SLOTS, key=len, reverse=True))
 SLOT = re.compile(r'(?:EffectSlot\.)?\b(' + NAMES + r')\b')
 ADD = re.compile(r'\baddEffect\(\s*(?:EffectSlot\.)?(' + NAMES + r')\s*,\s*')
@@ -44,6 +55,7 @@ def head(slot):
 
 
 def rewrite(line):
+    line = STATIC.sub('addStaticEffect(', line)
     line = ADD.sub(lambda m: 'addTrigger(%s, ' % head(m.group(1))[1], line)
     return SLOT.sub(lambda m: head(m.group(1))[0], line)
 

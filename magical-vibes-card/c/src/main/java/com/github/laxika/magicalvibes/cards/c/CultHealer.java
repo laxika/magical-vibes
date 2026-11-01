@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "2")
 public class CultHealer extends Card {
 
     public CultHealer() {
         GrantKeywordEffect gainLifelink = new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF);
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, gainLifelink);
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), gainLifelink);
         addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, gainLifelink);
     }
 }

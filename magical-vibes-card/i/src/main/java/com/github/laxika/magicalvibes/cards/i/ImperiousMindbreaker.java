@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOC", collectorNumber = "33")
 @CardRegistration(set = "VOC", collectorNumber = "71")
@@ -22,7 +24,8 @@ public class ImperiousMindbreaker extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Imperious Mindbreaker with another unpaired creature you control?"));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SoulbondPairWithEnteringEffect());
 
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),

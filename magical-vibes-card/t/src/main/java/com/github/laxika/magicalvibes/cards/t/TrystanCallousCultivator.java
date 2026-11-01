@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECL", collectorNumber = "199")
 @CardRegistration(set = "ECL", collectorNumber = "291")
@@ -23,7 +25,7 @@ public class TrystanCallousCultivator extends Card {
         setBackFaceCard(new TrystanPenitentCuller());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, millThenGainLife());
-        addEffect(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE, millThenGainLife());
+        addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), millThenGainLife());
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new MayPayManaEffect("{B}", new TransformSelfEffect(),
                         "Pay {B} to transform Trystan?"));

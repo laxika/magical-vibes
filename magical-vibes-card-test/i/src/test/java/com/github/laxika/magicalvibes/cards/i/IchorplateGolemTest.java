@@ -53,8 +53,7 @@ class IchorplateGolemTest extends BaseCardTest {
         entering.setCounterCount(CounterType.OIL, 2);
 
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkAllyCreatureEntersTriggers(
-                    gd, player1.getId(), entering.getCard(), 0);
+            harness.announceEntry(player1.getId(), entering);
             entering.setCounterCount(CounterType.OIL, 0);
             harness.getStackResolutionService().resolveTopOfStack(gd);
         });
@@ -129,8 +128,7 @@ class IchorplateGolemTest extends BaseCardTest {
         Permanent entering = harness.addToBattlefieldAndReturn(player1, new IchorplateGolem());
         entering.setCounterCount(CounterType.OIL, 1);
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyCreatureEntersTriggers(gd, player1.getId(), entering.getCard(), 0));
+        harness.inMutationScope(() -> harness.announceEntry(player1.getId(), entering));
         resolveAllTriggers();
 
         assertThat(entering.getCounterCount(CounterType.OIL)).isEqualTo(2);

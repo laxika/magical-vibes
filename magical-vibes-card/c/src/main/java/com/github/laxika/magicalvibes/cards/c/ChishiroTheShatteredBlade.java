@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,9 +32,9 @@ public class ChishiroTheShatteredBlade extends Card {
                 Set.of(CardColor.RED), List.of(CardSubtype.SPIRIT), Set.of(Keyword.MENACE), Set.of(),
                 false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardIsAuraPredicate(), spiritToken));
-        addEffect(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD, spiritToken);
+        addTrigger(Triggers.enters(Triggers.EQUIPMENT, ObjectRelation.ANOTHER_YOU_CONTROL), spiritToken);
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new PutCounterOnEachControlledPermanentEffect(

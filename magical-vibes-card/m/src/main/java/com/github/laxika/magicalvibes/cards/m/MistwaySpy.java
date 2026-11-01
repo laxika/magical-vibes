@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "65")
 public class MistwaySpy extends Card {
@@ -16,7 +18,7 @@ public class MistwaySpy extends Card {
         addMorph("{1}{U}");
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
-        addEffect(EffectSlot.ON_TURNED_FACE_UP,
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                         EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                         CreateTokenEffect.ofClueToken(1)));

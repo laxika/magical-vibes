@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ public class GreensleevesMaroSorcerer extends Card {
         addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.PLANESWALKER)));
         addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.WIZARD)));
         addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new CreateTokenEffect("Badger", 3, 3, CardColor.GREEN,
                         List.of(CardSubtype.BADGER), Set.of(), Set.of()));
     }

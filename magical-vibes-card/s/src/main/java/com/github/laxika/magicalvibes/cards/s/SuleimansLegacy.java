@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "138")
@@ -26,7 +28,7 @@ public class SuleimansLegacy extends Card {
                 true));
 
         // Whenever a Djinn or Efreet enters, destroy it. It can't be regenerated.
-        addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.enters(null, ObjectRelation.ANY), new TriggeringCardConditionalEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.DJINN),
                         new CardSubtypePredicate(CardSubtype.EFREET))),

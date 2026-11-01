@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantTurnFaceUpAbilityToOwnFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceTurnFaceUpCostForPermanentEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -42,8 +44,8 @@ public class GrantTurnFaceUpAbilityToOwnFaceDownCreaturesEffectHandler
             if (!permanent.isFaceDown() || !gameQueryService.isCreature(gameData, permanent)) {
                 continue;
             }
-            permanent.addPersistentTriggeredEffect(EffectSlot.ON_TURNED_FACE_UP,
-                    grant.turnFaceUpEffect());
+            permanent.addPersistentAbility(new TriggeredAbility(
+                    Triggers.turnedFaceUp(null, ObjectRelation.THIS), grant.turnFaceUpEffect()));
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new ReduceTurnFaceUpCostForPermanentEffect(

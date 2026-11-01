@@ -10,13 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "17")
 @CardRegistration(set = "OPCA", collectorNumber = "38")
 public class Immersturm extends Card {
 
     public Immersturm() {
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new MayEffect(DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()),
                         "Have it deal damage to any target?", null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));

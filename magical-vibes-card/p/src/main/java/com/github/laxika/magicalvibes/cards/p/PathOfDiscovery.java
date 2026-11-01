@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "142")
 @CardRegistration(set = "FIC", collectorNumber = "312")
@@ -15,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 public class PathOfDiscovery extends Card {
 
     public PathOfDiscovery() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new ExploreEffect());
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new ExploreEffect());
         // "Whenever a creature you control enters" includes Path itself when it enters as an animated creature.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new SourceIsCreature(), new ExploreEffect()));

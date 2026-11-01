@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
@@ -27,7 +26,7 @@ public class PeltCollector extends Card {
                 new ConditionalEffect(
                         new TriggeringPermanentPowerGreaterThanSourcePower(),
                         new PutCountersOnSourceEffect(1, 1, 1)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, growWhenLarger);
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), growWhenLarger);
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), growWhenLarger);
 
         addStaticEffect(new ConditionalEffect(

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,14 +36,17 @@ public class CovetedFalcon extends Card {
         )).addEffect(EffectSlot.ON_ATTACK,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT));
 
+        TargetGroupMarkerEffect opponent = new TargetGroupMarkerEffect();
+        TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect gainControl =
+                new TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect(2);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_TURNED_FACE_UP, new TargetGroupMarkerEffect());
+        )).bindEffect(opponent);
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentTruePredicate(),
                 "Target must be a permanent you control"
-        ), 0, Integer.MAX_VALUE).addEffect(EffectSlot.ON_TURNED_FACE_UP,
-                new TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect(2));
+        ), 0, Integer.MAX_VALUE).bindEffect(gainControl);
+        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), opponent, gainControl);
     }
 }

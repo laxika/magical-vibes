@@ -3,15 +3,25 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +47,12 @@ import java.util.UUID;
  * {@link LegacyTriggerBindings.Kind}: leaves the battlefield, arrives in a zone, dies, sacrificed. Their controller
  * orders them later all the same (CR 603.3b).
  *
+ * <p>A permanent entering is seen by every permanent on the battlefield after the event, the newcomers and the
+ * entering permanent itself included (CR 603.6a). Those abilities, but for the token watches, are matched as the
+ * entering permanent's own enters abilities are processed ({@link #triggerEnteringObservers}), where the old slot
+ * collectors ran, once the permanents that entered with it are all on the battlefield. A permanent phasing, transforming or being turned face up is a {@link PermanentChangeEvent},
+ * matched against permanent-change triggers: the "one or more" abilities once for the batch, then each event's.
+ *
  * <p>Abilities still held in an {@code EffectSlot} are the slot collectors' business. For the slots a test puts in
  * shadow mode ({@link RulesObserver#shadowedSlots()}), the pipeline also works out what those abilities would
  * trigger once their family moves, reading their wrappers through {@link LegacyTriggerOptions}, and reports it to
@@ -49,23 +65,35 @@ public class RulesEventPipeline {
     private final TriggeredAbilityStackService stackService;
     private final LegacyTriggerOptions legacyTriggerOptions;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentRemovalService permanentRemovalService;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
                               LegacyTriggerOptions legacyTriggerOptions,
-                              @Lazy PredicateEvaluationService predicateEvaluationService) {
+                              @Lazy PredicateEvaluationService predicateEvaluationService,
+                              @Lazy PermanentRemovalService permanentRemovalService) {
         this.triggerIndex = triggerIndex;
         this.stackService = stackService;
         this.legacyTriggerOptions = legacyTriggerOptions;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.permanentRemovalService = permanentRemovalService;
     }
 
     /** Matches the events of {@code batch}, one occurrence that just ended, and triggers what they trigger. */
     public void process(GameData gameData, RulesEventBatch batch) {
         List<ZoneChangeEvent> events = new ArrayList<>();
+        List<PermanentChangeEvent> permanentChanges = new ArrayList<>();
         for (RulesEvent event : batch.events()) {
             if (event instanceof ZoneChangeEvent zoneChange && !triggerIndex.entryCausesNoTriggers(gameData, zoneChange)) {
                 events.add(zoneChange);
+            } else if (event instanceof PermanentChangeEvent permanentChange) {
+                permanentChanges.add(permanentChange);
             }
+        }
+        if (!permanentChanges.isEmpty()) {
+            triggerPermanentChanges(gameData, permanentChanges);
+        }
+        if (events.isEmpty()) {
+            return;
         }
         // CR 603.10a: leaves-the-battlefield abilities look back in time, so a condition that counts a graveyard
         // (Decaying Soil's threshold grant) doesn't count the cards that just died.
@@ -91,6 +119,40 @@ public class RulesEventPipeline {
         }
     }
 
+    /**
+     * The abilities that see a permanent phase, transform or be turned face up. The "one or more" abilities trigger
+     * once for the batch first, then, for each event in order, the other permanents' abilities and the changed
+     * permanent's own, as the old slot collectors queued them.
+     */
+    private void triggerPermanentChanges(GameData gameData, List<PermanentChangeEvent> events) {
+        Map<OneOrMoreKey, ObservedChanges> oneOrMore = new LinkedHashMap<>();
+        List<ChangeMatch> each = new ArrayList<>();
+        for (PermanentChangeEvent event : events) {
+            List<ChangeMatch> own = new ArrayList<>();
+            for (TriggerCandidate candidate : triggerIndex.permanentChangeCandidates(gameData, event)) {
+                PermanentChangeTrigger trigger = TriggerMatcher.matchedPermanentChange(gameData,
+                        predicateEvaluationService, candidate, event);
+                if (trigger == null) {
+                    continue;
+                }
+                if (candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE) {
+                    oneOrMore.computeIfAbsent(new OneOrMoreKey(candidate.sourceObjectId(), candidate.ability()),
+                            ignored -> new ObservedChanges(candidate, trigger, new ArrayList<>())).events().add(event);
+                } else if (trigger.relation() == ObjectRelation.THIS) {
+                    own.add(new ChangeMatch(candidate, trigger, event));
+                } else {
+                    each.add(new ChangeMatch(candidate, trigger, event));
+                }
+            }
+            each.addAll(own);
+        }
+        oneOrMore.values().forEach(observed -> stackService.triggerPermanentChange(gameData, observed.candidate(),
+                observed.events(), observed.trigger()));
+        for (ChangeMatch match : each) {
+            stackService.triggerPermanentChange(gameData, match.candidate(), List.of(match.event()), match.trigger());
+        }
+    }
+
     /** The abilities of other objects that see an object move: "whenever a creature dies". */
     private void triggerObservers(GameData gameData, List<ZoneChangeEvent> events,
                                   Set<OneOrMoreKey> triggeredForBatch) {
@@ -99,7 +161,8 @@ public class RulesEventPipeline {
             for (TriggerCandidate candidate : triggerIndex.observerCandidates(gameData, event, events)) {
                 ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(gameData, predicateEvaluationService,
                         candidate, event, false);
-                if (trigger == null || TriggerMatcher.suppressed(candidate.ability(), event)) {
+                if (trigger == null || TriggerMatcher.suppressed(candidate.ability(), event)
+                        || matchedAsItsEntryIsProcessed(candidate, trigger)) {
                     continue;
                 }
                 if (candidate.ability().options().multiplicity() == TriggerMultiplicity.EACH) {
@@ -114,6 +177,97 @@ public class RulesEventPipeline {
             triggeredForBatch.add(key);
             stackService.triggerOnce(gameData, observed.candidate(), observed.events(), observed.trigger());
         });
+    }
+
+    /**
+     * Whether an ability that sees another permanent enter is matched as the entering permanent's enters abilities
+     * are processed ({@link #triggerEnteringObservers}) rather than as its entry's batch closes: every one but the
+     * token watches, which see a token creation as one event.
+     */
+    private static boolean matchedAsItsEntryIsProcessed(TriggerCandidate candidate, ZoneChangeTrigger trigger) {
+        if (!trigger.entersBattlefield()) {
+            return false;
+        }
+        ZoneChangeWatch watch = ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone());
+        return watch != ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD
+                && watch != ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD;
+    }
+
+    /**
+     * Triggers the "whenever [an object] enters" abilities that see {@code entering} enter, as its own enters
+     * abilities are processed: once every permanent that entered with it is on the battlefield and their entry
+     * choices are made, which is where the mass-entry paths process the permanents of one event together. Every
+     * permanent on the battlefield then is checked, the newcomers and {@code entering} itself included (CR 603.6a).
+     * The entry is the rules event the log still holds for it, with the permanent as it entered. While
+     * {@code GameData.collectingSimultaneousCreatureEntryTriggers} marks such an event, a "one or more" ability that
+     * already triggered for it names this permanent too instead of triggering again (CR 603.2c).
+     */
+    public void triggerEnteringObservers(GameData gameData, Permanent entering, UUID controllerId) {
+        List<ZoneChangeEvent> batch = entryBatch(gameData, entering, controllerId);
+        // The game checks it as it is now that it has entered and its entry choices are made (CR 603.6a): its effective
+        // characteristics, which the triggers' filters are judged on.
+        Permanent asEntered = new Permanent(entering);
+        asEntered.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, entering));
+        ZoneChangeEvent event = batch.stream()
+                .filter(candidate -> candidate.to() == Zone.BATTLEFIELD && candidate.permanent() != null
+                        && candidate.permanent().getId().equals(entering.getId()))
+                .reduce((first, second) -> second).orElseThrow().withPermanent(asEntered);
+        for (TriggerCandidate candidate : triggerIndex.observerCandidates(gameData, event, batch)) {
+            ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(gameData, predicateEvaluationService,
+                    candidate, event, false);
+            if (trigger == null || !matchedAsItsEntryIsProcessed(candidate, trigger)) {
+                continue;
+            }
+            if (candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE
+                    && gameData.collectingSimultaneousCreatureEntryTriggers) {
+                CardEffect marker = candidate.ability().effects().getFirst().effect();
+                if (!gameData.simultaneousCreatureEntryTriggers
+                        .computeIfAbsent(candidate.sourceObjectId(), ignored -> new HashSet<>()).add(marker)) {
+                    joinTriggeredEntry(gameData, candidate, entering.getId());
+                    continue;
+                }
+            }
+            stackService.trigger(gameData, candidate, event, trigger);
+        }
+    }
+
+    /**
+     * The batch the log holds {@code entering}'s entry in, newest first; a permanent whose entry the log no longer
+     * holds is described as it is now.
+     */
+    private List<ZoneChangeEvent> entryBatch(GameData gameData, Permanent entering, UUID controllerId) {
+        List<RulesEventBatch> pending = gameData.rulesEvents.pending();
+        for (int index = pending.size() - 1; index >= 0; index--) {
+            List<ZoneChangeEvent> events = new ArrayList<>();
+            boolean found = false;
+            for (RulesEvent rulesEvent : pending.get(index).events()) {
+                if (rulesEvent instanceof ZoneChangeEvent zoneChange) {
+                    events.add(zoneChange);
+                    found |= zoneChange.to() == Zone.BATTLEFIELD && zoneChange.permanent() != null
+                            && zoneChange.permanent().getId().equals(entering.getId());
+                }
+            }
+            if (found) {
+                return events;
+            }
+        }
+        return List.of(new ZoneChangeEvent(entering.getOriginalCard(), gameData.ownerOf(entering.getOriginalCard()),
+                entering.getEnteredFromZone(), Zone.BATTLEFIELD, ZoneChangeCause.OTHER, new Permanent(entering),
+                controllerId));
+    }
+
+    /** Names {@code enteringId} on the stack objects a "one or more" ability of {@code candidate} already put there. */
+    private static void joinTriggeredEntry(GameData gameData, TriggerCandidate candidate, UUID enteringId) {
+        for (StackEntry entry : gameData.stack) {
+            if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                    && candidate.sourceObjectId().equals(entry.getSourcePermanentId())
+                    && !entry.getTriggeringPermanentIds().isEmpty()
+                    && !entry.getTriggeringPermanentIds().contains(enteringId)) {
+                List<UUID> group = new ArrayList<>(entry.getTriggeringPermanentIds());
+                group.add(enteringId);
+                entry.setTriggeringPermanentIds(group);
+            }
+        }
     }
 
     /** The moving objects' own abilities, and the slot abilities shadow mode reports. */
@@ -164,6 +318,16 @@ public class RulesEventPipeline {
     }
 
     private record OneOrMoreKey(UUID sourceId, TriggeredAbility ability) {
+    }
+
+    /** A candidate whose ability's permanent-change trigger condition {@code trigger} {@code event} met. */
+    private record ChangeMatch(TriggerCandidate candidate, PermanentChangeTrigger trigger,
+                               PermanentChangeEvent event) {
+    }
+
+    /** A "one or more" permanent-change ability and the events of the batch that met its {@code trigger}. */
+    private record ObservedChanges(TriggerCandidate candidate, PermanentChangeTrigger trigger,
+                                   List<PermanentChangeEvent> events) {
     }
 
     /** A candidate whose ability's trigger condition {@code trigger} an event met. */

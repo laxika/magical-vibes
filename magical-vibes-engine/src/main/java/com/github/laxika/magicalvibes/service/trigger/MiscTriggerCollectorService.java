@@ -4101,7 +4101,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_OTHER_PERMANENT_PHASES_OUT)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_OTHER_PERMANENT_PHASES_OUT)
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CARD_EXILED)
     boolean handleGlobalPhaseOutOrCardExileTriggers(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {

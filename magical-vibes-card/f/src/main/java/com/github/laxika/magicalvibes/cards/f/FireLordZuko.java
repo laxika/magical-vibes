@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,6 +30,6 @@ public class FireLordZuko extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null, List.of(counterEffect),
                         new StackEntryCastFromZonePredicate(Zone.EXILE)));
-        addEffect(EffectSlot.ON_PERMANENT_ENTERS_FROM_EXILE, counterEffect);
+        addTrigger(Triggers.entersFrom(Zone.EXILE, null, ObjectRelation.YOU_CONTROL), counterEffect);
     }
 }

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -15,7 +17,7 @@ public class EyeOfMalcator extends Card {
 
     public EyeOfMalcator() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new AnimatePermanentsEffect(4, 4,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.EYE), Set.of()));
     }

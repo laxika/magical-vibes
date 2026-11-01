@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "40K", collectorNumber = "6")
 @CardRegistration(set = "40K", collectorNumber = "172")
@@ -26,7 +28,7 @@ public class BelakorTheDarkMaster extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LoseLifeEffect(demons, LoseLifeRecipient.CONTROLLER));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DEMON),
                         new DealDamageToAnyTargetEffect(new SourcePower())));

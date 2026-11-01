@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +29,7 @@ public class BrigidClachansHeart extends Card {
 
         // Whenever this creature enters or transforms into Brigid, Clachan's Heart, create a 1/1 green and white Kithkin creature token.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, kithkinToken);
-        addEffect(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE, kithkinToken);
+        addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), kithkinToken);
 
         // At the beginning of your first main phase, you may pay {G}. If you do, transform Brigid.
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,

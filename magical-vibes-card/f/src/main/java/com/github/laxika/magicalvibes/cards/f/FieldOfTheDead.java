@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "247")
 @CardRegistration(set = "SLD", collectorNumber = "1356")
@@ -32,6 +34,6 @@ public class FieldOfTheDead extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, landfall);
 
         // Whenever another land you control enters, use the same condition and token effect.
-        addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, landfall);
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), landfall);
     }
 }
