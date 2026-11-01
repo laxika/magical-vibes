@@ -22,7 +22,7 @@ re-check them with a grep before acting on them.
 | 6 | Static abilities leave the enum | done |
 | 7 | Activated and mana abilities in one list | done |
 | 8 | Replacement effects, special actions and markers leave the enum | done |
-| 9 | Rules events for zone changes, and shadow mode | open |
+| 9 | Rules events for zone changes, and shadow mode | done |
 | 10 | Trigger index and the generic trigger pipeline | open |
 | 11 | Creature-death triggers and self-inclusion | open |
 | 12 | The rest of the zone-change family | open |
@@ -1992,6 +1992,226 @@ CR 113.3's four kinds.
   The War Doctor, Distracted Botanist, Mirrored Lotus, Planeswalkerificate, Clone, Phantasmal Image and Serum
   Powder. The four new as-enters tests were run again on their own and pass.
 - The whole build, every card module and every test source compiles. The full card suite was not run here.
+
+### Step 9
+
+**Types** (`magical-vibes-domain`, `model.rules`). Nothing reads them yet except the tests and the shadow recorder.
+
+- `RulesEvent`: a sealed interface, for now permitting only `ZoneChangeEvent`. It has `deepCopy()` for simulation
+  copies. It lives apart from `model.event`, whose domain events no rules code may read.
+- `ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause, Permanent permanent,
+  UUID controllerId)`:
+  - `card` is the physical card; for a merged or melded permanent it is the original card.
+  - `from` is `null` when the object came from outside the game or nothing knew where it was: a created token, a
+    conjured card, a card a test put straight into a zone.
+  - `permanent` is the last-known copy for a departure and a copy taken as it entered for an entry. Moves between
+    other zones have none.
+  - `controllerId` is set for departures and entries only.
+  - It has `leftBattlefield()`, `enteredBattlefield()` and `withTo(zone)`.
+- `ZoneChangeCause`: `OTHER`, `DESTROY`, `SACRIFICE`, `STATE_BASED`, `DISCARD`, `MILL` and `CAST`.
+  `ZoneChangeCause.of(DepartureCause)` maps `STATE_BASED_DESTROY` to `DESTROY`: lethal damage destroys (CR 704.5g).
+- `RulesEventBatch(long id, List<RulesEvent> events)`: one occurrence, never empty (CR 603.2c).
+- `RulesEventLog`: the mutable log on `GameData.rulesEvents`. It holds:
+  - the closed batches and the open one, with nested `beginBatch`/`endBatch` scopes, the outermost of which closes
+    the batch;
+  - the zone each card was last seen arriving in (`track`, `zoneOf`);
+  - the departures whose card hasn't arrived anywhere yet;
+  - per-object causes (`setCause`/`restoreCause`);
+  - a suppression depth (`suppress`/`resume`).
+
+  An event emitted outside a scope is a batch of its own. `drain()` takes the closed batches and leaves an open
+  batch open. `pending()` reads everything without taking it. `copyFrom` deep-copies all of it.
+- `RulesObserver`: a test hook on `GameData.rulesObserver`. It has `triggerQueued(Route, item)` and
+  `eventsDrained(batches)`. The routes are `STACK`, `MANA_ABILITY_QUEUE`, `SUSPENDED_QUEUE`, `MAY_ABILITY` and
+  `INTERACTION`.
+
+**Where zone changes are emitted.** There are three kinds of choke point, which together cover every place where a
+card changes zones. Step 1 found no single choke point, with about 140 `processCreatureETBEffects` callers and 179
+`addCardToGraveyard` callers, so the hooks sit below them.
+
+- **Departures**: `PermanentRemovalService.processRemovalCleanup`, through the new `emitDeparture`. Both
+  `removeFromBattlefield` (now given its destination by its nine callers) and `processAlreadyRemovedToGraveyard`
+  reach it, and every battlefield leave path goes through one of the two. The snapshot is the one `DepartureService`
+  published in `simultaneousDyingPermanents` before a batch left (CR 603.10a). Without a batch, it is the existing
+  departure snapshot with the effective card it left as. Phasing never reaches it (CR 702.26d).
+- **Entries**: `BattlefieldPlacementService.completePlacement`, right after the permanent is added to the
+  battlefield. `from` is the card's tracked zone, or `Permanent.getEnteredFromZone()` when the zone is unknown.
+  Upgrade places a permanent and then undoes its entry: `PermanentRemovalService.exileInsteadOfEntering` exiles it
+  instead, and `UpgradeSupport.applyUpgrade` merges it into the artifact it covers. Both call the new
+  `RulesEventLog.retractEntry`, so an entry that didn't happen leaves no event.
+- **Every other arrival**: GameData's own zone lists report each card added to them. That covers the hand, library
+  and graveyard lists (which already existed for commander moves), the new `CommandZoneMap`/`CommandZoneList`, the
+  new `ExileZoneList` behind `exiledCards`, and spells reaching the stack in `TriggerAwareStackList` (CR 601.2a; not
+  copies, cause `CAST`). This needs no change at the 500-odd call sites that add cards to these lists. A card added
+  straight to a list is still a zone change, and so are test setups (`harness.setGraveyard` and so on), which
+  produce events with `from == null`. Putting a whole list into a zone map (`setHand`, `setLibrary`, game setup)
+  only tracks the cards' zone and emits nothing.
+
+**How arrivals and departures fit together.**
+
+- An arrival names the zone the log last saw the card in, so a card that was taken out of its zone before it was
+  added elsewhere (the usual order) still has the right `from`. An arrival in the zone the card is already in emits
+  nothing: a library reordered or a card put back on top. `LibraryCardList.set` (shuffles, Bombardment's swap)
+  never emits.
+- A departure is emitted as the permanent leaves, with the destination its caller intended. When its card then
+  arrives in another zone because a replacement redirected it (CR 614.6), for example `GraveyardService`'s
+  extra-turn exile, egg counters, the library replacements or Rest in Peace, the departure event is rewritten in
+  place to the actual zone. A departure is therefore always one event. The card ids of every component
+  (`cardsLeavingBattlefield`, the original and the current card) wait for that arrival. The first one to arrive
+  ends the wait.
+- A departure whose card never arrives keeps its intended zone. That happens for tokens (CR 111.7: a token that left
+  the battlefield went to that zone before it ceased to exist) and for `removePermanentWithoutDestination`
+  (`OUTSIDE_GAME`). Spellmorph's `STACK` departure is then met by its stack arrival.
+
+**Causes.** The engine names a cause around the call that moves one object:
+
+- `PermanentRemovalService.departToGraveyard`: every `DepartureIntent` cause, so destroy, sacrifice and state-based
+  removals, including a sacrifice that a replacement sends into exile;
+- `GraveyardService.discardCard`: `DISCARD`, which still applies when Library of Leng puts the card on the library
+  or madness exiles it;
+- `GraveyardService.millCards`: `MILL`, per card.
+
+Everything else is `OTHER`. An entry's cause is `OTHER` unless one was named for the permanent's id; none is yet.
+
+**Batches.**
+
+- The existing scopes open rules event batches as well: `beginPermanentLeaveBatch`/`endPermanentLeaveBatch` (so
+  `DepartureService.perform` and `performSimultaneousRemovals`), `beginGraveyardLeaveBatch`/`endGraveyardLeaveBatch`
+  (which also wraps `BattlefieldEntryBatchSupport.placeCards` and the mass graveyard returns) and
+  `GameData.runAsSingleCardExileBatch`.
+- `millCards` opens its own batch.
+- Everything else is one batch per event. Tokens created by one effect, for example, are separate batches. The
+  `collectingSimultaneousCreatureEntryTriggers` flag is not a scope, and token creation sets none. Step 12 needs
+  real scopes there; `TOKEN_CREATION` is a token-creation event.
+- The batches are drained in `TriggeredAbilityQueueService.beginTriggerOrder`, after its awaiting-input guard and
+  before the APNAP ordering, which is the point where step 10's matcher will run (CR 603.3). For now the drained
+  batches only reach the observer. A batch scope left open by mistake is never drained, so keep scopes in
+  `try`/`finally`.
+
+**Copies.**
+
+- `simulationFrameCopy` fills the copy's zone lists while the copy's log is suppressed, then `copyFrom`s this game's
+  log. That copy includes pending batches, waiting departures (remapped to the copied events), tracked zones and
+  causes.
+- `restoreMutableStateFrom` (turn restart) suppresses the log while it refills the lists, then restores the log from
+  the snapshot. `rulesEvents` and `rulesObserver` are now in `preservedDuringTurnRestart`.
+- `rulesObserver` is never copied. It is in `SimulationCopyCompletenessTest.DELIBERATELY_NOT_COPIED`.
+- Cost per simulation frame: one map entry per card the game has seen, plus the pending batches, which are drained
+  before every priority.
+
+**The shadow recorder** (`magical-vibes-engine` test fixtures, `testutil`).
+
+- `ShadowTriggerRecorder.attach(gameData)` installs itself as `rulesObserver`. `GameTestHarness` attaches one to
+  every game and exposes it as `getShadowRecorder()`.
+- The old path: `GameData` reports these routes:
+  - every `TRIGGERED_ABILITY` entry added to the stack (`enqueueTrigger`, direct `stack.add`, the `queueMayAbility`
+    variants, all of which end in `stack.add`);
+  - `enqueueTrigger`'s mana-ability and subgame queues;
+  - every `PendingMayAbility` (the list is now an `ObservedMayAbilityList`; this includes resolution-time "may"
+    questions);
+  - `queueInteraction` and `queueInteractionFirst`.
+
+  An item is recorded once by identity. A stack entry that waited in the mana-ability queue isn't recorded again
+  when it is flushed, and the extra copies `activeTriggeredAbilityCopies` makes are never reported. Each record
+  holds the route, a `ShadowTrigger(sourceCardId, effects)` and the item.
+- The new path's input: drained batches plus `pending()`. `clear()` forgets everything so far without draining the
+  game.
+- `differences()` keeps the old-path records with a source that the `ShadowComparison` `compares`, and matches them
+  as a multiset against `comparison.newPath(gameData, batches)`. Effects compare by value, because collectors bind
+  `…AwareEffect`s into new records. Interactions have no readable source or effects. They are kept for diagnosis
+  only, and a trigger that reaches the stack after its interaction is compared through its stack entry.
+- `ShadowComparison.CURRENT` is `NONE`: no family is in shadow mode. `BaseCardTest`'s new `@AfterEach
+  assertShadowTriggerPathsAgree` runs `assertPathsAgree()` in every card test, so it runs and compares nothing yet.
+  A test can pass another comparison through `setComparison`.
+
+**For step 10.**
+
+- Set `ShadowComparison.CURRENT` to the pilot's comparison:
+  - `compares`: the trigger's source card has those effects in a pilot slot (by value, unwrapped where the collector
+    unwraps);
+  - `newPath`: what the matcher triggers for the batches.
+
+  Every card test then shadows the pilot with no other change.
+- The old collectors queue at the choke point, inside the action, while the batches are drained later, at
+  `beginTriggerOrder`. The comparison covers the whole test, not each batch. Step 10's matcher must read the
+  snapshots on the events, not the live board, for look-back triggers (CR 603.10a).
+- Old-path may abilities that are asked before the stack (`MAY_ABILITY`) are recorded, and so are the
+  resolution-time ones. `compares` must tell them apart, for example by whether the effects are a pilot slot's
+  registrations.
+- Gaps the matcher will meet:
+  - A card moved between two players' zones of the same kind (one graveyard to another) is no event: the log tracks
+    a `Zone`, not an owner's zone.
+  - Cards arriving from a sideboard come from `null`: sideboards aren't tracked.
+  - The ante zone is reported as `EXILE`, because the engine represents it as exile entries.
+  - A commander whose zone move is deferred (`deferCommanderZoneMove`) arrives only when the owner's choice is made.
+    If that happens after the departure's batch was drained, its departure keeps the intended zone and the later
+    arrival is a second event from that zone.
+
+**Tests changed.**
+
+- `SimulationCopyCompletenessTest`: `rulesObserver` added to `DELIBERATELY_NOT_COPIED`.
+- `GameDataDeepCopyTest` (`magical-vibes-ai`): new `deepCopyPreservesPendingRulesEventsIndependently`. Pending
+  events and tracked zones survive a copy and stay independent; the copy emits nothing while it is built and
+  carries no observer.
+- New `RulesEventLogTest` (`magical-vibes-application`, `model/rules/`): tracked origins, moves inside a zone,
+  batches and scopes, drain, departures and their rewrite, entries, retracted entries, causes, suppression and
+  copies.
+- New `ZoneChangeRulesEventTest` (`magical-vibes-application`, `mechanics/`). It resolves each choke point through
+  the engine with real cards:
+  - destroy with last-known power (Giant Growth, then Terror);
+  - a Wrath of God as one batch of three;
+  - sacrifice (Diabolic Edict);
+  - lethal damage (Shock);
+  - bounce (Unsummon);
+  - exile (Swords to Plowshares);
+  - top of library (Griptide);
+  - Rest in Peace turning a death into one move to exile;
+  - tokens entering from nowhere and dying (Raise the Alarm, Wrath of God);
+  - a creature cast from hand to stack to battlefield;
+  - an instant from stack to graveyard;
+  - a mill as one batch (Tome Scour);
+  - discard (Mind Rot);
+  - draw (Divination);
+  - graveyard to hand (Raise Dead);
+  - graveyard to exile (Coffin Purge);
+  - a library reorder emitting nothing;
+  - the drain before priority;
+  - an old-path trigger being recorded (Soul Warden).
+- `BaseCardTest` and `GameTestHarness` gained the recorder and its `@AfterEach`.
+- Three card tests that the user's full run reported failing were flaky, depending on randomness that this step
+  doesn't touch. Each failure was reproduced and explained before the test was changed:
+  - `SeedlingCharmTest#returnsAuraToOwnerRatherThanController` and
+    `HurkylsRecallTest#doesNotReturnArtifactsOwnedByAnotherPlayer` assert by name that a card is not in a hand. The
+    random 10E white opening hand sometimes holds a Pacifism or an Icy Manipulator. The first test now empties
+    player 2's hand; `HurkylsRecallTest` empties both hands in a `@BeforeEach`, which also makes its by-name
+    `assertInHand` checks meaningful.
+  - `FearOfChangeTest`: the conjured mana-value-4 creature is random.
+    - `conjuringTheCreatureTriggersConjureAbilities`: when the creature has an enters question of its own (Gavony
+      Silversmith, Skeleton Archer, Solemn Simulacrum, Species Specialist), `resolveAllTriggers` stops at it before
+      Thayan Evokers' ability resolves. The test now asserts that the conjure ability is on the stack with Thayan
+      Evokers' `ON_CONTROLLER_CONJURES` effects; resolving it is Thayan Evokers' own test.
+    - The two "conjures a creature with mana value four" tests: when the creature is a Clone or Phyrexian Metamorph,
+      it waits on its "enter as a copy" question. The tests now decline the question, and then the 0/0 dies, so they
+      look for the conjured card (`isConjured()`) on the battlefield or in the graveyard.
+
+    Probes of 250 to 400 draws per Fear of Change scenario now pass.
+
+**Test runs.**
+
+- Card: 3,302 classes, 25,839 tests, all passing. That is the card test classes of steps 10 and 11
+  (`--gradle-args 10` and `11`), plus every card whose class names a mill, discard, madness, mutate, meld, flicker,
+  blink or exile-instead-of-graveyard effect. The Upgrade cards (Weaponized Scrap; Iron Spider, Stark Upgrade; and
+  Biogenic Upgrade) and Do Over (turn restart) were run again after `retractEntry` and pass. Every card test now
+  runs the shadow recorder and its `@AfterEach`.
+- AI: the whole module (1,620 tests). It has the same 10 failures as steps 7 and 8.
+- Application: the new tests, `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`, `CardFreezeTest`,
+  `CommanderGameTest`, `GameDataExileTrackingTest`, `GameRegistrySessionTest`, `DepartureServiceOrphanedStepBatchTest`,
+  `AsEntersInteractionServiceTest`, `PermanentRemovalServiceTest` and `BattlefieldPlacementServiceTest` (172
+  tests). There are 72 failures. The last two classes have 70 of them (mock wiring: null `DepartureService`,
+  `layerSystemServiceProvider` and `AsEntersDiscardSupport`), and the two architecture tests have the known one
+  each. With the change stashed, HEAD fails the same four classes with the same per-class counts.
+- The full suite was not run here.
+
 
 ## Prompt
 

@@ -484,6 +484,7 @@ public class BattlefieldPlacementService {
         // CR 400.7: the entering permanent is a new object, so it forgets mana noted by its previous object.
         gameData.notedMana.remove(permanent.getCard().getId());
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        gameData.rulesEvents.entered(permanent, gameData.ownerOf(permanent.getOriginalCard()), controllerId);
         if (creaturePositioningSupport != null) {
             creaturePositioningSupport.applyChosenPosition(gameData, controllerId, permanent);
         }

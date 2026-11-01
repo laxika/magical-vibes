@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -72,6 +73,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -165,6 +167,7 @@ public class PermanentRemovalService {
     }
 
     public void beginPermanentLeaveBatch(GameData gameData) {
+        gameData.rulesEvents.beginBatch();
         if (gameData.permanentLeaveNotificationDepth++ > 0) {
             return;
         }
@@ -182,6 +185,7 @@ public class PermanentRemovalService {
         if (gameData.permanentLeaveNotificationDepth <= 0) {
             return;
         }
+        gameData.rulesEvents.endBatch();
         if (--gameData.permanentLeaveNotificationDepth > 0) {
             return;
         }
@@ -371,6 +375,16 @@ public class PermanentRemovalService {
      */
     public boolean departToGraveyard(GameData gameData, Permanent target, DepartureIntent intent,
                                      DeathExileReplacement chosenReplacement) {
+        ZoneChangeCause previousCause = gameData.rulesEvents.setCause(target.getId(), ZoneChangeCause.of(intent.cause()));
+        try {
+            return departToGraveyardFor(gameData, target, intent, chosenReplacement);
+        } finally {
+            gameData.rulesEvents.restoreCause(target.getId(), previousCause);
+        }
+    }
+
+    private boolean departToGraveyardFor(GameData gameData, Permanent target, DepartureIntent intent,
+                                         DeathExileReplacement chosenReplacement) {
         return switch (intent.cause()) {
             case DESTROY -> destroyPermanentToGraveyard(gameData, target, chosenReplacement);
             case SACRIFICE -> sacrificePermanentToGraveyard(gameData, target, chosenReplacement);
@@ -552,7 +566,7 @@ public class PermanentRemovalService {
         int persistInstances = lookBack.persistInstances();
         boolean creatureDeathTriggersSuppressed = lookBack.creatureDeathTriggersSuppressed();
         boolean selfGraveyardTriggerSuppressed = lookBack.selfGraveyardTriggerSuppressed();
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.GRAVEYARD);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1207,7 +1221,7 @@ public class PermanentRemovalService {
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId, wasCreature, wasLand,
                 hadPrintedAbilitiesBeforeRemoval(gameData, target),
                 gameData.simultaneousDyingPermanents.getOrDefault(target.getId(), target).getCard(),
-                wasCreature ? dyingPowerAtDeath : null);
+                wasCreature ? dyingPowerAtDeath : null, Zone.GRAVEYARD);
 
         if (!creatureDeathTriggersSuppressed) {
             triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD, info.lastKnownCard());
@@ -1272,7 +1286,7 @@ public class PermanentRemovalService {
             triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval, target);
         }
         boolean werewhatTransformed = target.getWerewhatCompanionCard() != null;
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.HAND);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1320,7 +1334,7 @@ public class PermanentRemovalService {
     /** Removes a permanent from the battlefield and puts its card into its owner's command zone. */
     public boolean removePermanentToCommandZone(GameData gameData, Permanent target) {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.COMMAND);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1367,7 +1381,7 @@ public class PermanentRemovalService {
 
     private boolean removePermanentWithoutDestination(GameData gameData, Permanent target, Zone destination) {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, destination);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1404,6 +1418,7 @@ public class PermanentRemovalService {
             if (battlefield == null || !battlefield.remove(target)) {
                 continue;
             }
+            gameData.rulesEvents.retractEntry(target.getId());
             Card physicalCard = target.getOriginalCard();
             if (!physicalCard.isToken()) {
                 exileService.exileCard(gameData, ownerOfCard(gameData, physicalCard, playerId), physicalCard);
@@ -1473,7 +1488,7 @@ public class PermanentRemovalService {
         int exiledPowerAtTrigger = wasCreature
                 ? Math.max(0, gameQueryService.getEffectivePower(gameData, target))
                 : 0;
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.EXILE);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1599,7 +1614,7 @@ public class PermanentRemovalService {
         }
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.LIBRARY);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1663,7 +1678,7 @@ public class PermanentRemovalService {
         }
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.LIBRARY);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1754,7 +1769,7 @@ public class PermanentRemovalService {
         }
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.LIBRARY);
         if (removed.isEmpty()) {
             return false;
         }
@@ -1836,7 +1851,7 @@ public class PermanentRemovalService {
         }
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
+        Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.LIBRARY);
         if (removed.isEmpty()) {
             return false;
         }
@@ -2519,7 +2534,8 @@ public class PermanentRemovalService {
                 visualCueService.resolvingSource(gameData));
     }
 
-    private Optional<RemovedPermanentInfo> removeFromBattlefield(GameData gameData, Permanent target) {
+    /** Removes {@code target} from the battlefield on its way to {@code destination} and runs its leave cleanup. */
+    private Optional<RemovedPermanentInfo> removeFromBattlefield(GameData gameData, Permanent target, Zone destination) {
         gameData.deathReplacementsCanRerunEffect = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -2658,7 +2674,7 @@ public class PermanentRemovalService {
                 ZoneChangeCounterSupport.preserve(gameData, target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature, wasLand,
-                        hadPrintedAbilities, lastKnownCard, powerAtDeparture));
+                        hadPrintedAbilities, lastKnownCard, powerAtDeparture, destination));
             }
         }
         return Optional.empty();
@@ -2720,15 +2736,17 @@ public class PermanentRemovalService {
 
     /**
      * Performs all leaving-the-battlefield cleanup for a permanent that has already been removed
-     * from the battlefield list. This is the single point where structural cleanup happens.
+     * from the battlefield list. This is the single point where structural cleanup happens, and
+     * where the departure's rules event is emitted (see {@link #emitDeparture}).
      */
     private RemovedPermanentInfo processRemovalCleanup(
             GameData gameData, Permanent target, UUID controllerId, boolean wasCreature, boolean wasLand,
-            boolean hadPrintedAbilities, Card lastKnownCard, Integer powerAtDeparture) {
+            boolean hadPrintedAbilities, Card lastKnownCard, Integer powerAtDeparture, Zone destination) {
         Permanent departureSnapshot = new Permanent(target);
         departureSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilities);
         departureSnapshot.setLastKnownPower(powerAtDeparture);
         departureSnapshot.setLastKnownSupertypes(Set.copyOf(lastKnownCard.getSupertypes()));
+        emitDeparture(gameData, target, departureSnapshot, lastKnownCard, controllerId, destination);
         gameData.departedPermanentSnapshots.put(target.getCard().getId(), departureSnapshot);
         gameData.departedPermanentSnapshots.put(target.getOriginalCard().getId(), departureSnapshot);
         gameData.departedPermanentControllerIds.put(target.getCard().getId(), controllerId);
@@ -2775,6 +2793,29 @@ public class PermanentRemovalService {
         handlePreparedSpellCleanup(gameData, target);
         clearSoulbondPairing(gameData, target);
         return new RemovedPermanentInfo(controllerId, ownerId, hadPrintedAbilities, lastKnownCard);
+    }
+
+    /**
+     * Emits the zone change of {@code target} leaving the battlefield for {@code destination}. Its snapshot is the
+     * one {@link DepartureService} took before a simultaneous batch left, when there is one (CR 603.10a), and
+     * otherwise {@code departureSnapshot} with the effective card it left as.
+     */
+    private void emitDeparture(GameData gameData, Permanent target, Permanent departureSnapshot, Card lastKnownCard,
+                               UUID controllerId, Zone destination) {
+        Permanent batchSnapshot = gameData.simultaneousDyingPermanents.get(target.getId());
+        Permanent lastKnown;
+        if (batchSnapshot != null) {
+            lastKnown = new Permanent(batchSnapshot);
+        } else {
+            lastKnown = new Permanent(departureSnapshot);
+            lastKnown.setCard(lastKnownCard);
+        }
+        Set<UUID> cardIds = new LinkedHashSet<>();
+        cardIds.add(target.getOriginalCard().getId());
+        cardIds.add(target.getCard().getId());
+        target.cardsLeavingBattlefield().forEach(card -> cardIds.add(card.getId()));
+        gameData.rulesEvents.departed(lastKnown, target.getOriginalCard(), cardIds,
+                resolvePermanentOwner(gameData, target, controllerId), controllerId, destination);
     }
 
     private void notifyPermanentLeftBattlefield(GameData gameData, Permanent leavingPermanent,

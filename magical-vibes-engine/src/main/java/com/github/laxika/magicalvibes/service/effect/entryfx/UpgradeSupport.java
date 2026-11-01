@@ -65,6 +65,7 @@ public class UpgradeSupport {
 
         gameData.playerBattlefields.get(controllerId).removeIf(
                 permanent -> permanent.getId().equals(enteringPermanent.getId()));
+        gameData.rulesEvents.retractEntry(enteringPermanent.getId());
     }
 
     private List<Permanent> controlledArtifacts(GameData gameData, UUID controllerId,

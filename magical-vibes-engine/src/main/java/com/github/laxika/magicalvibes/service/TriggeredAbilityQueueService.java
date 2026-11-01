@@ -1929,6 +1929,10 @@ public class TriggeredAbilityQueueService {
      * triggers are waiting to go on the stack, before a player receives priority. Every new trigger is
      * marked as ordered so it never joins a later batch.
      *
+     * <p>First it drains the game's closed rules event batches ({@link GameData#drainRulesEvents}): this is
+     * where the trigger pipeline will match them against triggered abilities (CR 603.3). No event family is
+     * matched yet, so for now the batches only reach a test's shadow recorder.
+     *
      * @return true when an ordering prompt was opened
      */
     public boolean beginTriggerOrder(GameData gameData) {
@@ -1936,6 +1940,7 @@ public class TriggeredAbilityQueueService {
                 || !gameData.pendingMayAbilities.isEmpty()) {
             return false;
         }
+        gameData.drainRulesEvents();
         putNewTriggersInApnapOrder(gameData);
         for (UUID playerId : apnapOrder(gameData)) {
             List<StackEntry> batch = gameData.stack.stream()

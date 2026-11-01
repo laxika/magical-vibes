@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
@@ -268,17 +269,29 @@ public class GraveyardService {
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
-        for (Card card : milledCards) {
-            boolean entered = addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY,
-                    true, null, null, null, false, false, false, null, true);
-            if (entered) {
-                cardsEnteredGraveyard.add(card);
-                if (!isToken(gameData, card)) {
-                    gameData.cardsMilledThisTurn
-                            .computeIfAbsent(targetPlayerId, ignored -> ConcurrentHashMap.newKeySet())
-                            .add(card.getId());
+        // The cards are milled together: one rules event batch, each card's move caused by the mill.
+        gameData.rulesEvents.beginBatch();
+        try {
+            for (Card card : milledCards) {
+                ZoneChangeCause previousCause = gameData.rulesEvents.setCause(card.getId(), ZoneChangeCause.MILL);
+                boolean entered;
+                try {
+                    entered = addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY,
+                            true, null, null, null, false, false, false, null, true);
+                } finally {
+                    gameData.rulesEvents.restoreCause(card.getId(), previousCause);
+                }
+                if (entered) {
+                    cardsEnteredGraveyard.add(card);
+                    if (!isToken(gameData, card)) {
+                        gameData.cardsMilledThisTurn
+                                .computeIfAbsent(targetPlayerId, ignored -> ConcurrentHashMap.newKeySet())
+                                .add(card.getId());
+                    }
                 }
             }
+        } finally {
+            gameData.rulesEvents.endBatch();
         }
         queueSimultaneousBottomOfLibraryOrdering(gameData, targetPlayerId, milledCards, deck);
         cardsEnteredGraveyard.stream().filter(card -> card.hasType(CardType.LAND)).findFirst()
@@ -475,6 +488,16 @@ public class GraveyardService {
 
     public boolean discardCard(GameData gameData, UUID ownerId, Card card,
                                boolean applyDiscardToLibraryReplacement) {
+        ZoneChangeCause previousCause = gameData.rulesEvents.setCause(card.getId(), ZoneChangeCause.DISCARD);
+        try {
+            return discardCardFor(gameData, ownerId, card, applyDiscardToLibraryReplacement);
+        } finally {
+            gameData.rulesEvents.restoreCause(card.getId(), previousCause);
+        }
+    }
+
+    private boolean discardCardFor(GameData gameData, UUID ownerId, Card card,
+                                   boolean applyDiscardToLibraryReplacement) {
         if (applyDiscardToLibraryReplacement && !isToken(gameData, card)
                 && findDiscardToLibraryReplacementSource(gameData, ownerId) != null) {
             gameData.playerDecks.get(ownerId).add(0, card);
@@ -2651,6 +2674,7 @@ public class GraveyardService {
      */
     public void beginGraveyardLeaveBatch(GameData gameData) {
         gameData.graveyardLeaveNotificationDepth++;
+        gameData.rulesEvents.beginBatch();
     }
 
     /**
@@ -2660,6 +2684,7 @@ public class GraveyardService {
         if (gameData.graveyardLeaveNotificationDepth <= 0) {
             return;
         }
+        gameData.rulesEvents.endBatch();
         gameData.graveyardLeaveNotificationDepth--;
         if (gameData.graveyardLeaveNotificationDepth == 0) {
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingOwners) {

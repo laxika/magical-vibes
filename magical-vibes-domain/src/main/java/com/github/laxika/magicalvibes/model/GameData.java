@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
+import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
+import com.github.laxika.magicalvibes.model.rules.RulesEventLog;
+import com.github.laxika.magicalvibes.model.rules.RulesObserver;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
@@ -100,6 +104,16 @@ public class GameData {
             new ConcurrentHashMap<>();
     /** Persistent intensity for digital cards; keyed by physical card identity and retained across zones. */
     public final Map<UUID, Integer> cardIntensities = new ConcurrentHashMap<>();
+    /**
+     * Rules events the trigger pipeline hasn't taken yet, and what describing zone changes needs (see
+     * {@link RulesEventLog}). The zone lists below report every card added to them here.
+     */
+    public final RulesEventLog rulesEvents = new RulesEventLog();
+    /**
+     * Test-only watcher of rules events and of the triggered abilities collectors queue (the shadow recorder);
+     * {@code null} in real games and never copied into simulations.
+     */
+    public RulesObserver rulesObserver;
     public final Map<UUID, List<Card>> playerDecks = new LibraryMap();
     /** The size of each player's deck before the opening hand was drawn. */
     public final Map<UUID, Integer> startingDeckSizes = new ConcurrentHashMap<>();
@@ -673,13 +687,13 @@ public class GameData {
     private int activeTriggeredAbilityCopies = 1;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>() {
         @Override public List<Card> put(UUID id, List<Card> cards) {
-            return super.put(id, new CommanderGraveyardList(cards));
+            return super.put(id, new CommanderGraveyardList(id, cards));
         }
         @Override public List<Card> putIfAbsent(UUID id, List<Card> cards) {
-            return super.putIfAbsent(id, new CommanderGraveyardList(cards));
+            return super.putIfAbsent(id, new CommanderGraveyardList(id, cards));
         }
         @Override public List<Card> computeIfAbsent(UUID id, Function<? super UUID, ? extends List<Card>> factory) {
-            return super.computeIfAbsent(id, key -> new CommanderGraveyardList(factory.apply(key)));
+            return super.computeIfAbsent(id, key -> new CommanderGraveyardList(key, factory.apply(key)));
         }
         @Override public void putAll(Map<? extends UUID, ? extends List<Card>> values) { values.forEach(this::put); }
     };
@@ -712,7 +726,7 @@ public class GameData {
     public final Map<UUID, Set<UUID>> permanentsCantAttackUntilNextTurn = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
     /** Cards in each player's command zone (CR 903.6). Used by Eminence and similar command-zone abilities. */
-    public final Map<UUID, List<Card>> playerCommandZones = new ConcurrentHashMap<>();
+    public final Map<UUID, List<Card>> playerCommandZones = new CommandZoneMap();
     /** Command-zone cards that have been turned face down by a resolving ability. */
     public final Set<UUID> faceDownCommandZoneCards = ConcurrentHashMap.newKeySet();
     /**
@@ -873,7 +887,7 @@ public class GameData {
     /** Source permanent id → ids of the tokens created with it ("tokens created with this permanent"; Tetravus, Tombstone Stairwell). */
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
-    public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
+    public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ExileZoneList());
     /** Original card objects replaced by Bombardment until cleanup. */
     public final Map<UUID, Card> bombardmentOriginalCardsUntilEndOfTurn = new ConcurrentHashMap<>();
     /** Number of cards put into exile during the current turn. */
@@ -1065,7 +1079,7 @@ public class GameData {
             new ConcurrentHashMap<>();
     /** Target IDs to which damage from colorless sources is prevented until end of turn. */
     public final Set<UUID> colorlessDamagePreventionUntilEndOfTurn = ConcurrentHashMap.newKeySet();
-    public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
+    public final List<PendingMayAbility> pendingMayAbilities = new ObservedMayAbilityList();
     public PendingGemstoneCavernsChoice pendingGemstoneCavernsChoice;
     /** Tariff: players (APNAP order) still to be processed after the one currently being resolved. */
     public final List<UUID> tariffRemainingPlayers = new ArrayList<>();
@@ -4536,6 +4550,8 @@ public class GameData {
     }
 
     private void restoreMutableStateFrom(GameData snapshot) {
+        // Refilling the zone lists moves no card; the rules event log is restored from the snapshot afterwards.
+        rulesEvents.suppress();
         try {
             for (java.lang.reflect.Field field : GameData.class.getDeclaredFields()) {
                 if (java.lang.reflect.Modifier.isStatic(field.getModifiers())
@@ -4553,7 +4569,10 @@ public class GameData {
             }
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Could not restore the turn-start snapshot", e);
+        } finally {
+            rulesEvents.resume();
         }
+        rulesEvents.copyFrom(snapshot.rulesEvents);
     }
 
     private static boolean preservedDuringTurnRestart(String fieldName) {
@@ -4571,7 +4590,7 @@ public class GameData {
                     "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
-                    "alwaysOfferPriorityWindows" -> true;
+                    "alwaysOfferPriorityWindows", "rulesEvents", "rulesObserver" -> true;
             default -> false;
         };
     }
@@ -4756,9 +4775,11 @@ public class GameData {
      */
     public void runAsSingleCardExileBatch(Runnable exiling) {
         cardExileBatchDepth++;
+        rulesEvents.beginBatch();
         try {
             exiling.run();
         } finally {
+            rulesEvents.endBatch();
             cardExileBatchDepth--;
         }
         if (cardExileBatchDepth == 0 && cardExileBatchPending) {
@@ -6073,6 +6094,7 @@ public class GameData {
      */
     public void enqueueTrigger(StackEntry entry) {
         if (waitingForSubgame && session.active() != this) {
+            observeTrigger(RulesObserver.Route.SUSPENDED_QUEUE, entry);
             suspendedZoneTriggers.add(entry);
             for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
                 suspendedZoneTriggers.add(new StackEntry(entry));
@@ -6080,6 +6102,7 @@ public class GameData {
             return;
         }
         if (manaAbilityResolutionDepth > 0) {
+            observeTrigger(RulesObserver.Route.MANA_ABILITY_QUEUE, entry);
             pendingManaAbilityTriggers.add(entry);
             for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
                 pendingManaAbilityTriggers.add(new StackEntry(entry));
@@ -6129,6 +6152,22 @@ public class GameData {
         return activeTriggeredAbilityCopies;
     }
 
+    /**
+     * A spell card moving to the stack is a zone change (CR 601.2a), reported to {@link #rulesEvents}; a copy of a
+     * spell is no card. A triggered ability reaching the stack is reported to {@link #rulesObserver}.
+     */
+    private void reportStackArrival(StackEntry entry) {
+        StackEntryType type = entry.getEntryType();
+        if (type == StackEntryType.TRIGGERED_ABILITY) {
+            observeTrigger(RulesObserver.Route.STACK, entry);
+        } else if (type != StackEntryType.ACTIVATED_ABILITY && !entry.isCopy() && entry.getCard() != null) {
+            Card card = entry.getCard();
+            ZoneChangeCause previous = rulesEvents.setCause(card.getId(), ZoneChangeCause.CAST);
+            rulesEvents.arrived(card, ownerOf(card), Zone.STACK);
+            rulesEvents.restoreCause(card.getId(), previous);
+        }
+    }
+
     private static final class TriggerAwareStackList extends ArrayList<StackEntry> {
 
         private final GameData gameData;
@@ -6144,6 +6183,7 @@ public class GameData {
             if (added) {
                 gameData.recordStackEntryForCrime(entry);
                 gameData.recordGraveyardTargetVersions(entry);
+                gameData.reportStackArrival(entry);
             }
             if (added && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
                 for (int i = 1; i < gameData.activeTriggeredAbilityCopies(); i++) {
@@ -6164,6 +6204,7 @@ public class GameData {
             super.add(index, entry);
             gameData.recordStackEntryForCrime(entry);
             gameData.recordGraveyardTargetVersions(entry);
+            gameData.reportStackArrival(entry);
             gameData.recordCurrentStackSourceCount();
         }
 
@@ -6174,6 +6215,7 @@ public class GameData {
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);
                 entries.forEach(gameData::recordGraveyardTargetVersions);
+                entries.forEach(gameData::reportStackArrival);
                 gameData.recordCurrentStackSourceCount();
             }
             return added;
@@ -6186,6 +6228,7 @@ public class GameData {
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);
                 entries.forEach(gameData::recordGraveyardTargetVersions);
+                entries.forEach(gameData::reportStackArrival);
                 gameData.recordCurrentStackSourceCount();
             }
             return added;
@@ -6225,6 +6268,7 @@ public class GameData {
      * Appends a pending interaction to the tail of the unified queue.
      */
     public void queueInteraction(PendingInteraction interaction) {
+        observeTrigger(RulesObserver.Route.INTERACTION, interaction);
         pendingInteractions.addLast(interaction);
         for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
             pendingInteractions.addLast(interaction);
@@ -6237,6 +6281,7 @@ public class GameData {
      * (e.g. re-queuing an updated {@code ETBTokenMultiTargetTrigger} between target slots).
      */
     public void queueInteractionFirst(PendingInteraction interaction) {
+        observeTrigger(RulesObserver.Route.INTERACTION, interaction);
         pendingInteractions.addFirst(interaction);
         for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
             pendingInteractions.addFirst(interaction);
@@ -7892,11 +7937,13 @@ public class GameData {
         CommanderHandList(UUID playerId, List<Card> cards) {
             super(cards);
             this.playerId = playerId;
+            cards.forEach(card -> rulesEvents.track(card, Zone.HAND));
         }
 
         private void recordCardPutIntoHand(Card card) {
             cardsPutIntoHandThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
                     .add(card.getId());
+            rulesEvents.arrived(card, playerId, Zone.HAND);
         }
 
         @Override public boolean add(Card card) {
@@ -7925,11 +7972,78 @@ public class GameData {
         }
     }
     private final class CommanderGraveyardList extends ArrayList<Card> {
-        CommanderGraveyardList(List<Card> cards) { super(cards); }
-        @Override public boolean add(Card card) { commanderEnteredReturnZone(card); return super.add(card); }
-        @Override public void add(int index, Card card) { commanderEnteredReturnZone(card); super.add(index, card); }
-        @Override public boolean addAll(java.util.Collection<? extends Card> cards) { cards.forEach(GameData.this::commanderEnteredReturnZone); return super.addAll(cards); }
-        @Override public boolean addAll(int index, java.util.Collection<? extends Card> cards) { cards.forEach(GameData.this::commanderEnteredReturnZone); return super.addAll(index, cards); }
+        private final UUID playerId;
+
+        CommanderGraveyardList(UUID playerId, List<Card> cards) {
+            super(cards);
+            this.playerId = playerId;
+            cards.forEach(card -> rulesEvents.track(card, Zone.GRAVEYARD));
+        }
+        private void arrived(Card card) { rulesEvents.arrived(card, playerId, Zone.GRAVEYARD); }
+        @Override public boolean add(Card card) { commanderEnteredReturnZone(card); boolean added = super.add(card); arrived(card); return added; }
+        @Override public void add(int index, Card card) { commanderEnteredReturnZone(card); super.add(index, card); arrived(card); }
+        @Override public boolean addAll(java.util.Collection<? extends Card> cards) { List<Card> added = List.copyOf(cards); added.forEach(GameData.this::commanderEnteredReturnZone); boolean changed = super.addAll(added); added.forEach(this::arrived); return changed; }
+        @Override public boolean addAll(int index, java.util.Collection<? extends Card> cards) { List<Card> added = List.copyOf(cards); added.forEach(GameData.this::commanderEnteredReturnZone); boolean changed = super.addAll(index, added); added.forEach(this::arrived); return changed; }
+    }
+    /** A command zone list that reports its arrivals to {@link #rulesEvents}. */
+    private final class CommandZoneList extends ArrayList<Card> {
+        private final UUID playerId;
+
+        CommandZoneList(UUID playerId, List<Card> cards) {
+            super(cards);
+            this.playerId = playerId;
+            cards.forEach(card -> rulesEvents.track(card, Zone.COMMAND));
+        }
+        private void arrived(Card card) { rulesEvents.arrived(card, playerId, Zone.COMMAND); }
+        @Override public boolean add(Card card) { boolean added = super.add(card); arrived(card); return added; }
+        @Override public void add(int index, Card card) { super.add(index, card); arrived(card); }
+        @Override public boolean addAll(java.util.Collection<? extends Card> cards) { List<Card> added = List.copyOf(cards); boolean changed = super.addAll(added); added.forEach(this::arrived); return changed; }
+        @Override public boolean addAll(int index, java.util.Collection<? extends Card> cards) { List<Card> added = List.copyOf(cards); boolean changed = super.addAll(index, added); added.forEach(this::arrived); return changed; }
+    }
+    private final class CommandZoneMap extends ConcurrentHashMap<UUID, List<Card>> {
+        private List<Card> wrap(UUID playerId, List<Card> cards) {
+            return cards instanceof CommandZoneList ? cards : new CommandZoneList(playerId, cards);
+        }
+        @Override public List<Card> put(UUID key, List<Card> cards) { return super.put(key, wrap(key, cards)); }
+        @Override public List<Card> putIfAbsent(UUID key, List<Card> cards) { return super.putIfAbsent(key, wrap(key, cards)); }
+        @Override public List<Card> computeIfAbsent(UUID key, Function<? super UUID, ? extends List<Card>> factory) {
+            return super.computeIfAbsent(key, id -> wrap(id, factory.apply(id)));
+        }
+        @Override public void putAll(Map<? extends UUID, ? extends List<Card>> values) { values.forEach(this::put); }
+    }
+    /** The exile zone list, which reports its arrivals to {@link #rulesEvents}; replacing an entry moves nothing. */
+    private final class ExileZoneList extends ArrayList<ExiledCardEntry> {
+        private void arrived(ExiledCardEntry entry) { rulesEvents.arrived(entry.card(), entry.ownerId(), Zone.EXILE); }
+        @Override public boolean add(ExiledCardEntry entry) { boolean added = super.add(entry); arrived(entry); return added; }
+        @Override public void add(int index, ExiledCardEntry entry) { super.add(index, entry); arrived(entry); }
+        @Override public boolean addAll(java.util.Collection<? extends ExiledCardEntry> entries) { List<ExiledCardEntry> added = List.copyOf(entries); boolean changed = super.addAll(added); added.forEach(this::arrived); return changed; }
+        @Override public boolean addAll(int index, java.util.Collection<? extends ExiledCardEntry> entries) { List<ExiledCardEntry> added = List.copyOf(entries); boolean changed = super.addAll(index, added); added.forEach(this::arrived); return changed; }
+    }
+    /** The pending may abilities, which reports each one queued to {@link #rulesObserver}. */
+    private final class ObservedMayAbilityList extends ArrayList<PendingMayAbility> {
+        @Override public boolean add(PendingMayAbility ability) { boolean added = super.add(ability); observeTrigger(RulesObserver.Route.MAY_ABILITY, ability); return added; }
+        @Override public void add(int index, PendingMayAbility ability) { super.add(index, ability); observeTrigger(RulesObserver.Route.MAY_ABILITY, ability); }
+        @Override public boolean addAll(java.util.Collection<? extends PendingMayAbility> abilities) { List<PendingMayAbility> added = List.copyOf(abilities); boolean changed = super.addAll(added); added.forEach(ability -> observeTrigger(RulesObserver.Route.MAY_ABILITY, ability)); return changed; }
+        @Override public boolean addAll(int index, java.util.Collection<? extends PendingMayAbility> abilities) { List<PendingMayAbility> added = List.copyOf(abilities); boolean changed = super.addAll(index, added); added.forEach(ability -> observeTrigger(RulesObserver.Route.MAY_ABILITY, ability)); return changed; }
+    }
+
+    /** Reports a triggered ability (or the question leading to one) put on {@code route} to {@link #rulesObserver}. */
+    public void observeTrigger(RulesObserver.Route route, Object item) {
+        if (rulesObserver != null && !rulesEvents.isSuppressed()) {
+            rulesObserver.triggerQueued(route, item);
+        }
+    }
+
+    /**
+     * Takes the closed rules event batches for the trigger pipeline (see {@link RulesEventLog#drain}) and shows
+     * them to {@link #rulesObserver}.
+     */
+    public List<RulesEventBatch> drainRulesEvents() {
+        List<RulesEventBatch> drained = rulesEvents.drain();
+        if (rulesObserver != null && !drained.isEmpty()) {
+            rulesObserver.eventsDrained(drained);
+        }
+        return drained;
     }
     public final Map<UUID, UUID> pendingCommandCasts = new ConcurrentHashMap<>();
     public UUID commandCastPlayerId;
@@ -8082,12 +8196,13 @@ public class GameData {
         commanderTaxByCardId.put(card.getId(), 0);
     }
 
-    private List<Card> asLibrary(List<Card> cards) {
+    private List<Card> asLibrary(UUID playerId, List<Card> cards) {
         if (cards instanceof LibraryCardList) {
             return cards;
         }
-        LibraryCardList wrapped = new LibraryCardList();
+        LibraryCardList wrapped = new LibraryCardList(playerId);
         wrapped.addAllWithoutClearing(cards);
+        cards.forEach(card -> rulesEvents.track(card, Zone.LIBRARY));
         return wrapped;
     }
 
@@ -8095,18 +8210,18 @@ public class GameData {
 
         @Override
         public List<Card> put(UUID key, List<Card> value) {
-            return super.put(key, asLibrary(value));
+            return super.put(key, asLibrary(key, value));
         }
 
         @Override
         public List<Card> putIfAbsent(UUID key, List<Card> value) {
-            return super.putIfAbsent(key, asLibrary(value));
+            return super.putIfAbsent(key, asLibrary(key, value));
         }
 
         @Override
         public List<Card> computeIfAbsent(UUID key,
                                           Function<? super UUID, ? extends List<Card>> mappingFunction) {
-            return super.computeIfAbsent(key, ignored -> asLibrary(mappingFunction.apply(key)));
+            return super.computeIfAbsent(key, ignored -> asLibrary(key, mappingFunction.apply(key)));
         }
 
         @Override
@@ -8116,6 +8231,12 @@ public class GameData {
     }
 
     private final class LibraryCardList extends ArrayList<Card> {
+
+        private final UUID playerId;
+
+        private LibraryCardList(UUID playerId) {
+            this.playerId = playerId;
+        }
 
         private void forgetPreservedCounters(Card card) {
             if (card != null) {
@@ -8131,7 +8252,9 @@ public class GameData {
         public boolean add(Card card) {
             if (deferCommanderZoneMove(card, Zone.LIBRARY, size())) return false;
             forgetPreservedCounters(card);
-            return super.add(card);
+            boolean added = super.add(card);
+            rulesEvents.arrived(card, playerId, Zone.LIBRARY);
+            return added;
         }
 
         @Override
@@ -8139,6 +8262,7 @@ public class GameData {
             if (deferCommanderZoneMove(card, Zone.LIBRARY, index)) return;
             forgetPreservedCounters(card);
             super.add(index, card);
+            rulesEvents.arrived(card, playerId, Zone.LIBRARY);
         }
 
         @Override
@@ -9290,6 +9414,8 @@ public class GameData {
 
     GameData simulationFrameCopy() {
         GameData copy = new GameData(id, gameName, createdByUserId, createdByUsername);
+        // Filling the copy's zone lists moves no card; the copy takes this game's rules event log at the end.
+        copy.rulesEvents.suppress();
         copy.subgameRequested = subgameRequested;
         copy.waitingForSubgame = waitingForSubgame;
         copy.pendingAncestorTransfers.addAll(pendingAncestorTransfers);
@@ -11412,6 +11538,8 @@ public class GameData {
                 permanent == null ? null : copiedCombatPermanents.computeIfAbsent(
                         permanent.getId(), ignored -> new Permanent(permanent));
         copy.pendingCombatDamageState = copyCombatDamageState(this.pendingCombatDamageState, copyCombatPermanent);
+        copy.rulesEvents.resume();
+        copy.rulesEvents.copyFrom(this.rulesEvents);
         return copy;
     }
 

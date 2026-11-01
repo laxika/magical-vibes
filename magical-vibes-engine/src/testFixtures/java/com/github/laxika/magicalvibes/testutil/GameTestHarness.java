@@ -194,6 +194,7 @@ public class GameTestHarness {
     private final LifeSupport lifeSupport;
     private final UntapStepService untapStepService;
     private final DeclaredEtbTargets declaredEtbTargets;
+    private final ShadowTriggerRecorder shadowRecorder;
 
     public GameTestHarness() {
         initServices();
@@ -256,6 +257,16 @@ public class GameTestHarness {
         this.gameData.playersAutoOrderingTriggers.add(player2.getId());
         this.declaredEtbTargets = new DeclaredEtbTargets(gameData, gameService, targetLegalityService,
                 GameTestEngineContext.get().getBean(ETBTokenTargetService.class), List.of(player1, player2));
+        this.shadowRecorder = ShadowTriggerRecorder.attach(gameData);
+    }
+
+    /**
+     * The shadow recorder watching this game: the rules events it emits and the triggered abilities the slot
+     * collectors queue. {@code BaseCardTest} fails a test whose two trigger paths disagree for the families its
+     * {@link ShadowComparison} covers.
+     */
+    public ShadowTriggerRecorder getShadowRecorder() {
+        return shadowRecorder;
     }
 
     /**

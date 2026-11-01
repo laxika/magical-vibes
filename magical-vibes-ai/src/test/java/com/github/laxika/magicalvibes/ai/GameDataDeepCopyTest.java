@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -150,6 +152,35 @@ class GameDataDeepCopyTest {
                 .containsExactly(new DrawCardEffect(1), new DrawCardEffect(2));
         assertThat(gd.perpetualAbilityEffects(card.getId(), EffectSlot.ON_SELF_CAST))
                 .containsExactly(new DrawCardEffect(1));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps pending rules events and known zones, emits nothing itself and carries no observer")
+    void deepCopyPreservesPendingRulesEventsIndependently() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card drawn = gd.playerDecks.get(player1.getId()).getFirst();
+        gd.drainRulesEvents();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.rulesObserver).isNull();
+        List<RulesEventBatch> pending = copy.rulesEvents.pending();
+        assertThat(pending).hasSize(1);
+        ZoneChangeEvent copied = (ZoneChangeEvent) pending.getFirst().events().getFirst();
+        ZoneChangeEvent original = (ZoneChangeEvent) gd.rulesEvents.pending().getFirst().events().getFirst();
+        assertThat(copied.to()).isEqualTo(Zone.HAND);
+        assertThat(copied.permanent().getId()).isEqualTo(bears.getId());
+        assertThat(copied.permanent()).isNotSameAs(original.permanent());
+
+        copy.playerDecks.get(player1.getId()).removeFirst();
+        copy.playerHands.get(player1.getId()).add(drawn);
+        copy.drainRulesEvents();
+
+        assertThat(copy.rulesEvents.pending()).isEmpty();
+        assertThat(gd.rulesEvents.pending()).hasSize(1);
+        assertThat(copy.rulesEvents.zoneOf(drawn.getId())).isEqualTo(Zone.HAND);
+        assertThat(gd.rulesEvents.zoneOf(drawn.getId())).isEqualTo(Zone.LIBRARY);
     }
 
     @Test

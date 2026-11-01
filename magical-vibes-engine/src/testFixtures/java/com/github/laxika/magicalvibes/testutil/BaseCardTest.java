@@ -90,6 +90,18 @@ public abstract class BaseCardTest {
     }
 
     /**
+     * Shadow mode: fails a test whose game put different triggered abilities toward the stack through the slot
+     * collectors than the trigger pipeline would for the same rules events, for the event families
+     * {@link ShadowComparison#CURRENT} covers. A test can compare other families through
+     * {@link ShadowTriggerRecorder#setComparison}.
+     */
+    @AfterEach
+    void assertShadowTriggerPathsAgree() {
+        if (harness == null) return;
+        harness.getShadowRecorder().assertPathsAgree();
+    }
+
+    /**
      * No test may end with a stack entry parked in {@code GameData.pendingEffectResolutionEntry}
      * while nothing is left to resume it. Effect resolution parks the entry when a handler begins
      * an interaction mid-resolution; the completing handler must resume it via
