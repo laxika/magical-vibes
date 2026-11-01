@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.rules;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -10,7 +11,9 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * A game's rules events that the trigger pipeline hasn't taken yet, grouped into batches, plus what the
@@ -20,7 +23,9 @@ import java.util.UUID;
  * <h2>Batches</h2>
  * Between {@link #beginBatch} and the matching {@link #endBatch} every event joins one batch, the events of
  * one occurrence (CR 603.2c). Scopes nest; only the outermost closes the batch. An event emitted outside a
- * scope is a batch of its own. {@link #drain} hands the closed batches to the trigger pipeline.
+ * scope is a batch of its own. A batch goes to the listener the log was made with as it closes, which is where
+ * the engine's trigger pipeline matches it; it stays readable ({@link #pending}) until {@link #drain} releases
+ * it before a player receives priority.
  *
  * <h2>Zone changes</h2>
  * The log remembers the zone of every card it has seen arrive somewhere ({@link #arrived}, {@link #entered},
@@ -66,6 +71,20 @@ public final class RulesEventLog {
     /** Departure events not yet drained, keyed by each physical card that left with the permanent. */
     private final Map<UUID, ZoneChangeEvent> departures = new HashMap<>();
     private final Map<UUID, ZoneChangeCause> causes = new HashMap<>();
+    private final Consumer<RulesEventBatch> onClose;
+
+    /** A log that tells nobody when a batch closes. */
+    public RulesEventLog() {
+        this(batch -> { });
+    }
+
+    /**
+     * A log that hands every batch to {@code onClose} as it closes, which is when the trigger pipeline matches
+     * it: an occurrence is complete once its outermost scope ends (or at once, for an event outside a scope).
+     */
+    public RulesEventLog(Consumer<RulesEventBatch> onClose) {
+        this.onClose = Objects.requireNonNull(onClose, "onClose");
+    }
 
     /** Opens a batch scope: until the matching {@link #endBatch}, every event joins one batch. */
     public void beginBatch() {
@@ -80,10 +99,12 @@ public final class RulesEventLog {
             return;
         }
         if (--openDepth == 0) {
-            if (!open.events.isEmpty()) {
-                closed.add(open);
-            }
+            Batch closing = open;
             open = null;
+            if (!closing.events.isEmpty()) {
+                closed.add(closing);
+                onClose.accept(closing.freeze());
+            }
         }
     }
 
@@ -104,6 +125,7 @@ public final class RulesEventLog {
         Batch single = new Batch(nextBatchId++);
         single.events.add(event);
         closed.add(single);
+        onClose.accept(single.freeze());
     }
 
     /** Stops emitting and tracking until the matching {@link #resume}. */
@@ -236,11 +258,22 @@ public final class RulesEventLog {
      */
     public void departed(Permanent lastKnown, Card card, Collection<UUID> cardIds, UUID ownerId,
                          UUID controllerId, Zone intendedTo) {
+        departed(lastKnown, card, cardIds, ownerId, controllerId, intendedTo, List.of(), false);
+    }
+
+    /**
+     * As {@link #departed(Permanent, Card, Collection, UUID, UUID, Zone)}, with the abilities granted to it as it
+     * left and whether its death would have caused no triggers (see {@link ZoneChangeEvent}).
+     */
+    public void departed(Permanent lastKnown, Card card, Collection<UUID> cardIds, UUID ownerId,
+                         UUID controllerId, Zone intendedTo, List<Ability> grantedAbilities,
+                         boolean deathTriggersSuppressed) {
         if (suppressDepth > 0) {
             return;
         }
         ZoneChangeEvent event = new ZoneChangeEvent(card, ownerId, Zone.BATTLEFIELD, intendedTo,
-                causes.getOrDefault(lastKnown.getId(), ZoneChangeCause.OTHER), lastKnown, controllerId);
+                causes.getOrDefault(lastKnown.getId(), ZoneChangeCause.OTHER), lastKnown, controllerId,
+                grantedAbilities, deathTriggersSuppressed);
         for (UUID cardId : cardIds) {
             departures.put(cardId, event);
             cardZones.put(cardId, intendedTo);

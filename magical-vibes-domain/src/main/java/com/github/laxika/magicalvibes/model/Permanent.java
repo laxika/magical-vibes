@@ -2050,6 +2050,39 @@ public class Permanent {
         temporaryAbilities.clear();
     }
 
+    /**
+     * The triggered abilities granted to it for a duration: until end of turn, end of combat or next upkeep,
+     * then those granted until it leaves (persistent), in that order. Each is an ability of this permanent, so
+     * losing all abilities drops the temporary ones; the persistent ones are read separately for that reason.
+     */
+    public List<TriggeredAbility> getTemporaryTriggeredAbilities() {
+        List<TriggeredAbility> triggered = new ArrayList<>();
+        for (List<Ability> abilities : List.of(temporaryAbilities, combatAbilities)) {
+            for (Ability ability : abilities) {
+                if (ability instanceof TriggeredAbility triggeredAbility) {
+                    triggered.add(triggeredAbility);
+                }
+            }
+        }
+        untilNextUpkeepAbilities.values().forEach(abilities -> abilities.forEach(ability -> {
+            if (ability instanceof TriggeredAbility triggeredAbility) {
+                triggered.add(triggeredAbility);
+            }
+        }));
+        return triggered;
+    }
+
+    /** The triggered abilities granted to it until it leaves the battlefield, perpetual grants among them. */
+    public List<TriggeredAbility> getPersistentTriggeredAbilities() {
+        List<TriggeredAbility> triggered = new ArrayList<>();
+        for (Ability ability : persistentAbilities) {
+            if (ability instanceof TriggeredAbility triggeredAbility) {
+                triggered.add(triggeredAbility);
+            }
+        }
+        return triggered;
+    }
+
     /** The effects in {@code slot} of the abilities granted until end of turn, end of combat or next upkeep. */
     public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
         List<CardEffect> effects = LegacySlots.effectsIn(temporaryAbilities, slot);

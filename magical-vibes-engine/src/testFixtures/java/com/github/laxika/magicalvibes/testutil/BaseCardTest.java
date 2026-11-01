@@ -92,13 +92,16 @@ public abstract class BaseCardTest {
     /**
      * Shadow mode: fails a test whose game put different triggered abilities toward the stack through the slot
      * collectors than the trigger pipeline would for the same rules events, for the event families
-     * {@link ShadowComparison#CURRENT} covers. A test can compare other families through
-     * {@link ShadowTriggerRecorder#setComparison}.
+     * {@link ShadowComparison#CURRENT} covers, unless the comparison lists the test as a known difference. A test can
+     * compare other families through {@link ShadowTriggerRecorder#setComparison}.
      */
     @AfterEach
-    void assertShadowTriggerPathsAgree() {
+    void assertShadowTriggerPathsAgree(TestInfo testInfo) {
         if (harness == null) return;
-        harness.getShadowRecorder().assertPathsAgree();
+        String testClass = testInfo.getTestClass().map(Class::getName)
+                .map(name -> name.substring(name.lastIndexOf('.') + 1)).orElse("");
+        String testMethod = testInfo.getTestMethod().map(java.lang.reflect.Method::getName).orElse("");
+        harness.getShadowRecorder().assertPathsAgree(testClass + "#" + testMethod);
     }
 
     /**

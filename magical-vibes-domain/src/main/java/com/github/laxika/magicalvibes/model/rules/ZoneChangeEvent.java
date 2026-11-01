@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.model.rules;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,19 +28,39 @@ import java.util.UUID;
  * @param cause        how it moved
  * @param permanent    the battlefield snapshot described above, or {@code null}
  * @param controllerId the permanent's controller as it left or entered the battlefield, or {@code null}
+ * @param grantedAbilities for a departure, the triggered abilities other objects' static abilities granted the
+ *                     permanent just before it left (CR 603.10a), which nothing on the permanent itself records;
+ *                     empty otherwise
+ * @param deathTriggersSuppressed for a departure, whether a static ability such as Hushbringer's kept a creature
+ *                     dying there from causing abilities to trigger, as it was just before it left; it matters
+ *                     only if the move is a death
  */
 public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause,
-                              Permanent permanent, UUID controllerId) implements RulesEvent {
+                              Permanent permanent, UUID controllerId, List<Ability> grantedAbilities,
+                              boolean deathTriggersSuppressed)
+        implements RulesEvent {
 
     public ZoneChangeEvent {
         Objects.requireNonNull(card, "card");
         Objects.requireNonNull(to, "to");
         Objects.requireNonNull(cause, "cause");
+        grantedAbilities = List.copyOf(grantedAbilities);
+    }
+
+    /** A zone change with no granted abilities. */
+    public ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause,
+                           Permanent permanent, UUID controllerId) {
+        this(card, ownerId, from, to, cause, permanent, controllerId, List.of(), false);
     }
 
     /** Whether a permanent left the battlefield (CR 603.6c). */
     public boolean leftBattlefield() {
         return from == Zone.BATTLEFIELD;
+    }
+
+    /** Whether a permanent died: was put into a graveyard from the battlefield (CR 700.4). */
+    public boolean died() {
+        return from == Zone.BATTLEFIELD && to == Zone.GRAVEYARD;
     }
 
     /** Whether a permanent entered the battlefield (CR 603.6a). */
@@ -48,12 +70,14 @@ public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneC
 
     /** This event with another destination, for a move that a replacement effect sent elsewhere. */
     public ZoneChangeEvent withTo(Zone destination) {
-        return new ZoneChangeEvent(card, ownerId, from, destination, cause, permanent, controllerId);
+        return new ZoneChangeEvent(card, ownerId, from, destination, cause, permanent, controllerId, grantedAbilities,
+                deathTriggersSuppressed);
     }
 
     @Override
     public ZoneChangeEvent deepCopy() {
         return permanent == null ? this
-                : new ZoneChangeEvent(card, ownerId, from, to, cause, new Permanent(permanent), controllerId);
+                : new ZoneChangeEvent(card, ownerId, from, to, cause, new Permanent(permanent), controllerId,
+                        grantedAbilities, deathTriggersSuppressed);
     }
 }

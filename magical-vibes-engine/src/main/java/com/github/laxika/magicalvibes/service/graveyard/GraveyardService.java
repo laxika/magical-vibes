@@ -703,290 +703,320 @@ public class GraveyardService {
                                        boolean suppressLibraryMillTriggers,
                                        boolean creatureDeathTriggersSuppressed,
                                        UUID cardControllerId, boolean suppressOncePerBatchLandTriggers) {
-        gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
-        gameData.spellsWithPlotOnResolution.remove(card.getId());
-        UUID resolvedCardControllerId = cardControllerId != null ? cardControllerId
-                : battlefieldControllerId != null ? battlefieldControllerId : ownerId;
-        // CR 614.7 â€” self-replacement effects apply first
+        // One move, one rules event batch: it closes after this move's bookkeeping and triggers.
+        gameData.rulesEvents.beginBatch();
+        try {
+            gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
+            gameData.spellsWithPlotOnResolution.remove(card.getId());
+            UUID resolvedCardControllerId = cardControllerId != null ? cardControllerId
+                    : battlefieldControllerId != null ? battlefieldControllerId : ownerId;
+            // CR 614.7 â€” self-replacement effects apply first
 
-        if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)
-                && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
-            UUID extraTurnControllerId = battlefieldControllerId != null ? battlefieldControllerId : ownerId;
-            exileService.exileCard(gameData, ownerId, card);
-            gameData.queueExtraTurnFirst(extraTurnControllerId, false);
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " is exiled instead of being put into a graveyard; its controller takes an extra turn."));
-            log.info("Game {} - {} replacement effect: exiled and granted an extra turn to {}",
-                    gameData.id, card.getName(), gameData.playerIdToName.get(extraTurnControllerId));
-            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
-            return false;
-        }
-
-        // "If [this] would die, instead exile it with N egg counters" (e.g. Darigaaz Reincarnated)
-        // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
-        if (sourceZone == Zone.BATTLEFIELD && hasExileWithEggCountersReplacementEffect(card)
-                && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
-            ExileWithEggCountersInsteadOfDyingEffect eggEffect = getExileWithEggCountersReplacementEffect(card);
-            exileService.exileCard(gameData, ownerId, card);
-            gameData.exiledCardEggCounters.put(card.getId(), eggEffect.count());
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " is exiled with " + eggEffect.count() + " egg counters instead of dying."));
-            log.info("Game {} - {} replacement effect: exiled with {} egg counters instead of dying",
-                    gameData.id, card.getName(), eggEffect.count());
-            return false;
-        }
-
-        // "If [this creature] would die, put it on top or bottom of its owner's library instead"
-        // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
-        DyingCreatureLibraryReplacementEffect libraryReplacement = sourceZone == Zone.BATTLEFIELD
-                && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())
-                ? getDyingCreatureLibraryReplacementEffect(card)
-                : null;
-        if (libraryReplacement != null) {
-            List<Card> deck = gameData.playerDecks.get(ownerId);
-            if (libraryReplacement.shuffleIntoLibrary()) {
-                deck.add(card);
-                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+            if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)
+                    && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
+                UUID extraTurnControllerId = battlefieldControllerId != null ? battlefieldControllerId : ownerId;
+                exileService.exileCard(gameData, ownerId, card);
+                gameData.queueExtraTurnFirst(extraTurnControllerId, false);
                 gameLogService.append(gameData, GameLog.cardThen(card,
-                        " is revealed and shuffled into its owner's library instead of dying."));
-                log.info("Game {} - {} replacement effect: shuffled into library instead of dying",
+                        " is exiled instead of being put into a graveyard; its controller takes an extra turn."));
+                log.info("Game {} - {} replacement effect: exiled and granted an extra turn to {}",
+                        gameData.id, card.getName(), gameData.playerIdToName.get(extraTurnControllerId));
+                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                return false;
+            }
+
+            // "If [this] would die, instead exile it with N egg counters" (e.g. Darigaaz Reincarnated)
+            // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
+            if (sourceZone == Zone.BATTLEFIELD && hasExileWithEggCountersReplacementEffect(card)
+                    && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
+                ExileWithEggCountersInsteadOfDyingEffect eggEffect = getExileWithEggCountersReplacementEffect(card);
+                exileService.exileCard(gameData, ownerId, card);
+                gameData.exiledCardEggCounters.put(card.getId(), eggEffect.count());
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is exiled with " + eggEffect.count() + " egg counters instead of dying."));
+                log.info("Game {} - {} replacement effect: exiled with {} egg counters instead of dying",
+                        gameData.id, card.getName(), eggEffect.count());
+                return false;
+            }
+
+            // "If [this creature] would die, put it on top or bottom of its owner's library instead"
+            // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
+            DyingCreatureLibraryReplacementEffect libraryReplacement = sourceZone == Zone.BATTLEFIELD
+                    && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())
+                    ? getDyingCreatureLibraryReplacementEffect(card)
+                    : null;
+            if (libraryReplacement != null) {
+                List<Card> deck = gameData.playerDecks.get(ownerId);
+                if (libraryReplacement.shuffleIntoLibrary()) {
+                    deck.add(card);
+                    LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+                    gameLogService.append(gameData, GameLog.cardThen(card,
+                            " is revealed and shuffled into its owner's library instead of dying."));
+                    log.info("Game {} - {} replacement effect: shuffled into library instead of dying",
+                            gameData.id, card.getName());
+                    updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                    return false;
+                }
+                String position;
+                String positionPhrase;
+                if (libraryReplacement.putOnBottom()) {
+                    deck.add(card);
+                    position = "bottom";
+                    positionPhrase = "the bottom";
+                } else {
+                    deck.add(0, card);
+                    position = "top";
+                    positionPhrase = "top";
+                }
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is put on " + positionPhrase + " of its owner's library instead of dying."));
+                log.info("Game {} - {} replacement effect: put on {} of library instead of dying",
+                        gameData.id, card.getName(), position);
+                return false;
+            }
+
+            Card shuffleReplacementSource = sourceZone == Zone.BATTLEFIELD && battlefieldSnapshot != null
+                    && battlefieldSnapshot.getCard() != null ? battlefieldSnapshot.getCard() : card;
+            if (hasShuffleIntoLibraryReplacementEffect(shuffleReplacementSource)
+                    && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
+                    || !battlefieldSnapshot.isFaceDown() && !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
+                if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)
+                        || opponentHasExileReplacementEffect(gameData, ownerId, resolvedCardControllerId) != null
+                        || shouldExileOwnCardInsteadOfGraveyard(
+                        gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
+                    var choice = new PendingInteraction.ColorChoice(
+                            ownerId, null, null,
+                            new ChoiceContext.GraveyardShuffleOrExileReplacementChoice(ownerId, card),
+                            List.of("SHUFFLE", "EXILE"), "Choose whether to shuffle this card into its owner's library or exile it.");
+                    if (gameData.interaction.isAwaitingInput()) {
+                        gameData.pendingInteractions.addLast(choice);
+                    } else {
+                        interactionHandlerRegistry.begin(gameData, choice);
+                    }
+                    return false;
+                }
+                shuffleIntoLibraryInsteadOfGraveyard(gameData, ownerId, card);
+                return false;
+            }
+
+            Card replacementSource = sourceZone == Zone.BATTLEFIELD && battlefieldSnapshot != null
+                    ? battlefieldSnapshot.getCard() : card;
+            if (appliesExileInsteadOfGraveyard(replacementSource, sourceZone)
+                    && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
+                    || !gameQueryService.hasLostPrintedAbilities(gameData, battlefieldSnapshot))) {
+                exileService.exileCard(gameData, ownerId, card);
+                gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
+                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                return false;
+            }
+
+            if (tryApplyGlobalColorGraveyardExileReplacement(
+                    gameData, ownerId, card, sourceZone, battlefieldSnapshot)) {
+                return false;
+            }
+
+            if (!isToken(gameData, card) && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))) {
+                if (anyPlayerHasInstantSorceryExileReplacement(gameData)) {
+                    exileService.exileCard(gameData, ownerId, card);
+                    gameLogService.append(gameData, GameLog.cardThen(card,
+                            " is exiled instead of being put into a graveyard."));
+                    log.info("Game {} - {} replacement effect: instant or sorcery exiled instead of graveyard",
+                            gameData.id, card.getName());
+                    updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                    return false;
+                }
+            }
+
+            // Wheel of Sun and Moon â€” if the graveyard's owner is enchanted by a player aura with this
+            // replacement, cards headed to their graveyard from anywhere are revealed and put on the
+            // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
+            if (putsCardOnBottomOfLibraryInsteadOfGraveyard(gameData, ownerId, card, battlefieldSnapshot)) {
+                putOnBottomOfLibraryInsteadOfGraveyard(gameData, ownerId, card);
+                return false;
+            }
+
+            // Yawgmoth's Testament â€” the controller's cards go to the bottom of their owner's
+            // library instead of their graveyards for the rest of the turn.
+            if (!isToken(gameData, card)
+                    && gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
+                    .contains(ownerId)) {
+                gameData.playerDecks.get(ownerId).add(card);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is put on the bottom of its owner's library instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard (turn effect)",
                         gameData.id, card.getName());
                 updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
                 return false;
             }
-            String position;
-            String positionPhrase;
-            if (libraryReplacement.putOnBottom()) {
-                deck.add(card);
-                position = "bottom";
-                positionPhrase = "the bottom";
-            } else {
-                deck.add(0, card);
-                position = "top";
-                positionPhrase = "top";
-            }
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " is put on " + positionPhrase + " of its owner's library instead of dying."));
-            log.info("Game {} - {} replacement effect: put on {} of library instead of dying",
-                    gameData.id, card.getName(), position);
-            return false;
-        }
 
-        Card shuffleReplacementSource = sourceZone == Zone.BATTLEFIELD && battlefieldSnapshot != null
-                && battlefieldSnapshot.getCard() != null ? battlefieldSnapshot.getCard() : card;
-        if (hasShuffleIntoLibraryReplacementEffect(shuffleReplacementSource)
-                && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
-                || !battlefieldSnapshot.isFaceDown() && !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
-            if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)
-                    || opponentHasExileReplacementEffect(gameData, ownerId, resolvedCardControllerId) != null
-                    || shouldExileOwnCardInsteadOfGraveyard(
-                    gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
-                var choice = new PendingInteraction.ColorChoice(
-                        ownerId, null, null,
-                        new ChoiceContext.GraveyardShuffleOrExileReplacementChoice(ownerId, card),
-                        List.of("SHUFFLE", "EXILE"), "Choose whether to shuffle this card into its owner's library or exile it.");
-                if (gameData.interaction.isAwaitingInput()) {
-                    gameData.pendingInteractions.addLast(choice);
-                } else {
-                    interactionHandlerRegistry.begin(gameData, choice);
-                }
+            // Per-card "if that spell would be put into a graveyard, exile it instead" replacement
+            // (e.g. a spell cast via Nita, Forum Conciliator). Tracked for the specific card until cleanup.
+            if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
+                exileService.exileCard(gameData, ownerId, card);
+            
+                gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: exiled instead of graveyard (cast permission)",
+                        gameData.id, card.getName());
                 return false;
             }
-            shuffleIntoLibraryInsteadOfGraveyard(gameData, ownerId, card);
-            return false;
-        }
 
-        Card replacementSource = sourceZone == Zone.BATTLEFIELD && battlefieldSnapshot != null
-                ? battlefieldSnapshot.getCard() : card;
-        if (appliesExileInsteadOfGraveyard(replacementSource, sourceZone)
-                && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
-                || !gameQueryService.hasLostPrintedAbilities(gameData, battlefieldSnapshot))) {
-            exileService.exileCard(gameData, ownerId, card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
-            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
-            return false;
-        }
+            if (!isToken(gameData, card) && gameData.playersExilingCardsInsteadOfGraveyardThisTurn.contains(ownerId)) {
+                exileService.exileCard(gameData, ownerId, card);
+                gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: exiled instead of graveyard (turn effect)",
+                        gameData.id, card.getName());
+                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+                return false;
+            }
 
-        if (tryApplyGlobalColorGraveyardExileReplacement(
-                gameData, ownerId, card, sourceZone, battlefieldSnapshot)) {
-            return false;
-        }
+            if (sourceZone == Zone.BATTLEFIELD
+                    && tryApplyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, battlefieldSnapshot)) {
+                return false;
+            }
 
-        if (!isToken(gameData, card) && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))) {
-            if (anyPlayerHasInstantSorceryExileReplacement(gameData)) {
+            // Leyline of the Void â€” if an opponent controls a permanent with
+            // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
+            if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)) {
                 exileService.exileCard(gameData, ownerId, card);
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " is exiled instead of being put into a graveyard."));
-                log.info("Game {} - {} replacement effect: instant or sorcery exiled instead of graveyard",
+                log.info("Game {} - {} replacement effect: opponent creature card exiled instead of graveyard",
                         gameData.id, card.getName());
-                updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
                 return false;
             }
-        }
 
-        // Wheel of Sun and Moon â€” if the graveyard's owner is enchanted by a player aura with this
-        // replacement, cards headed to their graveyard from anywhere are revealed and put on the
-        // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
-        if (putsCardOnBottomOfLibraryInsteadOfGraveyard(gameData, ownerId, card, battlefieldSnapshot)) {
-            putOnBottomOfLibraryInsteadOfGraveyard(gameData, ownerId, card);
-            return false;
-        }
-
-        // Yawgmoth's Testament â€” the controller's cards go to the bottom of their owner's
-        // library instead of their graveyards for the rest of the turn.
-        if (!isToken(gameData, card)
-                && gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
-                .contains(ownerId)) {
-            gameData.playerDecks.get(ownerId).add(card);
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " is put on the bottom of its owner's library instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard (turn effect)",
-                    gameData.id, card.getName());
-            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
-            return false;
-        }
-
-        // Per-card "if that spell would be put into a graveyard, exile it instead" replacement
-        // (e.g. a spell cast via Nita, Forum Conciliator). Tracked for the specific card until cleanup.
-        if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
-            exileService.exileCard(gameData, ownerId, card);
+            OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
+                    gameData, ownerId, resolvedCardControllerId);
+            if (opponentExileReplacement == null) {
+                opponentExileReplacement = leavingSourceOpponentExileReplacement(
+                        ownerId, card, battlefieldControllerId, battlefieldSnapshot, resolvedCardControllerId);
+            }
+            if (opponentExileReplacement != null && !isToken(gameData, card)) {
+                if (opponentExileReplacement.effect().addVoidCounter()) {
+                    gameData.addToExileWithVoidCounter(ownerId, card,
+                            opponentExileReplacement.effect().trackWithSource()
+                                    ? opponentExileReplacement.sourcePermanentId() : null);
+                } else if (opponentExileReplacement.effect().trackWithSource()) {
+                    exileService.exileCard(gameData, ownerId, card,
+                            opponentExileReplacement.sourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, ownerId, card);
+                }
+                if (opponentExileReplacement.effect().addVoidCounter()) {
+                    gameData.exiledCardsWithVoidCounters.add(card.getId());
+                }
             
-            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: exiled instead of graveyard (cast permission)",
-                    gameData.id, card.getName());
-            return false;
-        }
+                gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
+                return false;
+            }
 
-        if (!isToken(gameData, card) && gameData.playersExilingCardsInsteadOfGraveyardThisTurn.contains(ownerId)) {
-            exileService.exileCard(gameData, ownerId, card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: exiled instead of graveyard (turn effect)",
-                    gameData.id, card.getName());
-            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
-            return false;
-        }
-
-        if (sourceZone == Zone.BATTLEFIELD
-                && tryApplyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, battlefieldSnapshot)) {
-            return false;
-        }
-
-        // Leyline of the Void â€” if an opponent controls a permanent with
-        // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
-        if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)) {
-            exileService.exileCard(gameData, ownerId, card);
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " is exiled instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: opponent creature card exiled instead of graveyard",
-                    gameData.id, card.getName());
-            return false;
-        }
-
-        OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
-                gameData, ownerId, resolvedCardControllerId);
-        if (opponentExileReplacement == null) {
-            opponentExileReplacement = leavingSourceOpponentExileReplacement(
-                    ownerId, card, battlefieldControllerId, battlefieldSnapshot, resolvedCardControllerId);
-        }
-        if (opponentExileReplacement != null && !isToken(gameData, card)) {
-            if (opponentExileReplacement.effect().addVoidCounter()) {
-                gameData.addToExileWithVoidCounter(ownerId, card,
-                        opponentExileReplacement.effect().trackWithSource()
-                                ? opponentExileReplacement.sourcePermanentId() : null);
-            } else if (opponentExileReplacement.effect().trackWithSource()) {
-                exileService.exileCard(gameData, ownerId, card,
-                        opponentExileReplacement.sourcePermanentId());
-            } else {
+            // Forbidden Crypt / Abandoned Sarcophagus â€” controller's own cards matching a replacement
+            if (shouldExileOwnCardInsteadOfGraveyard(
+                    gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
                 exileService.exileCard(gameData, ownerId, card);
+                gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
+                log.info("Game {} - {} replacement effect: exiled instead of graveyard (own)", gameData.id, card.getName());
+                return false;
             }
-            if (opponentExileReplacement.effect().addVoidCounter()) {
-                gameData.exiledCardsWithVoidCounters.add(card.getId());
-            }
-            
-            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: exiled instead of graveyard", gameData.id, card.getName());
-            return false;
-        }
 
-        // Forbidden Crypt / Abandoned Sarcophagus â€” controller's own cards matching a replacement
-        if (shouldExileOwnCardInsteadOfGraveyard(
-                gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
-            exileService.exileCard(gameData, ownerId, card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
-            log.info("Game {} - {} replacement effect: exiled instead of graveyard (own)", gameData.id, card.getName());
-            return false;
-        }
-
-        card = gameData.restoreBombardmentCardForZoneChange(card);
-        gameData.playerGraveyards.get(ownerId).add(card);
-        if (sourceZone == Zone.BATTLEFIELD && card.hasType(CardType.ARTIFACT)) {
-            gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn++;
-        }
-        gameData.markGraveyardEntry(card);
-        if (sourceZone == Zone.BATTLEFIELD) {
-            gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn++;
-            if (card.hasType(CardType.LAND)) {
-                gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn.add(
-                        battlefieldControllerId != null ? battlefieldControllerId : ownerId);
+            card = gameData.restoreBombardmentCardForZoneChange(card);
+            gameData.playerGraveyards.get(ownerId).add(card);
+            if (sourceZone == Zone.BATTLEFIELD && card.hasType(CardType.ARTIFACT)) {
+                gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn++;
             }
-        }
-        if (!isToken(gameData, card) && isPermanentCard(card)) {
-            gameData.playersWhoDescendedThisTurn.add(ownerId);
-            gameData.descentsThisTurn.merge(ownerId, 1, Integer::sum);
-        }
-        updateThisCombatGraveyardTracking(gameData, ownerId, card);
-        updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone,
-                battlefieldSnapshot, creatureDeathTriggersSuppressed);
-        updateFromAnywhereThisTurnTracking(gameData, ownerId, card, sourceZone);
-        if (!creatureDeathTriggersSuppressed) {
-            collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-        }
-        collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
-        if (!isToken(gameData, card) && !creatureDeathTriggersSuppressed) {
-            collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
-        }
-        if (sourceZone == Zone.HAND) {
-            collectPutIntoGraveyardFromHandTriggers(gameData, ownerId, card);
-        }
-        if (sourceZone == Zone.LIBRARY && !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY)) {
-                StackEntry selfTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
-                        card.getName() + "'s ability", new ArrayList<>(List.of(effect)), null, (UUID) null);
-                selfTrigger.setTriggeringCardId(card.getId());
-                selfTrigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                gameData.enqueueTrigger(selfTrigger);
-                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+            gameData.markGraveyardEntry(card);
+            if (sourceZone == Zone.BATTLEFIELD) {
+                gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn++;
+                if (card.hasType(CardType.LAND)) {
+                    gameData.playersWhoControlledLandPutIntoGraveyardFromBattlefieldThisTurn.add(
+                            battlefieldControllerId != null ? battlefieldControllerId : ownerId);
+                }
             }
-        }
-        if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed
-                && !creatureDeathTriggersSuppressed) {
-            collectPutIntoGraveyardFromBattlefieldTriggers(
-                    gameData, battlefieldControllerId != null ? battlefieldControllerId : ownerId,
-                    card, battlefieldPermanentId, battlefieldSnapshot);
-        }
-        if (gameData.deferOncePerBatchGraveyardTriggers && !isToken(gameData, card)) {
-            suppressOncePerBatchLandTriggers = true;
-            gameData.deferredBatchOwnerId = ownerId;
-            if (isPermanentCard(card) && gameData.deferredBatchPermanentCard == null) {
-                gameData.deferredBatchPermanentCard = card;
+            if (!isToken(gameData, card) && isPermanentCard(card)) {
+                gameData.playersWhoDescendedThisTurn.add(ownerId);
+                gameData.descentsThisTurn.merge(ownerId, 1, Integer::sum);
             }
-            if (card.hasType(CardType.LAND) && gameData.deferredBatchLandCard == null) {
-                gameData.deferredBatchLandCard = card;
+            updateThisCombatGraveyardTracking(gameData, ownerId, card);
+            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone,
+                    battlefieldSnapshot, creatureDeathTriggersSuppressed);
+            updateFromAnywhereThisTurnTracking(gameData, ownerId, card, sourceZone);
+            if (!creatureDeathTriggersSuppressed) {
+                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
+                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, null, card));
+                try {
+                    collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+                } finally {
+                    gameData.endCollectingTrigger(previousCollecting);
+                }
             }
+            collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
+            if (!isToken(gameData, card) && !creatureDeathTriggersSuppressed) {
+                collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
+            }
+            if (sourceZone == Zone.HAND) {
+                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
+                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_HAND, null, card));
+                try {
+                    collectPutIntoGraveyardFromHandTriggers(gameData, ownerId, card);
+                } finally {
+                    gameData.endCollectingTrigger(previousCollecting);
+                }
+            }
+            if (sourceZone == Zone.LIBRARY && !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
+                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY, null, card));
+                try {
+                    for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_LIBRARY)) {
+                        StackEntry selfTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
+                                card.getName() + "'s ability", new ArrayList<>(List.of(effect)), null, (UUID) null);
+                        selfTrigger.setTriggeringCardId(card.getId());
+                        selfTrigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                        gameData.enqueueTrigger(selfTrigger);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    }
+                } finally {
+                    gameData.endCollectingTrigger(previousCollecting);
+                }
+            }
+            if (sourceZone == Zone.BATTLEFIELD && !selfGraveyardTriggerSuppressed
+                    && !creatureDeathTriggersSuppressed) {
+                GameData.CollectingTrigger previousCollecting = gameData.beginCollectingTrigger(
+                        new GameData.CollectingTrigger(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, null, card));
+                try {
+                    collectPutIntoGraveyardFromBattlefieldTriggers(
+                            gameData, battlefieldControllerId != null ? battlefieldControllerId : ownerId,
+                            card, battlefieldPermanentId, battlefieldSnapshot);
+                } finally {
+                    gameData.endCollectingTrigger(previousCollecting);
+                }
+            }
+            if (gameData.deferOncePerBatchGraveyardTriggers && !isToken(gameData, card)) {
+                suppressOncePerBatchLandTriggers = true;
+                gameData.deferredBatchOwnerId = ownerId;
+                if (isPermanentCard(card) && gameData.deferredBatchPermanentCard == null) {
+                    gameData.deferredBatchPermanentCard = card;
+                }
+                if (card.hasType(CardType.LAND) && gameData.deferredBatchLandCard == null) {
+                    gameData.deferredBatchLandCard = card;
+                }
+            }
+            // These abilities all trigger on this one event (CR 603.2) and go on the stack later (CR 603.3); their
+            // collectors write nothing the layered board or the static-bonus assembly reads (the land-entry count is
+            // read only by trigger collection), so their per-permanent queries share one query scope instead of each
+            // re-fingerprinting the board.
+            Card enteredCard = card;
+            Boolean oncePerBatchOnly = suppressOncePerBatchLandTriggers ? Boolean.FALSE : null;
+            gameQueryService.withQueryScope(gameData, () -> {
+                collectCardPutIntoGraveyardTriggers(gameData, ownerId, enteredCard, sourceZone,
+                        suppressLibraryBatchTriggers, oncePerBatchOnly);
+                return null;
+            });
+            return true;
+        } finally {
+            gameData.rulesEvents.endBatch();
         }
-        // These abilities all trigger on this one event (CR 603.2) and go on the stack later (CR 603.3); their
-        // collectors write nothing the layered board or the static-bonus assembly reads (the land-entry count is
-        // read only by trigger collection), so their per-permanent queries share one query scope instead of each
-        // re-fingerprinting the board.
-        Card enteredCard = card;
-        Boolean oncePerBatchOnly = suppressOncePerBatchLandTriggers ? Boolean.FALSE : null;
-        gameQueryService.withQueryScope(gameData, () -> {
-            collectCardPutIntoGraveyardTriggers(gameData, ownerId, enteredCard, sourceZone,
-                    suppressLibraryBatchTriggers, oncePerBatchOnly);
-            return null;
-        });
-        return true;
     }
 
     private void collectCardPutIntoGraveyardTriggers(GameData gameData, UUID ownerId, Card card, Zone sourceZone,

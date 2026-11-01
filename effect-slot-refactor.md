@@ -23,7 +23,8 @@ re-check them with a grep before acting on them.
 | 7 | Activated and mana abilities in one list | done |
 | 8 | Replacement effects, special actions and markers leave the enum | done |
 | 9 | Rules events for zone changes, and shadow mode | done |
-| 10 | Trigger index and the generic trigger pipeline | open |
+| 10a | Trigger index and the generic trigger pipeline; the pilot in shadow mode | done |
+| 10b | Switch the pilot to the pipeline, convert its cards, delete its slots | open |
 | 11 | Creature-death triggers and self-inclusion | open |
 | 12 | The rest of the zone-change family | open |
 | 13 | Remaining event families (repeatable) | open |
@@ -452,9 +453,16 @@ Time the pilot's card test classes before and after, and record the numbers in F
 **Done when:** the pilot slots are gone, their card tests fail exactly as at the baseline, and
 shadow mode left no unexplained difference.
 
+This step was split, with the user, in two:
+
+- **10a** builds the pipeline and its pieces, maps the pilot slots to `Trigger`s and runs shadow mode over the
+  pilot's card tests (items 1 and 2).
+- **10b** switches the slots, converts their cards and deletes the constants and collector code (items 3 to
+  5), and times the pilot's card test classes.
+
 ### Step 11: Creature-death triggers and self-inclusion
 
-**Depends on:** 10.
+**Depends on:** 10b.
 
 This replaces `refactors-to-do.md` entry 2.
 
@@ -2212,6 +2220,243 @@ Everything else is `OTHER`. An entry's cause is `OTHER` unless one was named for
   each. With the change stashed, HEAD fails the same four classes with the same per-class counts.
 - The full suite was not run here.
 
+
+### Step 10a
+
+10a builds the trigger pipeline and runs the pilot slots (`ON_DEATH`, `ON_SELF_LEAVES_BATTLEFIELD`, the four
+`ON_SELF_PUT_INTO_GRAVEYARD_FROM_…` slots and the dead `ON_SELF_MILLED`) in shadow mode. No slot moved, no card
+changed and the old collectors still put every card's abilities on the stack. 10b switches the slots.
+
+**Domain types.**
+
+- `model.trigger.ObjectRelation`: `THIS`, `YOU_CONTROL`, `ANY`, `ANOTHER_YOU_CONTROL`, `ANOTHER`,
+  `THIS_OR_ANOTHER_YOU_CONTROL`, `THIS_OR_ANOTHER`, `OPPONENT_CONTROLS`, `ENCHANTED`, `EQUIPPED`, with
+  `includesThis()`.
+- `model.trigger.ZoneChangeTrigger(ObjectRelation relation, Set<Zone> from, Zone to, Set<ZoneChangeCause> causes)`.
+  An empty `from` means any zone, outside the game included; a `null` `to` means any zone; empty `causes` means any
+  cause. A move inside one zone is rejected.
+  - `looksBack()` is true for leaving the battlefield or a graveyard (CR 603.10a).
+  - `defaultZones()`: the source's own look-back move functions from the zone it left. Its other moves function
+    from the zone it arrives in (CR 603.10): "put into a graveyard from your hand", "from anywhere" (CR 603.6c)
+    and milled all function from the graveyard. Every other relation functions from the battlefield.
+- `model.trigger.Triggers`: `dies`, `sacrificed` (any destination, since a replacement that exiles a sacrificed
+  permanent doesn't undo the sacrifice), `leavesBattlefield`, `putIntoGraveyardFrom(zone)`,
+  `putIntoGraveyardFromAnywhere`, `milled`. `Trigger` permits `ZoneChangeTrigger`.
+- `Card.addTrigger(Trigger, CardEffect...)`, `addTrigger(TriggerCondition, TriggerOptions, CardEffect...)`,
+  `addTriggeredAbility(TriggeredAbility)` and `getTriggeredAbilities()`.
+  - An ability with a real trigger has no slot: `LegacySlots.slotOf` returns `null`, the slot views skip it, and
+    `addAbility` appends it as it is.
+  - No card uses `addTrigger` yet, so agent-docs and the card skills don't name it; 10b changes them with the
+    pilot's cards.
+- `Permanent.getTemporaryTriggeredAbilities()` and `getPersistentTriggeredAbilities()`.
+- `ZoneChangeEvent` gains two fields, both captured just before the permanent leaves:
+  - `grantedAbilities`: the "when this dies" abilities other permanents grant the departing permanent. For now
+    these are the legacy `ON_DEATH` grants, from `DepartureService`'s batch snapshot or
+    `PermanentRemovalService.grantedSelfDeathEffects`.
+  - `deathTriggersSuppressed`: Hushbringer.
+
+  Both are taken before the permanent leaves, because `DepartureService` restores its `simultaneousDying…` maps
+  before a batch closes. `died()` is new.
+- `ZoneChangeCause.CRAFT`: exiled to pay a craft cost (CR 702.167a). `PermanentRemovalService` sets it for
+  `exiledWhileActivatingCraftAbility`.
+- `GameData`:
+  - `keyedOnceOnlyTriggersFired`: `TriggerLimit.ONCE` per source and ability, copied for simulations.
+  - `setRulesEventListener` (carried into simulation copies like `cardsExiledListener`).
+  - `CollectingTrigger` with `beginCollectingTrigger`/`endCollectingTrigger`, transient and only for the
+    observer.
+  - `RulesEventLog(Consumer<RulesEventBatch> onClose)` hands every batch to `GameData`'s listener as it closes.
+
+**Matching happens when a batch closes, not at `beginTriggerOrder`.** This changes step 9's plan. An occurrence is
+complete once its outermost scope ends, and matching it then is what the old collectors do at their choke points,
+so trigger timing stays the same. Matching at the drain would have run after prompts and auto-pass, and only once
+pending questions were answered. `beginTriggerOrder` still drains, which now only releases the closed batches.
+Scopes were added so that a departure's batch closes after its card arrived:
+
+- the ten leave bodies of `PermanentRemovalService`;
+- the core `GraveyardService.addCardToGraveyard`;
+- the two `AuraAttachmentService` sweeps, each as one batch.
+
+**A step 9 gap, fixed here.** The two Aura sweeps (`removeOrphanedAuras`, `enforceAttachmentLegality`) take Auras
+off the battlefield themselves, not through `PermanentRemovalService`. Their departure was therefore a plain
+arrival with no snapshot. They now emit it (`emitSweptDeparture`).
+
+**The pipeline** (`service/trigger/pipeline`).
+
+- `RulesEventPipeline.process` is the batch listener. `GameSetupService` registers it on every game and subgame.
+  - For each event it asks the index for candidates and matches them. It triggers an ability with a real
+    trigger: once per matching event for `EACH`, once per batch for `ONE_OR_MORE`.
+  - An ability still in a slot is reported to the observer only, and only if the observer shadows that slot.
+- `TriggerIndex.movingObjectCandidates` gives two sets of candidates for the object that moved:
+  - The departed permanent as it last existed:
+    - the effective card's abilities;
+    - its persistent abilities;
+    - the event's granted abilities;
+    - its temporary abilities;
+    - its delayed death effects.
+
+    Everything but the temporary abilities and the delayed death effects is dropped when it had lost all its
+    abilities. The temporary abilities are kept as the old collector keeps them (Infuse with Vitality after
+    Humble), and the delayed death effects because they aren't abilities of the permanent. A face-down permanent
+    has none of its card's abilities.
+  - The card in the zone it went to: its abilities and its perpetual grants. It has none in a graveyard under
+    Yixlid Jailer.
+
+  Each candidate's zone decides which trigger conditions it can meet. Abilities perpetually removed are left out.
+  Only `THIS` is matched: step 11 adds the other objects, with the look-back of a simultaneous batch.
+- `TriggerMatcher` checks:
+  - the condition's zones (CR 113.6);
+  - the relation;
+  - `ZoneChangeTrigger.matchesMove`;
+  - Hushbringer's suppression of a creature dying, which doesn't stop a sacrifice trigger
+    (`DaemogothWoeEaterTest`).
+- `TriggeredAbilityStackService.trigger` puts the ability on the stack:
+  - It checks the intervening "if" as it triggers and wraps every effect in an intervening-if
+    `ConditionalEffect` for the check on resolution (CR 603.4).
+  - Limits: `ONCE_EACH_TURN` in `keyedOncePerTurnTriggersFiredThisTurn` under `trigger:<ability hash>`;
+    `DO_ONLY_ONCE_EACH_TURN` as `OncePerTurnTriggerEffect.markOnAcceptance` does (the unkeyed set, marked on
+    acceptance through `markSourceOncePerTurnOnAcceptance`, CR 603.2h); `ONCE` in `keyedOnceOnlyTriggersFired`.
+    Equal abilities of one source share a key.
+  - A targeting ability queues a `DeathTriggerTarget` with `creaturesOnly` off, which `TriggerTargetCollector`
+    serves as it goes on the stack (CR 603.3d). Any other ability goes through `enqueueTrigger`.
+  - Additional-trigger copies are counted as the slot collectors count them, through a `TriggerContext`. That is
+    a bridge until step 16.
+  - A graveyard source's entry records the card's graveyard entry version (CR 400.7).
+- `LegacySlotTriggers` maps the pilot slots to their `Trigger`. `ON_DEATH` registrations that only trigger on a
+  sacrifice map to `Triggers.sacrificed`.
+- `LegacyTriggerOptions` reads a slot ability's trigger-only wrappers for the pipeline:
+  - the death conditionals and death intervening "if", through the collector's own new
+    `TriggerCollectionService.legacyDeathTriggerEffect`;
+  - the intervening "if"s handlers wrote as effects: "had a counter" (Promising Duskmage, Ochre Jelly, Nine-Lives
+    Familiar, Ambitious Augmenter, the move-counters effects);
+  - "into your graveyard" (Brood of Cockroaches, Triumph of Saint Katherine);
+  - "during combat" (Cathedral Membrane);
+  - exiled only, and exiled for craft;
+  - the leave collector's trigger-time-only `ConditionalEffect` check. An intervening "if" there is checked only
+    on resolution, as the old collector checks it.
+  - `OncePerTurnTriggerEffect` is unwrapped without checking its limit, because the collector has used the limit
+    up before the batch closes.
+
+  14 is the step that turns all of these into options and filters.
+
+**Shadow mode.**
+
+- `RulesObserver` gains `shadowedSlots()` and `wouldTrigger(slot, source, effects)`. `triggerQueued` now takes the
+  `CollectingTrigger`.
+  - `TriggerCollectionService.dispatch` marks the slot, the dispatched effect and the source.
+  - The four GraveyardService self-graveyard collectors mark their slot.
+  - `dispatch` also reports a prompt a handler begins directly instead of queueing it (Reveillark).
+- `ShadowTriggerRecorder` keys an old-path trigger by its source card id and the class of the dispatched
+  effect, not the effects that reach the stack. Handlers rewrite effects (Arcbound modular into `MayEffect`,
+  token counts into `CreateTokenEffect`, …), which step 15 removes. It reads the source from any record item
+  (`TriggeredModalTrigger` carries no effect list). Only records made inside a shadowed collector count, once
+  each.
+- `ShadowComparison` is now a record:
+  - `slots`;
+  - `nothingToDoDeclines`: effects whose handler skips an ability that would do nothing; a trigger only the
+    pipeline reports for one of them is no difference;
+  - `knownDifferences`: tests whose comparison is skipped, with the reason.
+
+  `CURRENT` shadows the pilot. `BaseCardTest` passes the test's `Class#method`.
+
+**Differences shadow mode found, and what became of them.** The first run of the pilot's card tests had 590
+failing tests. All of them were shadow differences: no other test broke. The causes and fixes, in order:
+
+1. The handlers' rewrites and `TriggeredModalTrigger`. Fixed by keying on the dispatched effect.
+2. Leave effects that are filters ("when this is exiled", craft). Moved into `LegacyTriggerOptions`.
+3. The Aura-sweep departures (the step 9 gap above).
+4. "From anywhere" triggers when the card dies (Dread, Purity, Bone Rattler, Emrakul): the index now also offers
+   the card in its new zone.
+5. Sacrifice triggers when a replacement exiles the permanent (Carrot Cake, Ordeal of Nylea): `Triggers.sacrificed`
+   takes any destination.
+6. Handler intervening "if"s and filters. Moved into `LegacyTriggerOptions`.
+7. The source a copy names. The old collectors name the effective card (Phantasmal Image as Gixian Puppeteer, Clone
+   as Harold and Bob, back faces), and so does the pipeline.
+8. A recorder bug: a pending question from another slot (Wernog's enter trigger) swallowed a leave trigger with
+   the same key. The consumption step is gone.
+
+What is left is recorded in `ShadowComparison`:
+
+- **Old-path declines, `nothingToDoDeclines`.** The handler puts nothing on the stack when the ability would do
+  nothing. None of these abilities has an intervening "if", so per CR 603.2 it triggers and resolves to nothing.
+  This affects `RemoveLinkedPermanentEffect` (Dance of Many, Diabolic Servitude), `CreateTokensForExiledCardsWithSourceEffect`
+  (Skyclave Apparition), `CreateTokenForImprintedCardOwnerEffect` (Severance Priest),
+  `SacrificeEnchantedCreatureOnLeaveEffect` (Animate Dead, Necromancy), `ExileEquippedCreatureEffect` (Oathkeeper),
+  `TargetPlayerGainsLifeEffect` (Laquatus's Champion) and `ManifestTopCardsForEachDyingSourceCounterEffect` with
+  X = 0 (Omarthis). After 10b these abilities go on the stack and do nothing. The change is rules-correct but
+  visible, and 10b should check those cards' tests.
+- **Limits of shadow mode, `knownDifferences`.**
+  - Once-each-turn limits really used earlier in the turn: Minthara, Terrors of the Track, Oni-Cult Anvil.
+  - Attachments that left in the same event: Gunner Conscript and Stone Haven Outfitter. The departure event has
+    no look-back of its attachments; step 11 needs one.
+  - Triggers queued where the recorder doesn't look: Foul Emissary's `pendingSpellCastCostTriggers` and Jugan's
+    divided counters.
+- **Recorded as known differences, for 10b to decide.**
+  - Tatsumasa's "return when that token dies" is printed on the token as an `ON_DEATH` ability, though it is a
+    delayed trigger (CR 603.7). The old death check misses Humility; the event's layer-aware flag doesn't. 10b
+    should make it a delayed trigger.
+  - Serra Paragon on Echoing Deeps: the old collector names the physical card, though it names the copied card
+    for a creature copy.
+
+**For 10b.**
+
+- Switching a slot means converting its cards to `addTrigger(Triggers.…)`. The pipeline then puts them on the
+  stack through `TriggeredAbilityStackService`, which reads options rather than wrappers. Until step 14 the
+  converted abilities keep their wrappers, so the stack service must read them through `LegacyTriggerOptions`
+  as shadow mode does. That adapter still needs a limit check that works when the pipeline is the only path:
+  with no collector running first, `OncePerTurnTriggerSupport.unwrapIfAvailable` is right again.
+- The death and leave handlers still decide each entry's details: the bound `…AwareEffect`s, the event value,
+  the dying permanent's mana value, the exile entry version, the cast mode. 10b has to give the stack service
+  those, or route the bound effects through `LegacyTriggerOptions`, before the handlers can go.
+- Haunt on instants and sorceries ("when this spell is put into a graveyard during its resolution",
+  CR 702.55a) needs a resolution cause on the stack-to-graveyard move. It isn't in shadow mode: the old path
+  collects it outside `dispatch`.
+- "When you sacrifice this … while casting with emerge" needs the casting spell on the event.
+- Time the pilot's card test classes before and after the switch (the step asks for it).
+
+**Tests changed.**
+
+- `SimulationCopyCompletenessTest`: `collectingTrigger` is deliberately not copied (scratch state for one dispatch).
+- `CardAbilitiesTest`: three new tests. A trigger is a triggered ability of its own that no slot view shows; it
+  keeps its condition's zones and options; and an ability with a real trigger is added, and copied with the card,
+  as it is.
+- New `ZoneChangeTriggerTest` (`model/trigger/`): the default zones of the source's own moves and of others',
+  move matching (zones, causes, from anywhere, outside the game), the rejected in-zone move, and `includesThis`.
+- New `TriggerPipelineTest` (`mechanics/`). Real triggers on test cards, resolved through the engine:
+  - a dies trigger goes on the stack and resolves;
+  - a bounce doesn't trigger dies;
+  - leaves the battlefield triggers for a bounce and for an exile;
+  - Rest in Peace turns a death into no dies trigger but a leaves trigger;
+  - a permanent that lost its abilities has no dies trigger;
+  - put into a graveyard from hand triggers from the graveyard under its owner's control;
+  - a false intervening "if" keeps it from triggering, and a true one wraps the effect for resolution;
+  - once each turn;
+  - a targeted trigger waits as a `DeathTriggerTarget`.
+- `ZoneChangeRulesEventTest#theSlotCollectorsTriggersAreRecorded` reads `effectClasses()`.
+- `BaseCardTest` and `GameTestHarness`: the comparison runs in every card test, keyed by test, with the pilot
+  shadowed.
+
+**Test runs.**
+
+- Card, with the pilot shadowed:
+  - the pilot's card test classes (`--gradle-args 10`): 590 failing tests at first, then 165, 46 and 1, and 0
+    with the known differences recorded;
+  - step 9's wider selection (steps 10 and 11 plus every mill, discard, madness, mutate, meld, flicker, blink and
+    exile-instead card): 3,302 classes, 25,839 tests, all passing. No failure in any run was other than a shadow
+    difference.
+- AI: the whole module (1,620 tests), with the same 10 failures as steps 7 to 9.
+- Application:
+  - the new and changed tests above, plus `RulesEventLogTest`, `TriggerConditionTest`, `LegacySlotTriggerTest`,
+    `TriggeredAbilityTest`, `GrantedAbilitiesTest`, `CardFreezeTest`, `CardImmutabilityArchTest`,
+    `GameSetupServiceAllRandomTest`, `CommanderGameTest`, `GameRegistrySessionTest`, `AuraAttachmentServiceTest`,
+    `DepartureServiceOrphanedStepBatchTest` and `GameDataExileTrackingTest`;
+  - the mock-wired `PermanentRemovalServiceTest`, `BattlefieldPlacementServiceTest`,
+    `DeathTriggerCollectorServiceTest` and `PlanechaseServiceTest`.
+
+  905 tests ran. The failures are the 70 of step 9 in `PermanentRemovalServiceTest` and
+  `BattlefieldPlacementServiceTest`, the known one each in the two architecture tests, and 11 in
+  `DeathTriggerCollectorServiceTest` and `PlanechaseServiceTest`. Those 11 fail the same way at HEAD with the
+  change stashed: mock wiring, and a planar ability with no card.
+- The full suite was not run here.
 
 ## Prompt
 

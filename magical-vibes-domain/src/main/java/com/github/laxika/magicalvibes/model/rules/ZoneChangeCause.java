@@ -17,7 +17,9 @@ public enum ZoneChangeCause {
     /** Milled from a library. */
     MILL,
     /** Moved to the stack to be cast (CR 601.2a). */
-    CAST;
+    CAST,
+    /** Exiled to pay the cost of a craft ability, as the permanent with it or as a material (CR 702.167a). */
+    CRAFT;
 
     /** The zone-change cause of a battlefield departure performed for {@code cause}. */
     public static ZoneChangeCause of(DepartureCause cause) {

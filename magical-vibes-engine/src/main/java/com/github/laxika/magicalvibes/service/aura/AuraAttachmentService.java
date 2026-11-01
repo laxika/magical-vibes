@@ -39,7 +39,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -94,82 +96,89 @@ public class AuraAttachmentService {
      * its CR 616.1 question before it leaves.
      */
     public AttachmentSweepResult removeOrphanedAuras(GameData gameData, Predicate<Permanent> leftForDepartureBatch) {
-        List<OrphanedAuraRemoval> removals = new ArrayList<>();
-        boolean anyUnattached = false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            Iterator<Permanent> it = battlefield.iterator();
-            while (it.hasNext()) {
-                Permanent p = it.next();
-                boolean isAura = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA)
-                        && !p.getCard().isEnchantZone();
-                boolean isFortification = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION);
-                boolean isEquipment = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT);
-                if (isAura && !p.isAttached() && isAwaitingDayNightAttachment(gameData, p.getId())) {
-                    continue;
-                }
-                boolean attachmentIsMissing = attachmentIsMissing(gameData, p, isAura);
-                if ((isAura && !p.isAttached()) || attachmentIsMissing) {
-                    if (p.isBestow()) {
-                        p.setCard(p.getOriginalCard());
-                        p.setBestow(false);
-                        p.setAttachedTo(null);
-                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
-                        anyUnattached = true;
-                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
-                        log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
-                    } else if (gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT)
-                            || isFortification) {
-                        // Equipment and Fortification stay on the battlefield unattached when their host leaves
-                        unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
-                        p.setAttachedTo(null);
-                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
-                        anyUnattached = true;
+        // One state-based check puts these Auras into graveyards at the same time: one rules event batch.
+        gameData.rulesEvents.beginBatch();
+        try {
+            List<OrphanedAuraRemoval> removals = new ArrayList<>();
+            boolean anyUnattached = false;
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) continue;
+                Iterator<Permanent> it = battlefield.iterator();
+                while (it.hasNext()) {
+                    Permanent p = it.next();
+                    boolean isAura = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA)
+                            && !p.getCard().isEnchantZone();
+                    boolean isFortification = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION);
+                    boolean isEquipment = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT);
+                    if (isAura && !p.isAttached() && isAwaitingDayNightAttachment(gameData, p.getId())) {
+                        continue;
+                    }
+                    boolean attachmentIsMissing = attachmentIsMissing(gameData, p, isAura);
+                    if ((isAura && !p.isAttached()) || attachmentIsMissing) {
+                        if (p.isBestow()) {
+                            p.setCard(p.getOriginalCard());
+                            p.setBestow(false);
+                            p.setAttachedTo(null);
+                            gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                            anyUnattached = true;
+                            gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
+                            log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
+                        } else if (gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT)
+                                || isFortification) {
+                            // Equipment and Fortification stay on the battlefield unattached when their host leaves
+                            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
+                            p.setAttachedTo(null);
+                            gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                            anyUnattached = true;
                         
-                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (attached permanent left the battlefield)."));
-                        log.info("Game {} - {} unattached (attached permanent left)", gameData.id, p.getCard().getName());
-                    } else if (!leftForDepartureBatch.test(p)) {
-                        boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
-                        // An Aura enchanting a card in a graveyard whose card left was enchanting nothing when it
-                        // fell off (Spellweaver Volute's triggered ability finds no enchanted card).
-                        // An Aura whose enchanted object already left in an earlier pass was enchanting nothing
-                        // when it last existed on the battlefield (CR 608.2h, CR 400.7).
-                        snapshotDepartingSource(gameData, p, attachmentIsMissing);
-                        it.remove();
-                        gameData.expireFloatingEffectsForDepartedSource(p.getId());
-                        // An Aura controlled by someone else goes to its owner's graveyard (CR 400.3).
-                        UUID auraOwnerId = gameData.stolenCreatures.get(p.getId());
-                        if (auraOwnerId == null) {
-                            auraOwnerId = p.getOriginalCard().getOwnerId() != null
-                                    ? p.getOriginalCard().getOwnerId() : playerId;
-                        }
-                        if (p.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, p)) {
-                            // "If this would leave the battlefield, exile it instead" (Storm Herald's Auras).
-                            gameData.addToExile(auraOwnerId, p.getOriginalCard());
-                            gameLogService.append(gameData, GameLog.cardThen(p.getCard(),
-                                    " is exiled instead of being put into the graveyard."));
-                            continue;
-                        }
-                        boolean wentToGraveyard = graveyardService.addCardToGraveyard(
-                                gameData, auraOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
-                        if (wentToGraveyard && hadOilCounter) {
-                            gameData.recordPermanentWithOilCounterPutIntoGraveyard();
-                        }
-                        String reason = p.isAttached()
-                                ? "enchanted permanent left the battlefield"
-                                : "Aura is not attached";
-                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (" + reason + ")."));
-                        log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
-                        if (wentToGraveyard) {
-                            removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
+                            gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (attached permanent left the battlefield)."));
+                            log.info("Game {} - {} unattached (attached permanent left)", gameData.id, p.getCard().getName());
+                        } else if (!leftForDepartureBatch.test(p)) {
+                            boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
+                            // An Aura enchanting a card in a graveyard whose card left was enchanting nothing when it
+                            // fell off (Spellweaver Volute's triggered ability finds no enchanted card).
+                            // An Aura whose enchanted object already left in an earlier pass was enchanting nothing
+                            // when it last existed on the battlefield (CR 608.2h, CR 400.7).
+                            snapshotDepartingSource(gameData, p, attachmentIsMissing);
+                            // An Aura controlled by someone else goes to its owner's graveyard (CR 400.3).
+                            UUID auraOwnerId = gameData.stolenCreatures.get(p.getId());
+                            if (auraOwnerId == null) {
+                                auraOwnerId = p.getOriginalCard().getOwnerId() != null
+                                        ? p.getOriginalCard().getOwnerId() : playerId;
+                            }
+                            emitSweptDeparture(gameData, p, playerId, auraOwnerId, attachmentIsMissing);
+                            it.remove();
+                            gameData.expireFloatingEffectsForDepartedSource(p.getId());
+                            if (p.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, p)) {
+                                // "If this would leave the battlefield, exile it instead" (Storm Herald's Auras).
+                                gameData.addToExile(auraOwnerId, p.getOriginalCard());
+                                gameLogService.append(gameData, GameLog.cardThen(p.getCard(),
+                                        " is exiled instead of being put into the graveyard."));
+                                continue;
+                            }
+                            boolean wentToGraveyard = graveyardService.addCardToGraveyard(
+                                    gameData, auraOwnerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
+                            if (wentToGraveyard && hadOilCounter) {
+                                gameData.recordPermanentWithOilCounterPutIntoGraveyard();
+                            }
+                            String reason = p.isAttached()
+                                    ? "enchanted permanent left the battlefield"
+                                    : "Aura is not attached";
+                            gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (" + reason + ")."));
+                            log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
+                            if (wentToGraveyard) {
+                                removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
+                            }
                         }
                     }
                 }
             }
+            creatureControlService.reconcileControl(gameData);
+            return new AttachmentSweepResult(removals, anyUnattached);
+        } finally {
+            gameData.rulesEvents.endBatch();
         }
-        creatureControlService.reconcileControl(gameData);
-        return new AttachmentSweepResult(removals, anyUnattached);
     }
 
     private boolean attachmentIsMissing(GameData gameData, Permanent p, boolean isAura) {
@@ -210,6 +219,25 @@ public class AuraAttachmentService {
             }
         }
         return auras;
+    }
+
+    /**
+     * Emits the zone change of an Aura a state-based sweep takes off the battlefield, which these sweeps do without
+     * {@code PermanentRemovalService}: its last-known snapshot, meant for its owner's graveyard. Its card's arrival
+     * rewrites the destination if a replacement sends it elsewhere.
+     */
+    private void emitSweptDeparture(GameData gameData, Permanent aura, UUID controllerId, UUID ownerId,
+                                    boolean enchantingNothing) {
+        Permanent lastKnown = new Permanent(aura);
+        if (enchantingNothing) {
+            lastKnown.setAttachedTo(null);
+        }
+        lastKnown.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, aura));
+        Set<UUID> cardIds = new LinkedHashSet<>();
+        cardIds.add(aura.getOriginalCard().getId());
+        cardIds.add(aura.getCard().getId());
+        gameData.rulesEvents.departed(lastKnown, aura.getOriginalCard(), cardIds, ownerId, controllerId,
+                Zone.GRAVEYARD);
     }
 
     private void snapshotDepartingSource(GameData gameData, Permanent permanent, boolean enchantingNothing) {
@@ -278,74 +306,81 @@ public class AuraAttachmentService {
      */
     public AttachmentSweepResult enforceAttachmentLegality(GameData gameData,
                                                            Predicate<Permanent> leftForDepartureBatch) {
-        List<OrphanedAuraRemoval> removals = new ArrayList<>();
-        boolean anyUnattached = false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            Iterator<Permanent> it = battlefield.iterator();
-            while (it.hasNext()) {
-                Permanent p = it.next();
-                if (!p.isAttached()) continue;
-                boolean isAura = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA);
-                boolean isEquipment = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT);
-                boolean isFortification = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION);
-                if (!isAura && !isEquipment && !isFortification) {
-                    // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
-                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
-                    p.setAttachedTo(null);
-                    gameData.expireFloatingEffectsForUnattachedSource(p.getId());
-                    anyUnattached = true;
-                    gameLogService.append(gameData, GameLog.builder().card(p.getCard())
-                            .text(" becomes unattached (it is no longer an Aura, Equipment, or Fortification).").build());
-                    log.info("Game {} - {} unattached (no longer Aura/Equipment/Fortification)", gameData.id, p.getCard().getName());
-                    continue;
-                }
-
-                String reason = illegalAttachmentReason(gameData, p, playerId, isAura, isFortification);
-                if (reason == null) continue;
-
-                if (isEquipment || isFortification) {
-                    // CR 704.5n — illegally attached equipment becomes unattached but stays
-                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
-                    p.setAttachedTo(null);
-                    gameData.expireFloatingEffectsForUnattachedSource(p.getId());
-                    anyUnattached = true;
-                    
-                    gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" becomes unattached (" + reason + ").").build());
-                    log.info("Game {} - {} unattached ({})", gameData.id, p.getCard().getName(), reason);
-                } else if (p.isBestow()) {
-                    p.setCard(p.getOriginalCard());
-                    p.setBestow(false);
-                    p.setAttachedTo(null);
-                    gameData.expireFloatingEffectsForUnattachedSource(p.getId());
-                    anyUnattached = true;
-                    gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment became illegal)."));
-                    log.info("Game {} - {} becomes a creature after illegal bestow attachment", gameData.id, p.getCard().getName());
-                } else if (!leftForDepartureBatch.test(p)) {
-                    // CR 704.5m — an illegally attached aura is put into its owner's graveyard
-                    boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
-                    snapshotDepartingSource(gameData, p, false);
-                    it.remove();
-                    gameData.expireFloatingEffectsForDepartedSource(p.getId());
-                    boolean wentToGraveyard = graveyardService.addCardToGraveyard(
-                            gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
-                    if (wentToGraveyard && hadOilCounter) {
-                        gameData.recordPermanentWithOilCounterPutIntoGraveyard();
+        // One state-based check puts these Auras into graveyards at the same time: one rules event batch.
+        gameData.rulesEvents.beginBatch();
+        try {
+            List<OrphanedAuraRemoval> removals = new ArrayList<>();
+            boolean anyUnattached = false;
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) continue;
+                Iterator<Permanent> it = battlefield.iterator();
+                while (it.hasNext()) {
+                    Permanent p = it.next();
+                    if (!p.isAttached()) continue;
+                    boolean isAura = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA);
+                    boolean isEquipment = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT);
+                    boolean isFortification = gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION);
+                    if (!isAura && !isEquipment && !isFortification) {
+                        // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
+                        unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
+                        p.setAttachedTo(null);
+                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        anyUnattached = true;
+                        gameLogService.append(gameData, GameLog.builder().card(p.getCard())
+                                .text(" becomes unattached (it is no longer an Aura, Equipment, or Fortification).").build());
+                        log.info("Game {} - {} unattached (no longer Aura/Equipment/Fortification)", gameData.id, p.getCard().getName());
+                        continue;
                     }
+
+                    String reason = illegalAttachmentReason(gameData, p, playerId, isAura, isFortification);
+                    if (reason == null) continue;
+
+                    if (isEquipment || isFortification) {
+                        // CR 704.5n — illegally attached equipment becomes unattached but stays
+                        unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
+                        p.setAttachedTo(null);
+                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        anyUnattached = true;
                     
-                    gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" is put into the graveyard (" + reason + ").").build());
-                    log.info("Game {} - {} removed (illegally attached: {})", gameData.id, p.getCard().getName(), reason);
-                    if (wentToGraveyard) {
-                        removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
+                        gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" becomes unattached (" + reason + ").").build());
+                        log.info("Game {} - {} unattached ({})", gameData.id, p.getCard().getName(), reason);
+                    } else if (p.isBestow()) {
+                        p.setCard(p.getOriginalCard());
+                        p.setBestow(false);
+                        p.setAttachedTo(null);
+                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
+                        anyUnattached = true;
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment became illegal)."));
+                        log.info("Game {} - {} becomes a creature after illegal bestow attachment", gameData.id, p.getCard().getName());
+                    } else if (!leftForDepartureBatch.test(p)) {
+                        // CR 704.5m — an illegally attached aura is put into its owner's graveyard
+                        boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
+                        snapshotDepartingSource(gameData, p, false);
+                        emitSweptDeparture(gameData, p, playerId, playerId, false);
+                        it.remove();
+                        gameData.expireFloatingEffectsForDepartedSource(p.getId());
+                        boolean wentToGraveyard = graveyardService.addCardToGraveyard(
+                                gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD, playerId, p);
+                        if (wentToGraveyard && hadOilCounter) {
+                            gameData.recordPermanentWithOilCounterPutIntoGraveyard();
+                        }
+                    
+                        gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" is put into the graveyard (" + reason + ").").build());
+                        log.info("Game {} - {} removed (illegally attached: {})", gameData.id, p.getCard().getName(), reason);
+                        if (wentToGraveyard) {
+                            removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
+                        }
                     }
                 }
             }
+            if (anyUnattached || !removals.isEmpty()) {
+                creatureControlService.reconcileControl(gameData);
+            }
+            return new AttachmentSweepResult(removals, anyUnattached);
+        } finally {
+            gameData.rulesEvents.endBatch();
         }
-        if (anyUnattached || !removals.isEmpty()) {
-            creatureControlService.reconcileControl(gameData);
-        }
-        return new AttachmentSweepResult(removals, anyUnattached);
     }
 
     /**

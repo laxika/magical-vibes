@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCre
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -11464,6 +11465,32 @@ public class TriggerCollectionService {
         return effects.stream().filter(effect -> !removed.contains(effect)).toList();
     }
 
+    /**
+     * What a printed, granted or temporary "when this dies" effect puts on the stack for a death, after the
+     * trigger-only wrappers its collector reads: {@code null} when a sacrifice-only effect, a creature-death
+     * conditional, a spent once-each-turn limit or a false intervening "if" keeps it from triggering, and
+     * otherwise the effect with those wrappers taken off. {@code LegacyTriggerOptions} reads ON_DEATH abilities
+     * through it until step 14 of effect-slot-refactor.md turns the wrappers into trigger options.
+     */
+    public CardEffect legacyDeathTriggerEffect(GameData gameData, Card dyingCard, Permanent dyingPermanent,
+                                               UUID controllerId, boolean wasCreature, boolean wasLand,
+                                               CardEffect effect) {
+        if (effect.onlyTriggersOnSacrifice()) {
+            return null;
+        }
+        CardEffect resolvedEffect = unwrapCreatureDeathConditional(
+                effect, dyingCard, dyingPermanent, gameData, controllerId, null, wasCreature, wasLand);
+        if (resolvedEffect == null) {
+            return null;
+        }
+        resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, dyingPermanent, resolvedEffect);
+        if (resolvedEffect == null
+                || !passesDeathInterveningIf(gameData, dyingPermanent, controllerId, resolvedEffect, wasCreature)) {
+            return null;
+        }
+        return resolvedEffect;
+    }
+
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {
         collectDeathTrigger(gameData, dyingCard, controllerId, wasCreature, null);
     }
@@ -18810,9 +18837,19 @@ public class TriggerCollectionService {
                 ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
                         match.gameData(), match.controllerId(), match.permanent())
                 : 0));
+        GameData.CollectingTrigger previousCollecting = match.gameData().beginCollectingTrigger(
+                new GameData.CollectingTrigger(slot, effect, match.permanent().getCard()));
+        Object activeBefore = match.gameData().interaction.activeInteraction();
         try {
-            return registry.dispatch(match, slot, effect, context);
+            boolean handled = registry.dispatch(match, slot, effect, context);
+            Object activeAfter = match.gameData().interaction.activeInteraction();
+            if (activeAfter != null && activeAfter != activeBefore) {
+                // A handler that asks its question at once begins the prompt instead of queueing it.
+                match.gameData().observeTrigger(RulesObserver.Route.INTERACTION, activeAfter);
+            }
+            return handled;
         } finally {
+            match.gameData().endCollectingTrigger(previousCollecting);
             match.gameData().restoreTriggeredAbilityCopies(previousCopies);
         }
     }

@@ -108,12 +108,20 @@ public class GameData {
      * Rules events the trigger pipeline hasn't taken yet, and what describing zone changes needs (see
      * {@link RulesEventLog}). The zone lists below report every card added to them here.
      */
-    public final RulesEventLog rulesEvents = new RulesEventLog();
+    public final RulesEventLog rulesEvents = new RulesEventLog(this::rulesEventBatchClosed);
     /**
      * Test-only watcher of rules events and of the triggered abilities collectors queue (the shadow recorder);
      * {@code null} in real games and never copied into simulations.
      */
     public RulesObserver rulesObserver;
+    /** The engine's trigger pipeline, handed every rules event batch as it closes; set at game setup. */
+    private transient volatile BiConsumer<GameData, RulesEventBatch> rulesEventListener;
+    /**
+     * The slot whose collector is putting triggered abilities toward the stack right now, and the effect it is
+     * dispatching, or {@code null}s. Only {@link #rulesObserver} reads them, to tell which family an old-path
+     * trigger belongs to and which effect it was before the collector rewrote it.
+     */
+    private transient CollectingTrigger collectingTrigger;
     public final Map<UUID, List<Card>> playerDecks = new LibraryMap();
     /** The size of each player's deck before the opening hand was drawn. */
     public final Map<UUID, Integer> startingDeckSizes = new ConcurrentHashMap<>();
@@ -4049,6 +4057,11 @@ public class GameData {
 
     /** Tracks source permanent object IDs whose one-shot triggered ability has fired. */
     public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
+    /**
+     * The "triggers only once" abilities that have triggered, by source object id: the trigger pipeline keys each
+     * ability of an object separately, for abilities with {@code TriggerLimit.ONCE}.
+     */
+    public final Map<UUID, Set<String>> keyedOnceOnlyTriggersFired = new ConcurrentHashMap<>();
 
     /** Tracks source permanent IDs to creature IDs whose first counter-placement trigger has fired
      *  this turn. Cleared at start of new turn. */
@@ -8030,8 +8043,41 @@ public class GameData {
     /** Reports a triggered ability (or the question leading to one) put on {@code route} to {@link #rulesObserver}. */
     public void observeTrigger(RulesObserver.Route route, Object item) {
         if (rulesObserver != null && !rulesEvents.isSuppressed()) {
-            rulesObserver.triggerQueued(route, item);
+            rulesObserver.triggerQueued(route, item, collectingTrigger);
         }
+    }
+
+    /** Sets the engine's trigger pipeline, which matches every rules event batch as it closes. */
+    public void setRulesEventListener(BiConsumer<GameData, RulesEventBatch> rulesEventListener) {
+        this.rulesEventListener = rulesEventListener;
+    }
+
+    private void rulesEventBatchClosed(RulesEventBatch batch) {
+        BiConsumer<GameData, RulesEventBatch> listener = rulesEventListener;
+        if (listener != null) {
+            listener.accept(this, batch);
+        }
+    }
+
+    /**
+     * What a slot collector is collecting, for {@link #rulesObserver}: its slot, the effect it dispatches and the
+     * card whose ability that is ({@code null}s for a collector that doesn't dispatch one effect at a time).
+     */
+    public record CollectingTrigger(EffectSlot slot, CardEffect effect, Card sourceCard) {
+    }
+
+    /**
+     * Marks what a slot collector is about to queue triggered abilities for, and returns the previous mark (or
+     * {@code null}) for {@link #endCollectingTrigger}.
+     */
+    public CollectingTrigger beginCollectingTrigger(CollectingTrigger collecting) {
+        CollectingTrigger previous = collectingTrigger;
+        collectingTrigger = collecting;
+        return previous;
+    }
+
+    public void endCollectingTrigger(CollectingTrigger previous) {
+        collectingTrigger = previous;
     }
 
     /**
@@ -9422,6 +9468,7 @@ public class GameData {
         copy.subgameCards.putAll(subgameCards);
         suspendedZoneTriggers.forEach(entry -> copy.suspendedZoneTriggers.add(new StackEntry(entry)));
         copy.cardsExiledListener = this.cardsExiledListener;
+        copy.rulesEventListener = this.rulesEventListener;
         copy.opponentOwnedCardExiledListener = this.opponentOwnedCardExiledListener;
 
         // --- Primitives, enums, UUIDs, Strings ---
@@ -10385,6 +10432,11 @@ public class GameData {
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         copy.permanentsWithCountersPutThisTurn.addAll(this.permanentsWithCountersPutThisTurn);
         copy.onceOnlyTriggersFired.addAll(this.onceOnlyTriggersFired);
+        this.keyedOnceOnlyTriggersFired.forEach((sourceId, keys) -> {
+            Set<String> copiedKeys = ConcurrentHashMap.newKeySet();
+            copiedKeys.addAll(keys);
+            copy.keyedOnceOnlyTriggersFired.put(sourceId, copiedKeys);
+        });
         this.firstCardCycledFreeUsesThisTurn.forEach((k, v) ->
                 copy.firstCardCycledFreeUsesThisTurn.put(k, new HashSet<>(v)));
         this.keyedOncePerTurnTriggersFiredThisTurn.forEach((k, v) -> {

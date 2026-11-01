@@ -59,11 +59,14 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentController
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -1782,6 +1785,10 @@ public class Card {
             return;
         }
         EffectSlot slot = slotOf(ability);
+        if (ability instanceof TriggeredAbility triggered && slot == null) {
+            addTriggeredAbility(triggered);
+            return;
+        }
         List<EffectRegistration> registrations = switch (ability) {
             // Its target groups are this card's first groups, so they follow from this card's own.
             case SpellAbility spell -> spell.effects();
@@ -1804,6 +1811,48 @@ public class Card {
             group.add(registration);
         }
         addRegistrations(slot, group);
+    }
+
+    /**
+     * Adds a triggered ability with one trigger condition, which functions from {@code trigger}'s default zones,
+     * and no options. The effects are one ability (CR 603.3), in the order they resolve.
+     */
+    public void addTrigger(Trigger trigger, CardEffect... effects) {
+        addTrigger(new TriggerCondition(trigger), TriggerOptions.DEFAULT, effects);
+    }
+
+    /**
+     * Adds a triggered ability with one trigger condition and {@code options}: its intervening "if", limit and
+     * multiplicity.
+     */
+    public void addTrigger(TriggerCondition condition, TriggerOptions options, CardEffect... effects) {
+        addTriggeredAbility(new TriggeredAbility(List.of(condition), options,
+                Arrays.stream(effects).map(effect -> new EffectRegistration(effect, TriggerMode.NORMAL)).toList()));
+    }
+
+    /**
+     * Adds {@code ability} as it is, for an ability with several trigger conditions or simultaneous effects.
+     * An ability with a {@link LegacySlotTrigger} is added the way its slot groups registrations instead.
+     */
+    public void addTriggeredAbility(TriggeredAbility ability) {
+        assertMutable();
+        if (slotOf(ability) != null) {
+            addAbility(ability);
+            return;
+        }
+        abilities.add(ability);
+        slotIndex = null;
+    }
+
+    /** The card's triggered abilities in the order they were added, those still held in a slot included. */
+    public List<TriggeredAbility> getTriggeredAbilities() {
+        List<TriggeredAbility> triggered = new ArrayList<>();
+        for (Ability ability : abilities) {
+            if (ability instanceof TriggeredAbility triggeredAbility) {
+                triggered.add(triggeredAbility);
+            }
+        }
+        return triggered;
     }
 
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
@@ -2030,7 +2079,7 @@ public class Card {
                 if (ability instanceof StaticAbility statik) {
                     statics.add(statik);
                     staticEffects.addAll(statik.effects());
-                } else if (ability instanceof TriggeredAbility triggered) {
+                } else if (ability instanceof TriggeredAbility triggered && slotOf(triggered) != null) {
                     bySlot.computeIfAbsent(slotOf(triggered), slot -> new ArrayList<>()).add(triggered);
                 }
             }

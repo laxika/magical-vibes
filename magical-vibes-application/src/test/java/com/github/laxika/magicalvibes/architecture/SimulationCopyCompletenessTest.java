@@ -58,7 +58,10 @@ class SimulationCopyCompletenessTest {
                     + "revertableManaActivations above; a simulation copy must start with none owed.",
             "rulesObserver",
             "The test fixtures' shadow recorder watches the real game only; a simulation copy recording into it "
-                    + "would mix the AI's imagined triggers and rules events into the test's.");
+                    + "would mix the AI's imagined triggers and rules events into the test's.",
+            "collectingTrigger",
+            "Scratch state for the shadow recorder that spans one collector's dispatch; a copy is never made "
+                    + "while a collector is dispatching.");
 
     private static final String GAME_DATA_SRC =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/GameData.java";

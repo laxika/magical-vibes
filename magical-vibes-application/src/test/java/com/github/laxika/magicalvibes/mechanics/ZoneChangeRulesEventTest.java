@@ -353,7 +353,7 @@ class ZoneChangeRulesEventTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(recorder.oldPath()).anySatisfy(queued ->
-                assertThat(queued.trigger().effects()).isNotEmpty());
+                assertThat(queued.trigger().effectClasses()).isNotEmpty());
         assertThat(recorder.differences().isEmpty()).isTrue();
     }
 

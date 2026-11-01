@@ -19,7 +19,11 @@ import com.github.laxika.magicalvibes.model.effect.SerumPowderEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -505,5 +509,42 @@ class CardAbilitiesTest {
         assertThat(copy.getActivatedAbilities(Zone.HAND)).containsExactly(cycling);
         assertThat(copy.getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(2);
         assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).containsExactly(mana);
+    }
+
+    @Test
+    void aTriggerIsATriggeredAbilityOfItsOwnThatNoSlotViewShows() {
+        card.addEffect(EffectSlot.ON_DEATH, DRAW_ONE);
+        card.addTrigger(Triggers.dies(ObjectRelation.THIS), DRAW_TWO, GAIN_ONE);
+
+        TriggeredAbility added = card.getTriggeredAbilities().get(1);
+        assertThat(added.conditions()).containsExactly(new TriggerCondition(Triggers.dies(ObjectRelation.THIS)));
+        assertThat(added.options()).isEqualTo(TriggerOptions.DEFAULT);
+        assertThat(added.effects()).extracting(EffectRegistration::effect).containsExactly(DRAW_TWO, GAIN_ONE);
+        assertThat(card.getTriggeredAbilities()).hasSize(2);
+        assertThat(card.getEffects(EffectSlot.ON_DEATH)).containsExactly(DRAW_ONE);
+    }
+
+    @Test
+    void aTriggerKeepsItsConditionZonesAndOptions() {
+        TriggerCondition fromExile = new TriggerCondition(Triggers.dies(ObjectRelation.THIS), AbilityZones.EXILE);
+        TriggerOptions oncePerTurn = TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN);
+
+        card.addTrigger(fromExile, oncePerTurn, DRAW_ONE);
+
+        TriggeredAbility added = card.getTriggeredAbilities().getFirst();
+        assertThat(added.conditions()).containsExactly(fromExile);
+        assertThat(added.options()).isEqualTo(oncePerTurn);
+    }
+
+    @Test
+    void addingATriggeredAbilityWithARealTriggerAddsItAsItIs() {
+        TriggeredAbility ability = new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW_ONE),
+                new EffectRegistration(GAIN_ONE, TriggerMode.NORMAL, true)));
+
+        card.addAbility(ability);
+
+        assertThat(card.getTriggeredAbilities()).containsExactly(ability);
+        assertThat(card.createRuntimeCopy().getTriggeredAbilities()).containsExactly(ability);
     }
 }

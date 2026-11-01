@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
@@ -57,6 +58,7 @@ public class GameSetupService {
     private final CardCatalog cardCatalog;
     private final RandomDeckGenerator randomDeckGenerator;
     private final TriggerCollectionService triggerCollectionService;
+    private final RulesEventPipeline rulesEventPipeline;
 
     public GameSetupService(GameRegistry gameRegistry,
                             ObjectProvider<CustomDeckSource> customDeckSourceProvider,
@@ -64,7 +66,8 @@ public class GameSetupService {
                             GameLogService gameLogService,
                             CardCatalog cardCatalog,
                             RandomDeckGenerator randomDeckGenerator,
-                            @Lazy TriggerCollectionService triggerCollectionService) {
+                            @Lazy TriggerCollectionService triggerCollectionService,
+                            @Lazy RulesEventPipeline rulesEventPipeline) {
         this.gameRegistry = gameRegistry;
         this.customDeckSourceProvider = customDeckSourceProvider;
         this.mutationCoordinator = mutationCoordinator;
@@ -72,6 +75,7 @@ public class GameSetupService {
         this.cardCatalog = cardCatalog;
         this.randomDeckGenerator = randomDeckGenerator;
         this.triggerCollectionService = triggerCollectionService;
+        this.rulesEventPipeline = rulesEventPipeline;
     }
 
     /**
@@ -118,6 +122,7 @@ public class GameSetupService {
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
         gameData.setCardsExiledListener(triggerCollectionService::checkCardsExiledTriggers);
         gameData.setOpponentOwnedCardExiledListener(triggerCollectionService::checkOpponentOwnedCardExiledTriggers);
+        gameData.setRulesEventListener(rulesEventPipeline::process);
         String selectedDeckId = deckId;
         mutationCoordinator.mutate(gameData, () -> {
             gameData.format = format;
@@ -309,6 +314,7 @@ public class GameSetupService {
     public void initializeSubgame(GameData game, java.util.Map<UUID, List<Card>> decks) {
         game.setCardsExiledListener(triggerCollectionService::checkCardsExiledTriggers);
         game.setOpponentOwnedCardExiledListener(triggerCollectionService::checkOpponentOwnedCardExiledTriggers);
+        game.setRulesEventListener(rulesEventPipeline::process);
         for (UUID player : game.orderedPlayerIds) {
             List<Card> deck = new ArrayList<>(decks.get(player));
             deck.forEach(card -> game.subgameCards.put(card.getId(), card));
