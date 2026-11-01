@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VaultSkirge;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -150,10 +149,6 @@ class LightlessEvangelTest extends BaseCardTest {
     }
 
     private void sacrifice(Player player, Permanent permanent) {
-        Card card = permanent.getCard();
-        gd.playerBattlefields.get(player.getId()).remove(permanent);
-        gd.playerGraveyards.get(player.getId()).add(card);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player.getId(), card));
+        harness.sacrifice(permanent);
     }
 }

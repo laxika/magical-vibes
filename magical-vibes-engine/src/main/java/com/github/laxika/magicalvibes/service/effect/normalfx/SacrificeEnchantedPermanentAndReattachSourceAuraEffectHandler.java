@@ -118,7 +118,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
             if (done.results().stream().noneMatch(DepartureResult::sacrificed)) {
                 return;
             }
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, enchanted.getCard());
+            triggerCollectionService.recordSacrifice(gameData, controllerId, enchanted.getCard());
             entry.setSacrificedCard(enchanted.getCard());
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));

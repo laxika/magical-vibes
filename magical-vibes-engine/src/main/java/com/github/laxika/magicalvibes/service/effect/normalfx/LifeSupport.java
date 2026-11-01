@@ -666,8 +666,7 @@ public class LifeSupport {
                 continue;
             }
             if (controllerId != null) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                        gameData, controllerId, source.getCard());
+                triggerCollectionService.recordSacrifice(gameData, controllerId, source.getCard());
             }
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is sacrificed."));
             permanentRemovalService.removeOrphanedAuras(gameData);

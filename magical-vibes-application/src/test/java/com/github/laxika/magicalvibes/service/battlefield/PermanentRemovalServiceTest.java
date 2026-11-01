@@ -594,7 +594,7 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Fires artifact graveyard trigger for artifacts sent to graveyard")
+        @DisplayName("Collects emblem artifact graveyard triggers for artifacts sent to graveyard")
         void firesArtifactGraveyardTrigger() {
             Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
             artifact.setCounterCount(CounterType.CHARGE, 2);
@@ -606,13 +606,13 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, artifact);
 
-            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+            verify(triggerCollectionService).checkEmblemArtifactGraveyardTriggers(
                     gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
                     Map.of(CounterType.CHARGE, 2), false);
         }
 
         @Test
-        @DisplayName("Artifact graveyard triggers retain whether the artifact was sacrificed")
+        @DisplayName("Emblem artifact graveyard triggers retain whether the artifact was sacrificed")
         void artifactGraveyardTriggerRecordsSacrifice() {
             Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
             artifact.setCounterCount(CounterType.CHARGE, 2);
@@ -626,13 +626,13 @@ class PermanentRemovalServiceTest {
             assertThat(prs.sacrificePermanentToGraveyard(gd, artifact)).isTrue();
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(artifact);
-            verify(triggerCollectionService).checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+            verify(triggerCollectionService).checkEmblemArtifactGraveyardTriggers(
                     gd, player1Id, player1Id, artifact.getOriginalCard(), artifact.getCard().getManaValue(),
                     Map.of(CounterType.CHARGE, 2), true);
         }
 
         @Test
-        @DisplayName("Fires enchantment graveyard trigger for enchantments sent to graveyard")
+        @DisplayName("Records an enchantment put into a graveyard from the battlefield")
         void firesEnchantmentGraveyardTrigger() {
             Permanent enchantment = addPermanent(player1Id, createEnchantment("Pacifism"));
             when(gameQueryService.isCreature(gd, enchantment)).thenReturn(false);
@@ -646,7 +646,6 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playersWhoPutEnchantmentIntoGraveyardFromBattlefieldThisTurn)
                     .containsExactly(player1Id);
-            verify(triggerCollectionService).checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id);
         }
 
         @Test
@@ -890,7 +889,7 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Bounced token still fires leave-battlefield and returned-to-hand triggers")
+        @DisplayName("Bounced token still fires delayed leave-battlefield triggers")
         void bouncedTokenStillFiresTriggers() {
             Card tokenCard = createCreature("Saproling");
             tokenCard.setToken(true);
@@ -900,8 +899,6 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToHand(gd, token);
 
             verify(triggerCollectionService).checkDelayedLeavesBattlefieldTriggers(gd, token, Zone.HAND);
-            verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
-            verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id, token);
         }
     }
 

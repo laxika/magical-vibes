@@ -60,8 +60,6 @@ public class SeekLibraryForOwnerOfCardExiledWithSourceBelowManaValueEffectHandle
         Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
         library.removeIf(card -> card.getId().equals(chosen.getId()));
         gameData.addCardToHand(exiled.ownerId(), chosen);
-        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                gameData, exiled.ownerId(), chosen);
         triggerCollectionService.checkSeekTriggers(gameData, exiled.ownerId(), List.of(chosen));
     }
 }

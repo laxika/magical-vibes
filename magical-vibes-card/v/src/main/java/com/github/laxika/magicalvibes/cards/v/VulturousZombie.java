@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RAV", collectorNumber = "238")
 @CardRegistration(set = "CMD", collectorNumber = "236")
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 public class VulturousZombie extends Card {
 
     public VulturousZombie() {
-        addEffect(EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.OPPONENT_OWNS),
                 new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

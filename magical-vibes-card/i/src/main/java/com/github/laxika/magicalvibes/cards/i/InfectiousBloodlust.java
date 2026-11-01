@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ORI", collectorNumber = "152")
 public class InfectiousBloodlust extends Card {
@@ -28,7 +29,7 @@ public class InfectiousBloodlust extends Card {
 
         // When enchanted creature dies, you may search your library for a card named
         // Infectious Bloodlust, reveal it, put it into your hand, then shuffle.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new MayEffect(
                 new SearchLibraryEffect(new Fixed(1), new CardNamedPredicate("Infectious Bloodlust"),
                         LibrarySearchDestination.HAND),
                 "Search your library for a card named Infectious Bloodlust?"

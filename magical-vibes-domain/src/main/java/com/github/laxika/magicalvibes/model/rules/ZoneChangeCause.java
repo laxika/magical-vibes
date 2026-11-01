@@ -27,7 +27,7 @@ public enum ZoneChangeCause {
     public static ZoneChangeCause of(DepartureCause cause) {
         return switch (cause) {
             case DESTROY, STATE_BASED_DESTROY -> DESTROY;
-            case SACRIFICE -> SACRIFICE;
+            case SACRIFICE, STATE_BASED_SACRIFICE -> SACRIFICE;
             case STATE_BASED -> STATE_BASED;
             case OTHER -> OTHER;
         };

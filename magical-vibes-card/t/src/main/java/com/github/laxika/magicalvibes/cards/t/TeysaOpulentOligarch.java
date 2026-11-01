@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,7 @@ public class TeysaOpulentOligarch extends Card {
                 1, "Spirit", 1, 1, CardColor.WHITE,
                 Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.SPIRIT),
                 Set.of(Keyword.FLYING), Set.of());
-        addEffect(EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.CLUE),
                         new TriggeringPermanentControllerConditionalEffect(

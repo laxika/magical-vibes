@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -27,7 +26,7 @@ public class Necrosynthesis extends Card {
                         new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANOTHER),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new LookAtTopCardsEffect(
                                 new EventValue(), new Fixed(1), null,
                                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,

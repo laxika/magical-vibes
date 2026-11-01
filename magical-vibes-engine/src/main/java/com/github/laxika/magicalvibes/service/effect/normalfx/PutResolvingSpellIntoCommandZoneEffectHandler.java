@@ -38,8 +38,6 @@ public class PutResolvingSpellIntoCommandZoneEffectHandler implements NormalEffe
                 entry.getOwnerId(), ignored -> new ArrayList<>());
         commandZone.removeIf(commandZoneCard -> commandZoneCard.getId().equals(card.getId()));
         commandZone.add(card);
-        triggerCollectionService.checkYourCommanderPutIntoCommandZoneTriggers(
-                gameData, card, entry.getOwnerId());
         entry.setSpellDispositionHandled(true);
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is put into its owner's command zone."));

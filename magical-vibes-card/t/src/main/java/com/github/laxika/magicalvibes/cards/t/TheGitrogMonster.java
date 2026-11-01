@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "238")
 @CardRegistration(set = "INR", collectorNumber = "431")
@@ -27,7 +30,9 @@ public class TheGitrogMonster extends Card {
         addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
 
         // Whenever one or more land cards are put into your graveyard from anywhere, draw a card.
-        addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
-                new DrawCardEffect(1), TriggerMode.ONCE_PER_BATCH);
+        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD,
+                ObjectRelation.YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE,
+                new DrawCardEffect(1));
     }
 }

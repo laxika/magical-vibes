@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "99")
 @CardRegistration(set = "SOC", collectorNumber = "226")
@@ -18,7 +20,7 @@ public class SmotheringAbomination extends Card {
     public SmotheringAbomination() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardTypePredicate(CardType.CREATURE), new DrawCardEffect()));
     }

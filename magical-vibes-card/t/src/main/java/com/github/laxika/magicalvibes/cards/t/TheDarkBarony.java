@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "6")
 @CardRegistration(set = "OPCA", collectorNumber = "19")
 public class TheDarkBarony extends Card {
 
     public TheDarkBarony() {
-        addEffect(EffectSlot.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONBLACK_CARD, ObjectRelation.ANOTHER),
                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));

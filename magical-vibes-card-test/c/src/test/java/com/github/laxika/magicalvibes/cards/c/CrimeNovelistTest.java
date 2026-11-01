@@ -124,10 +124,6 @@ class CrimeNovelistTest extends BaseCardTest {
     }
 
     private void sacrifice(Player player, Permanent permanent) {
-        harness.inMutationScope(() -> {
-            assertThat(harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, permanent)).isTrue();
-            harness.getTriggerCollectionService()
-                    .checkAllyPermanentSacrificedTriggers(gd, player.getId(), permanent.getCard());
-        });
+        harness.sacrifice(permanent);
     }
 }

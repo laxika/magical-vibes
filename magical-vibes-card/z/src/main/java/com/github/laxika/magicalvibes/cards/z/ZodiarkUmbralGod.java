@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class ZodiarkUmbralGod extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GOD))))));
-        addEffect(EffectSlot.ON_ANY_CREATURE_SACRIFICED, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.sacrificed(Triggers.CREATURE, ObjectRelation.ANOTHER),
+                new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

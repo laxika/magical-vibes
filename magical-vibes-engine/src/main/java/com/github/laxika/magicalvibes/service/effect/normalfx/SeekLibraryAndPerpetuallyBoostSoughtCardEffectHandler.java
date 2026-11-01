@@ -51,8 +51,6 @@ public class SeekLibraryAndPerpetuallyBoostSoughtCardEffectHandler
         gameData.addCardToHand(controllerId, sought);
         PerpetualCardPowerToughnessSupport.remember(
                 gameData, sought, seek.powerBoost(), seek.toughnessBoost());
-        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                gameData, controllerId, sought);
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(sought));
     }
 }

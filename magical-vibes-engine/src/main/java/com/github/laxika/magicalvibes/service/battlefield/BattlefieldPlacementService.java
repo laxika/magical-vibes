@@ -1175,7 +1175,6 @@ public class BattlefieldPlacementService {
             List<Card> library = gameData.playerDecks.get(ownerId);
             if (library != null && library.stream().noneMatch(existing -> existing.getId().equals(physicalCard.getId()))) {
                 library.add(physicalCard);
-                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
                 if (gameData.exileEntryShuffleBatchOwners != null) {
                     gameData.exileEntryShuffleBatchOwners.add(ownerId);
                 } else {
@@ -1801,8 +1800,7 @@ public class BattlefieldPlacementService {
                 DepartureBatch.of(doomed.stream().map(Permanent::getId).map(DepartureIntent::sacrifice).toList()),
                 DepartureService.Hooks.afterEach((intent, other, snapshot, removed) -> {
                     if (removed) {
-                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId,
-                                other.getCard(), null, snapshot.creature());
+                        triggerCollectionService.recordSacrifice(gameData, controllerId, other.getCard());
                         gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is sacrificed."));
                     }
                 }));

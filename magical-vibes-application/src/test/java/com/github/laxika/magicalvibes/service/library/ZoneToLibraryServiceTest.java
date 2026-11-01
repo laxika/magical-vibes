@@ -82,7 +82,6 @@ class ZoneToLibraryServiceTest {
         assertThat(gd.playerDecks.get(player1Id)).hasSize(6);
         assertThat(gd.playerHands.get(player1Id)).isEmpty();
         assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
-        verify(triggerCollectionService).checkCardsPutIntoLibraryTriggers(gd, player1Id, 5);
     }
 
     @Test

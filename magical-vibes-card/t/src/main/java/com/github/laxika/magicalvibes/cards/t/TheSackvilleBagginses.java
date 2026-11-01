@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -47,7 +49,7 @@ public class TheSackvilleBagginses extends Card {
                         "another creature or artifact", false, false),
                 "Sacrifice another creature or artifact?"));
 
-        target(OPPONENT_TARGET).addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+        target(OPPONENT_TARGET).addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsTokenPredicate(),
                         new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)));

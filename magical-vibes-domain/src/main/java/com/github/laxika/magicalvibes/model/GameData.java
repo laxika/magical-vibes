@@ -108,7 +108,8 @@ public class GameData {
      * Rules events the trigger pipeline hasn't taken yet, and what describing zone changes needs (see
      * {@link RulesEventLog}). The zone lists below report every card added to them here.
      */
-    public final RulesEventLog rulesEvents = new RulesEventLog(this::rulesEventBatchClosed);
+    public final RulesEventLog rulesEvents = new RulesEventLog(this::rulesEventBatchClosed,
+            this::resolvingControllerForRulesEvents);
     /**
      * Test-only watcher of rules events and of the triggered abilities collectors queue (the shadow recorder);
      * {@code null} in real games and never copied into simulations.
@@ -653,15 +654,11 @@ public class GameData {
 
     /**
      * Set while a multi-card discard cost is being paid one card at a time: the cards are put into the
-     * graveyard simultaneously (CR 601.2h), so "one or more" graveyard triggers wait for the last card.
+     * graveyard simultaneously (CR 601.2h), so a rules event batch stays open until the last card.
      */
-    public boolean deferOncePerBatchGraveyardTriggers;
+    public boolean discardCostBatchOpen;
     /** Spellbook cards drafted but not yet put onto the battlefield (The Hourglass Coven). */
     public final List<Card> heldSpellbookCards = Collections.synchronizedList(new ArrayList<>());
-    /** The first permanent card (and first land card) discarded while {@link #deferOncePerBatchGraveyardTriggers} was set. */
-    public Card deferredBatchPermanentCard;
-    public Card deferredBatchLandCard;
-    public UUID deferredBatchOwnerId;
     /** Permanents chosen to be sacrificed for the activated ability whose costs are being paid. They
      *  stay on the battlefield until every cost choice is made, then leave together with any
      *  sacrificed source as one simultaneous event (CR 603.10a look-back for their dies triggers). */
@@ -2968,35 +2965,6 @@ public class GameData {
             new CopyOnWriteArrayList<>();
     /** Depth counter for batching "cards leave graveyard" triggers (one trigger per batch). */
     public int graveyardLeaveNotificationDepth = 0;
-    /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
-    public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
-    /** Cards captured for the corresponding general graveyard-leave batch. */
-    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingCards = new ConcurrentHashMap<>();
-    /** Instant or sorcery cards leaving each owner's graveyard during a suppressed batch. */
-    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingInstantOrSorceryCards =
-            new ConcurrentHashMap<>();
-    /** Owners whose graveyards had creature cards leave during a suppressed batch. */
-    public final Set<UUID> graveyardLeaveNotificationPendingCreatureOwners = ConcurrentHashMap.newKeySet();
-    /** Counts creature cards leaving each owner's graveyard during a suppressed batch. */
-    public final Map<UUID, Integer> graveyardLeaveNotificationPendingCreatureCardCounts = new ConcurrentHashMap<>();
-    /** Creature cards that left each owner's graveyard during a suppressed batch; these become new objects
-     *  and so never see the event that moved them. */
-    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingCreatureCards = new ConcurrentHashMap<>();
-    /** Owners whose graveyards had artifact or creature cards leave during a suppressed batch. */
-    public final Set<UUID> graveyardLeaveNotificationPendingArtifactOrCreatureOwners = ConcurrentHashMap.newKeySet();
-    /** Owners whose graveyards had artifact cards leave during a suppressed batch. */
-    public final Set<UUID> graveyardLeaveNotificationPendingArtifactOwners = ConcurrentHashMap.newKeySet();
-    /** Artifact and creature cards captured for the corresponding suppressed leave batch. */
-    public final Map<UUID, List<Card>> graveyardLeaveNotificationPendingArtifactOrCreatureCards =
-            new ConcurrentHashMap<>();
-    /** Number of cards exiled from each owner's graveyard during a suppressed batch. */
-    public final Map<UUID, Integer> graveyardExileNotificationPendingCounts = new ConcurrentHashMap<>();
-    /** Creature cards captured for Kaya's exile trigger during a suppressed batch. */
-    public final Map<UUID, List<Card>> kayaExileNotificationPendingCreatureCards = new ConcurrentHashMap<>();
-    /** Creature-exile events captured for Kaya during a suppressed batch. */
-    public final Map<UUID, Integer> kayaExileNotificationPendingCounts = new ConcurrentHashMap<>();
-    /** Whether a suppressed batch exiled one or more cards from a graveyard or the battlefield. */
-    public boolean graveyardOrBattlefieldExileNotificationPending;
     /** Depth counter for tap events that are paid or performed as one batch. */
     public int permanentTapTriggerBatchDepth;
     /** Tap-trigger registrations that have already fired in the current tap batch, by source permanent. */
@@ -3009,14 +2977,6 @@ public class GameData {
     public final Map<UUID, Integer> cardsLeftGraveyardCountThisTurn = new ConcurrentHashMap<>();
     /** Depth counter for batching non-dying battlefield departures into one trigger event. */
     public int permanentLeaveNotificationDepth;
-    /** Last-known permanents present when a non-dying battlefield-leave batch began. */
-    public final Map<UUID, Permanent> permanentLeaveBatchWatchers = new ConcurrentHashMap<>();
-    /** Controllers of the last-known permanents in a non-dying battlefield-leave batch. */
-    public final Map<UUID, UUID> permanentLeaveBatchWatcherControllers = new ConcurrentHashMap<>();
-    /** Creature permanents that left during a non-dying battlefield-leave batch. */
-    public final Map<UUID, UUID> permanentLeaveBatchPendingCreatures = new ConcurrentHashMap<>();
-    /** Permanents that left during a battlefield-leave batch, keyed by permanent and controller. */
-    public final Map<UUID, UUID> permanentLeaveBatchPendingPermanents = new ConcurrentHashMap<>();
     /**
      * Depth counter for a group of simultaneous deaths. While it is positive, CR 616.1 death
      * replacement prompts wait in {@link #deferredDeathReplacementChoices} and are opened in APNAP
@@ -4334,6 +4294,21 @@ public class GameData {
      */
     public boolean sacrificingAsSpellCost;
 
+    /**
+     * The controller of the spell or ability whose resolution causes a zone change now, as rules events record it:
+     * the resolving one, or the one whose resolution waits for a player's input. Paying a spell's sacrifice cost is
+     * the casting player's own action, not something a resolving spell or ability causes.
+     */
+    private UUID resolvingControllerForRulesEvents() {
+        if (sacrificingAsSpellCost) {
+            return null;
+        }
+        if (currentlyResolvingControllerId != null) {
+            return currentlyResolvingControllerId;
+        }
+        return pendingEffectResolutionEntry == null ? null : pendingEffectResolutionEntry.getControllerId();
+    }
+
     /** Controller of the triggered ability currently resolving, or {@code null} otherwise. */
     public UUID currentlyResolvingTriggeredAbilityControllerId;
 
@@ -4666,6 +4641,19 @@ public class GameData {
     }
 
     /**
+     * Stamps the card's current graveyard stay on the triggered abilities waiting to resolve that refer to it and
+     * have none yet, as {@link #markGraveyardEntry} does for the abilities queued before the card arrived.
+     */
+    public synchronized void stampGraveyardEntryOnPendingTriggers(UUID cardId) {
+        long version = graveyardEntryVersion(cardId);
+        java.util.stream.Stream.of(stack, pendingManaAbilityTriggers, suspendedZoneTriggers)
+                .flatMap(java.util.Collection::stream)
+                .filter(entry -> cardId.equals(entry.getTriggeringCardId())
+                        && entry.getTriggeringCardGraveyardEntryVersion() == -1L)
+                .forEach(entry -> entry.setTriggeringCardGraveyardEntryVersion(version));
+    }
+
+    /**
      * Ends a card's continuous stay in a graveyard. The card is a new object once it has left, so
      * anything remembering the old stay's identity no longer refers to it.
      */
@@ -4768,37 +4756,17 @@ public class GameData {
      */
     public transient volatile Object layeredBoardCache;
 
-    private transient volatile Consumer<GameData> cardsExiledListener;
-    private transient volatile Consumer<GameData> opponentOwnedCardExiledListener;
-
-    public void setCardsExiledListener(Consumer<GameData> cardsExiledListener) {
-        this.cardsExiledListener = cardsExiledListener;
-    }
-
-    public void setOpponentOwnedCardExiledListener(Consumer<GameData> opponentOwnedCardExiledListener) {
-        this.opponentOwnedCardExiledListener = opponentOwnedCardExiledListener;
-    }
-
-    private transient int cardExileBatchDepth;
-    private transient boolean cardExileBatchPending;
-
     /**
-     * Runs {@code exiling} as one batch of card exiles, so that "one or more cards are put into
-     * exile" triggers fire once for the whole batch rather than once per card. Per-card bookkeeping
-     * (exile versions, turn counters) still happens for every card.
+     * Runs {@code exiling} as one batch of card exiles, one rules event batch, so that "one or more cards are put
+     * into exile" abilities trigger once for the whole batch rather than once per card (CR 603.2c). Per-card
+     * bookkeeping (exile versions, turn counters) still happens for every card.
      */
     public void runAsSingleCardExileBatch(Runnable exiling) {
-        cardExileBatchDepth++;
         rulesEvents.beginBatch();
         try {
             exiling.run();
         } finally {
             rulesEvents.endBatch();
-            cardExileBatchDepth--;
-        }
-        if (cardExileBatchDepth == 0 && cardExileBatchPending) {
-            cardExileBatchPending = false;
-            fireCardsExiledListeners();
         }
     }
 
@@ -4826,22 +4794,6 @@ public class GameData {
                         permanent.getId(), manaValue, Math::max));
         cardsExiledThisTurn++;
         cardPutIntoExileThisTurn = true;
-        if (cardExileBatchDepth > 0) {
-            cardExileBatchPending = true;
-            return;
-        }
-        fireCardsExiledListeners();
-    }
-
-    private void fireCardsExiledListeners() {
-        Consumer<GameData> listener = cardsExiledListener;
-        if (listener != null) {
-            listener.accept(this);
-        }
-        Consumer<GameData> opponentListener = opponentOwnedCardExiledListener;
-        if (opponentListener != null) {
-            opponentListener.accept(this);
-        }
     }
 
     /**
@@ -7951,7 +7903,7 @@ public class GameData {
         CommanderHandList(UUID playerId, List<Card> cards) {
             super(cards);
             this.playerId = playerId;
-            cards.forEach(card -> rulesEvents.track(card, Zone.HAND));
+            cards.forEach(card -> rulesEvents.track(card, playerId, Zone.HAND));
         }
 
         private void recordCardPutIntoHand(Card card) {
@@ -7991,7 +7943,7 @@ public class GameData {
         CommanderGraveyardList(UUID playerId, List<Card> cards) {
             super(cards);
             this.playerId = playerId;
-            cards.forEach(card -> rulesEvents.track(card, Zone.GRAVEYARD));
+            cards.forEach(card -> rulesEvents.track(card, playerId, Zone.GRAVEYARD));
         }
         private void arrived(Card card) { rulesEvents.arrived(card, playerId, Zone.GRAVEYARD); }
         @Override public boolean add(Card card) { commanderEnteredReturnZone(card); boolean added = super.add(card); arrived(card); return added; }
@@ -8006,7 +7958,7 @@ public class GameData {
         CommandZoneList(UUID playerId, List<Card> cards) {
             super(cards);
             this.playerId = playerId;
-            cards.forEach(card -> rulesEvents.track(card, Zone.COMMAND));
+            cards.forEach(card -> rulesEvents.track(card, playerId, Zone.COMMAND));
         }
         private void arrived(Card card) { rulesEvents.arrived(card, playerId, Zone.COMMAND); }
         @Override public boolean add(Card card) { boolean added = super.add(card); arrived(card); return added; }
@@ -8249,7 +8201,7 @@ public class GameData {
         }
         LibraryCardList wrapped = new LibraryCardList(playerId);
         wrapped.addAllWithoutClearing(cards);
-        cards.forEach(card -> rulesEvents.track(card, Zone.LIBRARY));
+        cards.forEach(card -> rulesEvents.track(card, playerId, Zone.LIBRARY));
         return wrapped;
     }
 
@@ -9468,9 +9420,7 @@ public class GameData {
         copy.pendingAncestorTransfers.addAll(pendingAncestorTransfers);
         copy.subgameCards.putAll(subgameCards);
         suspendedZoneTriggers.forEach(entry -> copy.suspendedZoneTriggers.add(new StackEntry(entry)));
-        copy.cardsExiledListener = this.cardsExiledListener;
         copy.rulesEventListener = this.rulesEventListener;
-        copy.opponentOwnedCardExiledListener = this.opponentOwnedCardExiledListener;
 
         // --- Primitives, enums, UUIDs, Strings ---
         copy.status = this.status;
@@ -11250,24 +11200,7 @@ public class GameData {
         copy.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn
                 .addAll(this.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
-        copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
-        this.graveyardLeaveNotificationPendingCards.forEach((playerId, cards) ->
-                copy.graveyardLeaveNotificationPendingCards.put(playerId, new ArrayList<>(cards)));
-        this.graveyardLeaveNotificationPendingInstantOrSorceryCards.forEach((playerId, cards) ->
-                copy.graveyardLeaveNotificationPendingInstantOrSorceryCards.put(playerId, new ArrayList<>(cards)));
-        copy.graveyardLeaveNotificationPendingCreatureOwners.addAll(this.graveyardLeaveNotificationPendingCreatureOwners);
-        copy.graveyardLeaveNotificationPendingCreatureCardCounts.putAll(this.graveyardLeaveNotificationPendingCreatureCardCounts);
-        this.graveyardLeaveNotificationPendingCreatureCards.forEach((playerId, cards) ->
-                copy.graveyardLeaveNotificationPendingCreatureCards.put(playerId, new ArrayList<>(cards)));
-        copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
-        copy.graveyardLeaveNotificationPendingArtifactOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOwners);
-        this.graveyardLeaveNotificationPendingArtifactOrCreatureCards.forEach((playerId, cards) ->
-                copy.graveyardLeaveNotificationPendingArtifactOrCreatureCards.put(playerId, new ArrayList<>(cards)));
-        copy.graveyardExileNotificationPendingCounts.putAll(this.graveyardExileNotificationPendingCounts);
-        this.kayaExileNotificationPendingCreatureCards.forEach((playerId, cards) ->
-                copy.kayaExileNotificationPendingCreatureCards.put(playerId, new ArrayList<>(cards)));
-        copy.kayaExileNotificationPendingCounts.putAll(this.kayaExileNotificationPendingCounts);
-        copy.graveyardOrBattlefieldExileNotificationPending = this.graveyardOrBattlefieldExileNotificationPending;
+        copy.discardCostBatchOpen = this.discardCostBatchOpen;
         copy.permanentTapTriggerBatchDepth = this.permanentTapTriggerBatchDepth;
         this.permanentTapTriggerBatchFiredEffects.forEach((sourceId, effects) -> {
             Set<CardEffect> copiedEffects = ConcurrentHashMap.newKeySet();
@@ -11279,10 +11212,6 @@ public class GameData {
                 .addAll(this.playersWhoseCreatureCardsLeftGraveyardThisTurn);
         copy.cardsLeftGraveyardCountThisTurn.putAll(this.cardsLeftGraveyardCountThisTurn);
         copy.permanentLeaveNotificationDepth = this.permanentLeaveNotificationDepth;
-        copy.permanentLeaveBatchWatchers.putAll(this.permanentLeaveBatchWatchers);
-        copy.permanentLeaveBatchWatcherControllers.putAll(this.permanentLeaveBatchWatcherControllers);
-        copy.permanentLeaveBatchPendingCreatures.putAll(this.permanentLeaveBatchPendingCreatures);
-        copy.permanentLeaveBatchPendingPermanents.putAll(this.permanentLeaveBatchPendingPermanents);
         copy.deathReplacementChoiceBatchDepth = this.deathReplacementChoiceBatchDepth;
         copy.deferredDeathReplacementChoices.addAll(this.deferredDeathReplacementChoices);
         copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;

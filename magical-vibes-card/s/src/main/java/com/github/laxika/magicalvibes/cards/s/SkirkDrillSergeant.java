@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -47,8 +46,8 @@ public class SkirkDrillSergeant extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                 DRILL_SERGEANT_ABILITY);
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, noncreatureGoblinDies);
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, noncreatureGoblinDies);
+        addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER_YOU_CONTROL), noncreatureGoblinDies);
+        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS), noncreatureGoblinDies);
         addTrigger(Triggers.dies(ObjectRelation.THIS), DRILL_SERGEANT_ABILITY);
     }
 }

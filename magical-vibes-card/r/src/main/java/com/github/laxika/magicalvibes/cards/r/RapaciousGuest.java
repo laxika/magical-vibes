@@ -26,7 +26,7 @@ public class RapaciousGuest extends Card {
     public RapaciousGuest() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null, CreateTokenEffect.ofFoodToken(1), false, true));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                         new PutCountersOnSourceEffect(1, 1, 1)));

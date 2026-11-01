@@ -13,6 +13,11 @@ public enum DepartureCause {
     STATE_BASED_DESTROY,
     /** Put into the graveyard by a state-based action that isn't destruction, such as 0 toughness (CR 704.5f). */
     STATE_BASED,
+    /**
+     * Sacrificed by its controller because of a state-based action: a Saga past its final chapter (CR 704.5s).
+     * The check performs it as {@link #STATE_BASED}, but abilities see a sacrifice.
+     */
+    STATE_BASED_SACRIFICE,
     /** Put into the graveyard some other way, neither destroyed nor sacrificed. */
     OTHER;
 
@@ -23,6 +28,6 @@ public enum DepartureCause {
 
     /** Whether the departure is performed by a state-based action check (CR 704.3). */
     public boolean isStateBased() {
-        return this == STATE_BASED_DESTROY || this == STATE_BASED;
+        return this == STATE_BASED_DESTROY || this == STATE_BASED || this == STATE_BASED_SACRIFICE;
     }
 }

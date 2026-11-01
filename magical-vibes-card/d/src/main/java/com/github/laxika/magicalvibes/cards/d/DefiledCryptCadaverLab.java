@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditional
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +38,8 @@ public class DefiledCryptCadaverLab extends Card {
 
         CreateTokenEffect horrorToken = new CreateTokenEffect(1, "Horror", 2, 2,
                 CardColor.BLACK, List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT));
-        addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+        addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE,
                 new OncePerTurnTriggerEffect(
                         new ConditionalEffect(new SourceRoomDoorUnlocked(0), horrorToken, true)));
 

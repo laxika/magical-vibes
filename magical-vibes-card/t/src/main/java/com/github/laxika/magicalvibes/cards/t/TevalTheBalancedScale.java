@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +36,8 @@ public class TevalTheBalancedScale extends Card {
                                 .build(),
                         "Return a land card from your graveyard to the battlefield tapped?")));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+        addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE,
                 new CreateTokenEffect(1, "Zombie Druid", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE, CardSubtype.DRUID), Set.of(), Set.of()));
     }

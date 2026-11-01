@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -25,7 +24,7 @@ public class SplinterTheMentor extends Card {
 
     public SplinterTheMentor() {
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), mutagenToken());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()), mutagenToken()));
     }

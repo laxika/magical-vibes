@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1239")
 @CardRegistration(set = "SLX", collectorNumber = "26")
@@ -23,7 +25,7 @@ public class EvinWaterdeepOpportunist extends Card {
         PermanentCount treasures = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE), CountScope.CONTROLLER);
         addStaticEffect(new BoostSelfEffect(new Scaled(treasures, 2), new Fixed(0)));
-        addEffect(EffectSlot.ON_ANY_CREATURE_SACRIFICED,
+        addTrigger(Triggers.sacrificed(Triggers.CREATURE, ObjectRelation.ANY),
                 new OncePerTurnTriggerEffect(CreateTokenEffect.ofTreasureToken(1, true)));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessSacrificesEffect(new PermanentIsCreaturePredicate(), "creature"));

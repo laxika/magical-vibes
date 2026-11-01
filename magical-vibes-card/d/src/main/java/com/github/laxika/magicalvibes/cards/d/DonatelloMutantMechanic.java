@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -23,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -66,8 +67,7 @@ public class DonatelloMutantMechanic extends Card {
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED));
 
-        target(artifactOrCreatureYouControlTarget, 0, 1).addEffect(
-                EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        target(artifactOrCreatureYouControlTarget, 0, 1).addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
                 new TriggeringArtifactControllerConditionalEffect(
                         new PutCountersOnTargetForEachLeavingSourceCountersEffect(artifactOrCreatureYouControl)));
     }

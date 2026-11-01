@@ -61,9 +61,6 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
 
         int count = moving.size();
         deck.addAll(moving);
-        if (triggerCollectionService != null) {
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, targetPlayerId, count);
-        }
         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
 
         String logEntry = filter == null

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class TergridGodOfFright extends Card {
         MayEffect returnSacrificedPermanent = new MayEffect(
                 new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(false, true),
                 "Put that card onto the battlefield under your control?");
-        addEffect(EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED, returnSacrificedPermanent);
+        addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS), returnSacrificedPermanent);
 
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new TriggeringCardConditionalEffect(
                 new CardAllOfPredicate(List.of(

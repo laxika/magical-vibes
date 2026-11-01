@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCardPutIntoHandFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostMatchingHandCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +21,7 @@ import java.util.List;
 public class KithkinBrinefarer extends Card {
 
     public KithkinBrinefarer() {
-        addEffect(EffectSlot.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY,
+        addTrigger(Triggers.putIntoHandFrom(Zone.LIBRARY, null, ObjectRelation.YOU_OWN),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.KITHKIN),
                         new ConjureDuplicateOfCardPutIntoHandFromLibraryEffect()));

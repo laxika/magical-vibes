@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "364")
 @CardRegistration(set = "4ED", collectorNumber = "315")
@@ -20,7 +21,7 @@ public class DingusEgg extends Card {
 
     public DingusEgg() {
         // Whenever a land is put into a graveyard from the battlefield, deal 2 damage to that land's controller.
-        addEffect(EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(Triggers.LAND, ObjectRelation.ANY),
                 new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

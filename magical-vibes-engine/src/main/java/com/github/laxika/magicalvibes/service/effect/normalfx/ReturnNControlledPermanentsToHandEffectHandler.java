@@ -103,11 +103,12 @@ public class ReturnNControlledPermanentsToHandEffectHandler implements NormalEff
                 toReturn.add(permanent);
             }
         }
-        // The permanents leave together, so each one's "whenever a creature is returned" watcher also sees
-        // the others returned in this event (CR 603.10a); only the leaving snapshots are shared, since
+        // The permanents leave together, as one event, so each one's "whenever a creature is returned" watcher
+        // also sees the others returned in it (CR 603.10a); only the leaving snapshots are shared, since
         // returning to hand is not dying.
         Map<UUID, Permanent> previousLeaving = new HashMap<>(gameData.simultaneousDyingPermanents);
         Map<UUID, UUID> previousLeavingControllers = new HashMap<>(gameData.simultaneousDyingPermanentControllers);
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
             for (Permanent permanent : toReturn) {
                 gameData.simultaneousDyingPermanents.put(permanent.getId(), new Permanent(permanent));
@@ -119,6 +120,7 @@ public class ReturnNControlledPermanentsToHandEffectHandler implements NormalEff
                 }
             }
         } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
             gameData.simultaneousDyingPermanents.clear();
             gameData.simultaneousDyingPermanents.putAll(previousLeaving);
             gameData.simultaneousDyingPermanentControllers.clear();

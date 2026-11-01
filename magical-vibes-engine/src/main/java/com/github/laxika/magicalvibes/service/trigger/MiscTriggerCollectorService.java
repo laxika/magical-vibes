@@ -410,7 +410,7 @@ public class MiscTriggerCollectorService {
 
     // ── ON_ALLY_PERMANENT_SACRIFICED ───────────────────────────────────
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         MayPayManaEffect boundMayPay = (MayPayManaEffect) mayPay.boundToSacrificedPermanent(as.sacrificedCard());
@@ -418,15 +418,15 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         match.gameData().queueMayAbility(match.permanent().getCard(), as.sacrificingPlayerId(), may);
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class,
-            slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = MayEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
     private boolean handleOpponentNontokenPermanentSacrificeMay(TriggerMatchContext match,
                                                                  MayEffect may,
                                                                  TriggerContext ctx) {
@@ -439,7 +439,7 @@ public class MiscTriggerCollectorService {
 
     // ── ON_ANY_CREATURE_SACRIFICED ─────────────────────────────────────
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
     private boolean handleAnyCreatureSacrificedMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         // "Whenever a player sacrifices a creature, you may put a +1/+1 counter on this creature"
         // (Thraximundar). The wrapped PutCountersOnSourceEffect resolves onto the source permanent,
@@ -450,7 +450,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
+    @CollectsWatchTrigger(value = OncePerTurnTriggerEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
     private boolean handleAnyCreatureSacrificedOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
@@ -479,7 +479,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = ConditionalEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (conditional.interveningIf()
@@ -490,7 +490,7 @@ public class MiscTriggerCollectorService {
         return handleSacrificeDefault(match, conditional, ctx);
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
+    @CollectsWatchTrigger(value = PutCountersOnSourceEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
     private boolean handleAnyCreatureSacrificedPutCounters(TriggerMatchContext match,
             PutCountersOnSourceEffect effect, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
@@ -506,7 +506,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_SACRIFICED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
     private boolean handleAnyCreatureSacrificedDefault(TriggerMatchContext match,
                                                         CardEffect effect, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
@@ -522,7 +522,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -547,8 +547,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PerpetuallyBoostCardEffect.class,
-            slot = EffectSlot.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)
+    @CollectsWatchTrigger(value = PerpetuallyBoostCardEffect.class,
+            watch = ZoneChangeWatch.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)
     private boolean handleExileTokenSacrificePerpetualBoost(TriggerMatchContext match,
                                                              PerpetuallyBoostCardEffect effect,
                                                              TriggerContext ctx) {
@@ -612,7 +612,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_PERMANENT_SACRIFICED)
     private boolean handleAnyPermanentSacrificedDefault(TriggerMatchContext match, CardEffect effect,
                                                         TriggerContext ctx) {
         TriggerContext.PermanentSacrificed sacrificed = (TriggerContext.PermanentSacrificed) ctx;
@@ -636,14 +636,15 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificePermanentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         if (as.sacrificedCard() == null) {
             return false;
         }
-        Permanent sacrificedPermanent = match.gameData().simultaneousDyingPermanents.values().stream()
+        Permanent sacrificedPermanent = as.sacrificedPermanent() != null ? as.sacrificedPermanent()
+                : match.gameData().simultaneousDyingPermanents.values().stream()
                 .filter(permanent -> permanent.getCard().getId().equals(as.sacrificedCard().getId()))
                 .findFirst().orElse(null);
         if (sacrificedPermanent == null && match.permanent().getCard().getId().equals(as.sacrificedCard().getId())) {
@@ -718,8 +719,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalTriggeringPermanentEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = ConditionalTriggeringPermanentEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleConditionalSacrificePermanent(TriggerMatchContext match,
             ConditionalTriggeringPermanentEffect conditional, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
@@ -729,7 +730,8 @@ public class MiscTriggerCollectorService {
             return false;
         }
 
-        Permanent sacrificedPermanent = match.gameData().simultaneousDyingPermanents.values().stream()
+        Permanent sacrificedPermanent = as.sacrificedPermanent() != null ? as.sacrificedPermanent()
+                : match.gameData().simultaneousDyingPermanents.values().stream()
                 .filter(permanent -> permanent.getCard().getId().equals(as.sacrificedCard().getId()))
                 .findFirst().orElse(null);
         if (sacrificedPermanent == null && match.permanent().getCard().getId().equals(as.sacrificedCard().getId())) {
@@ -769,8 +771,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_OPPONENT_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_SACRIFICED)
     private boolean handleOpponentSacrificePermanentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.OpponentPermanentSacrificed sacrificed =
@@ -798,7 +800,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_SACRIFICED)
     private boolean handleOpponentPermanentSacrificed(TriggerMatchContext match,
                                                        CardEffect effect,
                                                        TriggerContext ctx) {
@@ -818,7 +820,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
     private boolean handleOpponentNontokenPermanentSacrificed(TriggerMatchContext match,
                                                                CardEffect effect,
                                                                TriggerContext ctx) {
@@ -845,8 +847,8 @@ public class MiscTriggerCollectorService {
 
     // ── ON_ENCHANTED_PERMANENT_TAPPED ──────────────────────────────────
 
-    @CollectsTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
-            slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    @CollectsWatchTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
     private boolean handleOpponentNontokenPermanentSacrificeSteal(
             TriggerMatchContext match, StealDyingOpponentPermanentUnlessPaysLifeEffect effect,
             TriggerContext ctx) {
@@ -1861,7 +1863,7 @@ public class MiscTriggerCollectorService {
         ));
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleLandPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1882,7 +1884,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_LAND_CARD_MILLED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_LAND_CARD_MILLED)
     private boolean handleLandCardMilledDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1903,8 +1905,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnTriggeringLandFromGraveyardToBattlefieldEffect.class,
-            slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    @CollectsWatchTrigger(value = ReturnTriggeringLandFromGraveyardToBattlefieldEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     private boolean handleMilledLandsReturn(TriggerMatchContext match,
             ReturnTriggeringLandFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)) {
@@ -1938,8 +1940,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnCardFromGraveyardEffect.class,
-            slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    @CollectsWatchTrigger(value = ReturnCardFromGraveyardEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     private boolean handleEventCardsGraveyardReturn(TriggerMatchContext match,
             ReturnCardFromGraveyardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)
@@ -1974,12 +1976,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY),
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
-    })
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     private boolean handleCreatureCardsPutIntoGraveyardFromLibraryDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2005,7 +2005,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CARDS_PUT_INTO_LIBRARY)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CARDS_PUT_INTO_LIBRARY)
     private boolean handleCardsPutIntoLibraryDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2024,8 +2024,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCardPutIntoGraveyardConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
@@ -2038,16 +2038,14 @@ public class MiscTriggerCollectorService {
         return handleCardPutIntoGraveyardDefault(match, conditional, ctx);
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD),
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
-    })
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     private boolean handleCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2089,8 +2087,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeEffect.class,
-            slot = EffectSlot.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = LoseLifeEffect.class,
+            watch = ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleNonblackCardPutIntoGraveyardLoseLife(TriggerMatchContext match,
             LoseLifeEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)
@@ -2123,12 +2121,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
-                    slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
-            @CollectsTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
-                    slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
-    })
+    @CollectsWatchTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = ExileTriggeringCardFromGraveyardEffect.class,
+                    watch = ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleExileTriggeringCardFromGraveyard(TriggerMatchContext match,
             ExileTriggeringCardFromGraveyardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
@@ -2160,8 +2156,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    @CollectsWatchTrigger(value = ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     private boolean handleExileTriggeringPermanentCardFromLibraryWithCroakCounter(
             TriggerMatchContext match, ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect effect,
             TriggerContext ctx) {
@@ -2194,12 +2190,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
-            @CollectsTrigger(value = CardEffect.class,
-                    slot = EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
-    })
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
     private boolean handleCreatureCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2237,12 +2231,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
-                    slot = EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE),
-            @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
-                    slot = EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
-    })
+    @CollectsWatchTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     private boolean handleDelayedReturnMatchingCardFromGraveyard(TriggerMatchContext match,
             RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
         if (ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut) {
@@ -2288,8 +2280,8 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleAllyCreatureCardPutIntoGraveyardConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
@@ -2304,8 +2296,8 @@ public class MiscTriggerCollectorService {
         return enqueueConditionalCreatureCardGraveyardTrigger(match, conditional, creatureCard);
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
     private boolean handleCreatureCardPutIntoGraveyardConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
@@ -2341,8 +2333,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PerpetuallyGrantTriggeredAbilityEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = PerpetuallyGrantTriggeredAbilityEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     private boolean handlePerpetualTriggeredAbilityGrant(TriggerMatchContext match,
             PerpetuallyGrantTriggeredAbilityEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
@@ -2368,8 +2360,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class,
-            slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = ConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleConditionalCardPutIntoOpponentGraveyard(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
@@ -2405,8 +2397,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCardPutIntoOpponentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
@@ -2428,8 +2420,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BecomeCopyOfCreatureCardInOpponentGraveyardEffect.class,
-            slot = EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = BecomeCopyOfCreatureCardInOpponentGraveyardEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCreatureCardPutIntoOpponentGraveyardBecomeCopy(TriggerMatchContext match,
             BecomeCopyOfCreatureCardInOpponentGraveyardEffect effect, TriggerContext ctx) {
         // Lazav, Dimir Mastermind: the ability doesn't target and doesn't check the graveyard again on
@@ -2455,7 +2447,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCreatureCardPutIntoOpponentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2476,8 +2468,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayLifeEffect.class,
-            slot = EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = MayPayLifeEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCreatureCardPutIntoOpponentGraveyardMayPayLife(TriggerMatchContext match,
             MayPayLifeEffect mayPay, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)) {
@@ -2686,7 +2678,7 @@ public class MiscTriggerCollectorService {
 
     // ── ON_OPPONENT_CREATURE_CARD_MILLED ────────────────────────────────
 
-    @CollectsTrigger(value = ExileMilledCreatureAndCreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED)
+    @CollectsWatchTrigger(value = ExileMilledCreatureAndCreateTokenEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_CARD_MILLED)
     private boolean handleExileMilledCreatureAndCreateToken(TriggerMatchContext match,
             ExileMilledCreatureAndCreateTokenEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureCardMilled milled = (TriggerContext.CreatureCardMilled) ctx;
@@ -2709,8 +2701,8 @@ public class MiscTriggerCollectorService {
 
     // ── ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE ──────────────────────────────
 
-    @CollectsTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
-            slot = EffectSlot.ON_OPPONENT_MILLS)
+    @CollectsWatchTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_MILLS)
     private boolean handlePutCountersOnOpponentMill(TriggerMatchContext match,
             PutCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2729,7 +2721,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
+    @CollectsWatchTrigger(value = GainLifeEffect.class, watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
     private boolean handleGainLifeOnNonlandCardsMilled(TriggerMatchContext match,
             GainLifeEffect effect, TriggerContext ctx) {
         int nonlandCardCount = ((TriggerContext.NonlandCardsMilled) ctx).nonlandCardCount();
@@ -2752,46 +2744,8 @@ public class MiscTriggerCollectorService {
         return nonlandCardCount > 0;
     }
 
-    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class,
-            slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
-    private boolean handlePutCountersOnNonlandCardsMilled(TriggerMatchContext match,
-            PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        int nonlandCardCount = ((TriggerContext.NonlandCardsMilled) ctx).nonlandCardCount();
-
-        if (sourceCard.getTargetGroups().stream()
-                .anyMatch(target -> target.getDynamicMaxTargets() != null)) {
-            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                    sourceCard,
-                    match.controllerId(),
-                    List.of(effect),
-                    match.permanent().getId(),
-                    List.of(),
-                    0,
-                    0,
-                    List.of(),
-                    0,
-                    List.of(),
-                    false,
-                    null,
-                    null,
-                    nonlandCardCount));
-            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} triggers on nonland cards milled (multi-target counter placement)",
-                    gameData.id, sourceCard.getName());
-            return true;
-        }
-
-        gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                sourceCard, match.controllerId(), List.of(effect), match.permanent().getId()));
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on nonland cards milled", gameData.id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsTrigger(value = SequenceEffect.class,
-            slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
+    @CollectsWatchTrigger(value = SequenceEffect.class,
+            watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
     private boolean handleNonlandCardsMilledSequence(TriggerMatchContext match,
             SequenceEffect effect, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
@@ -2808,8 +2762,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokensForNonlandCardsMilledEffect.class,
-            slot = EffectSlot.ON_NONLAND_CARDS_MILLED)
+    @CollectsWatchTrigger(value = CreateTokensForNonlandCardsMilledEffect.class,
+            watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
     private boolean handleCreateTokensForNonlandCardsMilled(TriggerMatchContext match,
             CreateTokensForNonlandCardsMilledEffect effect, TriggerContext ctx) {
         TriggerContext.NonlandCardsMilled milled = (TriggerContext.NonlandCardsMilled) ctx;
@@ -2837,7 +2791,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_NONLAND_CARDS_MILLED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
     private boolean handleNonlandCardsMilled(TriggerMatchContext match,
                                              CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.NonlandCardsMilled milled)) {
@@ -3812,8 +3766,8 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD ────────────────────────────
 
-    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    @CollectsWatchTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleTurnScopedModalOnCardsLeaveGraveyard(TriggerMatchContext match,
             ChooseModeNotYetChosenThisTurnEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard)) {
@@ -3830,8 +3784,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleConditionalControllerCardsLeaveGraveyard(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard cardsLeft)
@@ -3842,7 +3796,7 @@ public class MiscTriggerCollectorService {
         return handleControllerCardsLeaveGraveyard(match, conditional.wrapped(), ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!handleControllerArtifactOrCreatureCardsLeaveGraveyard(match, effect, ctx)) {
@@ -3855,7 +3809,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    @CollectsWatchTrigger(value = OncePerTurnTriggerEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleOncePerTurnControllerCardsLeaveGraveyard(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(match.gameData(), match.permanent(), effect);
@@ -3866,8 +3820,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CARD_RETURNED_FROM_GRAVEYARD_TO_HAND)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_CARD_RETURNED_FROM_GRAVEYARD_TO_HAND)
     boolean handleControllerCardReturnedFromGraveyardToHand(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardReturnedFromGraveyardToHand returned)) {
@@ -3893,8 +3847,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
     boolean handleControllerCardPutIntoHandFromLibraryConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardPutIntoHandFromLibrary moved)
@@ -3905,8 +3859,8 @@ public class MiscTriggerCollectorService {
         return enqueueControllerCardPutIntoHandFromLibraryTrigger(match, conditional, moved.card());
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
     boolean handleControllerCardPutIntoHandFromLibrary(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (effect instanceof TriggeringCardConditionalEffect
@@ -3937,8 +3891,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD)
     boolean handleControllerInstantOrSorceryCardLeavesGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerInstantOrSorceryCardLeavesGraveyard)) {
@@ -3959,7 +3913,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_LIBRARY_OR_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_EXILED_FROM_LIBRARY_OR_GRAVEYARD)
     boolean handleControllerCardsExiledFromLibraryOrGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardsExiledFromLibraryOrGraveyard exiled)) {
@@ -3982,7 +3936,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD)
     boolean handleControllerCardsExiledFromGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardsExiledFromGraveyard exiled)) {
@@ -4005,8 +3959,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED)
     boolean handleControllerCreaturesOrCreatureCardsExiled(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCreaturesOrCreatureCardsExiled exiled)) {
@@ -4044,8 +3998,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
     boolean handleAnyCreatureExiledFromBattlefield(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureExiledFromBattlefield exiled)) {
@@ -4071,8 +4025,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnTriggeringPermanentToBattlefieldWithCounterEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnTriggeringPermanentToBattlefieldWithCounterEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
     boolean handleAnyCreatureExiledReturnCounteredPermanent(TriggerMatchContext match,
             ReturnTriggeringPermanentToBattlefieldWithCounterEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureExiledFromBattlefield exiled)
@@ -4104,7 +4058,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_DURING_TURN)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_EXILED_DURING_TURN)
     boolean handleControllerCardsExiledDuringTurn(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardsExiledDuringTurn)) {
@@ -4125,7 +4079,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_OWNED_CARD_EXILED)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_OWNED_CARD_EXILED)
     boolean handleOpponentOwnedCardExiled(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.OpponentOwnedCardExiled exiled)
@@ -4147,10 +4101,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_OTHER_PERMANENT_PHASES_OUT),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CARD_EXILED)
-    })
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_OTHER_PERMANENT_PHASES_OUT)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CARD_EXILED)
     boolean handleGlobalPhaseOutOrCardExileTriggers(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.PermanentPhasedOut)
@@ -4172,10 +4124,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_HAND),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT)
-    })
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_EXILED_FROM_HAND)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT)
     boolean handleControllerExileTriggers(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardsExiledFromHand)
                 && !(ctx instanceof TriggerContext.ControllerSpellOrAbilityExilesPermanent)) {
@@ -4201,10 +4151,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD),
-            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD)
-    })
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD)
     boolean handleControllerCreatureCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -4222,8 +4170,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerArtifactOrCreatureCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard cardsLeft)) {
@@ -4257,8 +4205,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerArtifactCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
@@ -4286,8 +4234,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_CARDS_EXILED_FROM_GRAVEYARDS_OR_BATTLEFIELD_DURING_YOUR_TURN)
     boolean handleCardsExiledFromGraveyardsOrBattlefieldDuringYourTurn(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CardsExiledFromGraveyardsOrBattlefield exiled)) {

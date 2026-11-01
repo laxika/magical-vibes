@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
@@ -105,6 +106,7 @@ public final class LegacySlots {
             case TriggeredAbility triggered -> switch (triggered.conditions().getFirst().trigger()) {
                 case LegacySlotTrigger legacy -> legacy.slot();
                 case ZoneChangeTrigger ignored -> null;
+                case PermanentChangeTrigger ignored -> null;
             };
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities aren't kept in a slot");

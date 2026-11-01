@@ -54,8 +54,6 @@ public class SeekFromTopOfLibraryEffectHandler implements NormalEffectHandlerBea
         for (Card chosenCard : chosenCards) {
             cardsToReturn.remove(chosenCard);
             gameData.playerHands.get(controllerId).add(chosenCard);
-            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                    gameData, controllerId, chosenCard);
         }
 
         gameData.playerDecks.get(controllerId).addAll(cardsToReturn);

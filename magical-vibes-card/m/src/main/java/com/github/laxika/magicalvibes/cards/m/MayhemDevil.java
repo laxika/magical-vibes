@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "204")
 @CardRegistration(set = "SLD", collectorNumber = "1715")
@@ -13,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 public class MayhemDevil extends Card {
 
     public MayhemDevil() {
-        addEffect(EffectSlot.ON_ANY_PERMANENT_SACRIFICED, new DealDamageToAnyTargetEffect(1));
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANY), new DealDamageToAnyTargetEffect(1));
     }
 }

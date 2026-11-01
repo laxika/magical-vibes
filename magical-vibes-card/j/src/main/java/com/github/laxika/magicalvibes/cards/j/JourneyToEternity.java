@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.a.AtzalCaveOfEternity;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "160")
 public class JourneyToEternity extends Card {
@@ -14,7 +15,7 @@ public class JourneyToEternity extends Card {
         setBackFaceCard(new AtzalCaveOfEternity());
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect());
     }
 

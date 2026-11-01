@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "4")
 @CardRegistration(set = "PIP", collectorNumber = "1067")
@@ -21,7 +25,8 @@ public class TheWiseMothman extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GiveEachPlayerRadCountersEffect(1));
         addEffect(EffectSlot.ON_ATTACK, new GiveEachPlayerRadCountersEffect(1));
         targetUpTo(new EventValue(), TargetFilters.creature(), 100)
-                .addEffect(EffectSlot.ON_ANY_NONLAND_CARDS_MILLED,
+                .addTrigger(new TriggerCondition(Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY)),
+                        TriggerOptions.ONE_OR_MORE,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

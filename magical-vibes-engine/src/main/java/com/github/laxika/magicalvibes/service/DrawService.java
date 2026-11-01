@@ -2676,8 +2676,6 @@ public class DrawService {
             gameData.drawStepFirstDrawTaken.add(playerId);
         }
         gameData.addCardToHand(playerId, drawn);
-        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                gameData, playerId, drawn);
 
         // Track cards drawn this turn (for Molten Psyche, etc.)
         gameData.cardsDrawnThisTurn.merge(playerId, 1, Integer::sum);

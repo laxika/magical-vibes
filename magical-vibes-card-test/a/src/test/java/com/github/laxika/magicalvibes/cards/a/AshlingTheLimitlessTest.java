@@ -160,9 +160,7 @@ class AshlingTheLimitlessTest extends BaseCardTest {
     void sacrificingAshlingCopiesItselfButSacrificingItsTokenDoesNotCopyAgain() {
         harness.addToBattlefield(player1, new AshlingTheLimitless());
         Permanent ashling = findPermanent(player1, "Ashling, the Limitless");
-        assertThat(harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, ashling)).isTrue();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkAllyPermanentSacrificedTriggers(
-                gd, player1.getId(), ashling.getCard()));
+        harness.sacrifice(ashling);
         resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Ashling, the Limitless");

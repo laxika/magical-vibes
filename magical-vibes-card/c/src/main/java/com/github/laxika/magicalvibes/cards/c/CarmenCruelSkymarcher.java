@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class CarmenCruelSkymarcher extends Card {
 
     public CarmenCruelSkymarcher() {
         // Whenever a player sacrifices a permanent, put a +1/+1 counter on Carmen and you gain 1 life.
-        addEffect(EffectSlot.ON_ANY_PERMANENT_SACRIFICED, SequenceEffect.of(
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANY), SequenceEffect.of(
                 new PutCountersOnSourceEffect(1, 1, 1),
                 new GainLifeEffect(1)
         ));

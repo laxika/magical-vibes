@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OracleData;
@@ -21,6 +20,10 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -67,7 +70,8 @@ public class TheHeronMoon extends Card {
                 )
         ));
 
-        addEffect(EffectSlot.ON_OPPONENT_OWNED_CARD_EXILED, SequenceEffect.of(
+        addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.OPPONENT_OWNS)),
+                TriggerOptions.ONE_OR_MORE, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.RELEASE),
                 new ConditionalEffect(
                         new SourceCounterThreshold(13, CounterType.RELEASE),

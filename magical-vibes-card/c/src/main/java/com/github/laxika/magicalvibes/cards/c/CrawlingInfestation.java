@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class CrawlingInfestation extends Card {
 
         // Whenever one or more creature cards are put into your graveyard from anywhere during your
         // turn, create a 1/1 green Insect creature token. This ability triggers only once each turn.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_OWN),
                 new OncePerTurnTriggerEffect(new ConditionalEffect(new ControllerTurn(),
                         new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
                                 List.of(CardSubtype.INSECT), Set.of(), Set.of()))));

@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanen
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -42,7 +43,7 @@ public class SmokeSpiritsAid extends Card {
                 false,
                 false,
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, SequenceEffect.of(
+                        new TriggeredAbility(Triggers.dies(ObjectRelation.ENCHANTED), SequenceEffect.of(
                                 DealDamageToEnchantedPermanentControllerEffect.dealtByEnchantedPermanent(1),
                                 CreateTokenEffect.ofTreasureToken(1)))),
                 List.of(),

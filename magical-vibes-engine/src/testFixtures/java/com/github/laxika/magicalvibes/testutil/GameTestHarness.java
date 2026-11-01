@@ -433,6 +433,19 @@ public class GameTestHarness {
         mutationCoordinator.mutate(gameData, serviceCall);
     }
 
+    /**
+     * Its controller sacrifices {@code permanent} (CR 701.21a), as a sacrifice cost or a "sacrifice this" effect
+     * does, so "whenever you sacrifice …" abilities see it.
+     */
+    public void sacrifice(Permanent permanent) {
+        inMutationScope(() -> {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
+                triggerCollectionService.recordSacrifice(gameData, controllerId, permanent.getCard());
+            }
+        });
+    }
+
     public void setGraveyard(Player player, List<Card> cards) {
         gameData.playerGraveyards.put(player.getId(), new ArrayList<>(cards));
     }

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
 /**
  * Binds effects to a target group a card constructor has just declared. The group itself is a
@@ -81,6 +83,18 @@ public final class SpellTarget {
      */
     public SpellTarget addTrigger(Trigger trigger, CardEffect... effects) {
         card.addTrigger(trigger, effects);
+        for (CardEffect effect : effects) {
+            card.registerEffectTargetIndex(effect, this.index);
+        }
+        return this;
+    }
+
+    /**
+     * Adds a triggered ability with one trigger condition and {@code options} ({@link Card#addTrigger}) and binds
+     * the effects to this group.
+     */
+    public SpellTarget addTrigger(TriggerCondition condition, TriggerOptions options, CardEffect... effects) {
+        card.addTrigger(condition, options, effects);
         for (CardEffect effect : effects) {
             card.registerEffectTargetIndex(effect, this.index);
         }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +20,7 @@ public class GremlinInfestation extends Card {
         target(TargetFilters.artifact())
                 .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                         new DealDamageToEnchantedPermanentControllerEffect(2))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new CreateTokenEffect("Gremlin", 2, 2, CardColor.RED,
                                 List.of(CardSubtype.GREMLIN), Set.of(), Set.of()));
     }

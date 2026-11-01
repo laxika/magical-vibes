@@ -55,8 +55,6 @@ public class SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler
         Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
         library.remove(chosen);
         gameData.addCardToHand(controllerId, chosen);
-        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                gameData, controllerId, chosen);
 
         Card triggerCard = entry.getCard().createRuntimeCopy();
         triggerCard.clearRuntimeSpellTargets();

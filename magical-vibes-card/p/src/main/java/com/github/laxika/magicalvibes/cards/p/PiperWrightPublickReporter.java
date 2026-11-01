@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "36")
 @CardRegistration(set = "PIP", collectorNumber = "907")
@@ -22,7 +24,7 @@ public class PiperWrightPublickReporter extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 CreateTokenEffect.ofClueToken(new EventValue()));
 
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));

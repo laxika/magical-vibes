@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LRW", collectorNumber = "254")
 @CardRegistration(set = "TDC", collectorNumber = "315")
@@ -16,7 +18,7 @@ public class ColfenorsUrn extends Card {
     public ColfenorsUrn() {
         // Whenever a creature with toughness 4 or greater is put into your graveyard from the
         // battlefield, you may exile it (tracked with this artifact).
-        addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_OWN),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentToughnessAtLeastPredicate(4),
                         new MayEffect(new ExileTriggeringCreatureAndTrackWithSourceEffect(),

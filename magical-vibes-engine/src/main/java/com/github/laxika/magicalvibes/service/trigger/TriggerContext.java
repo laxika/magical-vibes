@@ -278,7 +278,14 @@ public sealed interface TriggerContext {
     /**
      * Context for ally-permanent-sacrificed triggers (ON_ALLY_PERMANENT_SACRIFICED).
      */
-    record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+    record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard, Permanent sacrificedPermanent)
+            implements TriggerContext {
+
+        /** A sacrifice whose permanent's last-known copy isn't known. */
+        public AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) {
+            this(sacrificingPlayerId, sacrificedCard, null);
+        }
+    }
 
     /** Context for a creature controlled by a player exploiting another creature. */
     record CreatureExploit(UUID exploitingPlayerId, Card exploitingCard, Card exploitedCard,
@@ -701,15 +708,6 @@ public sealed interface TriggerContext {
             this(dyingCard, dyingControllerId, graveyardOwnerId, null);
         }
     }
-
-    /**
-     * Context for ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers
-     * (Kothophed, Soul Hoarder).
-     *
-     * @param dyingCard the permanent's card, now in its owner's graveyard
-     * @param ownerId   the owner of the permanent (and of the graveyard it went to)
-     */
-    record OtherPlayerOwnedPermanentGraveyard(Card dyingCard, UUID ownerId) implements TriggerContext {}
 
     /**
      * Context for ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Yomiji, Who Bars

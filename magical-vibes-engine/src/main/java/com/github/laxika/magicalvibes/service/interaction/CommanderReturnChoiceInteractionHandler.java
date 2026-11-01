@@ -25,7 +25,6 @@ public class CommanderReturnChoiceInteractionHandler implements InteractionHandl
             }
             if (removed) {
                 game.playerCommandZones.computeIfAbsent(choice.playerId(), id -> new ArrayList<>()).add(choice.card());
-                triggers.checkYourCommanderPutIntoCommandZoneTriggers(game, choice.card(), choice.playerId());
             }
         }
         game.interaction.clearAwaitingInput();

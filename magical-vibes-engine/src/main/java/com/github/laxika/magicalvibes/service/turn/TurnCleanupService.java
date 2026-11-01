@@ -653,17 +653,7 @@ public class TurnCleanupService {
         // but guard against any leaked batch depth across turns).
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardExileChoiceLeaveBatchOpen = false;
-        gameData.graveyardLeaveNotificationPendingOwners.clear();
-        gameData.graveyardLeaveNotificationPendingCards.clear();
-        gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
         gameData.cardsExiledThisTurn = 0;
-        gameData.graveyardLeaveNotificationPendingCreatureCardCounts.clear();
-        gameData.graveyardLeaveNotificationPendingCreatureCards.clear();
-        gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
-        gameData.graveyardLeaveNotificationPendingArtifactOwners.clear();
-        gameData.graveyardLeaveNotificationPendingArtifactOrCreatureCards.clear();
-        gameData.kayaExileNotificationPendingCreatureCards.clear();
-        gameData.kayaExileNotificationPendingCounts.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
         gameData.playersWhoseCreatureCardsLeftGraveyardThisTurn.clear();
         gameData.cardsLeftGraveyardCountThisTurn.clear();

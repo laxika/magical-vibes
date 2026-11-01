@@ -108,13 +108,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             deck.removeIf(card -> card.getId().equals(chosen.getId()));
             if (seek.destination() == LibrarySearchDestination.HAND) {
                 gameData.addCardToHand(controllerId, chosen);
-                triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                        gameData, controllerId, chosen);
             } else if (seek.destination() == LibrarySearchDestination.BATTLEFIELD
                     || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
                 // Seek puts the card into the hand first and then onto the battlefield, so hand-from-library triggers see it.
-                triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                        gameData, controllerId, chosen);
                 Permanent permanent = new Permanent(chosen, Zone.LIBRARY);
                 if (seek.battlefieldCloaked()) {
                     permanent.setFaceDownAsCloaked();
@@ -139,10 +135,6 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                                 ? "seeks and cloaks a card onto the battlefield."
                                 : "seeks and puts " + chosen.getName() + " onto the battlefield.").build());
             } else if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
-                if (seek.triggersSeekAbilities()) {
-                    triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                            gameData, controllerId, chosen);
-                }
                 if (seek.faceDown()) {
                     exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);
                     gameData.exileLookPermissions.put(chosen.getId(), controllerId);

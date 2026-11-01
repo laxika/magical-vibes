@@ -44,12 +44,26 @@ public enum ObjectRelation {
      * An object the permanent the source is attached to dealt damage to this turn: "a creature dealt damage by
      * equipped creature this turn", "by enchanted creature".
      */
-    DAMAGED_BY_ATTACHED;
+    DAMAGED_BY_ATTACHED,
+    /**
+     * A card or permanent its controller owns, the source included if it matches: "a card is put into your
+     * graveyard", "a card leaves your graveyard". A card goes to its owner's graveyard, hand or library
+     * (CR 400.3), so this is also "your graveyard" for the card that moved.
+     */
+    YOU_OWN,
+    /** A card or permanent its controller owns other than the source: "another card is put into your graveyard". */
+    ANOTHER_YOU_OWN,
+    /**
+     * A card or permanent an opponent of its controller owns, the source included if it does: "a card is put into
+     * an opponent's graveyard", "a permanent owned by another player".
+     */
+    OPPONENT_OWNS;
 
     /** Whether the source itself can be the object. */
     public boolean includesThis() {
         return this == THIS || this == YOU_CONTROL || this == ANY
-                || this == THIS_OR_ANOTHER_YOU_CONTROL || this == THIS_OR_ANOTHER;
+                || this == THIS_OR_ANOTHER_YOU_CONTROL || this == THIS_OR_ANOTHER || this == YOU_OWN
+                || this == OPPONENT_OWNS;
     }
 
     /** Whether the object must be one its controller controls: the "you control" relations. */

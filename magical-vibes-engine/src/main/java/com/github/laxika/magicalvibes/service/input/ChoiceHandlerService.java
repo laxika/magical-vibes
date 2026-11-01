@@ -8819,10 +8819,6 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
 
-        if (handExiledCount > 0) {
-            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
-                    gameData, targetPlayerId, handExiledCount);
-        }
 
         if (ctx.drawForHandExiled()) {
             for (int i = 0; i < handExiledCount; i++) {

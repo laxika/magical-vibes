@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreat
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ODY", collectorNumber = "166")
 public class TravelingPlague extends Card {
@@ -22,7 +24,7 @@ public class TravelingPlague extends Card {
                         new Scaled(new CountersOnSource(CounterType.PLAGUE), -1),
                         new Scaled(new CountersOnSource(CounterType.PLAGUE), -1),
                         GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
+                .addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED),
                         new ReturnSourceAuraToChosenCreatureOnLeaveEffect());
     }
 }

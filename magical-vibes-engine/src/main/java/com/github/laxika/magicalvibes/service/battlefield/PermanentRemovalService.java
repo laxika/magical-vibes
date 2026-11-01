@@ -172,60 +172,31 @@ public class PermanentRemovalService {
         this.triggerCollectionService = triggerCollectionService;
     }
 
+    /** Opens a scope whose permanents leave the battlefield as one event (CR 603.2c). */
+    /**
+     * Opens a scope in which permanents leave the battlefield together. The outermost one is an isolated rules event
+     * batch, matched as it ends even inside a resolving effect's batch, while the snapshots of what left are still
+     * published (CR 603.10a).
+     */
     public void beginPermanentLeaveBatch(GameData gameData) {
-        gameData.rulesEvents.beginBatch();
-        if (gameData.permanentLeaveNotificationDepth++ > 0) {
-            return;
+        if (gameData.permanentLeaveNotificationDepth == 0) {
+            gameData.rulesEvents.beginIsolatedBatch();
+        } else {
+            gameData.rulesEvents.beginBatch();
         }
-        gameData.permanentLeaveBatchWatchers.clear();
-        gameData.permanentLeaveBatchWatcherControllers.clear();
-        gameData.permanentLeaveBatchPendingCreatures.clear();
-        gameData.permanentLeaveBatchPendingPermanents.clear();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            gameData.permanentLeaveBatchWatchers.put(permanent.getId(), permanent);
-            gameData.permanentLeaveBatchWatcherControllers.put(permanent.getId(), controllerId);
-        });
+        gameData.permanentLeaveNotificationDepth++;
     }
 
     public void endPermanentLeaveBatch(GameData gameData) {
         if (gameData.permanentLeaveNotificationDepth <= 0) {
             return;
         }
-        gameData.rulesEvents.endBatch();
-        if (--gameData.permanentLeaveNotificationDepth > 0) {
-            return;
+        gameData.permanentLeaveNotificationDepth--;
+        if (gameData.permanentLeaveNotificationDepth == 0) {
+            gameData.rulesEvents.endIsolatedBatch();
+        } else {
+            gameData.rulesEvents.endBatch();
         }
-        triggerCollectionService.checkAllyCreatureLeavesBattlefieldWithoutDyingBatchTriggers(
-                gameData, Map.copyOf(gameData.permanentLeaveBatchWatchers),
-                Map.copyOf(gameData.permanentLeaveBatchWatcherControllers),
-                Map.copyOf(gameData.permanentLeaveBatchPendingCreatures));
-        triggerCollectionService.checkSelfOrAllyCreatureLeavesBattlefieldWithoutDyingBatchTriggers(
-                gameData, Map.copyOf(gameData.permanentLeaveBatchWatchers),
-                Map.copyOf(gameData.permanentLeaveBatchWatcherControllers),
-                Map.copyOf(gameData.permanentLeaveBatchPendingCreatures));
-        triggerCollectionService.checkAllyPermanentsLeaveBattlefieldBatchTriggers(
-                gameData, Map.copyOf(gameData.permanentLeaveBatchWatchers),
-                Map.copyOf(gameData.permanentLeaveBatchWatcherControllers),
-                Map.copyOf(gameData.permanentLeaveBatchPendingPermanents));
-        gameData.permanentLeaveBatchWatchers.clear();
-        gameData.permanentLeaveBatchWatcherControllers.clear();
-        gameData.permanentLeaveBatchPendingCreatures.clear();
-        gameData.permanentLeaveBatchPendingPermanents.clear();
-    }
-
-    private void notifyCreatureLeftWithoutDying(GameData gameData, Permanent leavingPermanent,
-                                                boolean wasCreature, UUID controllerId) {
-        if (!wasCreature || controllerId == null) {
-            return;
-        }
-        if (gameData.permanentLeaveNotificationDepth > 0) {
-            gameData.permanentLeaveBatchPendingCreatures.put(leavingPermanent.getId(), controllerId);
-            return;
-        }
-        triggerCollectionService.checkAllyCreatureLeavesBattlefieldWithoutDyingTriggers(
-                gameData, leavingPermanent, true, controllerId);
-        triggerCollectionService.checkSelfOrAllyCreatureLeavesBattlefieldWithoutDyingTriggers(
-                gameData, leavingPermanent, true, controllerId);
     }
 
     /**
@@ -392,7 +363,7 @@ public class PermanentRemovalService {
             case STATE_BASED_DESTROY -> emitLeaveCue(gameData, target,
                     destroyPermanentToGraveyard(gameData, target, false, chosenReplacement),
                     VisualCueType.DIED, VisualCueService.Source.none());
-            case STATE_BASED, OTHER -> emitLeaveCue(gameData, target,
+            case STATE_BASED, STATE_BASED_SACRIFICE, OTHER -> emitLeaveCue(gameData, target,
                     removePermanentToGraveyard(gameData, target, false, false, intent.graveyardOwnerId(), false,
                             chosenReplacement),
                     VisualCueType.DIED, VisualCueService.Source.none());
@@ -410,16 +381,11 @@ public class PermanentRemovalService {
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         boolean wasArtifact = gameQueryService.isArtifact(gameData, target);
-        boolean wasNoncreatureArtifact = wasArtifact && !gameQueryService.isCreature(gameData, target);
         boolean removed = emitLeaveCue(gameData, target,
                 removePermanentToGraveyard(gameData, target, false, false, null, true, chosenReplacement),
                 VisualCueType.SACRIFICED, visualCueService.resolvingSource(gameData));
         if (removed && wasArtifact && controllerId != null) {
             gameData.playersWhoSacrificedArtifactsThisTurn.add(controllerId);
-        }
-        if (removed && wasNoncreatureArtifact && controllerId != null) {
-            triggerCollectionService.checkAnyNoncreatureArtifactSacrificedOrDestroyedTriggers(
-                    gameData, controllerId, target.getCard());
         }
         return removed;
     }
@@ -449,16 +415,8 @@ public class PermanentRemovalService {
     private boolean destroyPermanentToGraveyard(GameData gameData, Permanent target,
                                                 boolean destroyedBySpellOrAbility,
                                                 DeathExileReplacement chosenReplacement) {
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        boolean wasNoncreatureArtifact = gameQueryService.isArtifact(gameData, target)
-                && !gameQueryService.isCreature(gameData, target);
-        boolean removed = removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility, false, null,
+        return removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility, false, null,
                 false, chosenReplacement);
-        if (removed && wasNoncreatureArtifact && controllerId != null) {
-            triggerCollectionService.checkAnyNoncreatureArtifactSacrificedOrDestroyedTriggers(
-                    gameData, controllerId, target.getCard());
-        }
-        return removed;
     }
 
     public boolean removePermanentToGraveyardAfterDecliningLibraryReplacement(GameData gameData,
@@ -576,23 +534,14 @@ public class PermanentRemovalService {
             UUID ownerId = destinationPlayerId == null ? removed.get().ownerId() : destinationPlayerId;
 
             if (!creatureDeathTriggersSuppressed) {
-                triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD, removed.get().lastKnownCard());
                 triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.GRAVEYARD);
                 triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
                 triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
                 triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
                 collectTriggersInScope(gameData, () -> {
-                    triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+                    triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                             gameData, target, wasCreature, controllerId);
-                    triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-                    triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-                    triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(
-                            gameData, target, wasCreature, controllerId);
-                    triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(
-                            gameData, target, controllerId);
-                    triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
-                    triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
-                            gameData, target, controllerId, Zone.GRAVEYARD);
+                    triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
                 });
             }
             processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
@@ -1238,21 +1187,13 @@ public class PermanentRemovalService {
                     creatureDeathTriggersSuppressed);
 
             if (!creatureDeathTriggersSuppressed) {
-                triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD, info.lastKnownCard());
                 triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.GRAVEYARD);
                 triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
                 triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
                 triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-                triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+                triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                         gameData, target, wasCreature, info.controllerId());
-                triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-                triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, info.controllerId());
-                triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, info.controllerId());
-                triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(
-                        gameData, target, info.controllerId());
-                triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, info.controllerId());
-                triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
-                        gameData, target, info.controllerId(), Zone.GRAVEYARD);
+                triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             }
             processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
                     wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, info.controllerId(), info.ownerId(), false,
@@ -1296,14 +1237,6 @@ public class PermanentRemovalService {
             UUID controllerIdBeforeRemoval = gameQueryService.findPermanentController(gameData, target.getId());
             UUID ownerIdBeforeRemoval = resolvePermanentOwner(gameData, target, controllerIdBeforeRemoval);
             boolean commanderChoice = gameData.isCommander(target.getCard().getId());
-            if (!commanderChoice) {
-            triggerCollectionService.checkControllerCreatureReturnedToHandTriggers(
-                    gameData, target, wasCreature, ownerIdBeforeRemoval);
-            triggerCollectionService.checkControllerAnotherNonlandPermanentReturnedToHandTriggers(
-                    gameData, target, controllerIdBeforeRemoval);
-            triggerCollectionService.checkControllerPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval);
-                triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval, target);
-            }
             boolean werewhatTransformed = target.getWerewhatCompanionCard() != null;
             Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target, Zone.HAND);
             if (removed.isEmpty()) {
@@ -1311,19 +1244,13 @@ public class PermanentRemovalService {
             }
             UUID controllerId = removed.get().controllerId();
             UUID ownerId = removed.get().ownerId();
-            if (!commanderChoice) triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.HAND, removed.get().lastKnownCard());
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.HAND);
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             // A creature made a token by a continuous effect is still put into its owner's hand and
             // ceases to exist the next time state-based actions are checked (CR 111.7, CR 704.5d).
             for (Card leaving : target.cardsLeavingBattlefield()) {
@@ -1364,24 +1291,15 @@ public class PermanentRemovalService {
             }
             UUID controllerId = removed.get().controllerId();
             UUID ownerId = removed.get().ownerId();
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.COMMAND, removed.get().lastKnownCard());
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.COMMAND);
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(
-                    gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             for (Card leaving : target.cardsLeavingBattlefield()) {
                 gameData.playerCommandZones.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).add(leaving);
-                triggerCollectionService.checkYourCommanderPutIntoCommandZoneTriggers(
-                        gameData, leaving, ownerId, target);
             }
             forgetDepartedPermanentState(gameData, target);
             handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
@@ -1415,19 +1333,13 @@ public class PermanentRemovalService {
                 return false;
             }
             UUID controllerId = removed.get().controllerId();
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, destination, removed.get().lastKnownCard());
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, destination);
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             forgetDepartedPermanentState(gameData, target);
             handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
             target.setAttachedTo(null);
@@ -1538,22 +1450,12 @@ public class PermanentRemovalService {
                 gameData.creatureExileCountThisTurn.merge(controllerId, 1, Integer::sum);
             }
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.EXILE);
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.EXILE, removed.get().lastKnownCard());
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherNontokenArtifactPutIntoGraveyardOrExileFromBattlefieldTriggers(
-                    gameData, target, controllerId, Zone.EXILE);
-            triggerCollectionService.checkAnyArtifactExiledFromBattlefieldTriggers(
-                    gameData, target, controllerId, wasArtifact);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 for (Card leaving : leavingCards) {
                     boolean companion = werewhatCompanion != null
@@ -1576,22 +1478,6 @@ public class PermanentRemovalService {
             } else {
                 clearDynamicToken(gameData, target);
             }
-            List<Card> creatureCards = leavingCards.stream()
-                    .filter(card -> !isToken(gameData, card) && card.hasType(CardType.CREATURE))
-                    .toList();
-            int exiledNontokenCards = (int) leavingCards.stream()
-                    .filter(card -> !isToken(gameData, card))
-                    .count();
-            graveyardService.notifyCardsExiledFromBattlefield(
-                    gameData, exiledNontokenCards, controllerId, wasCreature, creatureCards);
-            triggerCollectionService.checkDepartedPermanentCardsExiledDuringYourTurnTriggers(
-                    gameData, target, controllerId, exiledNontokenCards);
-            triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId, exiledPowerAtTrigger);
-            triggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers(
-                    gameData, target, controllerId, exilingControllerId(gameData));
             forgetDepartedPermanentState(gameData, target);
             handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
             return true;
@@ -1664,19 +1550,13 @@ public class PermanentRemovalService {
             UUID controllerId = removed.get().controllerId();
             UUID ownerId = removed.get().ownerId();
             Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.LIBRARY);
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                     putMutationComponentsInLibrary(gameData, target, ownerId, false, 0, !shuffle);
@@ -1691,11 +1571,6 @@ public class PermanentRemovalService {
             } else {
                 clearDynamicToken(gameData, target);
             }
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                    gameData, ownerId, (target.isMergedByMutation()
-                            ? (int) target.cardsLeavingBattlefield().stream().filter(card -> !isToken(gameData, card)).count()
-                            : target.cardsLeavingBattlefield().size())
-                            + (werewhatCompanion == null ? 0 : 1));
             forgetDepartedPermanentState(gameData, target);
             handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
             if (shuffle) {
@@ -1733,19 +1608,13 @@ public class PermanentRemovalService {
             UUID controllerId = removed.get().controllerId();
             UUID ownerId = removed.get().ownerId();
             Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.LIBRARY);
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                     putMutationComponentsInLibrary(gameData, target, ownerId, true, null, true);
@@ -1763,10 +1632,6 @@ public class PermanentRemovalService {
             } else {
                 clearDynamicToken(gameData, target);
             }
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                    gameData, ownerId, (int) target.cardsLeavingBattlefield().stream()
-                            .filter(card -> !isToken(gameData, card)).count()
-                            + (werewhatCompanion == null ? 0 : 1));
             forgetDepartedPermanentState(gameData, target);
             handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
             return true;
@@ -1829,19 +1694,13 @@ public class PermanentRemovalService {
             UUID controllerId = removed.get().controllerId();
             UUID ownerId = removed.get().ownerId();
             Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.LIBRARY);
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             if (!dynamicToken) {
                 if (target.isMergedByMutation() || target.cardsLeavingBattlefield().size() > 1) {
                     putMutationComponentsInLibrary(gameData, target, ownerId, false, position, true);
@@ -1863,10 +1722,6 @@ public class PermanentRemovalService {
             } else {
                 clearDynamicToken(gameData, target);
             }
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                    gameData, ownerId, (dynamicToken ? 0
-                            : (int) target.cardsLeavingBattlefield().stream().filter(card -> !isToken(gameData, card)).count())
-                            + (werewhatCompanion == null ? 0 : 1));
             handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
             return true;
         } finally {
@@ -1916,19 +1771,13 @@ public class PermanentRemovalService {
             UUID controllerId = removed.get().controllerId();
             UUID ownerId = removed.get().ownerId();
             Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, target, Zone.GRAVEYARD);
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
-            triggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers(
+            triggerCollectionService.checkPlanarCreatureLeavesBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnotherPermanentLeavesBattlefieldTriggers(gameData, target);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
-            notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
-            triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+            triggerCollectionService.checkSchemePermanentLeavesBattlefieldTriggers(gameData, target);
             int cardsPutIntoLibrary = 0;
             if (!dynamicToken) {
                 for (Card leaving : target.cardsLeavingBattlefield()) {
@@ -1943,8 +1792,6 @@ public class PermanentRemovalService {
             } else {
                 clearDynamicToken(gameData, target);
             }
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                    gameData, ownerId, cardsPutIntoLibrary);
             if (shuffle) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             }
@@ -1988,7 +1835,6 @@ public class PermanentRemovalService {
         }
 
         library.add(card);
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
         LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
         return true;
     }
@@ -2011,9 +1857,6 @@ public class PermanentRemovalService {
             emitLeaveCue(gameData, removal.permanent(), true, VisualCueType.DIED, VisualCueService.Source.none());
             handleExileReturnOnLeave(gameData, removal.permanent(), removal.controllerId(), true);
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, removal.permanent(), Zone.GRAVEYARD);
-            triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
-            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
-                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }
@@ -2043,9 +1886,6 @@ public class PermanentRemovalService {
             emitLeaveCue(gameData, removal.permanent(), true, VisualCueType.DIED, VisualCueService.Source.none());
             handleExileReturnOnLeave(gameData, removal.permanent(), removal.controllerId(), true);
             triggerCollectionService.checkDelayedLeavesBattlefieldTriggers(gameData, removal.permanent(), Zone.GRAVEYARD);
-            triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
-            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData, removal.permanent(),
-                    removal.controllerId(), removal.controllerId());
         }
         return result.anyChange();
     }
@@ -2524,8 +2364,9 @@ public class PermanentRemovalService {
 
     private void recordLostPrintedAbilityWatchersBeforeLeave(GameData gameData, Permanent target) {
         gameData.lostPrintedAbilityWatcherIdsBeforeLeave.clear();
-        if (!gameQueryService.isCreature(gameData, target)) return;
-        // One query scope for the scan; the recorded ids are read by death trigger collection, not by the layers.
+        // One query scope for the scan; the recorded ids are read by the trigger pipeline as the departure's event
+        // ends, not by the layers: an ability lost to the leaving permanent's own static ability (Humility) wasn't
+        // there to trigger (CR 603.10a).
         gameQueryService.withQueryScope(gameData, () -> {
             gameData.forEachPermanent((playerId, perm) -> {
                 if (!perm.getId().equals(target.getId())
@@ -2824,7 +2665,6 @@ public class PermanentRemovalService {
                 entry.setTargetId(controllerId);
             }
         }
-        notifyPermanentLeftBattlefield(gameData, target, controllerId);
         gameData.playersWhosePermanentsLeftBattlefieldThisTurn.add(controllerId);
         if (!wasLand) {
             gameData.nonlandPermanentLeftBattlefieldThisTurn = true;
@@ -2904,19 +2744,6 @@ public class PermanentRemovalService {
             }
         });
         return cardIds;
-    }
-
-    private void notifyPermanentLeftBattlefield(GameData gameData, Permanent leavingPermanent,
-                                                UUID controllerId) {
-        if (controllerId == null) {
-            return;
-        }
-        if (gameData.permanentLeaveNotificationDepth > 0) {
-            gameData.permanentLeaveBatchPendingPermanents.put(leavingPermanent.getId(), controllerId);
-            return;
-        }
-        triggerCollectionService.checkAllyPermanentsLeaveBattlefieldTriggers(
-                gameData, leavingPermanent, controllerId);
     }
 
     private UUID resolvePermanentOwner(GameData gameData, Permanent permanent, UUID controllerId) {
@@ -3251,7 +3078,6 @@ public class PermanentRemovalService {
         graveyardSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilitiesAtDeparture);
         boolean wentToGraveyard = false;
         int exiledFromBattlefield = 0;
-        List<Card> exiledCreatureCards = new ArrayList<>();
         PlanarCreatureExileReplacement planarExileReplacement = wasCreature
                 ? planarCreatureExileReplacement(gameData) : null;
         // Disturb back-face (etc.): exile-instead is printed on the current face; the physical
@@ -3350,9 +3176,6 @@ public class PermanentRemovalService {
                 } else {
                     exileService.exileCard(gameData, leavingOwnerId, leaving);
                 }
-                if (!isToken(gameData, leaving) && leaving.hasType(CardType.CREATURE)) {
-                    exiledCreatureCards.add(leaving);
-                }
                 if (opponentExileReplacement != null && opponentExileReplacement.effect().addIceCounter()) {
                     gameData.exiledCardsWithIceCounters.add(leaving.getId());
                 }
@@ -3399,9 +3222,6 @@ public class PermanentRemovalService {
                     }
                 } else if (gameData.findExiledCard(leaving.getId()) != null) {
                     exiledFromBattlefield++;
-                    if (!isToken(gameData, leaving) && leaving.hasType(CardType.CREATURE)) {
-                        exiledCreatureCards.add(leaving);
-                    }
                 }
             }
         }
@@ -3422,19 +3242,6 @@ public class PermanentRemovalService {
                     planarExileReplacement.effect().lifeLoss(),
                     planarExileReplacement.sourceCard().getName());
         }
-        graveyardService.notifyCardsExiledFromBattlefield(
-                gameData, exiledFromBattlefield, controllerId,
-                wasCreature && exiledFromBattlefield > 0, exiledCreatureCards);
-        if (exiledFromBattlefield > 0) {
-            triggerCollectionService.checkAnyArtifactExiledFromBattlefieldTriggers(
-                    gameData, target, controllerId, wasArtifact);
-            triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId);
-            triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
-                    gameData, target, wasCreature, controllerId, Math.max(0, dyingPowerAtDeath));
-            triggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers(
-                    gameData, target, controllerId, exilingControllerId(gameData));
-        }
         if (wasCreature) {
             target.setLastKnownToughness(dyingToughnessAtDeath);
         }
@@ -3442,28 +3249,6 @@ public class PermanentRemovalService {
             if (target.getCounterCount(CounterType.OIL) > 0) {
                 gameData.recordPermanentWithOilCounterPutIntoGraveyard();
             }
-            collectTriggersInScope(gameData, () -> {
-                // Any permanent an opponent controls is put into a graveyard (Prince of Thralls).
-                if (!creatureDeathTriggersSuppressed) {
-                    triggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers(
-                            gameData, target.getOriginalCard(), controllerId, ownerId, new Permanent(target));
-                }
-                // Any permanent owned by another player is put into a graveyard (Kothophed, Soul Hoarder).
-                if (!creatureDeathTriggersSuppressed) {
-                    triggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(
-                            gameData, target, controllerId, ownerId);
-                }
-                // Any permanent at all is put into a graveyard (Yomiji, Who Bars the Way).
-                // Retain types granted by battlefield effects for graveyard-event filters.
-                Permanent graveyardEventSnapshot = new Permanent(target);
-                if (wasCreature) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.CREATURE);
-                if (wasArtifact) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.ARTIFACT);
-                if (wasEnchantment) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.ENCHANTMENT);
-                if (!creatureDeathTriggersSuppressed) {
-                    triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(gameData,
-                            graveyardEventSnapshot, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
-                }
-            });
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 gameData.creaturePermanentIdsDiedThisTurn.add(target.getId());
@@ -3487,19 +3272,6 @@ public class PermanentRemovalService {
                     subtypePowers.merge(subtype, dyingPowerAtDeath, Integer::sum);
                 }
                 if (!creatureDeathTriggersSuppressed) {
-                    // CR 603.10a: leaves-the-battlefield triggers look back in time, so graveyard-count
-                    // conditions on granted abilities (Decaying Soil threshold) ignore the arriving cards.
-                    gameData.graveyardLookBackExcludedCardIds.add(target.getOriginalCard().getId());
-                    gameData.simultaneousDyingPermanents.values().forEach(dying ->
-                            gameData.graveyardLookBackExcludedCardIds.add(dying.getOriginalCard().getId()));
-                    try {
-                        collectTriggersInScope(gameData, () -> triggerCollectionService
-                                .checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
-                                        gameData, target, ownerId, controllerId,
-                                        dyingPowerAtDeath, dyingToughnessAtDeath));
-                    } finally {
-                        gameData.graveyardLookBackExcludedCardIds.clear();
-                    }
                     // "Whenever a creature dies" abilities of objects trigger through the rules event pipeline as the
                     // death's event ends; these are the registered ones no object has.
                     collectTriggersInScope(gameData, () -> triggerCollectionService
@@ -3518,43 +3290,15 @@ public class PermanentRemovalService {
                         gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);
             }
             if (wasArtifact && !creatureDeathTriggersSuppressed) {
-                triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+                triggerCollectionService.checkEmblemArtifactGraveyardTriggers(
                         gameData, ownerId, controllerId, target.getOriginalCard(), target.getCard().getManaValue(),
                         Map.copyOf(target.getCounters()), wasSacrificed);
-            }
-            if (wasEnchantment && !creatureDeathTriggersSuppressed) {
-                triggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
-            }
-            if (wasLand && !creatureDeathTriggersSuppressed) {
-                if (!gameData.sacrificingAsSpellCost) {
-                    triggerCollectionService.checkLandPutIntoGraveyardByOpponentTriggers(
-                            gameData, target.getOriginalCard(), ownerId, gameData.currentlyResolvingControllerId);
-                }
-                // CR 603.10a: a creature that was a land when it died (e.g. enchanted by Imprisoned in the
-                // Moon) is judged by its land characteristics, so its card is read as a land here.
-                Card lastKnownLandCard = target.getCard();
-                if (!lastKnownLandCard.hasType(CardType.LAND)) {
-                    lastKnownLandCard = lastKnownLandCard.createCardCopy();
-                    lastKnownLandCard.setAdditionalTypes(Set.of(CardType.LAND));
-                }
-                triggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(
-                        gameData, lastKnownLandCard, ownerId, controllerId);
             }
             if (destroyedBySpellOrAbility && !wasCreature) {
                 recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);
             }
-            if (!creatureDeathTriggersSuppressed) {
-                triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId,
-                    target.getCard().getId(), dyingPowerAtDeath, dyingToughnessAtDeath,
-                    target.getCard().getManaValue(), wasCreature,
-                    target.cardsLeavingBattlefield().stream().map(Card::getId).toList(), ownerId,
-                    target.getCard());
-            }
-            // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)
-            if ((target.getCard().isAura() || target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
-                    && !creatureDeathTriggersSuppressed) {
-                triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
-            }
+            triggerCollectionService.retargetEnchantedPermanentControllerDamage(gameData, target.getId(),
+                    controllerId);
         } else if (exiledFromBattlefield > 0 && destroyedBySpellOrAbility && !wasCreature) {
             // The permanent was still destroyed when a replacement effect exiled it instead of
             // putting it into a graveyard, so "is destroyed" abilities (Karmic Justice) trigger.
@@ -3568,8 +3312,6 @@ public class PermanentRemovalService {
         if (destroyingControllerId != null && !destroyingControllerId.equals(controllerId)) {
             gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.add(controllerId);
         }
-        triggerCollectionService.checkNoncreaturePermanentDestroyedByOpponentTriggers(
-                gameData, target, controllerId, gameData.currentlyResolvingControllerId);
     }
 
     private UUID exilingControllerId(GameData gameData) {

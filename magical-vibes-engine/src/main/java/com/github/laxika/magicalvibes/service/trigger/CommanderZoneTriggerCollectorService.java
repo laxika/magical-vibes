@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -20,7 +19,7 @@ import java.util.List;
 @Service
 public class CommanderZoneTriggerCollectorService {
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE)
     private boolean handleCommanderPutIntoCommandZoneMay(TriggerMatchContext match,
                                                          MayEffect may, TriggerContext ctx) {
         TriggerContext.CommanderPutIntoCommandZone commander =
@@ -38,7 +37,7 @@ public class CommanderZoneTriggerCollectorService {
         return enqueue(match, resolved);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE)
     private boolean handleCommanderPutIntoCommandZoneDefault(TriggerMatchContext match,
                                                               CardEffect effect, TriggerContext ctx) {
         return enqueue(match, effect);

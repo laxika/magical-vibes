@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.CipherboundSpirit;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -50,7 +51,8 @@ public class SoulcipherBoard extends Card {
 
         // Whenever a creature card is put into your graveyard from anywhere, remove an omen counter
         // from this artifact. Then if it has no omen counters on it, transform it.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, SequenceEffect.of(
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_OWN),
+                SequenceEffect.of(
                 new RemoveCounterFromSourceEffect(CounterType.OMEN, 1),
                 new ConditionalEffect(
                         new NotCondition(new SourceCounterThreshold(1, CounterType.OMEN)),

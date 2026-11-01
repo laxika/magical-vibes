@@ -13,18 +13,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Registry that maps (EffectSlot, CardEffect class) pairs to trigger collector handlers.
+ * Registry that maps (EffectSlot or {@link ZoneChangeWatch}, CardEffect class) pairs to trigger collector handlers.
  * <p>
  * Discovered automatically at startup by {@link com.github.laxika.magicalvibes.service.GameEngineConfig}.
  */
 public class TriggerCollectorRegistry {
 
-    private record TriggerKey(EffectSlot slot, Class<? extends CardEffect> effectClass) {}
+    private record TriggerKey(Object slot, Class<? extends CardEffect> effectClass) {}
 
     private final Map<TriggerKey, TriggerCollectorHandler> handlers = new LinkedHashMap<>();
     private final Map<Class<? extends CardEffect>, EmblemTriggerCollectorHandler> emblemHandlers = new LinkedHashMap<>();
 
-    public void register(EffectSlot slot, Class<? extends CardEffect> effectClass, TriggerCollectorHandler handler) {
+    public void register(Object slot, Class<? extends CardEffect> effectClass, TriggerCollectorHandler handler) {
         handlers.put(new TriggerKey(slot, effectClass), handler);
     }
 
@@ -44,7 +44,7 @@ public class TriggerCollectorRegistry {
      *
      * @return {@code true} if a handler was found and the trigger fired
      */
-    public boolean dispatch(TriggerMatchContext match, EffectSlot slot, CardEffect effect, TriggerContext context) {
+    public boolean dispatch(TriggerMatchContext match, Object slot, CardEffect effect, TriggerContext context) {
         // 1. Exact match
         TriggerCollectorHandler handler = handlers.get(new TriggerKey(slot, effect.getClass()));
         if (handler != null) {
@@ -118,6 +118,17 @@ public class TriggerCollectorRegistry {
                 }
             }
 
+            CollectsWatchTrigger singleWatch = method.getAnnotation(CollectsWatchTrigger.class);
+            if (singleWatch != null) {
+                registerMethod(bean, method, singleWatch.watch(), singleWatch.value(), registry);
+            }
+            CollectsWatchTriggers watchContainer = method.getAnnotation(CollectsWatchTriggers.class);
+            if (watchContainer != null) {
+                for (CollectsWatchTrigger cwt : watchContainer.value()) {
+                    registerMethod(bean, method, cwt.watch(), cwt.value(), registry);
+                }
+            }
+
             CollectsEmblemTrigger singleEmblem = method.getAnnotation(CollectsEmblemTrigger.class);
             if (singleEmblem != null) {
                 registerEmblemMethod(bean, method, singleEmblem, registry);
@@ -134,6 +145,12 @@ public class TriggerCollectorRegistry {
     @SuppressWarnings("unchecked")
     private static void registerMethod(Object bean, Method method, CollectsTrigger annotation,
                                         TriggerCollectorRegistry registry) {
+        registerMethod(bean, method, annotation.slot(), annotation.value(), registry);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void registerMethod(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass,
+                                        TriggerCollectorRegistry registry) {
         method.setAccessible(true);
         Class<?>[] params = method.getParameterTypes();
 
@@ -148,7 +165,7 @@ public class TriggerCollectorRegistry {
             MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
             Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
 
-            registry.register(annotation.slot(), annotation.value(), (match, innerEffect, context) -> {
+            registry.register(key, effectClass, (match, innerEffect, context) -> {
                 try {
                     return (boolean) handle.invoke(match, effectParam.cast(innerEffect), context);
                 } catch (RuntimeException re) {

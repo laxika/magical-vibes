@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.trigger.CreatureDeath;
 import com.github.laxika.magicalvibes.service.trigger.CreatureDeathWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +58,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@link GameData#enqueueTrigger}.
  * An ability that watches another object die ("whenever a creature you control dies", a relation other than
  * {@code THIS}) goes through {@link #triggerOnce} instead: its options are checked the same way, and its effects go on
- * the stack the way the old slot collector of its {@link CreatureDeathWatch} put them there.
+ * the stack the way the old slot collector of its {@link CreatureDeathWatch} put them there. So does an ability of
+ * one of the other zone-change families step 12a of effect-slot-refactor.md moved, through its
+ * {@link ZoneChangeWatch}.
  * APNAP ordering (CR 603.3b) happens later, in {@code TriggeredAbilityQueueService.beginTriggerOrder}.
  */
 @Service
@@ -93,7 +96,8 @@ public class TriggeredAbilityStackService {
      */
     public void trigger(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
                         ZoneChangeTrigger trigger) {
-        if (trigger.relation() != ObjectRelation.THIS) {
+        if (trigger.relation() != ObjectRelation.THIS
+                || ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone()) != null) {
             triggerOnce(gameData, candidate, List.of(event), trigger);
             return;
         }
@@ -131,7 +135,8 @@ public class TriggeredAbilityStackService {
      */
     public void triggerOnce(GameData gameData, TriggerCandidate candidate, List<ZoneChangeEvent> events,
                             ZoneChangeTrigger trigger) {
-        if (LegacyTriggerBindings.kindOf(trigger) != LegacyTriggerBindings.Kind.DIES) {
+        ZoneChangeWatch zoneChangeWatch = ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone());
+        if (zoneChangeWatch == null && LegacyTriggerBindings.kindOf(trigger) != LegacyTriggerBindings.Kind.DIES) {
             return;
         }
         TriggerOptions options = candidate.ability().options();
@@ -150,6 +155,12 @@ public class TriggeredAbilityStackService {
         for (EffectRegistration registration : candidate.ability().effects()) {
             effects.add(interveningIf == null ? registration.effect()
                     : new ConditionalEffect(interveningIf, registration.effect(), true));
+        }
+        if (zoneChangeWatch != null) {
+            if (triggerCollectionService.triggerZoneChange(gameData, zoneChangeWatch, candidate, effects, events)) {
+                markLimit(gameData, options.limit(), sourceId, limitKey);
+            }
+            return;
         }
         CreatureDeathWatch watch = CreatureDeathWatch.of(trigger, candidate.zone());
         List<CreatureDeath> deaths = events.stream().map(CreatureDeath::of).toList();

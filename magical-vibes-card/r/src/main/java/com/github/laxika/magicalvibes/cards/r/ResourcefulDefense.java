@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MoveAnyNumberOfCountersFromTargetPermanentToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,7 +30,7 @@ public class ResourcefulDefense extends Card {
         targetPermanentYouControl.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.ANY), transferCounters));
-        targetPermanentYouControl.addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
+        targetPermanentYouControl.addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY), transferCounters));
 

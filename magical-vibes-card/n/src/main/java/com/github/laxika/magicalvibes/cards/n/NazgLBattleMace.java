@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -28,7 +30,7 @@ public class NazgLBattleMace extends Card {
                         1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER),
                 GrantScope.EQUIPPED_CREATURE));
 
-        addEffect(EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED,
+        addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS),
                 new StealDyingOpponentPermanentUnlessPaysLifeEffect(3));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));

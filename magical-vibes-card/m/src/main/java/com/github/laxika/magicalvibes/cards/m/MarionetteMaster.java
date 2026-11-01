@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerC
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class MarionetteMaster extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        )).addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
                 new TriggeringArtifactControllerConditionalEffect(
                         new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER)));
     }

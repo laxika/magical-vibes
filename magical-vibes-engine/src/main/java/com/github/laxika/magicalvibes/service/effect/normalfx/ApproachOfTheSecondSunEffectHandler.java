@@ -54,7 +54,6 @@ public class ApproachOfTheSecondSunEffectHandler implements NormalEffectHandlerB
             gameData.removeResolvingSpellFromStack(entry);
             library.add(position, entry.getPhysicalCard());
             entry.setSpellMovedDuringResolution(true);
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     " is put " + (position + 1) + " from the top of its owner's library."));
         }

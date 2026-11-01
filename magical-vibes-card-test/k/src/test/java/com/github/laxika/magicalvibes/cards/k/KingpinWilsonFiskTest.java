@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.c.ClawsOfGix;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -128,10 +127,6 @@ class KingpinWilsonFiskTest extends BaseCardTest {
     }
 
     private void sacrifice(Permanent permanent) {
-        Card card = permanent.getCard();
-        gd.playerBattlefields.get(player1.getId()).remove(permanent);
-        gd.playerGraveyards.get(player1.getId()).add(card);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), card));
+        harness.sacrifice(permanent);
     }
 }

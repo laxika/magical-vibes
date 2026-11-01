@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureThenBoostOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfWhenChosenPermanentLeavesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "127")
 @CardRegistration(set = "FIN", collectorNumber = "384")
@@ -20,7 +22,7 @@ public class ZenosYaeGalvus extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseOpponentCreatureThenBoostOthersEffect(-2, -2));
-        addEffect(EffectSlot.ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER),
                 new TransformSelfWhenChosenPermanentLeavesEffect());
     }
 

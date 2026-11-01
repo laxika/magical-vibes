@@ -69,9 +69,12 @@ class AdvancedReconstructionTest extends BaseCardTest {
         gd.playerManaPools.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromGraveyard(player1, 0);
+        // The card leaving the graveyard to be cast triggers level 2's ability, which goes on the stack above it.
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player2, 18);
     }
 
     @Test

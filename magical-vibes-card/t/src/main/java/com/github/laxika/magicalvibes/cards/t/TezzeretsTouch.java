@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class TezzeretsTouch extends Card {
         target(TargetFilters.artifact())
                 .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(5, 5, null, List.of()))
                 // When enchanted artifact is put into a graveyard, return that card to its owner's hand.
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

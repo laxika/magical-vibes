@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CON", collectorNumber = "126")
 @CardRegistration(set = "HOP", collectorNumber = "95")
@@ -24,6 +26,6 @@ public class SludgeStrider extends Card {
                         new GainLifeEffect(1)),
                 "pay {1}");
         addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, drain);
-        addEffect(EffectSlot.ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD, drain);
+        addTrigger(Triggers.leavesBattlefield(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), drain);
     }
 }

@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -44,7 +46,7 @@ public class ChevillBaneOfMonsters extends Card {
                         new PermanentHasCountersPredicate(CounterType.BOUNTY))),
                 new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY)));
 
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.BOUNTY),
                         SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect())));

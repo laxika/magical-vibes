@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSacrificedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEvokeToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class AshlingTheLimitless extends Card {
                 new CardIsPermanentPredicate(),
                 new CardSubtypePredicate(CardSubtype.ELEMENTAL)))));
 
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),

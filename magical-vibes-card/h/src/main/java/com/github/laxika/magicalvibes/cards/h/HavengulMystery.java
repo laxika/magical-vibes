@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfWhenChosenPermanentLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 public class HavengulMystery extends Card {
@@ -27,7 +29,7 @@ public class HavengulMystery extends Card {
 
         // When the creature put onto the battlefield with Havengul Mystery leaves the battlefield,
         // transform Havengul Mystery.
-        addEffect(EffectSlot.ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER),
                 new TransformSelfWhenChosenPermanentLeavesEffect());
 
         // {T}, Pay 1 life: Add {B}.

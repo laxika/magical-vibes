@@ -250,7 +250,6 @@ public class LibrarySearchSupport {
         });
         picks.forEach((playerId, cards) -> cards.forEach(card -> {
             gameData.addCardToHand(playerId, card);
-            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(gameData, playerId, card);
         }));
     }
 

@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MIC", collectorNumber = "38")
 @CardRegistration(set = "MIC", collectorNumber = "76")
 public class LyndeCheerfulTormentor extends Card {
 
     public LyndeCheerfulTormentor() {
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.CURSE),
                         new RegisterDelayedReturnCurseAttachedToPlayerEffect(null, null)));

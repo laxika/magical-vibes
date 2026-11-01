@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M11", collectorNumber = "107")
 public class NecroticPlague extends Card {
@@ -18,6 +20,7 @@ public class NecroticPlague extends Card {
                 // When enchanted creature dies, its controller chooses target creature one of their
                 // opponents controls. Return Necrotic Plague from its owner's graveyard to the battlefield
                 // attached to that creature.
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new ReturnSourceAuraToOpponentCreatureOnDeathEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+                        new ReturnSourceAuraToOpponentCreatureOnDeathEffect());
     }
 }

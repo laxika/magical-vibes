@@ -1512,7 +1512,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, husk);
-            verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id, husk.getCard());
+            verify(triggerCollectionService).recordSacrifice(gameData, player1Id, husk.getCard());
             verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Nantuko Husk.")));
         }
 

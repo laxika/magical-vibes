@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -14,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHa
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ODY", collectorNumber = "127")
 public class DecayingSoil extends Card {
@@ -24,10 +27,10 @@ public class DecayingSoil extends Card {
         var threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
+                        new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_OWN),
                         new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()),
                                 new MayPayManaEffect("{1}", new ReturnTriggeringCardToOwnerHandEffect(),
-                                        "Pay {1} to return that card to your hand?")),
+                                        "Pay {1} to return that card to your hand?"))),
                         GrantScope.SELF)));
     }
 }

@@ -543,7 +543,9 @@ public class StateBasedActionService {
         List<DepartureIntent> intents = new ArrayList<>();
         Map<UUID, DeathReason> reasons = new HashMap<>();
         for (DeathEntry entry : toDie) {
-            intents.add(new DepartureIntent(entry.permanent().getId(), DepartureCause.STATE_BASED));
+            // CR 704.5s: the Saga's controller sacrifices it.
+            intents.add(new DepartureIntent(entry.permanent().getId(), entry.reason() == DeathReason.FINAL_CHAPTER
+                    ? DepartureCause.STATE_BASED_SACRIFICE : DepartureCause.STATE_BASED));
             reasons.put(entry.permanent().getId(), entry.reason());
         }
         // CR 704.5g/704.5h: regeneration can replace these, so they are destructions.
@@ -597,8 +599,7 @@ public class StateBasedActionService {
                 logDeath(gameData, permanent.getCard(), reason);
                 if (reason == DeathReason.FINAL_CHAPTER && result.lastKnownControllerId() != null) {
                     // CR 704.5s: the Saga's controller sacrifices it.
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                            gameData, result.lastKnownControllerId(), permanent.getCard());
+                    triggerCollectionService.recordSacrifice(gameData, result.lastKnownControllerId(), permanent.getCard());
                 }
             }
         }
@@ -613,6 +614,9 @@ public class StateBasedActionService {
     private DeathReason deathReason(GameData gameData, Permanent permanent, DepartureIntent intent) {
         if (intent.cause() == DepartureCause.STATE_BASED_DESTROY) {
             return DeathReason.LETHAL_DAMAGE;
+        }
+        if (intent.cause() == DepartureCause.STATE_BASED_SACRIFICE) {
+            return DeathReason.FINAL_CHAPTER;
         }
         if (gameQueryService.isCreature(gameData, permanent)
                 && gameQueryService.getEffectiveToughness(gameData, permanent) <= 0) {

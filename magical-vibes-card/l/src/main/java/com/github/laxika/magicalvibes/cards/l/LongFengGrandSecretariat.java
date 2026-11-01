@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
@@ -24,7 +23,7 @@ public class LongFengGrandSecretariat extends Card {
 
     public LongFengGrandSecretariat() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+                .addTrigger(Triggers.dies(null, ObjectRelation.ANY),
                         // "Another creature you control or a land you control": Long Feng's own death is
                         // covered by its dies trigger below, and only when it was a land.
                         new TriggeringCardConditionalEffect(

@@ -75,7 +75,6 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moving.size());
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts " + moving.size()
                 + " card(s) on the " + (onTop ? "top" : "bottom") + " of their library."));

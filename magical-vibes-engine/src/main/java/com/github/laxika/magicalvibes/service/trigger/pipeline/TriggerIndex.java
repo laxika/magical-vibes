@@ -52,8 +52,8 @@ import java.util.UUID;
  *
  * <p>The other objects that may see a permanent die ({@link #observerCandidates}) are listed as they were just
  * before the event (CR 603.10a): the permanents on the battlefield, those that left in the same event as their
- * last-known copies, the cards in graveyards that were there before it, and the cards in exile that haunt the
- * permanent (CR 702.55c). Abilities their owner perpetually lost are left out everywhere.
+ * last-known copies, and the cards in graveyards and face up in exile that were there before it (the haunting
+ * cards among them, CR 702.55c). Abilities their owner perpetually lost are left out everywhere.
  */
 @Service
 public class TriggerIndex {
@@ -79,13 +79,21 @@ public class TriggerIndex {
     public List<TriggerCandidate> observerCandidates(GameData gameData, ZoneChangeEvent event,
                                                      List<ZoneChangeEvent> batch) {
         List<TriggerCandidate> candidates = new ArrayList<>();
-        if (!event.leftBattlefield() || event.permanent() == null) {
+        if (!event.leftBattlefield()) {
+            otherMoveCandidates(gameData, batch, candidates);
+            return candidates;
+        }
+        if (event.permanent() == null) {
             return candidates;
         }
         UUID departedId = event.permanent().getId();
+        // A permanent that entered in the same occurrence is a new object (CR 400.7) that wasn't there when the game
+        // looks back to see this one leave (CR 603.10a): a flickered creature doesn't see itself leave.
+        Set<UUID> entered = enteredCardIds(batch);
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!permanent.getId().equals(departedId)) {
-                battlefieldCandidates(gameData, event, batch, permanent, controllerId, candidates);
+            if (!permanent.getId().equals(departedId) && !entered.contains(permanent.getCard().getId())
+                    && !entered.contains(permanent.getOriginalCard().getId())) {
+                battlefieldCandidates(gameData, batch, true, permanent, controllerId, candidates);
             }
         });
         for (ZoneChangeEvent other : batch) {
@@ -96,11 +104,34 @@ public class TriggerIndex {
             }
         }
         graveyardCandidates(gameData, batch, candidates);
-        hauntingCandidates(gameData, event, candidates);
+        exileCandidates(gameData, batch, candidates);
         return candidates;
     }
 
-    private void battlefieldCandidates(GameData gameData, ZoneChangeEvent event, List<ZoneChangeEvent> batch,
+    /**
+     * The other objects that may see a move that isn't a permanent leaving the battlefield: a card put into a
+     * graveyard, a hand, a library or exile, or leaving a graveyard. The permanents on the battlefield and the cards
+     * in graveyards and in exile are seen as they are after the event (CR 603.10), except the ones that moved in it:
+     * a permanent made from a card that left a graveyard is a new object that wasn't there to see the card leave
+     * (CR 400.7, CR 603.10a).
+     */
+    private void otherMoveCandidates(GameData gameData, List<ZoneChangeEvent> batch, List<TriggerCandidate> into) {
+        Set<UUID> movedTogether = movedCardIds(batch);
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!movedTogether.contains(permanent.getCard().getId())
+                    && !movedTogether.contains(permanent.getOriginalCard().getId())) {
+                battlefieldCandidates(gameData, batch, false, permanent, controllerId, into);
+            }
+        });
+        graveyardCandidates(gameData, batch, into);
+        exileCandidates(gameData, batch, into);
+    }
+
+    /**
+     * {@code permanent}'s zone-change abilities. {@code departure} says whether the event is a permanent leaving the
+     * battlefield, whose look-back also drops the abilities lost just before it left.
+     */
+    private void battlefieldCandidates(GameData gameData, List<ZoneChangeEvent> batch, boolean departure,
                                        Permanent permanent, UUID controllerId, List<TriggerCandidate> into) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         boolean lostAll = permanent.isLosesAllAbilitiesUntilEndOfTurn() || staticBonus.losesAllAbilities()
@@ -109,7 +140,7 @@ public class TriggerIndex {
         // An ability lost to an effect that ended with the departure was still lost as it left
         // (lostPrintedAbilityWatcherIdsBeforeLeave, CR 603.10a).
         if (!lostAll && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
-                && !gameData.lostPrintedAbilityWatcherIdsBeforeLeave.contains(permanent.getId())) {
+                && !(departure && gameData.lostPrintedAbilityWatcherIdsBeforeLeave.contains(permanent.getId()))) {
             abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
                     permanent.getCard().getTriggeredAbilities()));
         }
@@ -146,13 +177,7 @@ public class TriggerIndex {
         if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
             return;
         }
-        Set<UUID> movedTogether = new HashSet<>();
-        for (ZoneChangeEvent moved : batch) {
-            movedTogether.add(moved.card().getId());
-            if (moved.permanent() != null) {
-                movedTogether.add(moved.permanent().getCard().getId());
-            }
-        }
+        Set<UUID> movedTogether = movedCardIds(batch);
         gameData.playerGraveyards.forEach((ownerId, graveyard) -> {
             for (Card card : List.copyOf(graveyard)) {
                 if (movedTogether.contains(card.getId())) {
@@ -167,19 +192,54 @@ public class TriggerIndex {
     }
 
     /**
-     * The cards in exile that haunted the departed permanent as it left (CR 702.55b), under their owners' control:
-     * their "when the creature it haunts dies" abilities trigger from exile (CR 702.55c).
+     * The face-up cards in exile, under their owners' control, except those that went there in this event, with the
+     * abilities that function from exile: "when the creature it haunts dies" (CR 702.55c), "whenever you sacrifice
+     * a token" on an adventurer card.
      */
-    private void hauntingCandidates(GameData gameData, ZoneChangeEvent event, List<TriggerCandidate> into) {
-        for (UUID cardId : event.hauntedBy()) {
-            ExiledCardEntry exiled = gameData.findExiledCard(cardId);
-            if (exiled == null) {
+    private void exileCandidates(GameData gameData, List<ZoneChangeEvent> batch, List<TriggerCandidate> into) {
+        Set<UUID> movedTogether = movedCardIds(batch);
+        for (ExiledCardEntry exiled : List.copyOf(gameData.exiledCards)) {
+            Card card = exiled.card();
+            if (exiled.faceDown() || movedTogether.contains(card.getId())) {
                 continue;
             }
-            Card card = exiled.card();
             addZoneChangeCandidates(card, null, exiled.ownerId(), Zone.EXILE,
                     withoutLost(gameData, card.getId(), card.getTriggeredAbilities()), into);
         }
+    }
+
+    /**
+     * Whether {@code event} is an artifact or creature entering the battlefield while a static ability such as
+     * Hushbringer's ("creatures entering the battlefield ... don't cause abilities to trigger") stops it from causing
+     * abilities to trigger. The whole zone change is the entering, so it doesn't trigger "leaves your graveyard"
+     * abilities either.
+     */
+    public boolean entryCausesNoTriggers(GameData gameData, ZoneChangeEvent event) {
+        return event.to() == Zone.BATTLEFIELD
+                && gameQueryService.areArtifactOrCreatureETBTriggersSuppressed(gameData, event.card());
+    }
+
+    /** The cards that entered the battlefield in {@code batch}. */
+    private static Set<UUID> enteredCardIds(List<ZoneChangeEvent> batch) {
+        Set<UUID> entered = new HashSet<>();
+        for (ZoneChangeEvent event : batch) {
+            if (event.to() == Zone.BATTLEFIELD) {
+                entered.add(event.card().getId());
+            }
+        }
+        return entered;
+    }
+
+    /** The cards that moved in {@code batch}: each event's card and the last-known card of a departure. */
+    private static Set<UUID> movedCardIds(List<ZoneChangeEvent> batch) {
+        Set<UUID> moved = new HashSet<>();
+        for (ZoneChangeEvent event : batch) {
+            moved.add(event.card().getId());
+            if (event.permanent() != null) {
+                moved.add(event.permanent().getCard().getId());
+            }
+        }
+        return moved;
     }
 
     /**
@@ -236,8 +296,27 @@ public class TriggerIndex {
         if (event.leftBattlefield()) {
             departedPermanentCandidates(gameData, event, candidates);
         }
+        if (event.from() == Zone.GRAVEYARD) {
+            leftGraveyardCandidates(gameData, event, candidates);
+        }
         arrivedCardCandidates(gameData, event, candidates);
         return candidates;
+    }
+
+    /**
+     * A card that left a graveyard, as it existed there just before (CR 603.10a), under its owner's control: "when
+     * this card is put into your hand from your graveyard".
+     */
+    private void leftGraveyardCandidates(GameData gameData, ZoneChangeEvent event, List<TriggerCandidate> into) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+            return;
+        }
+        Card card = event.card();
+        List<TriggeredAbility> abilities = new ArrayList<>(withoutLost(gameData, card.getId(),
+                card.getTriggeredAbilities()));
+        triggered(gameData.perpetualAbilities(card.getId()), abilities);
+        UUID controllerId = event.ownerId() != null ? event.ownerId() : gameData.ownerOf(card);
+        addZoneChangeCandidates(card, null, controllerId, Zone.GRAVEYARD, abilities, into);
     }
 
     private void arrivedCardCandidates(GameData gameData, ZoneChangeEvent event, List<TriggerCandidate> into) {

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.RingTemptsYouEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "4")
 @CardRegistration(set = "LTC", collectorNumber = "84")
@@ -30,7 +32,7 @@ public class SauronLordOfTheRings extends Card {
                 .mandatory(true)
                 .build());
 
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCommanderPredicate(), new RingTemptsYouEffect()));
     }

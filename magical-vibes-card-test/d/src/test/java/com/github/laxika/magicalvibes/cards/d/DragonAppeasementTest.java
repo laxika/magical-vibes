@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -70,11 +69,7 @@ class DragonAppeasementTest extends BaseCardTest {
     void opponentSacrificeDoesNotTrigger() {
         harness.addToBattlefield(player1, new DragonAppeasement());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).remove(bears);
-        gd.playerGraveyards.get(player2.getId()).add(bears.getCard());
-
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player2.getId(), bears.getCard()));
+        harness.sacrifice(bears);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -133,13 +128,7 @@ class DragonAppeasementTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }
 
-    // Simulate player1 sacrificing one of their permanents, firing the
-    // ON_ALLY_PERMANENT_SACRIFICED trigger through the engine's collection path.
     private void sacrifice(Permanent permanent) {
-        Card card = permanent.getCard();
-        gd.playerBattlefields.get(player1.getId()).remove(permanent);
-        gd.playerGraveyards.get(player1.getId()).add(card);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), card));
+        harness.sacrifice(permanent);
     }
 }

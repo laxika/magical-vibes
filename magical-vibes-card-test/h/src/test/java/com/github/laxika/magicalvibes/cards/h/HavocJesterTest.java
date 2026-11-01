@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.FabledPassage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -114,10 +113,6 @@ class HavocJesterTest extends BaseCardTest {
     }
 
     private void sacrificeForPlayer(Permanent permanent, com.github.laxika.magicalvibes.model.Player player) {
-        Card card = permanent.getCard();
-        gd.playerBattlefields.get(player.getId()).remove(permanent);
-        gd.playerGraveyards.get(player.getId()).add(card);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player.getId(), card));
+        harness.sacrifice(permanent);
     }
 }

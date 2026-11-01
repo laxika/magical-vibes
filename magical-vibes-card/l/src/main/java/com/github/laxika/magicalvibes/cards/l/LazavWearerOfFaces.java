@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "216")
 @CardRegistration(set = "MKM", collectorNumber = "318")
@@ -22,7 +24,7 @@ public class LazavWearerOfFaces extends Card {
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(GraveyardSearchScope.ALL_GRAVEYARDS),
                 CreateTokenEffect.ofClueToken(1)));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                         new MayEffect(

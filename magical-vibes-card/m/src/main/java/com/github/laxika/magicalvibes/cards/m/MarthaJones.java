@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class MarthaJones extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"), 0, 1)
-                .addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+                .addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                                 SequenceEffect.of(

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "124")
 @CardRegistration(set = "PIP", collectorNumber = "191")
@@ -20,6 +22,6 @@ public class StickyFingers extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1)))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new DrawCardEffect());
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new DrawCardEffect());
     }
 }

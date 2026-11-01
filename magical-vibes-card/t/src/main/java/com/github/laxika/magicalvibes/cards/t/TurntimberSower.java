@@ -6,14 +6,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,10 +26,11 @@ public class TurntimberSower extends Card {
 
     public TurntimberSower() {
         // Whenever one or more land cards are put into your graveyard from anywhere, create a Plant.
-        addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD,
+                ObjectRelation.YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE,
                 new CreateTokenEffect("Plant", 0, 1, CardColor.GREEN,
-                        List.of(CardSubtype.PLANT), Set.of(), Set.of()),
-                TriggerMode.ONCE_PER_BATCH);
+                        List.of(CardSubtype.PLANT), Set.of(), Set.of()));
 
         // {G}, Sacrifice three creatures: Return target land card from your graveyard to your hand.
         addActivatedAbility(new ActivatedAbility(

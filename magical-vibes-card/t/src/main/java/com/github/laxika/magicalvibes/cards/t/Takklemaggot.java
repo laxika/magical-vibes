@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CHR", collectorNumber = "37")
 @CardRegistration(set = "LEG", collectorNumber = "119")
@@ -17,7 +19,7 @@ public class Takklemaggot extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
                         new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ZERO_MINUS_ONE))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect());
     }
 }

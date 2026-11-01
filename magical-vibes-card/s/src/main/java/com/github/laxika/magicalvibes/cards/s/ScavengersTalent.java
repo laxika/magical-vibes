@@ -66,7 +66,7 @@ public class ScavengersTalent extends Card {
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, new ConditionalEffect(
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
                 new SourceClassLevelAtLeast(2),
                 new MillEffect(2, MillRecipient.TARGET_PLAYER)));
 

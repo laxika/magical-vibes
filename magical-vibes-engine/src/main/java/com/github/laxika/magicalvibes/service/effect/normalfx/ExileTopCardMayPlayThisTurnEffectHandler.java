@@ -97,7 +97,5 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             log.info("Game {} - {} exiles {} from library top (withoutPaying={})",
                     gameData.id, controllerName, topCard.getName(), withoutPaying);
         }
-        triggerCollectionService.checkControllerCardsExiledFromLibraryOrGraveyardTriggers(
-                gameData, controllerId, exiledCount);
     }
 }

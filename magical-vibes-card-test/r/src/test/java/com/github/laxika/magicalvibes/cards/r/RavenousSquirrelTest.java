@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrnithopterOfParadise;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -189,10 +188,6 @@ class RavenousSquirrelTest extends BaseCardTest {
     }
 
     private void sacrifice(Permanent permanent) {
-        Card card = permanent.getCard();
-        gd.playerBattlefields.get(player1.getId()).remove(permanent);
-        gd.playerGraveyards.get(player1.getId()).add(card);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), card));
+        harness.sacrifice(permanent);
     }
 }

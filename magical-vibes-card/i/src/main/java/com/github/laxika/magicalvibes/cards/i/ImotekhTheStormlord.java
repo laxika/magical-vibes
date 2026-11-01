@@ -18,6 +18,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +31,8 @@ import java.util.Set;
 public class ImotekhTheStormlord extends Card {
 
     public ImotekhTheStormlord() {
-        addEffect(EffectSlot.ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD,
+        addTrigger(new TriggerCondition(Triggers.leavesGraveyard(Triggers.ARTIFACT, ObjectRelation.YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE,
                 new CreateTokenEffect(2, "Necron Warrior", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.NECRON, CardSubtype.WARRIOR), Set.of(),
                         Set.of(CardType.ARTIFACT)));

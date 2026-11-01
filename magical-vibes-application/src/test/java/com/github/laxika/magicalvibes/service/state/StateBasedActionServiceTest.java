@@ -158,6 +158,11 @@ class StateBasedActionServiceTest {
         return argThat((DepartureIntent intent) -> intent.cause() == DepartureCause.STATE_BASED);
     }
 
+    /** A departure intent for a Saga sacrificed past its final chapter (CR 704.5s). */
+    private static DepartureIntent finalChapterSacrifice() {
+        return argThat((DepartureIntent intent) -> intent.cause() == DepartureCause.STATE_BASED_SACRIFICE);
+    }
+
     private static Card createCreatureCard(String name) {
         Card card = new Card();
         card.setName(name);
@@ -656,7 +661,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), finalChapterSacrifice(), any());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("The Eldest Reborn is sacrificed (final chapter reached).")));
         }
 
@@ -670,7 +675,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), finalChapterSacrifice(), any());
         }
 
         @Test
@@ -752,7 +757,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), finalChapterSacrifice(), any());
         }
 
         @Test
@@ -771,7 +776,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), putIntoGraveyard(), any());
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(perm), finalChapterSacrifice(), any());
         }
 
         @Test

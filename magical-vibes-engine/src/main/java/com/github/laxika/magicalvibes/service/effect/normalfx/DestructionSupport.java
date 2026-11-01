@@ -420,8 +420,7 @@ public class DestructionSupport {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
         // Collect both ally-permanent-sacrificed and global creature-sacrificed triggers for the
         // edict / chosen / forced-sacrifice paths that funnel through this shared helper.
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedCard, null,
-                sacrificedCreature);
+        triggerCollectionService.recordSacrifice(gameData, playerId, sacrificedCard);
     }
 
     /**

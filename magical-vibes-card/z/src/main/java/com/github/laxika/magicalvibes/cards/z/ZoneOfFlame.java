@@ -31,7 +31,7 @@ public class ZoneOfFlame extends Card {
         addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()), trigger),
                 TriggerMode.ONCE_PER_BATCH);
-        addEffect(EffectSlot.ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()), trigger, true));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),

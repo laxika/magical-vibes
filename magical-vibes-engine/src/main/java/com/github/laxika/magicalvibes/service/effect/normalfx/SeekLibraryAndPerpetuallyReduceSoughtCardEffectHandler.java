@@ -59,8 +59,6 @@ public class SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler implements N
         Card modified = sought.createRuntimeCopy();
         modified.addStaticEffect(new ReduceOwnCastCostEffect(new Fixed(1)));
         gameData.addCardToHand(controllerId, modified);
-        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                gameData, controllerId, modified);
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(modified));
     }
 }

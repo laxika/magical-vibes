@@ -119,10 +119,7 @@ class HeapedHarvestTest extends BaseCardTest {
         harness.setLife(player1, 10);
         setupLibrary();
 
-        harness.inMutationScope(() -> {
-            harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, harvest);
-            harness.getTriggerCollectionService().checkAllyPermanentSacrificedTriggers(gd, player1.getId(), harvest.getCard());
-        });
+        harness.sacrifice(harvest);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

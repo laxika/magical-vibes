@@ -432,8 +432,7 @@ public class DepartureService {
                 return;
             }
             if (intent.cause() == DepartureCause.SACRIFICE) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, snapshot.controllerId(),
-                        permanent.getCard(), null, snapshot.creature());
+                triggerCollectionService.recordSacrifice(gameData, snapshot.controllerId(), permanent.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
             } else if (intent.cause() == DepartureCause.DESTROY) {
                 gameLogService.append(gameData, GameLog.isDestroyed(permanent.getCard()));

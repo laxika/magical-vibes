@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -47,7 +49,7 @@ public class JennyFlint extends Card {
         ));
         target(new PermanentPredicateTargetFilter(anotherCreatureYouControl,
                 "Target must be another creature you control"))
-                .addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+                .addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),

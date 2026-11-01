@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KHM", collectorNumber = "228")
 @CardRegistration(set = "KHM", collectorNumber = "330")
@@ -18,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class SarulfRealmEater extends Card {
 
     public SarulfRealmEater() {
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

@@ -65,7 +65,5 @@ public class ExileRandomCardFromLibraryMayPlayThisTurnEffectHandler implements N
         log.info("Game {} - {} exiles {} at random from library (withoutPaying={})",
                 gameData.id, controllerName, exiled.getName(), exileEffect.withoutPayingManaCost());
 
-        triggerCollectionService.checkControllerCardsExiledFromLibraryOrGraveyardTriggers(
-                gameData, controllerId, 1);
     }
 }

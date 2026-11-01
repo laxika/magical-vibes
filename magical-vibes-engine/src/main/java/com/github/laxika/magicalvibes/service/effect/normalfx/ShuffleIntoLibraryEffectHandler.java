@@ -59,9 +59,6 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
                 ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard())
                 : physicalCard;
         deck.add(libraryCard);
-        if (triggerCollectionService != null) {
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
-        }
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getOwnerId());
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));

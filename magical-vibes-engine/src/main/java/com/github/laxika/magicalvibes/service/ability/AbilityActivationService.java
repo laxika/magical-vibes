@@ -1633,14 +1633,10 @@ public class AbilityActivationService {
         // ability is put on the stack — prevents the same graveyard card from being activated twice.
         if (ability.getEffects().stream().anyMatch(ExileSelfFromGraveyardCost.class::isInstance)) {
             graveyard.remove(card);
-            int stackBeforeExileCost = gameData.stack.size();
-            graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
-            if (gameData.stack.size() > stackBeforeExileCost) {
-                gameData.pendingActivatedAbilityCostTriggers.addAll(
-                        new ArrayList<>(gameData.stack.subList(stackBeforeExileCost, gameData.stack.size())));
-                gameData.stack.subList(stackBeforeExileCost, gameData.stack.size()).clear();
-            }
-            exileService.exileCard(gameData, playerId, card);
+            payCostDeferringTriggers(gameData, () -> {
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
+                exileService.exileCard(gameData, playerId, card);
+            });
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", card, " from the graveyard as an activation cost."));
         }
@@ -2466,7 +2462,6 @@ public class AbilityActivationService {
             recordHandAbilityActivationUse(gameData, card, idx);
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
-            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, 1);
             int suspendTimeCounters = ability.isSuspendTimeCountersFromX()
                     ? effectiveXValue
                     : ability.getSuspendTimeCounters();
@@ -2486,7 +2481,6 @@ public class AbilityActivationService {
             gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(card.getId())
                     ? exiled.withAbilityLink(com.github.laxika.magicalvibes.model.ExileCast.OWN_HAND_ABILITY_LINK)
                     : exiled);
-            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, 1);
             if (isManaAbility(ability, abilityEffects)) {
                 sacrificeChosenCostPermanents(gameData, player, null);
                 resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
@@ -3149,7 +3143,7 @@ public class AbilityActivationService {
 
         gameData.interaction.clearAwaitingInput();
         if (pending.remainingDiscards() > 1) {
-            gameData.deferOncePerBatchGraveyardTriggers = true;
+            openDiscardCostBatch(gameData);
         }
         PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
                 pending.discardCostRequiredName(), source.getCard());
@@ -3167,7 +3161,7 @@ public class AbilityActivationService {
                     gameData, player.getId(), gameData.playerHands.get(player.getId()), discardCost,
                     pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
-                gameData.deferOncePerBatchGraveyardTriggers = false;
+                closeDiscardCostBatch(gameData);
                 clearPendingAbilityActivation(gameData);
                 throw new IllegalStateException("No valid card to discard for the activation cost");
             }
@@ -3280,7 +3274,7 @@ public class AbilityActivationService {
 
         gameData.interaction.clearAwaitingInput();
         if (pending.remainingDiscards() > 1) {
-            gameData.deferOncePerBatchGraveyardTriggers = true;
+            openDiscardCostBatch(gameData);
         }
         PaidHandCard paid = payDiscardCost(gameData, player, discardCost, cardIndex, pending.xValue(),
                 pending.discardCostRequiredName(), card);
@@ -3298,7 +3292,7 @@ public class AbilityActivationService {
                     gameData, player.getId(), gameData.playerHands.get(player.getId()), discardCost,
                     pending.xValue(), requiredName);
             if (validDiscardIndices.size() < remaining) {
-                gameData.deferOncePerBatchGraveyardTriggers = false;
+                closeDiscardCostBatch(gameData);
                 gameData.pendingGraveyardAbilityActivation = null;
                 throw new IllegalStateException("No valid card to discard for the activation cost");
             }
@@ -8390,8 +8384,7 @@ public class AbilityActivationService {
                             if (!removed) {
                                 return;
                             }
-                            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                                    gameData, player.getId(), snapshot.permanent().getCard());
+                            triggerCollectionService.recordSacrifice(gameData, player.getId(), snapshot.permanent().getCard());
                             gameLogService.append(gameData, GameLog.textCardText(
                                     player.getUsername() + " sacrifices ", sacrificed.getCard(), "."));
                         }));
@@ -10412,10 +10405,12 @@ public class AbilityActivationService {
         }
 
         graveyard.removeAll(toExile);
-        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
-        for (Card exiled : toExile) {
-            exileService.exileCard(gameData, playerId, exiled, sourcePermanentId);
-        }
+        payCostDeferringTriggers(gameData, () -> {
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
+            for (Card exiled : toExile) {
+                exileService.exileCard(gameData, playerId, exiled, sourcePermanentId);
+            }
+        });
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " exiles "
                 + toExile.size() + " cards from their graveyard as an activation cost."));
         if (cost.triggersCollectEvidence()) {
@@ -10530,14 +10525,10 @@ public class AbilityActivationService {
         }
 
         Card exiled = graveyard.remove((int) exileCardIndex);
-        int stackBeforeCostTriggers = gameData.stack.size();
-        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiled);
-        if (gameData.stack.size() > stackBeforeCostTriggers) {
-            gameData.pendingActivatedAbilityCostTriggers.addAll(
-                    new ArrayList<>(gameData.stack.subList(stackBeforeCostTriggers, gameData.stack.size())));
-            gameData.stack.subList(stackBeforeCostTriggers, gameData.stack.size()).clear();
-        }
-        exileService.exileCard(gameData, playerId, exiled);
+        payCostDeferringTriggers(gameData, () -> {
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiled);
+            exileService.exileCard(gameData, playerId, exiled);
+        });
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));
         log.info("Game {} - {} exiles {} from graveyard as activation cost", gameData.id, player.getUsername(), exiled.getName());
@@ -10575,16 +10566,48 @@ public class AbilityActivationService {
     }
 
     /**
-     * The cards of a multi-card discard cost enter the graveyard together, so "one or more" graveyard
-     * triggers held back while the cost was being paid fire once now; like other cost-time triggers they
-     * wait until the ability is on the stack.
+     * Opens the rules event batch the cards of a multi-card discard cost, discarded one choice at a time, enter the
+     * graveyard in: they are put there together (CR 601.2h), so a "one or more" trigger sees one event.
+     */
+    private void openDiscardCostBatch(GameData gameData) {
+        if (!gameData.discardCostBatchOpen) {
+            gameData.discardCostBatchOpen = true;
+            gameData.rulesEvents.beginBatch();
+        }
+    }
+
+    private void closeDiscardCostBatch(GameData gameData) {
+        if (gameData.discardCostBatchOpen) {
+            gameData.discardCostBatchOpen = false;
+            gameData.rulesEvents.endBatch();
+        }
+    }
+
+    /**
+     * Closes a multi-card discard cost's batch once its last card is discarded; like other cost-time triggers, the
+     * ones it causes wait until the ability is on the stack.
      */
     private void finishDiscardCostBatch(GameData gameData) {
-        if (!gameData.deferOncePerBatchGraveyardTriggers) {
+        if (!gameData.discardCostBatchOpen) {
             return;
         }
         int stackBefore = gameData.stack.size();
-        graveyardService.endDeferredOncePerBatchGraveyardTriggers(gameData);
+        closeDiscardCostBatch(gameData);
+        deferActivatedAbilityCostTriggers(gameData, stackBefore);
+    }
+
+    /**
+     * Pays a cost that moves cards: the moves are one rules event batch, and the abilities they trigger wait until
+     * the ability is on the stack (CR 603.3).
+     */
+    private void payCostDeferringTriggers(GameData gameData, Runnable payment) {
+        int stackBefore = gameData.stack.size();
+        gameData.rulesEvents.beginBatch();
+        try {
+            payment.run();
+        } finally {
+            gameData.rulesEvents.endBatch();
+        }
         deferActivatedAbilityCostTriggers(gameData, stackBefore);
     }
 

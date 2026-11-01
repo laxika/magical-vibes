@@ -150,7 +150,6 @@ public class CounterSupport {
             }
             if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
-                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {
@@ -230,7 +229,6 @@ public class CounterSupport {
                 return;
             }
             gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);
@@ -260,7 +258,6 @@ public class CounterSupport {
                 return;
             }
             gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);
@@ -302,7 +299,6 @@ public class CounterSupport {
         }
 
         gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         notifyCounteredSpell(gameData, source.getControllerId(), target);
         return target.getPhysicalCard();
     }
@@ -438,7 +434,6 @@ public class CounterSupport {
     public boolean replaceFlashforwardDestination(GameData gameData, StackEntry target) {
         if (!target.isCastWithFlashforward() || target.isCopy()) return false;
         gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         return true;
     }
 

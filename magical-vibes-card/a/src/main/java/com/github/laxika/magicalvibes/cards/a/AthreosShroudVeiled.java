@@ -45,7 +45,7 @@ public class AthreosShroudVeiled extends Card {
 
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
                 new ReturnTriggeringPermanentToBattlefieldWithCounterEffect(CounterType.COIN, Zone.GRAVEYARD));
-        addEffect(EffectSlot.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD,
+        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.CREATURE, ObjectRelation.ANY),
                 new ReturnTriggeringPermanentToBattlefieldWithCounterEffect(CounterType.COIN, Zone.EXILE));
     }
 }

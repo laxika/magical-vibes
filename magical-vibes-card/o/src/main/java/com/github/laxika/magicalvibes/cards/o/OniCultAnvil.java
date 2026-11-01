@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -31,7 +30,7 @@ public class OniCultAnvil extends Card {
         CardEffect createConstruct = new CreateTokenEffect(
                 "Construct", 1, 1, null, List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT));
 
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
+        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL).onlyDuringYourTurn(),
                 new OncePerTurnTriggerEffect(new TriggeringPermanentConditionalEffect(
                         new PermanentIsArtifactPredicate(), createConstruct)));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),

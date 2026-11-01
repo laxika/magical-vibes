@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSC", collectorNumber = "341")
 public class MyChampionStandsSupreme extends Card {
@@ -28,7 +30,7 @@ public class MyChampionStandsSupreme extends Card {
                 new PutCountersOnSourceEffect(1, 1, 2), GrantScope.ALL_CREATURES, commander));
 
         // When your commander leaves the battlefield, abandon this scheme.
-        addEffect(EffectSlot.ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER),
                 new TriggeringPermanentConditionalEffect(commander, new SacrificeSelfEffect()));
     }
 }

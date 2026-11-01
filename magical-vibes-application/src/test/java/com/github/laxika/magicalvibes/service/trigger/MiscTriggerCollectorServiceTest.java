@@ -80,6 +80,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -160,7 +162,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect,
+                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect,
                 new TriggerContext.ControllerCardsLeaveGraveyard(player1Id));
 
         assertThat(collected).isTrue();
@@ -338,7 +340,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect, ctx);
+                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -476,7 +478,7 @@ class MiscTriggerCollectorServiceTest {
         when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect, ctx);
+                match(perm, player1Id, effect), ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect, ctx);
 
         assertThat(result).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -604,7 +606,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isNotEmpty();
@@ -621,7 +623,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2Id);
         }
@@ -643,7 +645,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isNotEmpty();
@@ -660,7 +662,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2Id);
         }
@@ -681,7 +683,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -699,7 +701,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         }
@@ -714,7 +716,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
@@ -729,7 +731,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2Id);
         }
@@ -759,7 +761,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -785,7 +787,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -801,14 +803,15 @@ class MiscTriggerCollectorServiceTest {
             sourceCard.target(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"
-            )).addEffect(EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect);
+            )).addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN),
+                    effect);
             Permanent perm = new Permanent(sourceCard);
             var ctx = new TriggerContext.CardPutIntoGraveyard(
                     createCard("Spellbook"), player1Id);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -1620,7 +1623,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
+                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
                 effect, ctx);
 
         assertThat(result).isTrue();
@@ -1646,7 +1649,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+                ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
                 effect, ctx);
 
         assertThat(result).isTrue();
@@ -1670,7 +1673,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 new TriggerMatchContext(gd, null, player1Id, effect, sourceCard),
-                EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
                 effect, ctx);
 
         assertThat(result).isTrue();
@@ -1691,7 +1694,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
+                ZoneChangeWatch.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
                 effect, ctx);
 
         assertThat(result).isTrue();
@@ -1712,7 +1715,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
+                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
                 effect, new TriggerContext.ControllerCardsLeaveGraveyard(player1Id, List.of(nonland)));
 
         assertThat(result).isFalse();

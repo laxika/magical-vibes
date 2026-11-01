@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "THS", collectorNumber = "48")
 public class FateForetold extends Card {
@@ -16,7 +18,7 @@ public class FateForetold extends Card {
                 // When this Aura enters, draw a card.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect())
                 // When enchanted creature dies, its controller draws a card.
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new DrawCardForTargetPlayerEffect(1));
     }
 }

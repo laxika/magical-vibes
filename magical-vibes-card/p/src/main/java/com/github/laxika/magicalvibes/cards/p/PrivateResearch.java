@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "UDS", collectorNumber = "41")
 public class PrivateResearch extends Card {
@@ -18,7 +20,7 @@ public class PrivateResearch extends Card {
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                         new PutCountersOnSelfEffect(CounterType.PAGE),
                         "Put a page counter on this Aura?"))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                         new DrawCardEffect(new CountersOnSource(CounterType.PAGE)));
     }
 }

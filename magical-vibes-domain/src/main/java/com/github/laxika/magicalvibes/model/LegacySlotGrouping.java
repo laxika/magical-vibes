@@ -105,7 +105,6 @@ enum LegacySlotGrouping {
             EffectSlot.ON_CHAMPIONED,
             EffectSlot.ON_ALLY_CREATURES_BECOME_BLOCKED,
             EffectSlot.ON_ANY_CREATURES_BLOCK,
-            EffectSlot.ON_ANY_PERMANENT_RETURNED_TO_HAND,
             EffectSlot.ON_SELF_BECOMES_PLOTTED);
 
     private static final Set<EffectSlot> ALL_BUT_INDEPENDENT_SLOTS = EnumSet.of(

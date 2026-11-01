@@ -2080,12 +2080,10 @@ public class GraveyardReturnSupport {
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
                 || destination == GraveyardChoiceDestination.TOP_OF_CONTROLLERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addFirst(card);
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, 1);
             
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " on top of their library from a graveyard."));
         } else if (destination == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addLast(card);
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, 1);
             gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " on the bottom of their library from a graveyard."));
         } else {
             putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype, enterTapped);

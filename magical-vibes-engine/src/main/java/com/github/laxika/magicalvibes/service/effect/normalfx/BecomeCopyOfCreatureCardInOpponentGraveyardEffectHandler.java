@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -27,8 +26,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements NormalEffectHandlerBean {
-
-    private static final EffectSlot SLOT = EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE;
 
     private final GameQueryService gameQueryService;
     private final PermanentCopierService permanentCopierService;
@@ -55,9 +52,9 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
         // The ability and name belong to the card this ability is on now, which for a Clone copying
         // this card is not its original card.
         String retainedName = source.getCard().getName();
-        List<EffectRegistration> retainedRegistrations = source.getCard().getEffectRegistrations(SLOT).stream()
-                .filter(reg -> reg.effect() instanceof MayEffect may
-                        && may.wrapped() instanceof BecomeCopyOfCreatureCardInOpponentGraveyardEffect)
+        List<TriggeredAbility> retainedAbilities = source.getCard().getTriggeredAbilities().stream()
+                .filter(ability -> ability.effects().stream().anyMatch(reg -> reg.effect() instanceof MayEffect may
+                        && may.wrapped() instanceof BecomeCopyOfCreatureCardInOpponentGraveyardEffect))
                 .toList();
         permanentCopierService.applyCloneCopy(source, e.graveyardCard(), null, null, Set.of());
 
@@ -77,8 +74,8 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
         keywords.add(Keyword.HEXPROOF);
         copy.setKeywords(keywords);
 
-        for (EffectRegistration reg : retainedRegistrations) {
-            copy.addEffect(SLOT, reg.effect(), reg.triggerMode());
+        for (TriggeredAbility ability : retainedAbilities) {
+            copy.addTriggeredAbility(ability);
         }
 
         gameLogService.append(gameData,

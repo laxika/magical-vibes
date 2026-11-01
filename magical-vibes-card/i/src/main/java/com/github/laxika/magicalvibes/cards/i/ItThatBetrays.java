@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSacrificedCardUnderCont
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ROE", collectorNumber = "7")
 @CardRegistration(set = "DDP", collectorNumber = "43")
@@ -17,7 +19,7 @@ public class ItThatBetrays extends Card {
         // Annihilator 2.
         addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
                 2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
-        addEffect(EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED,
+        addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS),
                 new ReturnSacrificedCardUnderControlEffect());
     }
 }

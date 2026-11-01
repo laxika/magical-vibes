@@ -156,11 +156,6 @@ class VitoFanaticOfAclazotzTest extends BaseCardTest {
     }
 
     private void enqueueSacrifice(Player player, Permanent permanent) {
-        harness.inMutationScope(() -> {
-            assertThat(gd.playerBattlefields.get(player.getId()).remove(permanent)).isTrue();
-            gd.playerGraveyards.get(player.getId()).add(permanent.getCard());
-            harness.getTriggerCollectionService()
-                    .checkAllyPermanentSacrificedTriggers(gd, player.getId(), permanent.getCard());
-        });
+        harness.sacrifice(permanent);
     }
 }

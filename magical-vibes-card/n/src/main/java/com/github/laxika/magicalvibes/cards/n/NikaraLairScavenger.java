@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForN
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C20", collectorNumber = "3")
 public class NikaraLairScavenger extends Card {
@@ -24,7 +26,7 @@ public class NikaraLairScavenger extends Card {
                 "Have target player put Yannik into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY),
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));

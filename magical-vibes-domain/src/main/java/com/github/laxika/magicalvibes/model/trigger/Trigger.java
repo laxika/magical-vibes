@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
  * state for a state trigger (CR 603.8). Triggers are pure data, like predicates: the engine, not
  * the trigger, decides whether something that happens in the game matches it.
  */
-public sealed interface Trigger permits LegacySlotTrigger, ZoneChangeTrigger {
+public sealed interface Trigger permits LegacySlotTrigger, PermanentChangeTrigger, ZoneChangeTrigger {
 
     /**
      * The zones a trigger condition on this trigger functions from when the card doesn't say

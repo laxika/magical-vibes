@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +30,8 @@ public class WanShiTongAllKnowing extends Card {
         target(TargetFilters.nonlandPermanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(1));
-        addEffect(EffectSlot.ON_ANY_CARDS_PUT_INTO_LIBRARY, spiritToken());
+        addTrigger(new TriggerCondition(Triggers.putIntoLibrary(Triggers.NONTOKEN, ObjectRelation.ANOTHER)),
+                TriggerOptions.ONE_OR_MORE, spiritToken());
     }
 
     private static CreateTokenEffect spiritToken() {

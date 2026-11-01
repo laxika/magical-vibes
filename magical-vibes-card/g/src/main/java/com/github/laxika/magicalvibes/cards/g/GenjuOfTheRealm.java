@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnE
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class GenjuOfTheRealm extends Card {
                 new GrantSupertypeUntilEndOfTurnEffect(
                         CardSupertype.LEGENDARY, GrantScope.ENCHANTED_PERMANENT)
         ), "Enchanted land becomes a legendary 8/12 Spirit creature with trample until end of turn. It's still a land."));
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new MayEffect(
+        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new MayEffect(
                 new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
                 "Return Genju of the Realm to your hand?"));
     }

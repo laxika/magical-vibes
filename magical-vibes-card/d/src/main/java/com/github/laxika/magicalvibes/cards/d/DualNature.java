@@ -20,7 +20,7 @@ public class DualNature extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()),
                         new CreateTokenCopyOfEnteringPermanentEffect(false, false, false, true, true)));
-        addEffect(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new ExileTokensWithSameNameAsLeavingCreatureEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ExileTokensCreatedWithSourceEffect());

@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +32,9 @@ public class CrawlingSensation extends Card {
 
         // Whenever one or more land cards are put into your graveyard from anywhere for the first
         // time each turn, create a 1/1 green Insect creature token.
-        addEffect(EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        // "The first time one or more land cards are put into your graveyard from anywhere each turn".
+        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE,
                 OncePerTurnTriggerEffect.firstLandGraveyardEvent(new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.INSECT), Set.of(), Set.of())));
     }

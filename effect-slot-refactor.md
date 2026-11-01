@@ -26,7 +26,8 @@ re-check them with a grep before acting on them.
 | 10a | Trigger index and the generic trigger pipeline; the pilot in shadow mode | done |
 | 10b | Switch the pilot to the pipeline, convert its cards, delete its slots | done |
 | 11 | Creature-death triggers and self-inclusion | done |
-| 12 | The rest of the zone-change family | open |
+| 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | open |
+| 12b | `ON_ENTER_BATTLEFIELD` | open |
 | 13 | Remaining event families (repeatable) | open |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
@@ -512,6 +513,13 @@ Per-token and per-object behaviour comes from the multiplicity. Convert `ON_ENTE
 
 **Done when:** every zone-change constant is gone and its card tests fail exactly as at the
 baseline.
+
+This step was split, with the user, in two:
+
+- **12a** moves every zone-change slot except `ON_ENTER_BATTLEFIELD`, including the three
+  owner-keyed creature put-into-graveyard slots step 11 left (`ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD`
+  and its two `GRAVEYARD_` forms).
+- **12b** moves `ON_ENTER_BATTLEFIELD` alone.
 
 ### Step 13: Remaining event families (repeatable)
 
@@ -2793,6 +2801,94 @@ that (below).
   tests as at HEAD (checked in a HEAD worktree): mock wiring, the two architecture tests' known ones, and
   `TurnCleanupServiceTest` / `EnterTriggerCollectorServiceTest`, which fail there too.
 - The full suite was not run here.
+
+### Step 12a (in progress)
+
+Work log while 12a is under way; rewritten as the step's findings when it is done.
+
+**The bridge.** Each moved slot becomes a `ZoneChangeWatch` constant of the same name (engine, `service/trigger`),
+listing the trigger conditions its cards were converted to (`Key`: trigger, zone the ability functions from,
+multiplicity). `TriggeredAbilityStackService.triggerOnce` looks the watch up first (`ZoneChangeWatch.of`) and calls
+`TriggerCollectionService.triggerZoneChange`, which builds the slot's old `TriggerContext` from the event and runs the
+old collector's per-source body. Handlers moved from `@CollectsTrigger(slot = …)` to `@CollectsWatchTrigger(watch = …)`
+(`scripts/step12a-rekey.py`); `TriggerCollectorRegistry` is keyed by `Object` (a slot or a watch).
+`GameEngineConfig.registerTriggerCollectors` scans the new annotation.
+
+**Relations.** A slot keeps the self-inclusion its collector had (the inventory's Self column); where a collector
+judged it by the effect (`ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`, `ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD`),
+the body still does. Exception: the sacrifice family was classified by Oracle wording (`RELATION` in
+`scripts/step12a-zone-change-triggers.py`), because its collector used a card-text heuristic ("sacrifices another").
+
+**Families done:** sacrifice, put into a graveyard from the battlefield (with step 11's three owner-keyed slots),
+leaves the battlefield / exiled from it / returned to hand, moves outside the battlefield (graveyard, library, hand,
+exile, command zone). **Left:** phasing / transform / face up, other objects entering.
+
+**Engine changes so far.**
+
+- Domain: `ObjectRelation.YOU_OWN`, `ANOTHER_YOU_OWN`, `OPPONENT_OWNS`; `PlayerRelation`; `ZoneChangeTrigger` gains
+  `excludedTo`, `causedBy`, `duringYourTurn`; `ZoneChangeEvent.causeControllerId` (from
+  `GameData.resolvingControllerForRulesEvents`: the resolving controller or the parked resolution's, never while a
+  spell's sacrifice cost is paid); `PermanentChange`, `PermanentChangeEvent`, `PermanentChangeTrigger` (not emitted
+  yet); many `Triggers` factories and filter constants.
+- `DepartureCause.STATE_BASED_SACRIFICE`: a Saga past its final chapter is sacrificed (CR 704.5s), so "whenever you
+  sacrifice" sees it (Narci, Fable Singer).
+- `TriggerIndex` lists face-up exiled cards' abilities that function from exile (haunting cards included).
+- `RulesEventPipeline` adds the batch's dying cards to `graveyardLookBackExcludedCardIds` while it matches
+  (CR 603.10a; Decaying Soil's threshold grant).
+- `TriggerCollectionService.recordSacrifice` replaces `checkAllyPermanentSacrificedTriggers` (bookkeeping only);
+  `harness.sacrifice(permanent)` sacrifices through the engine for card tests.
+- Removed: the leave-batch watcher maps (`permanentLeaveBatchWatchers`, `…WatcherControllers`, `…PendingCreatures`,
+  `…PendingPermanents`).
+- Batches. `EffectResolutionService` opens one per resolving effect (CR 603.2c: one effect, one event). Moves a
+  player makes after a choice, outside that scope, get their own: `GraveyardService.addCardsFromLibraryToGraveyard`,
+  `resolvePutTopCardsIntoGraveyard`, `resolveMillPlayersSimultaneously`, the hand-to-library choice handler, and each
+  `beginGraveyardLeaveBatch` in `SpellCastingService` now ends after the cards reach exile, not before. A multi-card
+  discard cost paid one choice at a time keeps one batch open across the choices (`GameData.discardCostBatchOpen`,
+  copied for simulations; CR 601.2h), replacing `deferOncePerBatchGraveyardTriggers` and the `deferredBatch*` fields.
+- Cost-time triggers. The old `notify…` calls fired synchronously, so the stack-size windows that defer cost-time
+  triggers (CR 603.3) wrapped them; the event now fires where the card moves, after the window. Activated-ability
+  costs that move cards go through `AbilityActivationService.payCostDeferringTriggers` (one batch, then deferral).
+  Spell costs already deferred everything paid before the spell goes on the stack.
+- Isolated batches. `RulesEventLog.beginIsolatedBatch`/`endIsolatedBatch` open a batch of its own inside an open
+  scope and hand the scope back after. The outermost `PermanentRemovalService.beginPermanentLeaveBatch` uses it, so
+  a destroy-all inside a resolving effect is matched while `DepartureService`'s `simultaneousDying*` snapshots are
+  still published (One with the Kami sees a creature's Equipment that died with it as making it modified).
+- Look-back observers. A permanent that entered in the same batch is a new object (CR 400.7) and doesn't see an
+  earlier departure of that batch (CR 603.10a): a flickered Imperial Cosmographer doesn't see itself leave.
+- Entry suppression. `TriggerIndex.entryCausesNoTriggers` drops a batch's artifact or creature entering the
+  battlefield while Hushbringer-style statics apply, so the whole zone change triggers nothing (Syr Konrad's "leaves
+  your graveyard" half when a creature is reanimated); it replaces `GraveyardService.withoutSuppressedEntries`.
+- Scroll Rack's set-aside cards are recorded as exiled from hand (`rulesEvents.arrived(card, player, EXILE)`), so
+  "put into exile from your hand" sees them, and their return to the library is a move from exile.
+- Owners. `RulesEventLog` remembers the player whose zone it last saw each card in and uses that owner when an event
+  names none (test setups put cards straight into a zone), so `YOU_OWN` and `OPPONENT_OWNS` match.
+- Removed from `GraveyardService` and `GameData`: every `graveyardLeaveNotificationPending*` collection,
+  `graveyardExileNotificationPendingCounts`, `kayaExileNotification*`, `graveyardOrBattlefieldExileNotificationPending`,
+  `notifyCardsExiledFromBattlefield`, and the per-type leave notifiers; `beginGraveyardLeaveBatch`/`end…` now only
+  open and close a rules event batch (the depth counter stays as a guard).
+- Still collected at the choke point, keyed by trigger: Takenuma (plane, `checkPlanarCreatureLeavesBattlefieldTriggers`),
+  My Champion Stands Supreme (scheme, `checkSchemePermanentLeavesBattlefieldTriggers`), emblems' artifact-graveyard
+  abilities (`checkEmblemArtifactGraveyardTriggers`).
+
+**Behaviour changes to list:** Camellia, the Seedmiser triggers once for one or more Foods (CR 603.2c); Jaws,
+Relentless Predator sees every destroy of a noncreature artifact, not only two removal paths; Kothophed's
+"owned by another player" merged into "put into an opponent's graveyard" (CR 400.3); the exile-then-return-to-hand
+handler no longer pretends a permanent was returned to hand; a commander bounce whose owner later chooses the command
+zone still triggers "returned to hand" abilities (the departure's batch closes before the choice); The War Doctor's
+exile half and The Heron Moon trigger once for one or more cards, as their Oracle text says (the old collector got
+that from the exile listener's batching); Wan Shi Tong, All-Knowing and Dutiful Knowledge-Seeker no longer trigger on
+a token put into a library (a token isn't a card, CR 111.1); Kaya, Spirits' Justice can choose a creature card exiled
+from the battlefield as well as from the graveyard ("from among them"); Advanced Reconstruction's level-2 ability
+triggers when a card is cast from your graveyard (the card leaves it for the stack) and goes on the stack above that
+spell.
+
+**For later steps.** `GraveyardService`'s private `addCardToGraveyard` overloads still carry
+`suppressLibraryBatchTriggers`, `suppressLibraryMillTriggers` and `suppressOncePerBatchLandTriggers`, which nothing
+reads any more; prune them in the cleanup step. Known gap: a simultaneous mill across players that pauses for one player's
+replacement-order choice (The Water Crystal plus Bruvac) closes its batch at the pause, so a "one or more nonland cards
+are milled" trigger fires for the cards milled before the pause and again for the rest. The old code held the trigger
+until the journal replay; the pipeline needs a batch that survives the pause (the same holds for any effect that
+stops for a choice mid-event).
 
 ## Prompt
 

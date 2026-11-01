@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -82,7 +83,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         }
 
         if (interaction.shuffleIn()) {
-            shuffleIntoLibrary(gameData, player, validated);
+            inOneBatch(gameData, () -> shuffleIntoLibrary(gameData, player, validated));
             if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
                 Card sourceCard = interaction.thenEffectSourceCard();
                 StackEntry followUp = new StackEntry(
@@ -99,7 +100,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         }
 
         if (interaction.swapWithLibraryTop()) {
-            swapWithLibraryTop(gameData, player, validated);
+            inOneBatch(gameData, () -> swapWithLibraryTop(gameData, player, validated));
             return;
         }
 
@@ -116,7 +117,8 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             return;
         }
 
-        putOnLibrary(gameData, player, validated, interaction.placement() == HandToLibraryPlacement.TOP);
+        inOneBatch(gameData, () -> putOnLibrary(gameData, player, validated,
+                interaction.placement() == HandToLibraryPlacement.TOP));
         if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
             Card sourceCard = interaction.thenEffectSourceCard();
             StackEntry followUp = new StackEntry(
@@ -129,6 +131,16 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             resolveFollowUp(gameData, followUp);
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Moves the chosen cards together: one rules event batch, so a "one or more" trigger sees one event. */
+    private static void inOneBatch(GameData gameData, Runnable moves) {
+        gameData.rulesEvents.beginBatch();
+        try {
+            moves.run();
+        } finally {
+            gameData.rulesEvents.endBatch();
+        }
     }
 
     /**
@@ -175,18 +187,14 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
                 setAside.add(found);
             }
         }
-
-        if (!setAside.isEmpty()) {
-            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
-                    gameData, playerId, setAside.size());
-        }
+        // The cards are exiled face down until they go back on top of the library; they wait outside the exile
+        // list, so the rules event log records the move itself ("put into exile from your hand").
+        setAside.forEach(card -> gameData.rulesEvents.arrived(card, playerId, Zone.EXILE));
 
         int moved = Math.min(setAside.size(), deck.size());
         for (int i = 0; i < moved; i++) {
             Card fromLibrary = deck.remove(0);
             gameData.addCardToHand(playerId, fromLibrary);
-            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                    gameData, playerId, fromLibrary);
         }
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " sets aside " + setAside.size()
@@ -195,7 +203,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         log.info("Game {} - {} swapped {} hand card(s) for {} library card(s)",
                 gameData.id, player.getUsername(), setAside.size(), moved);
 
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, setAside.size());
         if (setAside.size() > 1) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(playerId,
                     List.copyOf(setAside), false, playerId,
@@ -223,7 +230,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             }
         }
         LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moved);
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " shuffles "
                 + moved + " card(s) from their hand into their library."));
@@ -255,7 +261,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         } else {
             deck.addAll(moving);
         }
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moving.size());
 
         String end = onTop ? "top" : "bottom";
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts "

@@ -52,8 +52,6 @@ public class SeekLibraryToHandEffectHandler implements NormalEffectHandlerBean {
         Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
         library.remove(chosen);
         gameData.addCardToHand(controllerId, chosen);
-        triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                gameData, controllerId, chosen);
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                 .text("seeks and puts a card into hand.").build());
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(chosen));

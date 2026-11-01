@@ -63,6 +63,7 @@ class MoonstoneEulogistTest extends BaseCardTest {
 
     private Permanent addPermanent(Player player, CardType type) {
         Card card = new Card();
+        card.setName("Test " + type);
         card.setType(type);
         Permanent permanent = new Permanent(card);
         gd.playerBattlefields.get(player.getId()).add(permanent);
@@ -70,10 +71,6 @@ class MoonstoneEulogistTest extends BaseCardTest {
     }
 
     private void sacrifice(Permanent permanent) {
-        Card card = permanent.getCard();
-        gd.playerBattlefields.get(player1.getId()).remove(permanent);
-        gd.playerGraveyards.get(player1.getId()).add(card);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), card));
+        harness.sacrifice(permanent);
     }
 }

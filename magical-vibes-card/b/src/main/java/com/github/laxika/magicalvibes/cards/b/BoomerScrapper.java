@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class BoomerScrapper extends Card {
                 new LoseLifeEffect(1), junkToken());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loseLifeAndCreateJunk);
         addEffect(EffectSlot.ON_ATTACK, loseLifeAndCreateJunk);
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
+        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsTokenPredicate(),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));

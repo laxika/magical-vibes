@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A game's rules events that the trigger pipeline hasn't taken yet, grouped into batches, plus what the
@@ -62,17 +65,26 @@ public final class RulesEventLog {
         }
     }
 
+    /** Stands in a deque, which takes no {@code null}, for "no scope was open". */
+    private static final Batch NO_BATCH = new Batch(0);
+
     private final List<Batch> closed = new ArrayList<>();
     private Batch open;
     private int openDepth;
+    /** The scopes an isolated batch set aside, innermost last, each with its depth. */
+    private final Deque<Batch> suspended = new ArrayDeque<>();
+    private final Deque<Integer> suspendedDepths = new ArrayDeque<>();
     private long nextBatchId = 1;
     private int suppressDepth;
     private final Map<UUID, Zone> cardZones = new HashMap<>();
+    /** The player whose zone each card was last seen in: its owner (CR 400.3), for events that don't name one. */
+    private final Map<UUID, UUID> cardOwners = new HashMap<>();
     /** Departure events not yet drained, keyed by each physical card that left with the permanent. */
     private final Map<UUID, ZoneChangeEvent> departures = new HashMap<>();
     private final Map<UUID, ZoneChangeCause> causes = new HashMap<>();
     private Card payingCostOf;
     private final Consumer<RulesEventBatch> onClose;
+    private final Supplier<UUID> resolvingController;
 
     /** A log that tells nobody when a batch closes. */
     public RulesEventLog() {
@@ -84,7 +96,16 @@ public final class RulesEventLog {
      * it: an occurrence is complete once its outermost scope ends (or at once, for an event outside a scope).
      */
     public RulesEventLog(Consumer<RulesEventBatch> onClose) {
+        this(onClose, () -> null);
+    }
+
+    /**
+     * As {@link #RulesEventLog(Consumer)}; every zone change also records {@code resolvingController}'s answer: the
+     * controller of the spell or ability resolving as it happens, or {@code null}.
+     */
+    public RulesEventLog(Consumer<RulesEventBatch> onClose, Supplier<UUID> resolvingController) {
         this.onClose = Objects.requireNonNull(onClose, "onClose");
+        this.resolvingController = Objects.requireNonNull(resolvingController, "resolvingController");
     }
 
     /** Opens a batch scope: until the matching {@link #endBatch}, every event joins one batch. */
@@ -107,6 +128,33 @@ public final class RulesEventLog {
                 onClose.accept(closing.freeze());
             }
         }
+    }
+
+    /**
+     * Opens a batch of its own even inside an open scope, which it sets aside until {@link #endIsolatedBatch}: an
+     * occurrence an effect performs among its other moves (a destroy-all), matched as it ends while the state the
+     * game looks back to (CR 603.10a) is still at hand.
+     */
+    public void beginIsolatedBatch() {
+        suspended.addLast(open == null ? NO_BATCH : open);
+        suspendedDepths.addLast(openDepth);
+        open = null;
+        openDepth = 0;
+        beginBatch();
+    }
+
+    /** Closes the isolated batch {@link #beginIsolatedBatch} opened and reopens the scope it set aside. */
+    public void endIsolatedBatch() {
+        if (suspended.isEmpty()) {
+            endBatch();
+            return;
+        }
+        while (openDepth > 0) {
+            endBatch();
+        }
+        Batch outer = suspended.removeLast();
+        open = outer == NO_BATCH ? null : outer;
+        openDepth = suspendedDepths.removeLast();
     }
 
     /** Whether a batch scope is open. */
@@ -145,10 +193,18 @@ public final class RulesEventLog {
     }
 
     /** Records that {@code card} is in {@code zone} without emitting anything, for cards a game starts with. */
-    public void track(Card card, Zone zone) {
+    public void track(Card card, UUID ownerId, Zone zone) {
         if (suppressDepth == 0 && card != null) {
             cardZones.put(card.getId(), zone);
+            if (ownerId != null) {
+                cardOwners.put(card.getId(), ownerId);
+            }
         }
+    }
+
+    /** {@code ownerId}, or the player whose zone the card was last seen in when it is {@code null}. */
+    private UUID ownerOr(UUID ownerId, Card card) {
+        return ownerId != null ? ownerId : cardOwners.get(card.getId());
     }
 
     /** The zone the log last saw the card arrive in, or {@code null}. */
@@ -178,6 +234,7 @@ public final class RulesEventLog {
         payingCostOf = previous;
     }
 
+
     public void restoreCause(UUID objectId, ZoneChangeCause previous) {
         if (previous == null) {
             causes.remove(objectId);
@@ -196,6 +253,9 @@ public final class RulesEventLog {
             return;
         }
         UUID cardId = card.getId();
+        if (ownerId != null) {
+            cardOwners.put(cardId, ownerId);
+        }
         if (consumeDeparture(cardId, to)) {
             cardZones.put(cardId, to);
             return;
@@ -204,8 +264,9 @@ public final class RulesEventLog {
         if (from == to) {
             return;
         }
-        emit(new ZoneChangeEvent(card, ownerId, from, to, causes.getOrDefault(cardId, ZoneChangeCause.OTHER),
-                null, null));
+        emit(new ZoneChangeEvent(card, ownerOr(ownerId, card), from, to,
+                causes.getOrDefault(cardId, ZoneChangeCause.OTHER), null, null)
+                .withCauseController(resolvingController.get()));
     }
 
     /**
@@ -225,9 +286,9 @@ public final class RulesEventLog {
             consumeDeparture(cardId, null);
             cardZones.put(cardId, Zone.BATTLEFIELD);
         }
-        emit(new ZoneChangeEvent(card, ownerId, from, Zone.BATTLEFIELD,
+        emit(new ZoneChangeEvent(card, ownerOr(ownerId, card), from, Zone.BATTLEFIELD,
                 causes.getOrDefault(permanent.getId(), ZoneChangeCause.OTHER),
-                new Permanent(permanent), controllerId));
+                new Permanent(permanent), controllerId).withCauseController(resolvingController.get()));
     }
 
     /**
@@ -288,9 +349,9 @@ public final class RulesEventLog {
         if (suppressDepth > 0) {
             return;
         }
-        ZoneChangeEvent event = new ZoneChangeEvent(card, ownerId, Zone.BATTLEFIELD, intendedTo,
+        ZoneChangeEvent event = new ZoneChangeEvent(card, ownerOr(ownerId, card), Zone.BATTLEFIELD, intendedTo,
                 causes.getOrDefault(lastKnown.getId(), ZoneChangeCause.OTHER), lastKnown, controllerId,
-                grantedAbilities, deathTriggersSuppressed, payingCostOf, attachments, hauntedBy);
+                grantedAbilities, deathTriggersSuppressed, payingCostOf, attachments, hauntedBy, resolvingController.get());
         for (UUID cardId : cardIds) {
             departures.put(cardId, event);
             cardZones.put(cardId, intendedTo);
@@ -364,9 +425,17 @@ public final class RulesEventLog {
         }
         open = source.open == null ? null : copyBatch(source.open, copies);
         openDepth = source.openDepth;
+        suspended.clear();
+        for (Batch batch : source.suspended) {
+            suspended.addLast(batch == NO_BATCH ? NO_BATCH : copyBatch(batch, copies));
+        }
+        suspendedDepths.clear();
+        suspendedDepths.addAll(source.suspendedDepths);
         nextBatchId = source.nextBatchId;
         cardZones.clear();
         cardZones.putAll(source.cardZones);
+        cardOwners.clear();
+        cardOwners.putAll(source.cardOwners);
         causes.clear();
         causes.putAll(source.causes);
         payingCostOf = source.payingCostOf;

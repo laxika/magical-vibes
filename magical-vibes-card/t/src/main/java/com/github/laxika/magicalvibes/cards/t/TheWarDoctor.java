@@ -15,8 +15,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "167")
 @CardRegistration(set = "WHO", collectorNumber = "452")
@@ -29,8 +34,8 @@ public class TheWarDoctor extends Card {
     public TheWarDoctor() {
         addEffect(EffectSlot.ON_ANY_OTHER_PERMANENT_PHASES_OUT,
                 new PutCountersOnSelfEffect(CounterType.TIME));
-        addEffect(EffectSlot.ON_ANY_CARD_EXILED,
-                new PutCountersOnSelfEffect(CounterType.TIME));
+        addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANOTHER)),
+                TriggerOptions.ONE_OR_MORE, new PutCountersOnSelfEffect(CounterType.TIME));
 
         TargetFilter anyTarget = new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

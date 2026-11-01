@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -23,7 +22,7 @@ public class ReyhanLastOfTheAbzan extends Card {
                         "Put that many +1/+1 counters on target creature?"));
 
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), counterTransfer);
-        addEffect(EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE,
+        addTrigger(Triggers.putIntoCommandZone(null, ObjectRelation.YOU_OWN),
                 new MayEffect(
                         new PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         "Put that many +1/+1 counters on target creature?"));

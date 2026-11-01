@@ -78,7 +78,6 @@ public class PutTriggeringSpellOnBottomThenRevealEffectHandler implements Normal
         gameData.stack.remove(spell);
         stateTriggerService.cleanupResolvedStateTrigger(gameData, spell);
         gameData.playerDecks.get(ownerId).add(physicalCard);
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
         gameLogService.append(gameData, GameLog.cardThen(physicalCard,
                 " is put on the bottom of its owner's library."));
 

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MIR", collectorNumber = "265")
 public class GrimFeast extends Card {
@@ -18,7 +20,7 @@ public class GrimFeast extends Card {
         // "Whenever a creature is put into an opponent's graveyard from the battlefield, you gain
         // life equal to its toughness." The toughness used is the creature's last-known effective
         // toughness on the battlefield, snapshotted when the trigger is collected.
-        addEffect(EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_OWNS),
                 new GainLifeEqualToDyingCreatureToughnessEffect());
     }
 }

@@ -67,8 +67,6 @@ public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
                     ThreadLocalRandom.current().nextInt(matchingCards.size()));
             library.remove(chosen);
             gameData.addCardToHand(controllerId, chosen);
-            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                    gameData, controllerId, chosen);
             soughtCards.add(chosen);
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text("seeks and puts " + chosen.getName() + " into hand.").build());

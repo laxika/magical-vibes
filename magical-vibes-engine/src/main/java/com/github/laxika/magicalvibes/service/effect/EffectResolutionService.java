@@ -512,6 +512,9 @@ public class EffectResolutionService {
                             || gameData.pendingEffectResolutionEntry == entry) ? effectToResolve : null;
                     boolean stoppedForDeathReplacement = false;
                     boolean stoppedForCoinFlipChoice = false;
+                    // What one effect does is one event (CR 603.2c): the cards it moves together trigger "one or
+                    // more" abilities once.
+                    gameData.rulesEvents.beginBatch();
                     try {
                         handler.resolve(gameData, entry, effectToResolve);
                     } catch (DeathReplacementChoicePending pending) {
@@ -525,6 +528,7 @@ public class EffectResolutionService {
                         }
                         stoppedForCoinFlipChoice = true;
                     } finally {
+                        gameData.rulesEvents.endBatch();
                         gameData.deathReplacementsCanRerunEffect = false;
                         gameData.coinFlipChoicesCanRerunEffect = false;
                         gameData.coinFlipCheckpointEffect = null;

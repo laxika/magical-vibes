@@ -114,10 +114,7 @@ class UlvenwaldMysteriesTest extends BaseCardTest {
         goblin.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(goblin);
 
-        gd.playerBattlefields.get(player1.getId()).remove(goblin);
-        gd.playerGraveyards.get(player1.getId()).add(goblin.getCard());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player1.getId(), goblin.getCard()));
+        harness.sacrifice(goblin);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

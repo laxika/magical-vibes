@@ -77,8 +77,6 @@ public class SeekThreeLandsThenChooseEffectHandler implements NormalEffectHandle
 
         for (Card soughtCard : soughtCards) {
             gameData.addCardToHand(controllerId, soughtCard);
-            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                    gameData, controllerId, soughtCard);
         }
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
 

@@ -475,8 +475,8 @@ public class DeathTriggerCollectorService {
                         (PutCountersOnSourceCardEffect) effect, context));
     }
 
-    @CollectsTrigger(value = SacrificePermanentsSharingDyingPermanentTypeEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SacrificePermanentsSharingDyingPermanentTypeEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleMartyrsBondAllyPermanentDeath(TriggerMatchContext match,
             SacrificePermanentsSharingDyingPermanentTypeEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -664,8 +664,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class,
-            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOwnedCreatureGraveyardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
         CardEffect wrapped = may.wrapped();
@@ -686,8 +686,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
-            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOwnedCreatureGraveyardDelayedReturn(TriggerMatchContext match,
             RegisterDelayedReturnDyingCreatureUnderControlEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -706,8 +706,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAnyPermanentGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -893,7 +893,7 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD ──────────────────────
 
-    @CollectsTrigger(value = ReturnSourceAuraToOpponentCreatureOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnSourceAuraToOpponentCreatureOnDeathEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnSourceAura(TriggerMatchContext match,
             ReturnSourceAuraToOpponentCreatureOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -904,16 +904,16 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnSourceTransformedAttachedToTargetPlayer(TriggerMatchContext match,
             ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect effect, TriggerContext ctx) {
         addEnchantedPermanentDeathEntry(match, effect);
         return true;
     }
 
-    @CollectsTrigger(value = ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnSourceAuraOrNonAura(TriggerMatchContext match,
             ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -924,7 +924,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnSourceAuraToSharedTypeCreatureOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnSourceAuraToSharedTypeCreatureOnDeathEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnSourceAuraSharedType(TriggerMatchContext match,
             ReturnSourceAuraToSharedTypeCreatureOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -942,7 +942,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnEnchantedCreatureToOwnerHandOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnEnchantedCreatureToOwnerHandOnDeathEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnEnchantedCreature(TriggerMatchContext match,
             ReturnEnchantedCreatureToOwnerHandOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -955,8 +955,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureControllerMaySearch(TriggerMatchContext match,
             EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect effect,
             TriggerContext ctx) {
@@ -977,7 +977,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnEnchantedCreatureToBattlefieldOnDeathEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnEnchantedCreatureToBattlefieldOnDeathEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnEnchantedCreatureToBattlefield(TriggerMatchContext match,
             ReturnEnchantedCreatureToBattlefieldOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -989,8 +989,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnEnchantedCreatureAndReattachAuraOnDeathEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnEnchantedCreatureAndReattachAuraOnDeathEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnEnchantedCreatureAndReattachAura(TriggerMatchContext match,
             ReturnEnchantedCreatureAndReattachAuraOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -1001,8 +1001,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handlePutLesserManaValueCreatureAndReturnAura(TriggerMatchContext match,
             PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect effect,
             TriggerContext ctx) {
@@ -1020,7 +1020,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureControllerLosesLife(TriggerMatchContext match,
             EnchantedCreatureControllerLosesLifeEffect effect, TriggerContext ctx) {
         // Banewasp Affliction: the dying creature's controller loses life equal to its toughness
@@ -1035,8 +1035,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = DrawCardForTargetPlayerEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureControllerDrawsCard(TriggerMatchContext match,
             DrawCardForTargetPlayerEffect effect, TriggerContext ctx) {
         // Fate Foretold: the dying creature's controller draws, not the Aura's controller.
@@ -1057,8 +1057,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughness(TriggerMatchContext match,
             EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect effect, TriggerContext ctx) {
         // Death Watch: controller loses life = power, you gain life = toughness. Both use LKI; one
@@ -1083,8 +1083,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureDiesGainLifeAndDrawEqualToToughness(TriggerMatchContext match,
             EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -1103,7 +1103,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureDeathDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         // Creature Bond: the dying creature's controller is dealt damage equal to its toughness.
@@ -1128,8 +1128,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToEnchantedPermanentControllerEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = DealDamageToEnchantedPermanentControllerEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureDeathDamageEnchantedController(TriggerMatchContext match,
             DealDamageToEnchantedPermanentControllerEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -1159,7 +1159,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = CreateTokenEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedCreatureDeathTokenCount(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         if (!amountEvaluationService.referencesEventValue(effect.amount())) {
@@ -1172,8 +1172,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleReturnEnchantedCreatureAndSourceTransformed(TriggerMatchContext match,
             ReturnEnchantedCreatureAndSourceTransformedOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -1184,8 +1184,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleExileTopCardsFromEnchantedCreatureOwnerAndAllowCast(TriggerMatchContext match,
             ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -1199,7 +1199,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedPermanentDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
@@ -1339,8 +1339,8 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD ──────────────────────
 
-    @CollectsTrigger(value = ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect.class,
+            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
     boolean handleReturnEnchantedPermanentOnDeathOrExile(TriggerMatchContext match,
             ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
@@ -1358,16 +1358,17 @@ public class DeathTriggerCollectorService {
                         cardId, epl.destination())))
         );
         if (epl.destination() == com.github.laxika.magicalvibes.model.Zone.GRAVEYARD) {
-            // CR 400.7: the trigger refers to the card's graveyard stay that begins after this collection;
-            // GameData.markGraveyardEntry stamps the version when the card actually enters the graveyard.
+            // CR 400.7: the trigger refers to the card's stay in the graveyard it just entered; one that leaves and
+            // comes back before this resolves is a new object.
             entry.setTriggeringCardId(cardId);
+            entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(cardId));
         }
         match.gameData().stack.add(entry);
         logEnchantedPermanentLTB(match);
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedPermanentLeavesConditionalEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
+    @CollectsWatchTrigger(value = EnchantedPermanentLeavesConditionalEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
     boolean handleEnchantedPermanentLeavesConditional(TriggerMatchContext match,
             EnchantedPermanentLeavesConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
@@ -1387,7 +1388,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedControllerSacrificesCreatureOnLeaveEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
+    @CollectsWatchTrigger(value = EnchantedControllerSacrificesCreatureOnLeaveEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
     boolean handleEnchantedControllerSacrificesCreatureOnLeave(TriggerMatchContext match,
             EnchantedControllerSacrificesCreatureOnLeaveEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
@@ -1405,7 +1406,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnSourceAuraToChosenCreatureOnLeaveEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnSourceAuraToChosenCreatureOnLeaveEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
     boolean handleReturnSourceAuraToChosenCreatureOnLeave(TriggerMatchContext match,
             ReturnSourceAuraToChosenCreatureOnLeaveEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
@@ -1421,7 +1422,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
     boolean handleEnchantedPermanentLeavesDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1443,8 +1444,8 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ────────────
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
-            slot = EffectSlot.ON_ANY_NONCREATURE_ARTIFACT_SACRIFICED_OR_DESTROYED)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_NONCREATURE_ARTIFACT_SACRIFICED_OR_DESTROYED)
     boolean handleNoncreatureArtifactSacrificedOrDestroyedDamage(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
@@ -1462,8 +1463,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect.class,
-            slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardReturnUnlessDamage(TriggerMatchContext match,
             ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect effect, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard artifactGraveyard = (TriggerContext.ArtifactGraveyard) ctx;
@@ -1484,7 +1485,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         // A "you may" wrapping a targeted effect (Disciple of the Vault) chooses its target as the
@@ -1505,7 +1506,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class, watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
@@ -1527,8 +1528,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringArtifactControllerConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringArtifactControllerConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardControllerConditional(TriggerMatchContext match,
             TriggeringArtifactControllerConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
@@ -1593,7 +1594,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1609,7 +1610,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_EXILED_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_ARTIFACT_EXILED_FROM_BATTLEFIELD)
     boolean handleArtifactExiledDefault(TriggerMatchContext match,
                                         CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1634,7 +1635,7 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ────────────────
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class, watch = ZoneChangeWatch.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleLandGraveyardDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.AnyLandGraveyard lg = (TriggerContext.AnyLandGraveyard) ctx;
@@ -1651,8 +1652,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleLandGraveyardConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AnyLandGraveyard land = (TriggerContext.AnyLandGraveyard) ctx;
@@ -1676,7 +1677,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleLandGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1699,7 +1700,7 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ─────────
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleEnchantmentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1715,7 +1716,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyEnchantmentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1731,24 +1732,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleOtherPlayerOwnedPermanentGraveyardDefault(TriggerMatchContext match,
-            CardEffect effect, TriggerContext ctx) {
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        ));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (permanent owned by another player put into graveyard from battlefield)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
     private void logEnchantmentGraveyard(TriggerMatchContext match) {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (enchantment put into graveyard from battlefield)", match.gameData().id, match.permanent().getCard().getName());
@@ -1756,8 +1739,8 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD ───────
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentArtifactGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
@@ -1765,8 +1748,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentArtifactGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1782,8 +1765,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
-            slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class,
+            watch = ZoneChangeWatch.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentArtifactGraveyardDamage(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         if (effect.recipient() != DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER) {
@@ -1812,7 +1795,7 @@ public class DeathTriggerCollectorService {
 
     // ── ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE ────────
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     boolean handleBlackCardOpponentGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
@@ -1820,7 +1803,7 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     boolean handleBlackCardOpponentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1843,8 +1826,8 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT ────────────────────
 
-    @CollectsTrigger(value = ReturnTriggeringLandFromGraveyardToBattlefieldEffect.class,
-            slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT)
+    @CollectsWatchTrigger(value = ReturnTriggeringLandFromGraveyardToBattlefieldEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT)
     boolean handleLandGraveyardReturn(TriggerMatchContext match,
             ReturnTriggeringLandFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
         TriggerContext.LandPutIntoGraveyard lpg = (TriggerContext.LandPutIntoGraveyard) ctx;
@@ -1871,8 +1854,8 @@ public class DeathTriggerCollectorService {
 
     // ── ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ──────
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class,
-            slot = EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = PutCountersOnSelfEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     private boolean handleOpponentPermanentGraveyardPutCountersOnSelf(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -1887,8 +1870,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentPermanentGraveyardConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
         TriggerContext.OpponentPermanentGraveyard opg = (TriggerContext.OpponentPermanentGraveyard) ctx;
@@ -1913,8 +1896,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class,
-            slot = EffectSlot.ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT)
+    @CollectsWatchTrigger(value = MayEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT)
     private boolean handleNoncreaturePermanentDestroyedByOpponent(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -1927,8 +1910,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
-            slot = EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
+            watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentPermanentGraveyardSteal(TriggerMatchContext match,
             StealDyingOpponentPermanentUnlessPaysLifeEffect effect, TriggerContext ctx) {
         TriggerContext.OpponentPermanentGraveyard opg = (TriggerContext.OpponentPermanentGraveyard) ctx;
@@ -1950,8 +1933,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect.class,
-            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleCreaturePutIntoOwnerGraveyardToLibrary(TriggerMatchContext match,
             com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect effect,
             TriggerContext ctx) {
@@ -1969,12 +1952,12 @@ public class DeathTriggerCollectorService {
     }
 
     /** Bakes the dead card and its owner into graveyard-to-hand triggers. */
-    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handlePermanentGraveyardReturnToHand(TriggerMatchContext match,
             ReturnTriggeringCardToOwnerHandEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -1999,8 +1982,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class,
-            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = MayPayManaEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleCreaturePutIntoOwnerGraveyardMayPay(TriggerMatchContext match,
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2028,8 +2011,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class,
-            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CreateTokenEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleCreaturePutIntoOwnerGraveyardCreateToken(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         StackEntry entry = new StackEntry(
@@ -2070,8 +2053,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect.class,
-            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect.class,
+            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleDyingCreatureReturnUnlessTargetPaysLife(TriggerMatchContext match,
             ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2086,8 +2069,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentControllerConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringPermanentControllerConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAnyPermanentGraveyardControllerConditional(TriggerMatchContext match,
             TriggeringPermanentControllerConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2134,8 +2117,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAnyPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2170,8 +2153,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAnyNontokenPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2197,8 +2180,8 @@ public class DeathTriggerCollectorService {
      * A permanent-characteristic filter on a nontoken-to-graveyard trigger is judged against the permanent as it
      * last existed on the battlefield, so an animated land that dies still counts as a creature.
      */
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyNontokenPermanentGraveyardConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2213,8 +2196,8 @@ public class DeathTriggerCollectorService {
         return handleAllyNontokenPermanentGraveyardDefault(match, effect.wrapped(), ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyNontokenPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -2236,8 +2219,8 @@ public class DeathTriggerCollectorService {
      * A source-relative sacrifice filter on an ally-death trigger compares against the permanent
      * that died, using its last-known card types rather than the watching permanent's types.
      */
-    @CollectsTrigger(value = SacrificePermanentsEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = SacrificePermanentsEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyPermanentGraveyardSacrifice(TriggerMatchContext match,
             SacrificePermanentsEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2258,10 +2241,10 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
-            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyCurseDelayedReturn(TriggerMatchContext match,
             RegisterDelayedReturnCurseAttachedToPlayerEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2273,10 +2256,10 @@ public class DeathTriggerCollectorService {
                         death.dyingCard().getId(), match.controllerId()), ctx);
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = ZoneChangeWatch.ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyPermanentGraveyardConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -2291,10 +2274,10 @@ public class DeathTriggerCollectorService {
         return handleAllyPermanentGraveyardDefault(match, effect.wrapped(), ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (effect.targetSpec().declaredTarget() != null) {
@@ -2341,8 +2324,8 @@ public class DeathTriggerCollectorService {
      * so the entry's target is baked to the graveyard owner rather than the dying permanent's
      * controller — a permanent an opponent owns but you control still hits its owner.
      */
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handlePermanentIntoOpponentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -3615,8 +3598,8 @@ public class DeathTriggerCollectorService {
                 || dying.getPersistentGrantedCardTypes().contains(CardType.CREATURE);
     }
 
-    @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class,
-            slot = EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class,
+            watch = ZoneChangeWatch.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentCreatureDeathGainLifeEqualToToughness(TriggerMatchContext match,
             GainLifeEqualToDyingCreatureToughnessEffect effect, TriggerContext ctx) {
         // Grim Feast: "you gain life equal to its toughness." The dying creature's last-known
@@ -3727,7 +3710,7 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ──
 
-    @CollectsTrigger(value = RegisterDelayedReturnCardFromGraveyardToHandEffect.class, slot = EffectSlot.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = RegisterDelayedReturnCardFromGraveyardToHandEffect.class, watch = ZoneChangeWatch.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleRegisterDelayedReturn(TriggerMatchContext match,
             RegisterDelayedReturnCardFromGraveyardToHandEffect effect, TriggerContext ctx) {
         TriggerContext.AllyAuraOrEquipmentGraveyard aaeg = (TriggerContext.AllyAuraOrEquipmentGraveyard) ctx;
@@ -3756,8 +3739,8 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect.class,
-            slot = EffectSlot.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsWatchTrigger(value = ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect.class,
+            watch = ZoneChangeWatch.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleExileTriggeringAuraMayCast(TriggerMatchContext match,
             ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect effect, TriggerContext ctx) {
         TriggerContext.AllyAuraOrEquipmentGraveyard aaeg = (TriggerContext.AllyAuraOrEquipmentGraveyard) ctx;

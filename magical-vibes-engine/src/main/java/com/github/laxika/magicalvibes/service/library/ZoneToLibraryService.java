@@ -55,8 +55,6 @@ public class ZoneToLibraryService {
         if (graveyardCount > 0) {
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId, leavingGraveyardCards);
         }
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId,
-                handCount + graveyardCount);
         return new MovedCounts(handCount, graveyardCount);
     }
 
@@ -72,7 +70,6 @@ public class ZoneToLibraryService {
             return 0;
          }
          int moved = drainInto(gameData.playerHands.get(playerId), library);
-         triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, playerId, moved);
          return moved;
     }
 

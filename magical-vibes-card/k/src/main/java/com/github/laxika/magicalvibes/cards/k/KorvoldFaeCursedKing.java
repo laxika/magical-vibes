@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -32,7 +31,6 @@ public class KorvoldFaeCursedKing extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SACRIFICE_ANOTHER_PERMANENT);
         addEffect(EffectSlot.ON_ATTACK, SACRIFICE_ANOTHER_PERMANENT);
 
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, SACRIFICE_TRIGGER);
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(SACRIFICE_TRIGGER));
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL), SACRIFICE_TRIGGER);
     }
 }

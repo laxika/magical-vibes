@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -21,7 +20,7 @@ public class FoolsDemise extends Card {
         target(TargetFilters.creature());
 
         // When enchanted creature dies, return that card to the battlefield under your control.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(true));
 
         // When this Aura is put into a graveyard from the battlefield, return that card to its owner's hand.

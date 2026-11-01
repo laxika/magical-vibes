@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsEmblemTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsEmblemTriggers;
+import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTrigger;
+import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
@@ -179,6 +181,20 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
+                CollectsWatchTrigger watchSingle = method.getAnnotation(CollectsWatchTrigger.class);
+                if (watchSingle != null) {
+                    registerTriggerHandler(bean, method, watchSingle.watch(), watchSingle.value());
+                    count++;
+                }
+
+                CollectsWatchTriggers watchContainer = method.getAnnotation(CollectsWatchTriggers.class);
+                if (watchContainer != null) {
+                    for (CollectsWatchTrigger cwt : watchContainer.value()) {
+                        registerTriggerHandler(bean, method, cwt.watch(), cwt.value());
+                        count++;
+                    }
+                }
+
                 CollectsEmblemTrigger emblemSingle = method.getAnnotation(CollectsEmblemTrigger.class);
                 if (emblemSingle != null) {
                     registerEmblemTriggerHandler(bean, method, emblemSingle);
@@ -198,8 +214,13 @@ public class GameEngineConfig implements SmartInitializingSingleton {
         return count;
     }
 
-    @SuppressWarnings("unchecked")
     private void registerTriggerHandler(Object bean, Method method, CollectsTrigger annotation) {
+        registerTriggerHandler(bean, method, annotation.slot(), annotation.value());
+    }
+
+    /** Registers a handler for {@code key}, an {@code EffectSlot} or a {@code ZoneChangeWatch}. */
+    @SuppressWarnings("unchecked")
+    private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {
         method.setAccessible(true);
         Class<?>[] params = method.getParameterTypes();
 
@@ -222,7 +243,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
             MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
             Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
 
-            triggerCollectorRegistry.register(annotation.slot(), annotation.value(), (match, innerEffect, context) -> {
+            triggerCollectorRegistry.register(key, effectClass, (match, innerEffect, context) -> {
                 try {
                     return (boolean) handle.invoke(match, effectParam.cast(innerEffect), context);
                 } catch (Throwable t) {

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class ChangingLoyalty extends Card {
         target(TargetFilters.creature());
 
         // When enchanted creature dies, return that card to the battlefield under your control.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(true));
 
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}", true));

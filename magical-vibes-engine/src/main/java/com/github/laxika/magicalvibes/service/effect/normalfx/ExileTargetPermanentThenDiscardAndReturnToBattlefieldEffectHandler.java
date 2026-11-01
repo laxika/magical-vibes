@@ -68,7 +68,6 @@ public class ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffectHandler
         UUID ownerId = exiled.ownerId();
         Card card = exiled.card();
         gameData.addCardToHand(ownerId, card);
-        triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(ownerId) + " returns ", card, " to their hand."));
 

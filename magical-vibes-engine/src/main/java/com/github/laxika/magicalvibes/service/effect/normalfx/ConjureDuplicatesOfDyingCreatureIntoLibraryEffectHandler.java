@@ -55,8 +55,6 @@ public class ConjureDuplicatesOfDyingCreatureIntoLibraryEffectHandler implements
             library.add(duplicate);
         }
 
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                gameData, entry.getControllerId(), conjure.oilCounterCount());
         triggerCollectionService.checkConjureTriggers(
                 gameData, entry.getControllerId(), conjure.oilCounterCount());
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());

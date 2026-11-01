@@ -143,7 +143,6 @@ public class ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandl
                 gameData.pendingLibraryBottomReorders.addLast(
                         new LibraryBottomReorderRequest(ownerId, new ArrayList<>(cards)));
             }
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, cards.size());
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(ownerId) + " puts " + cards.size()
                             + " card(s) on the bottom of their library."));

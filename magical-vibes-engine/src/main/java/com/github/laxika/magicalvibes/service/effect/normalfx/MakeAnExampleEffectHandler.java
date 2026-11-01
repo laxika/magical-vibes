@@ -111,8 +111,7 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
                 () -> gameData.pollPendingInteraction(PendingPileSeparation.class),
                 (intent, permanent, snapshot, removed) -> {
                     if (removed) {
-                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                                gameData, sacrificingPlayerId, permanent.getCard());
+                        triggerCollectionService.recordSacrifice(gameData, sacrificingPlayerId, permanent.getCard());
                         gameData.recordSacrificedPermanent(sacrificingPlayerId, permanent.getCard());
                         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
                         permanentRemovalService.removeOrphanedAuras(gameData);

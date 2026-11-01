@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBatt
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "6ED", collectorNumber = "55")
 @CardRegistration(set = "WTH", collectorNumber = "30")
@@ -23,7 +25,7 @@ public class Abduction extends Card {
         addStaticEffect(new ControlEnchantedCreatureEffect());
 
         // When enchanted creature dies, return that card to the battlefield under its owner's control.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToBattlefieldOnDeathEffect());
     }
 }

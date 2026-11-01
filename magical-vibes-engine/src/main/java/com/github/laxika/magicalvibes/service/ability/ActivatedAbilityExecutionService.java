@@ -263,8 +263,7 @@ public class ActivatedAbilityExecutionService {
                             if (!removed) {
                                 return;
                             }
-                            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                                    gameData, player.getId(), snapshot.permanent().getCard());
+                            triggerCollectionService.recordSacrifice(gameData, player.getId(), snapshot.permanent().getCard());
                             if (!sacrificeSource || !sacrificedPermanent.getId().equals(sourceId)) {
                                 gameLogService.append(gameData, GameLog.textCardText(
                                         player.getUsername() + " sacrifices ", sacrificedPermanent.getCard(), "."));
@@ -2044,7 +2043,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof SacrificeSelfEffect
                     && !gameQueryService.cantBeSacrificed(gameData, permanent)
                     && sacrificeAlone(gameData, permanent)) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());
+                triggerCollectionService.recordSacrifice(gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }

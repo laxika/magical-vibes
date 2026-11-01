@@ -133,11 +133,11 @@ combat damage step is processed.
 | `ON_EQUIPMENT_ATTACHED_TO_CREATURE` | `TriggerCollectionService.checkEquipmentAttachedTriggers` (non-targeting; called by `EquipSupport.attachEquipment` and for permanents entering already attached) | Attachment |
 | `ON_ALLY_PERMANENT_TRANSFORMS` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) | Death |
-| `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
+| `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
 | `POSTCOMBAT_MAIN_TRIGGERED` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`; non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
-| `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
-| `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
+| `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
+| `Triggers.dies(ObjectRelation.ENCHANTED)` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkAllyLandEntersTriggers` (targeted effects use `SpellTargetTriggerAnyTarget`; other effects go directly to the stack) | Spell target |
 | `ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD` | `TriggerCollectionService.checkEnchantedPlayerLandEntersTriggers` scans player-enchanting Curses attached to the entering land's controller | Non-targeting |
 | `Triggers.nontokenCreatureDies(ENCHANTED_PLAYER_CONTROLS)` | The trigger pipeline matches player-enchanting Curses attached to the dying creature's controller; `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ENCHANTED_PLAYER_NONTOKEN`) | Non-targeting |
@@ -187,20 +187,20 @@ combat damage step is processed.
 | `ON_SELF_TIME_COUNTERS_REMOVED` | `TriggerCollectionService.checkLoyaltyCounterRemovalTriggers` dispatches the slot after a permanent's tracked time-counter removals are drained | Non-targeting; source permanent is carried on the triggered stack entry; Regenerations Restored (`WHO`) |
 | `ON_SELF_PHASES_IN` (permanent-target effects) | `TriggerCollectionService.enqueuePhasingTriggers` → `PhasesInTriggerTarget` (queued during the untap-step phasing action when `targetSpec()` includes permanents, e.g. Shimmering Efreet's "target creature phases out"); drained at upkeep start via `StepTriggerService.processNextPhasesInTriggerTarget` (also AutoPass). Honours the card's `PermanentPredicateTargetFilter`. | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `ON_ANY_OTHER_PERMANENT_PHASES_OUT` | `TriggerCollectionService.checkOtherPermanentPhasesOutTriggers` dispatches before the phased-out permanent leaves the battlefield; the watcher that phased out is excluded. | Non-targeting; the phased-out permanent is carried only in `TriggerContext.PermanentPhasedOut` |
-| `ON_ANY_CARD_EXILED` | `GameData`'s non-token card-exile listener dispatches `TriggerCollectionService.checkAnyCardExiledTriggers` after a card enters exile, regardless of its previous zone. | Non-targeting |
-| `ON_CONTROLLER_CARDS_EXILED_FROM_HAND` | Hand-exile paths dispatch `TriggerCollectionService.checkControllerCardsExiledFromHandTriggers` after one or more cards leave the controller's hand for exile. | Non-targeting |
-| `ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT` | `PermanentRemovalService` dispatches `TriggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers` after a battlefield permanent is exiled by the resolving controller's spell or ability. | Non-targeting |
+| `Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANY)` | `GameData`'s non-token card-exile listener dispatches `TriggerCollectionService.checkAnyCardExiledTriggers` after a card enters exile, regardless of its previous zone. | Non-targeting |
+| `Triggers.exiledFrom(Set.of(Zone.HAND), null, ObjectRelation.YOU_OWN)` | Hand-exile paths dispatch `TriggerCollectionService.checkControllerCardsExiledFromHandTriggers` after one or more cards leave the controller's hand for exile. | Non-targeting |
+| `Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU)` | `PermanentRemovalService` dispatches `TriggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers` after a battlefield permanent is exiled by the resolving controller's spell or ability. | Non-targeting |
 | `END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (non-kicked / morbid / default) | End step |
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default; multi-target groups reuse `ETBTokenMultiTargetTrigger`) | End step |
 | `OPPONENT_END_STEP_TRIGGERED` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
 | `Triggers.leavesBattlefield(THIS)` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfTriggeredAbilityTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or admits a graveyard card — `admits(Kind.GRAVEYARD_CARD)`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfTriggeredAbilityTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
-| `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
-| `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD_WITHOUT_DYING` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureLeavesBattlefieldWithoutDyingTriggers` (and the leave-batch variant, which enqueues one trigger per other creature leaving together); per-creature counterpart of `ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING` ("one or more"). Used by Imperial Cosmographer | Non-targeting effects push directly to the stack |
+| `Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
+| `Triggers.leavesBattlefieldWithoutDying(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureLeavesBattlefieldWithoutDyingTriggers` (and the leave-batch variant, which enqueues one trigger per other creature leaving together); per-creature counterpart of `Triggers.leavesBattlefieldWithoutDying(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` ("one or more"). Used by Imperial Cosmographer | Non-targeting effects push directly to the stack |
 | `ON_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkCreatureExiledFromBattlefieldTriggers`; global watcher for any creature exiled from the battlefield, after the card enters exile | Non-targeting effects push directly to the stack |
-| `ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
-| `ON_CONTROLLER_ARTIFACT_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
-| `ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
-| `ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
+| `Triggers.leavesGraveyard(Triggers.ARTIFACT_OR_CREATURE, ObjectRelation.YOU_OWN)` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
+| `Triggers.leavesGraveyard(Triggers.ARTIFACT, ObjectRelation.YOU_OWN)` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
+| `Triggers.leavesGraveyard(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_OWN)` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
+| `Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
 | `ON_SELF_BECOMES_MONSTROUS` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
 | `ON_SELF_CYCLED` | `TriggerCollectionService.checkCycleTriggers` | Self-cycle (non-targeting → stack; targeted → `DiscardControllerTriggerTarget` with no source permanent) |
 | `ON_SELF_DISCARDED` | `TriggerCollectionService.checkDiscardTriggers` | Discard-self (any cause; non-targeting → stack, any-target → `DiscardTriggerAnyTarget`) |
@@ -209,7 +209,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
 | `ON_OPPONENT_SCRIES` | `ScryTriggerCollectorService` | Opponent scry; the scrying player is supplied as the implicit player context and event-driven effects enqueue directly |
 | `ON_CONTROLLER_SEARCHES_LIBRARY` | `LibrarySearchTriggerHelper` | Controller searches their own library; non-targeting effects enqueue directly |
-| `ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY` | `TriggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers` + `MiscTriggerCollectorService` | Controller's card enters their hand from their library; non-targeting effects enqueue directly |
+| `Triggers.putIntoHandFrom(Zone.LIBRARY, null, ObjectRelation.YOU_OWN)` | `TriggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers` + `MiscTriggerCollectorService` | Controller's card enters their hand from their library; non-targeting effects enqueue directly |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
@@ -235,7 +235,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_DRAWS` / `ON_CONTROLLER_DRAWS_SECOND_CARD` (targeted effects) | `DrawService.checkControllerDrawTriggers` queues `DrawTriggerPermanentTarget` for a permanent-target effect bound to the card's `target(...)` filter (e.g. Mantle of Tides). `TriggeredAbilityQueueService.processNextDrawTriggerPermanentTarget` uses the shared `TriggerTargetCollector`; the controller chooses the permanent before the ability goes on the stack. | Draw (permanent target) |
 | `GRAVEYARD_ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `GRAVEYARD_ON_CONTROLLER_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
-| `GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED` | `TriggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers` | None (graveyard-resident, non-targeting; one trigger per nonland card milled) |
+| `Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` | `TriggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers` | None (graveyard-resident, non-targeting; one trigger per nonland card milled) |
 | `GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
 | `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `ON_OPPONENT_DRAWS` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
@@ -277,58 +277,58 @@ non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget`
 `ON_ENCHANTED_PLAYER_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
-`ON_ALLY_PERMANENT_SACRIFICED`, `ON_OPPONENT_PERMANENT_SACRIFICED` (carries the sacrificing player as a non-targeting player reference), `ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
+`Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)`, `Triggers.sacrificed(null, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificing player as a non-targeting player reference), `Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_CREWS_VEHICLE`,
-`ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
-`ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
-`ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Liability; fires for nontoken permanents entering any player's graveyard and bakes the graveyard owner as the trigger's target),
-`ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD` (Scrapheap; fires for any permanent, including tokens, entering the graveyard owned by the slot's controller),
-`ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (non-targeting effects use the direct stack path; `TriggeringArtifactControllerConditionalEffect` uses the spell-target pipeline),
-`ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Femeref Enchantress; fires on every permanent with the slot
+`Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)`, `ON_ALLY_CREATURES_ATTACK`,
+`Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN)` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
+`Triggers.dies(Triggers.NONTOKEN, ObjectRelation.ANY)` (Liability; fires for nontoken permanents entering any player's graveyard and bakes the graveyard owner as the trigger's target),
+`Triggers.dies(null, ObjectRelation.YOU_OWN)` (Scrapheap; fires for any permanent, including tokens, entering the graveyard owned by the slot's controller),
+`Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (non-targeting effects use the direct stack path; `TriggeringArtifactControllerConditionalEffect` uses the spell-target pipeline),
+`Triggers.dies(Triggers.ENCHANTMENT, ObjectRelation.ANY)` (Femeref Enchantress; fires on every permanent with the slot
 whenever an enchantment is put into a graveyard from the battlefield — checked in `PermanentRemovalService`),
-`ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Dingus Egg; fires on every permanent with the slot
+`Triggers.dies(Triggers.LAND, ObjectRelation.ANY)` (Dingus Egg; fires on every permanent with the slot
 whenever a land is put into a graveyard from the battlefield — checked in `PermanentRemovalService`; the
 collector pre-sets the damage target to the land's controller; `TriggeringCardConditionalEffect`
 can filter the triggering land card and preserve its controller for resolution),
-`ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` ("an artifact an opponent controls" — keyed on the artifact's controller),
-`ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD` (Viridian Revel "into an opponent's graveyard" — keyed on the graveyard owner, so it fires for your stolen-back opponent-owned artifact and not for your own artifact an opponent controls),
-`ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` (Sacred Ground; fires only on permanents the
+`Triggers.dies(Triggers.ARTIFACT, ObjectRelation.OPPONENT_CONTROLS)` ("an artifact an opponent controls" — keyed on the artifact's controller),
+`Triggers.dies(Triggers.ARTIFACT, ObjectRelation.OPPONENT_OWNS)` (Viridian Revel "into an opponent's graveyard" — keyed on the graveyard owner, so it fires for your stolen-back opponent-owned artifact and not for your own artifact an opponent controls),
+`Triggers.dies(Triggers.LAND, ObjectRelation.YOU_OWN).causedBy(PlayerRelation.OPPONENT)` (Sacred Ground; fires only on permanents the
 graveyard owner controls, and only when `GameData.currentlyResolvingControllerId` — the controller of
 the resolving spell/ability — is an opponent of the graveyard owner; the collector stamps the dying
 land card id onto a fresh `ReturnTriggeringLandFromGraveyardToBattlefieldEffect`),
-`ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Countryside Crusher; fires on every permanent the
+`Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.YOU_OWN)` (Countryside Crusher; fires on every permanent the
 graveyard owner controls whenever a non-token land card enters their graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`, the single zone→graveyard choke point; wrap the effect in
 `OncePerTurnTriggerEffect` for “the first time each turn”),
-`ON_ALLY_LAND_CARD_MILLED` (Pedantic Learning; fires on every permanent the graveyard owner controls
+`Triggers.milled(Triggers.LAND_CARD, ObjectRelation.YOU_OWN)` (Pedantic Learning; fires on every permanent the graveyard owner controls
 whenever a non-token land card actually enters their graveyard from their library — checked in
 `GraveyardService.addCardToGraveyard` after replacement effects),
-`ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Sidisi, Brood Tyrant; fires once per
+`Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_OWN)` (Sidisi, Brood Tyrant; fires once per
 library-to-graveyard event when one or more non-token creature cards actually enter the graveyard
 owner's graveyard — mill batches are checked in `GraveyardService.resolveMillPlayer` after replacement
 effects),
-`ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Devourer of Memory; fires once per
+`Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN, ObjectRelation.YOU_OWN)` (Devourer of Memory; fires once per
 library-to-graveyard event when one or more non-token cards actually enter the controller's graveyard —
 mill batches are checked after replacement effects and preserve the cards in the event context for
 card-specific effects such as Hedge Shredder),
-`ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Dreadhound; fires once for each non-token
+`Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE, ObjectRelation.ANY)` (Dreadhound; fires once for each non-token
 creature card that actually enters any player's graveyard from a library, after replacement effects;
 checked in `GraveyardService.addCardToGraveyard`),
-`ON_ANY_CARDS_PUT_INTO_LIBRARY` (Dutiful Knowledge Seeker; fires once when one or more cards enter any
+`Triggers.putIntoLibrary(null, ObjectRelation.ANOTHER)` (Dutiful Knowledge Seeker; fires once when one or more cards enter any
 player's library from another zone, with the library owner preserved in `TriggerContext.CardsPutIntoLibrary`),
-`ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Soulcipher Board; fires on every permanent the
+`Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_OWN)` (Soulcipher Board; fires on every permanent the
 graveyard owner controls whenever a non-token creature card enters their graveyard from any zone — uses
 printed card types, not battlefield creature-ness; checked in `GraveyardService.addCardToGraveyard`),
-`ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD` (global watcher; fires on every permanent
+`Triggers.putIntoGraveyardFromAnywhereButBattlefield(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANY)` (global watcher; fires on every permanent
 whenever a non-token creature card enters any graveyard from a non-battlefield zone; checked in
 `GraveyardService.addCardToGraveyard`),
-`ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (Quest for Ancient Secrets; fires on every permanent the
+`Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN)` (Quest for Ancient Secrets; fires on every permanent the
 graveyard owner controls whenever a non-token card enters their graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`),
-`ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD` (Ultron the Annihilator; fires on every
+`Triggers.putIntoGraveyardFromAnywhereButBattlefield(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.YOU_OWN)` (Ultron the Annihilator; fires on every
 permanent the graveyard owner controls whenever a non-token artifact card enters their graveyard from a
 non-battlefield zone),
-`ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE` (Compost; fires on every permanent controlled by
+`Triggers.putIntoGraveyardFromAnywhere(Triggers.BLACK_CARD, ObjectRelation.OPPONENT_OWNS)` (Compost; fires on every permanent controlled by
 an opponent of the graveyard owner whenever a black card enters that graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`), `ON_ENCHANTED_PERMANENT_TAPPED`,
 `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, and
@@ -366,7 +366,7 @@ phase triggers cover the untap-step turn-based action and effect-driven phase-ou
 `StepTriggerService.processNextPhasesInTriggerTarget` (Shimmering Efreet's "target creature phases out";
 reuses `TriggerTargetCollector.Options.END_STEP`)),
 `ON_ANY_OTHER_PERMANENT_PHASES_OUT` (The War Doctor; global non-targeting watcher dispatched before
-the phased-out permanent is removed), and `ON_ANY_CARD_EXILED` (The War Doctor; global non-targeting
+the phased-out permanent is removed), and `Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANY)` (The War Doctor; global non-targeting
 watcher dispatched after a non-token card enters exile),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
@@ -389,21 +389,21 @@ with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Wheneve
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER`,
 `ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT`,
 `ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
-`ON_NONLAND_CARDS_MILLED` (The Wise Mothman; fires once when a mill event contains one or more
+`Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY)` (The Wise Mothman; fires once when a mill event contains one or more
 nonland cards, regardless of which player milled them),
-`ON_OPPONENT_MILLS` (Lo and Li, Royal Advisors; fires once when an opponent mills one or more
-cards in a single mill event), `ON_OPPONENT_CREATURE_CARD_MILLED`, `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD`,
-`ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` (Extractor Demon; global watcher — fires on every permanent
+`Triggers.mills(null, ObjectRelation.OPPONENT_OWNS)` (Lo and Li, Royal Advisors; fires once when an opponent mills one or more
+cards in a single mill event), `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE, ObjectRelation.OPPONENT_OWNS)`, `Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED)`,
+`Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER)` (Extractor Demon; global watcher — fires on every permanent
 with the slot whenever another creature leaves the battlefield by any means, checked in
 `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`.
 `ON_CREATURE_EXILED_FROM_BATTLEFIELD` (Soulherder; global watcher — fires on every permanent with
 the slot whenever a creature is exiled from the battlefield, checked after the card enters exile).
-`ON_ALLY_CREATURE_LEAVES_BATTLEFIELD` is the controller-scoped sibling; effects implementing
+`Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` is the controller-scoped sibling; effects implementing
 `LeavingCreatureCountersAwareEffect` receive a snapshot of the leaving creature's concrete
 counters before the trigger is queued.
-`ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` is the controller-scoped watcher for any permanent type;
+`Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL)` is the controller-scoped watcher for any permanent type;
 use `TriggeringPermanentConditionalEffect` to narrow it to tokens or another permanent predicate.
-`ON_ALLY_PERMANENTS_LEAVE_BATTLEFIELD` is the batched controller-scoped watcher for "one or more"
+`Triggers.leavesBattlefield(null, ObjectRelation.YOU_CONTROL)` is the batched controller-scoped watcher for "one or more"
 permanents, including the source permanent when it leaves; the removal service snapshots a batch
 before dispatching one trigger per source.
 Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving permanent's concrete
@@ -472,16 +472,16 @@ the 4-arg overload of `fireMinusOneMinusOneCounterPutOnCreatureTriggers`; non-ta
 counters, do it once" cadence — same controller restriction and firing method as the per-counter slot
 above, but fires exactly one trigger per creature per placement instance regardless of how many -1/-1
 counters were placed at once; non-targeting — the Snake creation is a plain `CreateTokenEffect`),
-`ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
+`Triggers.dies(Triggers.AURA_OR_EQUIPMENT, ObjectRelation.YOU_CONTROL)`,
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`, `GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
-`GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED` (Infesting Radroach; scans each owner's graveyard and
+`Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` (Infesting Radroach; scans each owner's graveyard and
 fires once per nonland card milled by an opponent),
 `GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` (graveyard mirror of `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD`;
 `TriggeringCardConditionalEffect` subtype-gate + `MayPayManaEffect` pay-to-return — Unconventional Tactics),
 `GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD` (graveyard mirror of
 `ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD`; use `TriggeringPermanentConditionalEffect` for a commander or
 other permanent predicate — Endless Ranks of HYDRA),
-`GRAVEYARD_ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` (graveyard watcher for any non-token land card entering any graveyard from any zone; `MayPayManaEffect` pay-to-return — Centaur Vinecrasher),
+`Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.ANY)` (graveyard watcher for any non-token land card entering any graveyard from any zone; `MayPayManaEffect` pay-to-return — Centaur Vinecrasher),
 `GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD` (graveyard watcher for any creature entering;
 `TriggeringCardConditionalEffect` can gate on the entering card's mana value — Dragon Scales),
 `GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD` (scans each graveyard for
@@ -754,7 +754,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "At the beginning of each upkeep, ..." | `EACH_UPKEEP_TRIGGERED` | Every player's upkeep; targeted permanents are chosen by the source controller as the trigger is put on the stack | — |
 | "At the beginning of each player's upkeep, if this card is suspended, ..." | `SUSPENDED_EACH_UPKEEP_TRIGGERED` | Every player's upkeep while the card is exiled with a positive time-counter entry | Curse of the Cabal (`TSP`) |
 | "At the beginning of your upkeep, if this card is exiled with a scream counter on it, remove a scream counter from it. If there are no more scream counters on it, put it into your graveyard and each player returns all creature cards from their graveyard to the battlefield." | `EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED` | The card owner's upkeep while it is exiled with a positive scream-counter entry; the last-counter handler moves it to its owner's graveyard and inserts the existing mass-reanimation effect | All Hallow's Eve (`LEG`) |
-| "When enchanted creature dies, ..." | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted creature goes to graveyard | Necrotic Plague (return effect), Banewasp Affliction (life loss = toughness), Creature Bond (damage = toughness), Death Watch (lose life = power + gain life = toughness) |
+| "When enchanted creature dies, ..." | `Triggers.dies(ObjectRelation.ENCHANTED)` | Enchanted creature goes to graveyard | Necrotic Plague (return effect), Banewasp Affliction (life loss = toughness), Creature Bond (damage = toughness), Death Watch (lose life = power + gain life = toughness) |
 | "Whenever enchanted creature is dealt damage, ..." | `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | Enchanted creature is dealt damage (combat or non-combat) | Spiteful Shadows |
 | "Whenever enchanted creature deals damage to a creature, ..." | `ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE` | Enchanted creature deals damage to another creature (combat or non-combat); the damaged creature is captured as a non-targeting `targetId` | Venomous Fangs |
 | "Whenever enchanted creature attacks and isn't blocked, ..." | `ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED` | Enchanted attacker ends up unblocked (declare-blockers step). Non-targeting effects use `sourcePermanentId`=enchanted attacker and `targetId`=defending player. Permanent-targeting `MayEffect`s defer target selection and use the enchanted creature's controller for the may choice | Cloak of Confusion, Farrel's Mantle |

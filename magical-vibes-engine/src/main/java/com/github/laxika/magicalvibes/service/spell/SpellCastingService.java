@@ -9529,13 +9529,7 @@ public class SpellCastingService {
                             .text(".")
                             .build());
                     Card triggerCard = triggerCards.get(permanent.getId());
-                    if (triggerWithSourceCard) {
-                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                                gameData, player.getId(), triggerCard, sourceCard);
-                    } else {
-                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                                gameData, player.getId(), triggerCard);
-                    }
+                    triggerCollectionService.recordSacrifice(gameData, player.getId(), triggerCard);
                 }));
     }
 
@@ -10005,18 +9999,18 @@ public class SpellCastingService {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
+            for (Card exiledCard : exiledCards) {
+                gameData.addToExile(playerId, exiledCard);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(exiledCard)
+                        .text(" from graveyard for ")
+                        .card(card)
+                        .text(".")
+                        .build());
+            }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-        for (Card exiledCard : exiledCards) {
-            gameData.addToExile(playerId, exiledCard);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(exiledCard)
-                    .text(" from graveyard for ")
-                    .card(card)
-                    .text(".")
-                    .build());
         }
         return exiledCards.size();
     }
@@ -10051,18 +10045,18 @@ public class SpellCastingService {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
+            for (Card exiledCard : exiledCards) {
+                gameData.addToExile(playerId, exiledCard);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(exiledCard)
+                        .text(" from graveyard for ")
+                        .card(card)
+                        .text(".")
+                        .build());
+            }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-        for (Card exiledCard : exiledCards) {
-            gameData.addToExile(playerId, exiledCard);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(exiledCard)
-                    .text(" from graveyard for ")
-                    .card(card)
-                    .text(".")
-                    .build());
         }
         if (cost.triggersCollectEvidence()) {
             triggerCollectionService.checkCollectEvidenceTriggers(gameData, playerId);
@@ -10092,18 +10086,18 @@ public class SpellCastingService {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
+            for (Card exiledCard : exiledCards) {
+                gameData.addToExile(playerId, exiledCard);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(exiledCard)
+                        .text(" from graveyard for ")
+                        .card(card)
+                        .text(".")
+                        .build());
+            }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-        for (Card exiledCard : exiledCards) {
-            gameData.addToExile(playerId, exiledCard);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(exiledCard)
-                    .text(" from graveyard for ")
-                    .card(card)
-                    .text(".")
-                    .build());
         }
     }
 
@@ -10336,18 +10330,18 @@ public class SpellCastingService {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
+            for (Card exiledCard : exiledCards) {
+                gameData.addToExile(playerId, exiledCard);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(exiledCard)
+                        .text(" from graveyard for the flashback cost of ")
+                        .card(card)
+                        .text(".")
+                        .build());
+            }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-        for (Card exiledCard : exiledCards) {
-            gameData.addToExile(playerId, exiledCard);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(exiledCard)
-                    .text(" from graveyard for the flashback cost of ")
-                    .card(card)
-                    .text(".")
-                    .build());
         }
     }
 
@@ -10376,18 +10370,18 @@ public class SpellCastingService {
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                 exiledCards.add(exiledCard);
             }
+            for (Card exiledCard : exiledCards) {
+                gameData.addToExile(playerId, exiledCard, card.getId());
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(exiledCard)
+                        .text(" from graveyard for delve on ")
+                        .card(card)
+                        .text(".")
+                        .build());
+            }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-        for (Card exiledCard : exiledCards) {
-            gameData.addToExile(playerId, exiledCard, card.getId());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(exiledCard)
-                    .text(" from graveyard for delve on ")
-                    .card(card)
-                    .text(".")
-                    .build());
         }
         return exiledCards.stream().map(Card::getId).toList();
     }
@@ -16366,18 +16360,18 @@ public class SpellCastingService {
                 exiledCards.add(exiledCard);
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
             }
+            for (Card exiledCard : exiledCards) {
+                gameData.addToExile(playerId, exiledCard);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " exiles ")
+                        .card(exiledCard)
+                        .text(" from graveyard to splice onto ")
+                        .card(hostSpell)
+                        .text(".")
+                        .build());
+            }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
-        }
-        for (Card exiledCard : exiledCards) {
-            gameData.addToExile(playerId, exiledCard);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(player.getUsername() + " exiles ")
-                    .card(exiledCard)
-                    .text(" from graveyard to splice onto ")
-                    .card(hostSpell)
-                    .text(".")
-                    .build());
         }
     }
 
@@ -17128,18 +17122,18 @@ public class SpellCastingService {
                     graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, exiledCard);
                     exiledCards.add(exiledCard);
                 }
+                for (Card exiledCard : exiledCards) {
+                    gameData.addToExile(playerId, exiledCard);
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " exiles ")
+                            .card(exiledCard)
+                            .text(" from graveyard to cast ")
+                            .card(card)
+                            .text(" from the graveyard.")
+                            .build());
+                }
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);
-            }
-            for (Card exiledCard : exiledCards) {
-                gameData.addToExile(playerId, exiledCard);
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(player.getUsername() + " exiles ")
-                        .card(exiledCard)
-                        .text(" from graveyard to cast ")
-                        .card(card)
-                        .text(" from the graveyard.")
-                        .build());
             }
             return exiledCards.stream().map(Card::getId).toList();
         }
@@ -18093,8 +18087,6 @@ public class SpellCastingService {
                 log.info("Game {} - {} exiles {} from hand as alternate casting cost",
                         gameData.id, player.getUsername(), toExile.getName());
             }
-            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
-                    gameData, playerId, effectiveIndices.size());
             payFreeCastManaPortion(gameData, playerId, card, xValue,
                     castingCostService.getCastCostModifier(gameData, playerId, card, xValue), "", true);
         }

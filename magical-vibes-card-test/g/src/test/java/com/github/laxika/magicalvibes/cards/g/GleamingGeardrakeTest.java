@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.i.InnocentBystander;
 import com.github.laxika.magicalvibes.cards.s.SanitationAutomaton;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -95,10 +94,6 @@ class GleamingGeardrakeTest extends BaseCardTest {
     }
 
     private void sacrifice(Player player, Permanent permanent) {
-        Card card = permanent.getCard();
-        gd.playerBattlefields.get(player.getId()).remove(permanent);
-        gd.playerGraveyards.get(player.getId()).add(card);
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkAllyPermanentSacrificedTriggers(gd, player.getId(), card));
+        harness.sacrifice(permanent);
     }
 }

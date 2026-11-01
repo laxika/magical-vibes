@@ -33,8 +33,6 @@ public class ShuffleSourceFromExileIntoOwnersLibraryEffectHandler implements Nor
         }
 
         gameData.playerDecks.get(entry.getOwnerId()).add(sourceCard);
-        triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                gameData, entry.getOwnerId(), 1);
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getOwnerId());
         gameLogService.append(gameData,
                 GameLog.textCardText(entry.getDescription() + " shuffles ", sourceCard,

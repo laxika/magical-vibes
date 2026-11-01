@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
@@ -62,13 +63,32 @@ public class RulesEventPipeline {
     public void process(GameData gameData, RulesEventBatch batch) {
         List<ZoneChangeEvent> events = new ArrayList<>();
         for (RulesEvent event : batch.events()) {
-            if (event instanceof ZoneChangeEvent zoneChange) {
+            if (event instanceof ZoneChangeEvent zoneChange && !triggerIndex.entryCausesNoTriggers(gameData, zoneChange)) {
                 events.add(zoneChange);
             }
         }
-        Set<OneOrMoreKey> triggeredForBatch = new HashSet<>();
-        triggerObservers(gameData, events, triggeredForBatch);
-        triggerMovingObjects(gameData, events, triggeredForBatch);
+        // CR 603.10a: leaves-the-battlefield abilities look back in time, so a condition that counts a graveyard
+        // (Decaying Soil's threshold grant) doesn't count the cards that just died.
+        Set<UUID> lookBack = new HashSet<>();
+        for (ZoneChangeEvent event : events) {
+            if (event.died() && gameData.graveyardLookBackExcludedCardIds.add(event.card().getId())) {
+                lookBack.add(event.card().getId());
+            }
+        }
+        try {
+            Set<OneOrMoreKey> triggeredForBatch = new HashSet<>();
+            triggerObservers(gameData, events, triggeredForBatch);
+            triggerMovingObjects(gameData, events, triggeredForBatch);
+        } finally {
+            gameData.graveyardLookBackExcludedCardIds.removeAll(lookBack);
+        }
+        // An ability that refers to a card that went to a graveyard refers to that stay (CR 400.7). The card arrived
+        // before the batch was matched, so its arrival couldn't stamp the abilities queued for it.
+        for (ZoneChangeEvent event : events) {
+            if (event.to() == Zone.GRAVEYARD) {
+                gameData.stampGraveyardEntryOnPendingTriggers(event.card().getId());
+            }
+        }
     }
 
     /** The abilities of other objects that see an object move: "whenever a creature dies". */

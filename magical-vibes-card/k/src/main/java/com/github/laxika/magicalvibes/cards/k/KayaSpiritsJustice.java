@@ -5,15 +5,21 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,8 +29,14 @@ import java.util.Set;
 public class KayaSpiritsJustice extends Card {
 
     public KayaSpiritsJustice() {
-        addEffect(EffectSlot.ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED,
-                new KayaSpiritsJusticeEffect());
+        // "Whenever one or more creatures you control and/or creature cards in your graveyard are put into exile":
+        // one ability of two trigger conditions, triggering once for the event.
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.CREATURE,
+                        ObjectRelation.YOU_CONTROL)),
+                new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.GRAVEYARD), Triggers.NONTOKEN_CREATURE,
+                        ObjectRelation.YOU_OWN))),
+                TriggerOptions.ONE_OR_MORE, List.of(new EffectRegistration(new KayaSpiritsJusticeEffect()))));
 
         addActivatedAbility(new ActivatedAbility(
                 2,

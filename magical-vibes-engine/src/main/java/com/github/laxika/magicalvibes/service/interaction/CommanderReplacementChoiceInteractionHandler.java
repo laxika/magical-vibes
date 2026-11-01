@@ -21,7 +21,6 @@ public class CommanderReplacementChoiceInteractionHandler implements Interaction
         boolean accepted = ((InteractionAnswer.MayAbilityChosen) answer).accepted();
         if (accepted) {
             game.playerCommandZones.computeIfAbsent(move.ownerId(), id -> new ArrayList<>()).add(move.card());
-            triggers.checkYourCommanderPutIntoCommandZoneTriggers(game, move.card(), move.ownerId());
         }
         else {
             game.completingCommanderZoneMove = move.card().getId();
@@ -35,15 +34,8 @@ public class CommanderReplacementChoiceInteractionHandler implements Interaction
             } finally { game.completingCommanderZoneMove = null; }
         }
         var bounce = game.commanderBounceContexts.remove(move.card().getId());
-        if (bounce != null) {
-            triggers.checkEnchantedPermanentLTBTriggers(game, bounce.permanent(), bounce.controllerId(), accepted ? Zone.COMMAND : Zone.HAND);
-            if (!accepted) {
-                triggers.checkControllerCreatureReturnedToHandTriggers(game, bounce.permanent(), bounce.wasCreature(), bounce.ownerId());
-                triggers.checkControllerAnotherNonlandPermanentReturnedToHandTriggers(game, bounce.permanent(), bounce.controllerId());
-                triggers.checkControllerPermanentReturnedToHandTriggers(game, bounce.ownerId());
-                triggers.checkPermanentReturnedToHandTriggers(game, bounce.ownerId(), bounce.permanent());
-                game.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(bounce.ownerId());
-            }
+        if (bounce != null && !accepted) {
+            game.playersWhoReceivedPermanentFromBattlefieldToHandThisTurn.add(bounce.ownerId());
         }
         if (!moves.beginPending(game)) completion.processMayAbilitiesThenAutoPassPreservingPriority(game);
     }

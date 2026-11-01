@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class ThendarTheOverminer extends Card {
         CardPredicate nonbasicLand = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.LAND),
                 new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC))));
-        addEffect(EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addTrigger(Triggers.dies(Triggers.LAND, ObjectRelation.ANY),
                 new TriggeringCardConditionalEffect(
                         nonbasicLand,
                         new ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect(

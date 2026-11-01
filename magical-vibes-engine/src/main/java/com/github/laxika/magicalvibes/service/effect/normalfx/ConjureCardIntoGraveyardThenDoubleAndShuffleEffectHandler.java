@@ -78,7 +78,6 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
         }
 
         movedByOwner.forEach((ownerId, count) -> {
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, count);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
         });
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),

@@ -259,10 +259,6 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         }
 
         if (toExile > 0) {
-            if (triggerCollectionService != null) {
-                triggerCollectionService.checkControllerCardsExiledFromLibraryOrGraveyardTriggers(
-                        gameData, playerId, toExile);
-            }
             String playerName = gameData.playerIdToName.get(playerId);
             // Card names are never listed: for a face-down exile that would leak information
             // CR 406.3 keeps hidden.

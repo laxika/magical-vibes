@@ -5936,10 +5936,6 @@ public class LibraryChoiceHandlerService {
     private void addCardFromLibraryToHand(GameData gameData, UUID handOwnerId, Card card,
                                           UUID deckOwnerId, boolean fromLibrary) {
         gameData.addCardToHand(handOwnerId, card);
-        if (fromLibrary && handOwnerId.equals(deckOwnerId)) {
-            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
-                    gameData, handOwnerId, card);
-        }
     }
 
     private static String topLibraryPositionText(int position) {

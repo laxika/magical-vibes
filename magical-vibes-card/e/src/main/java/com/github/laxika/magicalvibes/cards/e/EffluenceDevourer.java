@@ -45,7 +45,7 @@ public class EffluenceDevourer extends Card {
                         + "where X is this card's power. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED);
 
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new PerpetuallyGrantGraveyardAbilityToSourceCardEffect(oozeAbility)));

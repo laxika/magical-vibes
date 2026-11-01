@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.p.PackAPunch;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Kirol, History Buff // Pack a Punch (SOS 198).
@@ -18,7 +21,8 @@ public class KirolHistoryBuffPackAPunch extends Card {
         setBackFaceCard(new PackAPunch());
 
         // Whenever one or more cards leave your graveyard, Kirol becomes prepared.
-        addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, new BecomePreparedEffect());
+        addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE, new BecomePreparedEffect());
     }
 
     @Override

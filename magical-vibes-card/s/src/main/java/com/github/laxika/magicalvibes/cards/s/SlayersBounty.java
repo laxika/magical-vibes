@@ -52,7 +52,7 @@ public class SlayersBounty extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new LookAtCreatureCardsInTargetPlayerHandEffect());
 
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                         draftFromSpellbook()));

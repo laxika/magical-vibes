@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFC", collectorNumber = "27")
 public class LorcanWarlockCollector extends Card {
@@ -15,7 +16,7 @@ public class LorcanWarlockCollector extends Card {
         // Whenever a creature card is put into an opponent's graveyard from anywhere, you may pay
         // life equal to its mana value. If you do, put it onto the battlefield under your control.
         // It's a Warlock in addition to its other types.
-        addEffect(EffectSlot.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.OPPONENT_OWNS),
                 new MayPayLifeEffect(0,
                         new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
                                 false, true, null, 0, CardSubtype.WARLOCK),

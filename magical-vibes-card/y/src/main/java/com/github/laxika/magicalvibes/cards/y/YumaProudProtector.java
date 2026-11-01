@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +43,7 @@ public class YumaProudProtector extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SACRIFICE_LAND_TO_DRAW);
         addEffect(EffectSlot.ON_ATTACK, SACRIFICE_LAND_TO_DRAW);
 
-        addEffect(EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DESERT),
                         new CreateTokenEffect(

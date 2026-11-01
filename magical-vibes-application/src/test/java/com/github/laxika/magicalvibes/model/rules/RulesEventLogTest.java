@@ -19,7 +19,7 @@ class RulesEventLogTest {
     @Test
     void anArrivalNamesTheZoneTheCardWasLastSeenIn() {
         Card card = new Card();
-        log.track(card, Zone.LIBRARY);
+        log.track(card, null, Zone.LIBRARY);
 
         log.arrived(card, owner, Zone.HAND);
 
@@ -45,7 +45,7 @@ class RulesEventLogTest {
     @Test
     void aMoveInsideOneZoneIsNoZoneChange() {
         Card card = new Card();
-        log.track(card, Zone.LIBRARY);
+        log.track(card, null, Zone.LIBRARY);
 
         log.arrived(card, owner, Zone.LIBRARY);
 
@@ -74,6 +74,31 @@ class RulesEventLogTest {
         List<RulesEventBatch> drained = log.drain();
         assertThat(drained).hasSize(1);
         assertThat(drained.getFirst().events()).hasSize(3);
+        assertThat(log.isBatchOpen()).isFalse();
+    }
+
+    @Test
+    void anIsolatedBatchClosesInsideAnOpenScopeAndHandsTheScopeBack() {
+        log.beginBatch();
+        log.arrived(new Card(), owner, Zone.GRAVEYARD);
+        log.beginIsolatedBatch();
+        log.arrived(new Card(), owner, Zone.EXILE);
+        log.arrived(new Card(), owner, Zone.EXILE);
+        log.endIsolatedBatch();
+
+        List<RulesEventBatch> isolated = log.drain();
+        assertThat(isolated).hasSize(1);
+        assertThat(isolated.getFirst().events()).hasSize(2)
+                .allSatisfy(event -> assertThat(((ZoneChangeEvent) event).to()).isEqualTo(Zone.EXILE));
+        assertThat(log.isBatchOpen()).isTrue();
+
+        log.arrived(new Card(), owner, Zone.GRAVEYARD);
+        log.endBatch();
+
+        List<RulesEventBatch> outer = log.drain();
+        assertThat(outer).hasSize(1);
+        assertThat(outer.getFirst().events()).hasSize(2)
+                .allSatisfy(event -> assertThat(((ZoneChangeEvent) event).to()).isEqualTo(Zone.GRAVEYARD));
         assertThat(log.isBatchOpen()).isFalse();
     }
 
@@ -155,7 +180,7 @@ class RulesEventLogTest {
     @Test
     void anEntryComesFromTheTrackedZoneAndCarriesACopy() {
         Card card = new Card();
-        log.track(card, Zone.STACK);
+        log.track(card, null, Zone.STACK);
         Permanent permanent = new Permanent(card);
         UUID controller = UUID.randomUUID();
 
@@ -172,7 +197,7 @@ class RulesEventLogTest {
     @Test
     void aRetractedEntryLeavesNoEventAndTheCardWhereItCameFrom() {
         Card card = new Card();
-        log.track(card, Zone.STACK);
+        log.track(card, null, Zone.STACK);
         Permanent permanent = new Permanent(card);
         log.entered(permanent, owner, null);
 
@@ -207,7 +232,7 @@ class RulesEventLogTest {
         log.suppress();
 
         log.arrived(card, owner, Zone.HAND);
-        log.track(card, Zone.LIBRARY);
+        log.track(card, null, Zone.LIBRARY);
         log.resume();
 
         assertThat(log.pending()).isEmpty();
