@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,20 +34,20 @@ public class ScryTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_SCRIES)
+    @CollectsLibraryTrigger(value = SequenceEffect.class, watch = LibraryWatch.ON_CONTROLLER_SCRIES)
+    @CollectsLibraryTrigger(value = SequenceEffect.class, watch = LibraryWatch.ON_OPPONENT_SCRIES)
     private boolean handleSequenceOnScry(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
         return enqueueOnScry(match, trigger, ctx);
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_SCRIES)
+    @CollectsLibraryTrigger(value = MayPayManaEffect.class, watch = LibraryWatch.ON_CONTROLLER_SCRIES)
+    @CollectsLibraryTrigger(value = MayPayManaEffect.class, watch = LibraryWatch.ON_OPPONENT_SCRIES)
     private boolean handleMayPayOnScry(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
         return enqueueOnScry(match, trigger, ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SCRIES)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_SCRIES)
+    @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_SCRIES)
+    @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_SCRIES)
     private boolean handleSingleEffectOnScry(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
         return enqueueOnScry(match, trigger, ctx);
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.q;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -21,7 +20,7 @@ import java.util.List;
 public class QuestForTheNihilStone extends Card {
 
     public QuestForTheNihilStone() {
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS,
+        addTrigger(Triggers.opponentDiscardsCard(),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Quest for the Nihil Stone?"));
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(

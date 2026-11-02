@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class ArchfiendOfIfnir extends Card {
         // opponents control." Cycling is a discard (CR 702.29e), so one "controller discards" trigger
         // covers both wordings. The source is on the battlefield while any discarded card comes from
         // hand, so the discard is always "another card".
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new PutCounterOnEachMatchingPermanentEffect(
+        addTrigger(Triggers.youDiscardCard(), new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.MINUS_ONE_MINUS_ONE, 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

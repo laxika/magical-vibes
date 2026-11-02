@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -26,7 +26,7 @@ public class KeranosGodOfStorms extends Card {
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.BLUE, ManaColor.RED), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new RevealFirstDrawEffect(
+        addTrigger(Triggers.youDrawCard(), new RevealFirstDrawEffect(
                 new DrawCardEffect(1),
                 new DealDamageToAnyTargetEffect(3)));
     }

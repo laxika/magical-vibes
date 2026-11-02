@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "7ED", collectorNumber = "146")
 @CardRegistration(set = "8ED", collectorNumber = "143")
@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Megrim extends Card {
 
     public Megrim() {
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
+        addTrigger(Triggers.opponentDiscardsCard(),
+                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

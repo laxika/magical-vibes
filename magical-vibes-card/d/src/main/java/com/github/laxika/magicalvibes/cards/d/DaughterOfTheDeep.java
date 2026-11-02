@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +21,7 @@ public class DaughterOfTheDeep extends Card {
 
     public DaughterOfTheDeep() {
         // Whenever you draw your second card each turn, create a 1/1 blue Merfolk creature token.
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.MERFOLK), Set.of(), Set.of()));
 

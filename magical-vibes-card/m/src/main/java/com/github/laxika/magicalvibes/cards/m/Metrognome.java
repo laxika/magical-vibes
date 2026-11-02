@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -15,7 +15,7 @@ import java.util.Set;
 public class Metrognome extends Card {
 
     public Metrognome() {
-        addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT, gnomeToken(4));
+        addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), gnomeToken(4));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

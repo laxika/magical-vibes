@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,8 +26,8 @@ public class SlivMizzetHivemind extends Card {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, sliver));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_CONTROLLER_DRAWS,
-                new DealDamageToAnyTargetEffect(1), GrantScope.ALL_OWN_CREATURES, sliver));
+                new TriggeredAbility(Triggers.youDrawCard(),
+                new DealDamageToAnyTargetEffect(1)), GrantScope.ALL_OWN_CREATURES, sliver));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new DrawCardEffect(1)), "{T}: Draw a card."),
                 GrantScope.ALL_OWN_CREATURES, sliver));

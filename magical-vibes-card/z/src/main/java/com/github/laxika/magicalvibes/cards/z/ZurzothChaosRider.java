@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -35,7 +34,7 @@ public class ZurzothChaosRider extends Card {
                 1, "Devil", 1, 1, CardColor.RED,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects);
 
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        addTrigger(Triggers.opponentDrawsCard(),
                 new NthCardDrawTriggerEffect(1,
                         new ConditionalEffect(new NotCondition(new TargetPlayerIsActive()), devilToken)));
 

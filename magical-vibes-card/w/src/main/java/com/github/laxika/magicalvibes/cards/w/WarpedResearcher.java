@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -13,7 +13,7 @@ import java.util.Set;
 public class WarpedResearcher extends Card {
 
     public WarpedResearcher() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CYCLES,
+        addTrigger(Triggers.playerCyclesCard(),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.SHROUD), GrantScope.SELF));
     }
 }

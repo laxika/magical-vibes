@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekCardSharingCardTypeWithDiscardedCardsEffect;
@@ -14,7 +13,7 @@ public class DivinerOfFates extends Card {
 
     public DivinerOfFates() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,
+        addTrigger(Triggers.youDiscardOneOrMoreCards(),
                 new OncePerTurnTriggerEffect(new SeekCardSharingCardTypeWithDiscardedCardsEffect()));
     }
 }

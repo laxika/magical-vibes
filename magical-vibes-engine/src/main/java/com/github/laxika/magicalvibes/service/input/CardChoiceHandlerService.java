@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -98,6 +97,7 @@ import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -3565,7 +3565,7 @@ public class CardChoiceHandlerService {
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {
-        return card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+        return LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(card).stream()
                 .anyMatch(e -> e instanceof EnterBattlefieldOnDiscardEffect);
     }
 

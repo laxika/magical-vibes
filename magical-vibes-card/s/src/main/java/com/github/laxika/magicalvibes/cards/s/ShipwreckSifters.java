@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -26,7 +25,7 @@ public class ShipwreckSifters extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.youDiscardCard(), new TriggeringCardConditionalEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardHasDisturbPredicate())),

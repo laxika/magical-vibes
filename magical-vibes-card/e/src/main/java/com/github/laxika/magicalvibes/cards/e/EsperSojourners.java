@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +22,7 @@ public class EsperSojourners extends Card {
         // When you cycle this card, you may tap or untap target permanent. The trigger is separate
         // from the cycling draw, so cycling is never blocked by the absence of a target.
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
+                .addTrigger(Triggers.youCycleThisCard(), new MayEffect(
                         new TapOrUntapTargetPermanentEffect(),
                         "Tap or untap target permanent?"));
 

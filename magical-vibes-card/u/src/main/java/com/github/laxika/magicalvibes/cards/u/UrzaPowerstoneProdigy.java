@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class UrzaPowerstoneProdigy extends Card {
                 "{1}, {T}: Draw a card, then discard a card."
         ));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
+        addTrigger(Triggers.youDiscardCard(),
                 new TriggeringCardConditionalEffect(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new OncePerTurnTriggerEffect(CreateTokenEffect.ofPowerstoneToken(new Fixed(1)))));

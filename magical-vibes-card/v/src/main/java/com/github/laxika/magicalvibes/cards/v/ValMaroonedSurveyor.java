@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YEOE", collectorNumber = "26")
 public class ValMaroonedSurveyor extends Card {
@@ -19,8 +20,8 @@ public class ValMaroonedSurveyor extends Card {
 
         addEffect(EffectSlot.ON_CONTROLLER_DISCOVERS, trigger);
         addEffect(EffectSlot.ON_CONTROLLER_INVESTIGATES_EACH_TIME, trigger);
-        addEffect(EffectSlot.ON_CONTROLLER_SCRIES, trigger);
-        addEffect(EffectSlot.ON_CONTROLLER_SURVEILS, trigger);
+        addTrigger(Triggers.youScry(), trigger);
+        addTrigger(Triggers.youSurveil(), trigger);
         addEffect(EffectSlot.ON_CONTROLLER_SEEKS, trigger);
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -21,7 +20,7 @@ public class CaptainHowlerSeaScourge extends Card {
 
     public CaptainHowlerSeaScourge() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,
+        addTrigger(Triggers.youDiscardOneOrMoreCards(),
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(new Scaled(new EventValue(), 2), new Fixed(0),
                                 new PermanentIsCreaturePredicate()),

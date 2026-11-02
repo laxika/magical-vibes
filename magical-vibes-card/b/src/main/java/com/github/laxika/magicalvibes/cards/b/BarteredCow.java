@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -29,6 +28,6 @@ public class BarteredCow extends Card {
 
     public BarteredCow() {
         addTrigger(Triggers.dies(ObjectRelation.THIS), FOOD_TOKEN);
-        addEffect(EffectSlot.ON_SELF_DISCARDED, FOOD_TOKEN);
+        addTrigger(Triggers.youDiscardThisCard(), FOOD_TOKEN);
     }
 }

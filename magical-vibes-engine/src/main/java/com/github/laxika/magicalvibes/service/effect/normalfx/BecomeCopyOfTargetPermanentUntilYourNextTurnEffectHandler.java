@@ -68,8 +68,8 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
         List<ActivatedAbility> retainedAbilities = copyEffect.retainSourceActivatedAbilities()
                 ? List.copyOf(source.getOriginalCard().getActivatedAbilities(Zone.BATTLEFIELD))
                 : List.of();
-        List<EffectRegistration> retainedTriggers = copyEffect.retainedAbilitySlot() == null ? List.of()
-                : List.copyOf(source.getCard().getEffectRegistrations(copyEffect.retainedAbilitySlot()));
+        List<EffectRegistration> retainedTriggers = copyEffect.retainedTrigger() == null ? List.of()
+                : List.copyOf(source.getCard().getTriggerEffectRegistrations(copyEffect.retainedTrigger()));
         permanentCopierService.applyCloneCopy(source, permanentCopierService.copiableCard(target),
                 copyEffect.powerOverride(), copyEffect.toughnessOverride(),
                 copyEffect.additionalTypesOverride(), retainedAbilities);
@@ -98,11 +98,12 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
             keywords.addAll(copyEffect.additionalKeywordsOverride());
             source.getCard().setKeywords(keywords);
         }
-        if (copyEffect.retainedAbilitySlot() != null) {
+        if (copyEffect.retainedTrigger() != null) {
             for (EffectRegistration registration : retainedTriggers) {
-                if (!source.getCard().getEffectRegistrations(copyEffect.retainedAbilitySlot()).contains(registration)) {
-                    source.getCard().addEffect(copyEffect.retainedAbilitySlot(),
-                            registration.effect(), registration.triggerMode());
+                if (!source.getCard().getTriggerEffectRegistrations(copyEffect.retainedTrigger())
+                        .contains(registration)) {
+                    source.getCard().addTrigger(copyEffect.retainedTrigger(),
+                            registration.triggerMode(), registration.effect());
                 }
             }
         }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -29,7 +28,7 @@ public class VeronicaDissidentScribe extends Card {
     public VeronicaDissidentScribe() {
         addTrigger(Triggers.attacks(),
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card?"));
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
+        addTrigger(Triggers.youDiscardCard(),
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         OncePerTurnTriggerEffect.firstNonlandDiscard(junkToken())));

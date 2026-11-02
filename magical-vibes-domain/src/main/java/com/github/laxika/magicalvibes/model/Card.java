@@ -2522,7 +2522,7 @@ public class Card {
      * rather than retyped per card.
      *
      * <p>Abilities triggered by cycling (such as the Sojourners and Resounding cycles) belong
-     * in {@link EffectSlot#ON_SELF_CYCLED}; they trigger separately from the cycling draw ability.
+     * in a {@code Triggers.youCycleThisCard()} ability; they trigger separately from the cycling draw ability.
      * Typecycling and landcycling instead use a hand activated ability that searches rather
      * than draws.
      */

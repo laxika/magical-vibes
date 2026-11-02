@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,6 +33,6 @@ public class ResoundingSilence extends Card {
                 List.of(),
                 0,
                 2).withCyclingTriggerUpToTargets());
-        addEffect(EffectSlot.ON_SELF_CYCLED, new ExileTargetPermanentEffect());
+        addTrigger(Triggers.youCycleThisCard(), new ExileTargetPermanentEffect());
     }
 }

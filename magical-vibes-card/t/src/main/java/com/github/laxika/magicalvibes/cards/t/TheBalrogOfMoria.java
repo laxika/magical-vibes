@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
@@ -24,6 +23,6 @@ public class TheBalrogOfMoria extends Card {
                         new ExileSourceCardFromGraveyardThenEffect(new ExileTargetPermanentEffect()),
                         "Exile The Balrog of Moria?"));
         addCycling("{3}{R}");
-        addEffect(EffectSlot.ON_SELF_CYCLED, CreateTokenEffect.ofTreasureToken(2));
+        addTrigger(Triggers.youCycleThisCard(), CreateTokenEffect.ofTreasureToken(2));
     }
 }

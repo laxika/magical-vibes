@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -24,7 +23,7 @@ import java.util.List;
 public class GixianPuppeteer extends Card {
 
     public GixianPuppeteer() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, SequenceEffect.onSecondControllerDraw(
+        addTrigger(Triggers.youDrawCard(), SequenceEffect.onSecondControllerDraw(
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(2)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()

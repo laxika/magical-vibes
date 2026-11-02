@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -31,7 +30,7 @@ public class DecreeOfSilence extends Card {
                                 new SacrificeSelfEffect())
                 )
         ));
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(new CounterSpellEffect(), "Counter target spell?"));
+        addTrigger(Triggers.youCycleThisCard(), new MayEffect(new CounterSpellEffect(), "Counter target spell?"));
         addCycling("{4}{U}{U}");
     }
 }

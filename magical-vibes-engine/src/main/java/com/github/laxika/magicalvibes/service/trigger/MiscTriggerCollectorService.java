@@ -3265,8 +3265,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_SURVEILS)
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_SURVEILS)
+    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_CONTROLLER_SURVEILS)
+    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilPutCountersOnSelf(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -3292,8 +3292,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_SURVEILS)
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_SURVEILS)
+    @CollectsLibraryTrigger(value = OncePerTurnTriggerEffect.class, watch = LibraryWatch.ON_CONTROLLER_SURVEILS)
+    @CollectsLibraryTrigger(value = OncePerTurnTriggerEffect.class, watch = LibraryWatch.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -3322,8 +3322,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SURVEILS)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_SURVEILS)
+    @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_SURVEILS)
+    @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         Permanent source = match.permanent();

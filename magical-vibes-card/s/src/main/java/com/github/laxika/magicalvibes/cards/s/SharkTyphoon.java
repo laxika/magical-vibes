@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -36,7 +35,7 @@ public class SharkTyphoon extends Card {
         CreateTokenEffect cyclingShark = new CreateTokenEffect(
                 "Shark", new XValue(), new XValue(), CardColor.BLUE,
                 List.of(CardSubtype.SHARK), Set.of(Keyword.FLYING), Set.of());
-        addEffect(EffectSlot.ON_SELF_CYCLED, cyclingShark);
+        addTrigger(Triggers.youCycleThisCard(), cyclingShark);
         addCycling("{X}{1}{U}");
     }
 }

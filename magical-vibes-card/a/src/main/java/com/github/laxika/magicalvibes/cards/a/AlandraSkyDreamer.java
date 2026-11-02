@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,12 +22,12 @@ import java.util.Set;
 public class AlandraSkyDreamer extends Card {
 
     public AlandraSkyDreamer() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new CreateTokenEffect("Drake", 2, 2, CardColor.BLUE,
                         List.of(CardSubtype.DRAKE), Set.of(Keyword.FLYING), Set.of()));
 
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
+        addTrigger(Triggers.youDrawCard(),
                 new NthCardDrawTriggerEffect(5, new BoostAllOwnCreaturesEffect(cardsInHand, cardsInHand,
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourcePermanentPredicate(),

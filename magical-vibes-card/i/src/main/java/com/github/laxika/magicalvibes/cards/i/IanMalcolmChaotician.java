@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "REX", collectorNumber = "13")
 @CardRegistration(set = "REX", collectorNumber = "38")
@@ -15,10 +15,10 @@ public class IanMalcolmChaotician extends Card {
     public IanMalcolmChaotician() {
         // Whenever a player draws their second card each turn, that player exiles the top card of
         // their library, tracked with Ian Malcolm.
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
+        addTrigger(Triggers.youDrawCard(),
                 new NthCardDrawTriggerEffect(2,
                         new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.CONTROLLER)));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        addTrigger(Triggers.opponentDrawsCard(),
                 new NthCardDrawTriggerEffect(2,
                         new ExileTopCardsToSourceEffect(
                                 1, false, false, LibraryScope.TARGET_OPPONENT)));

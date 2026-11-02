@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForYouAndDamagedPlayerEffect;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class XyrisTheWrithingStorm extends Card {
 
     public XyrisTheWrithingStorm() {
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        addTrigger(Triggers.opponentDrawsCard(),
                 new ExceptFirstDrawStepTriggerEffect(new CreateTokenEffect(
                         "Snake", 1, 1, CardColor.GREEN, List.of(CardSubtype.SNAKE), Set.of(), Set.of())));
         EventValue damage = new EventValue();

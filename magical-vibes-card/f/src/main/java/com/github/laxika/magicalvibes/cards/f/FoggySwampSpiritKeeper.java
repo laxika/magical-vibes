@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class FoggySwampSpiritKeeper extends Card {
 
     public FoggySwampSpiritKeeper() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, new CreateTokenEffect(
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Spirit", 1, 1, null, null,
                 List.of(CardSubtype.SPIRIT), Set.of(), Set.of(), false, false,
                 List.of(

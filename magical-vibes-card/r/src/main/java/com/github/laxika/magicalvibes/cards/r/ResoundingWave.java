@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALA", collectorNumber = "54")
 public class ResoundingWave extends Card {
@@ -17,7 +17,7 @@ public class ResoundingWave extends Card {
         // hands." Both targets are chosen as the trigger is put on the stack; with fewer than two legal
         // targets the trigger is removed and only the cycling draw happens.
         addCycling("{5}{W}{U}{B}");
-        addEffect(EffectSlot.ON_SELF_CYCLED, ReturnToHandEffect.target());
+        addTrigger(Triggers.youCycleThisCard(), ReturnToHandEffect.target());
         setSelfCycledTriggerPermanentTargets(2);
     }
 }

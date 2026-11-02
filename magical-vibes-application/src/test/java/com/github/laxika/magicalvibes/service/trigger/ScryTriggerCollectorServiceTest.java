@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,7 +60,7 @@ class ScryTriggerCollectorServiceTest {
 
         boolean triggered = registry.dispatch(
                 new TriggerMatchContext(gameData, permanent, playerId, effect),
-                EffectSlot.ON_CONTROLLER_SCRIES,
+                LibraryWatch.ON_CONTROLLER_SCRIES,
                 effect,
                 new TriggerContext.Scry(playerId, 2, 3));
 
@@ -87,7 +86,7 @@ class ScryTriggerCollectorServiceTest {
 
         boolean triggered = registry.dispatch(
                 new TriggerMatchContext(gameData, permanent, playerId, effect),
-                EffectSlot.ON_CONTROLLER_SCRIES,
+                LibraryWatch.ON_CONTROLLER_SCRIES,
                 effect,
                 new TriggerContext.Scry(playerId));
 
@@ -111,7 +110,7 @@ class ScryTriggerCollectorServiceTest {
 
         boolean triggered = registry.dispatch(
                 new TriggerMatchContext(gameData, permanent, playerId, effect),
-                EffectSlot.ON_CONTROLLER_SCRIES,
+                LibraryWatch.ON_CONTROLLER_SCRIES,
                 effect.wrapped(),
                 new TriggerContext.Scry(playerId));
 

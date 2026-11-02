@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +28,7 @@ import java.util.Set;
 public class TeferiTemporalPilgrim extends Card {
 
     public TeferiTemporalPilgrim() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new PutCountersOnSelfEffect(CounterType.LOYALTY));
+        addTrigger(Triggers.youDrawCard(), new PutCountersOnSelfEffect(CounterType.LOYALTY));
 
         addActivatedAbility(new ActivatedAbility(
                 0,
@@ -41,7 +41,8 @@ public class TeferiTemporalPilgrim extends Card {
                 List.of(new CreateTokenEffect(
                         1, "Spirit", 2, 2, CardColor.BLUE,
                         List.of(CardSubtype.SPIRIT), Set.of(Keyword.VIGILANCE), Set.of(),
-                        List.of(LegacySlots.triggered(EffectSlot.ON_CONTROLLER_DRAWS, new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))))),
+                        List.of(new TriggeredAbility(Triggers.youDrawCard(),
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))))),
                 "\u22122: Create a 2/2 blue Spirit creature token with vigilance and \"Whenever you draw a card, put a +1/+1 counter on this token.\""
         ));
 

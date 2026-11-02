@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -29,7 +28,7 @@ public class WharfInfiltrator extends Card {
                 "Draw a card and discard a card?"
         ));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.youDiscardCard(), new TriggeringCardConditionalEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 new MayPayManaEffect("{2}",
                         new CreateTokenEffect("Eldrazi Horror", 3, 2, null,

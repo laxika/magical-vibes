@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -33,7 +32,7 @@ public class NathOfTheGiltLeaf extends Card {
         ));
 
         // Whenever an opponent discards a card, you may create a 1/1 green Elf Warrior creature token.
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new MayEffect(
+        addTrigger(Triggers.opponentDiscardsCard(), new MayEffect(
                 new CreateTokenEffect(
                         "Elf Warrior", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()),

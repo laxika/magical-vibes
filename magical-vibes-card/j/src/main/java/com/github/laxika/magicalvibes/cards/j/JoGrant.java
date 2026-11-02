@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHandActivatedAbilityToCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 public class JoGrant extends Card {
 
     public JoGrant() {
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
+        addTrigger(Triggers.youDiscardCard(),
                 new CyclingTriggerEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
 
         ActivatedAbility cycling = new ActivatedAbility(false, "{2}{W}",

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,7 +14,7 @@ public class OrvarTheAllForm extends Card {
     public OrvarTheAllForm() {
         addTrigger(Triggers.youCastSpell(),
                 new CreateTokenCopyOfTargetedSpellPermanentEffect());
-        addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT,
+        addTrigger(Triggers.opponentCausesYouToDiscardThisCard(),
                 new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

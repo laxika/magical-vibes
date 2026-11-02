@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,7 +23,7 @@ public class ToothyImaginaryFriend extends Card {
                 "Have target player put Pir into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
+        addTrigger(Triggers.youDrawCard(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new DrawCardEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.CardType;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
@@ -69,8 +68,8 @@ public class DiscardTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = ConditionalEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = ConditionalEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleConditionalDiscard(TriggerMatchContext match,
             ConditionalEffect trigger, TriggerContext ctx) {
         if (trigger.interveningIf()
@@ -83,14 +82,14 @@ public class DiscardTriggerCollectorService {
         return enqueueDiscardTrigger(match, trigger, "conditional effect", triggeringPlayerId);
     }
 
-    @CollectsTrigger(value = UntapPermanentsEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = UntapPermanentsEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleSelfUntapOnDiscard(TriggerMatchContext match,
             UntapPermanentsEffect trigger, TriggerContext ctx) {
         if (trigger.scope() != TapUntapScope.SELF) return false;
         return enqueueDiscardTrigger(match, trigger, "untap source");
     }
 
-    @CollectsTrigger(value = CyclingTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = CyclingTriggerEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleCyclingTrigger(TriggerMatchContext match,
             CyclingTriggerEffect trigger, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.Discard discard) || !discard.cycled()) return false;
@@ -117,7 +116,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OpponentCausedDiscardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = OpponentCausedDiscardTriggerEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleOpponentCausedDiscard(TriggerMatchContext match,
             OpponentCausedDiscardTriggerEffect trigger, TriggerContext ctx) {
         if (!match.gameData().discardCausedByOpponent) return false;
@@ -137,8 +136,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = MayEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = MayEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.Discard discard = (TriggerContext.Discard) ctx;
         UUID triggeringCardId = discard.discardedCard() == null ? null : discard.discardedCard().getId();
@@ -161,7 +160,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = MayEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleDiscardEventMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.DiscardEvent discard = (TriggerContext.DiscardEvent) ctx;
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
@@ -178,8 +177,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CastDiscardedCardFromGraveyardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = CastDiscardedCardFromGraveyardEffect.class,
+            watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleCastDiscardedCard(TriggerMatchContext match,
             CastDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.Discard discard)
@@ -208,7 +207,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    @CollectsLibraryTrigger(value = MayEffect.class, watch = LibraryWatch.ON_ANY_PLAYER_CYCLES)
     private boolean handleCycleMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
         if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -231,7 +230,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    @CollectsLibraryTrigger(value = ReturnToHandEffect.class, watch = LibraryWatch.ON_ANY_PLAYER_CYCLES)
     private boolean handleCycleReturnToHand(TriggerMatchContext match, ReturnToHandEffect effect,
                                             TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
@@ -249,7 +248,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_ANY_PLAYER_CYCLES)
     private boolean handleCyclePutCountersOnSelf(TriggerMatchContext match,
                                                   PutCountersOnSelfEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
@@ -268,7 +267,7 @@ public class DiscardTriggerCollectorService {
     }
 
     /** "Whenever an opponent discards a card, this enchantment deals 2 damage to that player." (Megrim) */
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = DealDamageToPlayersEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handleDamageToDiscardingPlayer(TriggerMatchContext match,
             DealDamageToPlayersEffect trigger, TriggerContext ctx) {
         if (trigger.recipient() != DamageRecipient.TRIGGERING_PLAYER) return false;
@@ -276,7 +275,7 @@ public class DiscardTriggerCollectorService {
                 ((TriggerContext.Discard) ctx).discardingPlayerId());
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = DealDamageToPlayersEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleDamageToEachOpponentOnDiscard(TriggerMatchContext match,
             DealDamageToPlayersEffect trigger, TriggerContext ctx) {
         if (trigger.recipient() != DamageRecipient.EACH_OPPONENT) return false;
@@ -297,7 +296,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleTurnScopedModalOnDiscard(TriggerMatchContext match,
             ChooseModeNotYetChosenThisTurnEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -310,7 +309,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = DealDamageToPlayersEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleDamageToEachOpponentOnDiscardEvent(TriggerMatchContext match,
             DealDamageToPlayersEffect trigger, TriggerContext ctx) {
         if (trigger.recipient() != DamageRecipient.EACH_OPPONENT) return false;
@@ -334,7 +333,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = DealDamageToAnyTargetEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleDamageToAnyTargetOnDiscardEvent(TriggerMatchContext match,
             DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
@@ -346,7 +345,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = LoseLifeEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleLifeLossToEachOpponentOnDiscardEvent(TriggerMatchContext match,
             LoseLifeEffect trigger, TriggerContext ctx) {
         if (trigger.recipient() != LoseLifeRecipient.EACH_OPPONENT) return false;
@@ -370,7 +369,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = DrawCardEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleDrawOnDiscardEvent(TriggerMatchContext match, DrawCardEffect trigger,
                                               TriggerContext ctx) {
         TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
@@ -392,7 +391,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handlePutCountersOnSelfOnDiscardEvent(TriggerMatchContext match,
             PutCountersOnSelfEffect trigger, TriggerContext ctx) {
         TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
@@ -414,8 +413,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SeekCardSharingCardTypeWithDiscardedCardsEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = SeekCardSharingCardTypeWithDiscardedCardsEffect.class,
+            watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleSeekCardSharingTypeOnDiscardEvent(TriggerMatchContext match,
             SeekCardSharingCardTypeWithDiscardedCardsEffect trigger, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.DiscardEvent discardEvent)
@@ -439,8 +438,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handleExileDiscardedFromGraveyard(TriggerMatchContext match,
             ExileDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
@@ -473,8 +472,8 @@ public class DiscardTriggerCollectorService {
      * "Whenever you discard one or more cards, exile them from your graveyard" (Toluz, Clever Conductor):
      * one trigger per discard event, carrying every card discarded by that event.
      */
-    @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = ExileDiscardedCardFromGraveyardEffect.class,
+            watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleExileDiscardedFromGraveyardOnDiscardEvent(TriggerMatchContext match,
             ExileDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.DiscardEvent discardEvent)
@@ -503,13 +502,13 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTopCardMayPlayThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = ExileTopCardMayPlayThisTurnEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleExileTopCardMayPlayOnDiscard(TriggerMatchContext match,
             ExileTopCardMayPlayThisTurnEffect trigger, TriggerContext ctx) {
         return enqueueDiscardTrigger(match, trigger, "exile top card and allow play");
     }
 
-    @CollectsTrigger(value = ScryEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = ScryEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleScryOnDiscard(TriggerMatchContext match, ScryEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard another card, scry N." Cycling discards the card (CR 702.29e),
         // so this single controller-discard trigger fires for both. Queue it as a proper triggered
@@ -529,10 +528,10 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
-            slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
+            watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
+            watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handleGutmornOnDiscard(TriggerMatchContext match,
             ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard discard = (TriggerContext.Discard) ctx;
@@ -562,14 +561,14 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MillEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = MillEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleMillOnDiscard(TriggerMatchContext match, MillEffect trigger, TriggerContext ctx) {
         if (trigger.recipient() != MillRecipient.EACH_OPPONENT) return false;
         return enqueueDiscardTrigger(match, trigger, "mill each opponent");
     }
 
-    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    @CollectsLibraryTrigger(value = BoostSelfEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = BoostSelfEffect.class, watch = LibraryWatch.ON_ANY_PLAYER_CYCLES)
     private boolean handleSelfBoostOnDiscard(TriggerMatchContext match, BoostSelfEffect trigger, TriggerContext ctx) {
         // Cycling discards the card, so this controller-discard trigger handles both cycling and discard.
         // Queue it as a proper triggered ability carrying the source permanent id so the self-boost lands on it.
@@ -589,15 +588,15 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PerpetuallyBoostSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = PerpetuallyBoostSourceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = PerpetuallyBoostSourceEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = PerpetuallyBoostSourceEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handlePerpetualBoostOnDiscard(TriggerMatchContext match,
             PerpetuallyBoostSourceEffect trigger, TriggerContext ctx) {
         return enqueueDiscardTrigger(match, trigger, "perpetual source boost");
     }
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = SequenceEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = SequenceEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
         // Multi-step discard triggers must stay ONE atomic triggered ability (SequenceEffect), so queue
         // a single stack entry carrying the source permanent id. Each self step then resolves against
@@ -624,7 +623,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = SequenceEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleSequenceOnDiscardEvent(TriggerMatchContext match, SequenceEffect trigger,
                                                   TriggerContext ctx) {
         TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
@@ -638,8 +637,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    @CollectsLibraryTrigger(value = GrantKeywordEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = GrantKeywordEffect.class, watch = LibraryWatch.ON_ANY_PLAYER_CYCLES)
     private boolean handleGrantKeywordOnDiscard(TriggerMatchContext match, GrantKeywordEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, target creature gains [keyword] until end of turn."
         // Cycling discards the card (CR 702.29e), so this single controller-discard trigger fires for
@@ -668,7 +667,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostTargetCreatureEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = BoostTargetCreatureEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleBoostTargetCreatureOnDiscard(TriggerMatchContext match, BoostTargetCreatureEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard a card, target creature an opponent controls gets -X/-Y until
         // end of turn." Cycling discards the card (CR 702.29e), so this single controller-discard
@@ -684,8 +683,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SourceFightsTargetCreatureEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = SourceFightsTargetCreatureEffect.class,
+            watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleSourceFightOnDiscard(TriggerMatchContext match,
             SourceFightsTargetCreatureEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -698,7 +697,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = PutCounterOnTargetPermanentEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handlePutCounterOnTargetOnDiscard(TriggerMatchContext match,
             PutCounterOnTargetPermanentEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -711,7 +710,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnEachMatchingPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = PutCounterOnEachMatchingPermanentEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handlePutCountersOnDiscard(TriggerMatchContext match,
             PutCounterOnEachMatchingPermanentEffect trigger, TriggerContext ctx) {
         // "Whenever you cycle or discard another card, put a -1/-1 counter on each creature your
@@ -733,8 +732,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
-            slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
+            watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handlePutCountersOnOpponentDiscard(TriggerMatchContext match,
             PutCounterOnEachControlledPermanentEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -753,8 +752,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = PutCountersOnSourceEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = PutCountersOnSourceEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handlePutCountersOnSourceOnDiscard(TriggerMatchContext match,
             PutCountersOnSourceEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -773,8 +772,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handlePutCountersOnSelfOnDiscard(TriggerMatchContext match,
             PutCountersOnSelfEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -793,10 +792,10 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS),
-            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CYCLES)
+    @CollectsLibraryTriggers({
+            @CollectsLibraryTrigger(value = MayPayManaEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS),
+            @CollectsLibraryTrigger(value = MayPayManaEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS),
+            @CollectsLibraryTrigger(value = MayPayManaEffect.class, watch = LibraryWatch.ON_ANY_PLAYER_CYCLES)
     })
     private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -832,12 +831,12 @@ public class DiscardTriggerCollectorService {
      * The card-type gate is applied upstream by {@code TriggeringCardConditionalEffect}; here the
      * trigger simply goes on the stack under the watching permanent's controller. (Waste Not)
      */
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = CreateTokenEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handleCreateTokenOnDiscard(TriggerMatchContext match, CreateTokenEffect trigger, TriggerContext ctx) {
         return enqueueDiscardTrigger(match, trigger, "create token");
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = CreateTokenEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleCreateTokenOnControllerDiscard(TriggerMatchContext match,
             CreateTokenEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -856,7 +855,7 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = CreateTokenEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleCreateTokenOnDiscardEvent(TriggerMatchContext match, CreateTokenEffect trigger,
                                                     TriggerContext ctx) {
         TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
@@ -878,8 +877,8 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTopCardsMayPlayUntilNextEndStepEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    @CollectsLibraryTrigger(value = ExileTopCardsMayPlayUntilNextEndStepEffect.class,
+            watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
     private boolean handleExileTopCardsMayPlayUntilNextEndStepOnDiscardEvent(
             TriggerMatchContext match, ExileTopCardsMayPlayUntilNextEndStepEffect trigger,
             TriggerContext ctx) {
@@ -904,8 +903,8 @@ public class DiscardTriggerCollectorService {
      * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
      * controller's pool when it resolves. (Waste Not)
      */
-    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = AwardManaEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = AwardManaEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleAwardManaOnDiscard(TriggerMatchContext match, AwardManaEffect trigger, TriggerContext ctx) {
         return enqueueDiscardTrigger(match, trigger, "add mana");
     }
@@ -913,8 +912,8 @@ public class DiscardTriggerCollectorService {
     /**
      * "Whenever an opponent discards a noncreature, nonland card, draw a card." (Waste Not)
      */
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = DrawCardEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = DrawCardEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleDrawOnDiscard(TriggerMatchContext match, DrawCardEffect trigger, TriggerContext ctx) {
         return enqueueDiscardTrigger(match, trigger, "draw");
     }
@@ -949,8 +948,8 @@ public class DiscardTriggerCollectorService {
      * "Whenever you discard a card, you lose 1 life." (Midnight Oil): the life loss is a triggered
      * ability that uses the stack (CR 603.3), bound to the discarding player when it names "that player".
      */
-    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = LoseLifeEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
+    @CollectsLibraryTrigger(value = LoseLifeEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     private boolean handleLifeLossOnDiscard(TriggerMatchContext match,
             LoseLifeEffect trigger, TriggerContext ctx) {
         return switch (trigger.recipient()) {

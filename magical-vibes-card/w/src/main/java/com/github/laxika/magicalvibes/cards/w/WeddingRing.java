@@ -50,7 +50,7 @@ public class WeddingRing extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new WasCast(),
                         new CreateTokenCopyOfSourceForTargetPlayerEffect(PlayerRelation.OPPONENT)));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        addTrigger(Triggers.opponentDrawsCard(),
                 ConditionalEffect.atTriggerTime(opponentRingDuringTheirTurn, new DrawCardEffect()));
         addEffect(EffectSlot.ON_OPPONENT_GAINS_LIFE,
                 ConditionalEffect.atTriggerTime(opponentRingDuringTheirTurn, new GainLifeEffect(new EventValue())));

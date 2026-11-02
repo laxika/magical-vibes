@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,6 +30,7 @@ public class VoidBeckoner extends Card {
                 1
         ).withCyclingTriggerTargetsChosenOnTriggerIfOmitted());
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_SELF_CYCLED, new PutCounterOnTargetPermanentEffect(CounterType.DEATHTOUCH, 1));
+                .addTrigger(Triggers.youCycleThisCard(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.DEATHTOUCH, 1));
     }
 }

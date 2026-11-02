@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -1563,7 +1564,7 @@ public class TriggeredAbilityQueueService {
             int exactTargets = pending.sourcePermanentId() == null
                     ? pending.sourceCard().getSelfCycledTriggerPermanentTargets() : 0;
             if (exactTargets > 0 && pending.effects().equals(
-                    pending.sourceCard().getEffects(EffectSlot.ON_SELF_CYCLED))) {
+                    LibraryWatch.ON_SELF_CYCLED.effectsOf(pending.sourceCard()))) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
                 if (result.validTargets().size() < exactTargets) {
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),

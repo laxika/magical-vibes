@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.service;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -35,6 +35,9 @@ import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplaced
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
@@ -227,7 +230,7 @@ class DrawServiceTest {
 
     private Permanent addEquipmentWithDrawTrigger(UUID controllerId) {
         Card card = createCard("Diviner's Wand", CardType.ARTIFACT);
-        card.addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
+        card.addTrigger(Triggers.youDrawCard(),
                 new BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(1, 1, Keyword.FLYING));
         Permanent equipment = new Permanent(card);
         gd.playerBattlefields.get(controllerId).add(equipment);
@@ -274,7 +277,7 @@ class DrawServiceTest {
         void nonEquipmentDrawTriggerUnaffected() {
             addEquipmentWithDrawTrigger(player1Id); // unattached — must stay silent
             Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
-            crawlerCard.addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new BoostSelfEffect(1, 1));
+            crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
             Permanent crawler = new Permanent(crawlerCard);
             gd.playerBattlefields.get(player1Id).add(crawler);
 
@@ -289,7 +292,7 @@ class DrawServiceTest {
         @DisplayName("duplicates a draw trigger when an additional-trigger effect applies")
         void additionalTriggerEffectDuplicatesDrawTrigger() {
             Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
-            crawlerCard.addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new BoostSelfEffect(1, 1));
+            crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
             Permanent crawler = new Permanent(crawlerCard);
             gd.playerBattlefields.get(player1Id).add(crawler);
             when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, player1Id, crawler))
@@ -305,7 +308,7 @@ class DrawServiceTest {
     @DisplayName("pushes a graveyard second-draw may-pay trigger onto the stack")
     void graveyardSecondDrawTriggerPushesMayPayAbility() {
         Card wolfbat = createCard("Wolfbat", CardType.CREATURE);
-        wolfbat.addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
+        wolfbat.addTrigger(new TriggerCondition(Triggers.youDrawSecondCardEachTurn(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new MayPayManaEffect("{B}", new BoostSelfEffect(1, 1), "Pay {B}?"));
         gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(wolfbat)));
         gd.cardsDrawnThisTurn.put(player1Id, 2);
@@ -323,7 +326,7 @@ class DrawServiceTest {
     @DisplayName("pushes a graveyard opponent second-draw may trigger onto the stack")
     void graveyardOpponentSecondDrawTriggerPushesMayAbility() {
         Card detective = createCard("Dogged Detective", CardType.CREATURE);
-        detective.addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
+        detective.addTrigger(new TriggerCondition(Triggers.opponentDrawsSecondCardEachTurn(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new MayEffect(new BoostSelfEffect(1, 1), "Do it?"));
         gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(detective)));
         gd.cardsDrawnThisTurn.put(player2Id, 2);
@@ -343,7 +346,7 @@ class DrawServiceTest {
         Card card = createCard("Mantle of Tides", CardType.ARTIFACT);
         AttachSourceEquipmentToTargetCreatureEffect effect = new AttachSourceEquipmentToTargetCreatureEffect();
         card.target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, effect);
+                .addTrigger(Triggers.youDrawSecondCardEachTurn(), effect);
         Permanent equipment = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(equipment);
         gd.cardsDrawnThisTurn.put(player1Id, 2);
@@ -367,7 +370,7 @@ class DrawServiceTest {
         card.target(new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent"))
-                .addEffect(EffectSlot.ON_CONTROLLER_DRAWS, effect);
+                .addTrigger(Triggers.youDrawCard(), effect);
         Permanent source = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(source);
 
@@ -380,7 +383,7 @@ class DrawServiceTest {
     @Test
     void opponentDrawTriggerHonorsOncePerTurnWrapper() {
         Card card = createCard("Tataru Taru", CardType.CREATURE);
-        card.addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        card.addTrigger(Triggers.opponentDrawsCard(),
                 new OncePerTurnTriggerEffect(new BoostSelfEffect(1, 1)));
         Permanent source = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(source);

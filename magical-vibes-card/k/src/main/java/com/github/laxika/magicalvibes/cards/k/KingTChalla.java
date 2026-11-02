@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.cards.b.BlackPantherHopeEnduring;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,8 +21,8 @@ public class KingTChalla extends Card {
         setBackFaceCard(backFace);
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, new DrawCardEffect(1));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), new DrawCardEffect(1));
+        addTrigger(Triggers.opponentDrawsCard(),
                 new NthCardDrawTriggerEffect(2, new DrawCardEffect(1)));
         addActivatedAbility(new ActivatedAbility(
                 false,

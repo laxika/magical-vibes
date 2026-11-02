@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -29,6 +28,6 @@ public class TeferisTutelage extends Card {
         var trigger = target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
-        trigger.addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        trigger.addTrigger(Triggers.youDrawCard(), new MillEffect(2, MillRecipient.TARGET_PLAYER));
     }
 }

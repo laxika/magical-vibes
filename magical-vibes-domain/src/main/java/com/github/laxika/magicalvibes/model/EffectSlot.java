@@ -22,38 +22,7 @@ public enum EffectSlot {
     /** Triggers whenever a Case is solved by the controller. */
     ON_ALLY_CASE_SOLVES,
     ON_CONTROLLER_FORETELLS,
-    ON_CONTROLLER_DRAWS,
-    /** Triggers when the controller draws their second card of the turn. */
-    ON_CONTROLLER_DRAWS_SECOND_CARD,
-    /** Triggers when this card's owner draws their second card of the turn while this card is in
-     *  their graveyard. Checked in {@code DrawService}. */
-    GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
-    /** Triggers when an opponent of this card's owner draws their second card of the turn while
-     *  this card is in the owner's graveyard. Checked in {@code DrawService}. */
-    GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
-    ON_OPPONENT_DRAWS,
-    /** Triggers whenever the player enchanted by this Aura draws a card. */
-    ON_ENCHANTED_PLAYER_DRAWS,
-    ON_OPPONENT_DISCARDS,
     ON_CONTROLLER_FORAGES,
-    /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
-     *  player's own battlefield in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Necropotence. */
-    ON_CONTROLLER_DISCARDS,
-    /** Triggers once for a discard event in which the controller discards one or more cards. */
-    ON_CONTROLLER_DISCARD_EVENT,
-    /** Triggers whenever any player cycles a card. */
-    ON_ANY_PLAYER_CYCLES,
-    /** A triggered ability of the card being cycled, independent of the cycling draw. */
-    ON_SELF_CYCLED,
-    /** Triggers whenever this permanent's controller scries. Checked by
-     *  {@code TriggerCollectionService.checkScryTriggers}. */
-    ON_CONTROLLER_SCRIES,
-    /** Triggers whenever an opponent scries. Checked by
-     *  {@code TriggerCollectionService.checkScryTriggers}; the scrying player is supplied as
-     *  the triggered ability's implicit player context. */
-    ON_OPPONENT_SCRIES,
-    /** Triggers whenever this permanent's controller searches their own library. */
-    ON_CONTROLLER_SEARCHES_LIBRARY,
     /** Triggers after all players finish a voting event. */
     ON_PLAYERS_FINISH_VOTING,
     /** Triggers whenever this permanent's controller chooses a Ring-bearer after the Ring tempts them. */
@@ -62,13 +31,6 @@ public enum EffectSlot {
     ON_CONTROLLER_INVESTIGATES,
     /** Triggers whenever this permanent's controller investigates one or more times. */
     ON_CONTROLLER_INVESTIGATES_EACH_TIME,
-    /** Triggers whenever this permanent's controller surveils. Checked by
-     *  {@code TriggerCollectionService.checkSurveilTriggers}. */
-    ON_CONTROLLER_SURVEILS,
-    /** Triggers whenever an opponent surveils. Checked by
-     *  {@code TriggerCollectionService.checkSurveilTriggers}; the surveiling player is supplied
-     *  as the triggered ability's implicit player context. */
-    ON_OPPONENT_SURVEILS,
     /** Triggers whenever this permanent's controller manifests dread. */
     ON_CONTROLLER_MANIFESTS_DREAD,
     /** Triggers whenever this permanent's controller completes a dungeon. */
@@ -91,11 +53,6 @@ public enum EffectSlot {
     ON_CONTROLLER_SEEKS,
     /** Triggers whenever this permanent's controller conjures one or more cards. */
     ON_CONTROLLER_CONJURES,
-    /** Triggers when this card is discarded for any reason ("When you discard this card, …").
-     *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
-     *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
-    ON_SELF_DISCARDED,
-    ON_SELF_DISCARDED_BY_OPPONENT,
     ON_ANY_PLAYER_TAPS_LAND,
     /** Triggers whenever any player taps any permanent for mana. */
     ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA,
@@ -176,21 +133,6 @@ public enum EffectSlot {
     /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
     GRAVEYARD_ON_DAY_NIGHT_CHANGE,
     ON_OPPONENT_LOSES_LIFE,
-    ON_OPPONENT_SHUFFLES_LIBRARY,
-    ON_ANY_PLAYER_SHUFFLES_LIBRARY,
-    /** Triggers whenever a spell or ability causes its controller to shuffle their library (Widespread
-     *  Panic). Fires on every permanent regardless of who controls it, and only when the player shuffling
-     *  is the controller of the spell or ability that is resolving. The shuffling player is the trigger's
-     *  target. */
-    ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE,
-    /** Triggers whenever an opponent of this permanent's controller searches their own library
-     *  ("Whenever an opponent searches their library"). Fired from the unified library-search choke
-     *  point ({@code LibrarySearchSupport.performLibrarySearch}) by
-     *  {@code LibrarySearchTriggerHelper}, which bakes the searching player as the triggered
-     *  ability's {@code targetId} so {@code TARGET_PLAYER}-scoped effects act on them. A search
-     *  prevented by Leonin Arbiter never happens and does not trigger this. Used by
-     *  Ob Nixilis, Unshackled. */
-    ON_OPPONENT_SEARCHES_LIBRARY,
     /** Triggers whenever the controller fully unlocks a Room. */
     ON_ALLY_ROOM_FULLY_UNLOCKED,
     /** Triggers whenever the controller fully unlocks a Room while this card is in the controller's
@@ -239,9 +181,6 @@ public enum EffectSlot {
     ON_ALLY_CREATURE_FIGHTS,
     /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
-    /** Triggers whenever the controller surveils, while this card is in the controller's
-     *  graveyard. Checked per-card inside {@code TriggerCollectionService.checkSurveilTriggers}. */
-    GRAVEYARD_ON_CONTROLLER_SURVEILS,
     /** Triggers whenever the controller conjures one or more cards, while this card is in the
      *  controller's graveyard. Checked per-card inside {@code TriggerCollectionService.checkConjureTriggers}. */
     GRAVEYARD_ON_CONTROLLER_CONJURES,

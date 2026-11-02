@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -42,7 +41,7 @@ public class EntropicBattlecruiser extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.opponentDiscardsCard(), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(1, CounterType.CHARGE),
                 new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER)));
 

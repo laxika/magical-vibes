@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "25")
 @CardRegistration(set = "AKR", collectorNumber = "32")
@@ -21,7 +21,7 @@ public class RenewedFaith extends Card {
 
         // When you cycle this card, you may gain 2 life. The trigger is separate from the cycling
         // draw, so it sits above the draw on the stack and the draw is never blocked by it.
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(new GainLifeEffect(2), "Gain 2 life?"));
+        addTrigger(Triggers.youCycleThisCard(), new MayEffect(new GainLifeEffect(2), "Gain 2 life?"));
 
         addCycling("{1}{W}");
     }

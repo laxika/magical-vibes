@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -32,7 +31,7 @@ public class StarvingRevenant extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new ConditionalEffect(
+        )).addTrigger(Triggers.youDrawCard(), new ConditionalEffect(
                 new GraveyardCardThreshold(8, new CardIsPermanentPredicate()),
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),

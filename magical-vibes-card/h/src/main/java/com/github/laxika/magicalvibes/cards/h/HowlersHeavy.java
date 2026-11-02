@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +32,8 @@ public class HowlersHeavy extends Card {
         target(new PermanentPredicateTargetFilter(
                 opponentCreatureOrVehicle,
                 "Target must be a creature or Vehicle an opponent controls"))
-                .addEffect(EffectSlot.ON_SELF_CYCLED, new BoostTargetPermanentEffect(-3, 0, opponentCreatureOrVehicle));
+                .addTrigger(Triggers.youCycleThisCard(),
+                        new BoostTargetPermanentEffect(-3, 0, opponentCreatureOrVehicle));
         addCycling("{1}{U}");
     }
 }

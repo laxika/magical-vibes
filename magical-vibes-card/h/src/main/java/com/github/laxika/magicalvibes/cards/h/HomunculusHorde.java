@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "41")
 @CardRegistration(set = "FDN", collectorNumber = "308")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 public class HomunculusHorde extends Card {
 
     public HomunculusHorde() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, new CreateTokenCopyOfSourceEffect());
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), new CreateTokenCopyOfSourceEffect());
     }
 }

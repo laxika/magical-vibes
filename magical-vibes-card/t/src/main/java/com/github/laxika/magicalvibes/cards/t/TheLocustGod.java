@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -30,7 +29,7 @@ public class TheLocustGod extends Card {
         // Flying — loaded from Scryfall
 
         // Whenever you draw a card, create a 1/1 blue and red Insect creature token with flying and haste.
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new CreateTokenEffect(
+        addTrigger(Triggers.youDrawCard(), new CreateTokenEffect(
                 1, "Insect", 1, 1, CardColor.BLUE,
                 Set.of(CardColor.BLUE, CardColor.RED),
                 List.of(CardSubtype.INSECT),

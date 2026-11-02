@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
@@ -29,7 +28,7 @@ public class TergridGodOfFright extends Card {
                 "Put that card onto the battlefield under your control?");
         addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS), returnSacrificedPermanent);
 
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.opponentDiscardsCard(), new TriggeringCardConditionalEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardNotPredicate(new CardIsTokenPredicate()))),

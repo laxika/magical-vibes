@@ -358,9 +358,9 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Surveil(player1Id, true);
 
         assertThat(registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isTrue();
+                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx)).isTrue();
         assertThat(registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isFalse();
+                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx)).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect.wrapped());
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
@@ -374,7 +374,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx);
+                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -459,7 +459,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS,
+                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS,
                 effect.wrapped(), ctx);
 
         assertThat(result).isTrue();

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -56,6 +55,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanen
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -276,7 +276,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         card.target(TargetFilters.creature(), 0, 4)
                 .addSpellEffect(new TapPermanentsEffect(TapUntapScope.TARGET));
         card.addCycling("{1}{U}");
-        card.addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
+        card.addTrigger(Triggers.youCycleThisCard(), new MayEffect(
                 new TapPermanentsEffect(TapUntapScope.TARGET), "Tap target creature?"));
         return freeze(card);
     }

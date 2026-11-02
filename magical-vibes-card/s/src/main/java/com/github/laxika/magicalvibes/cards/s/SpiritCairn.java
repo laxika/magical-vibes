@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "26")
 @CardRegistration(set = "VMA", collectorNumber = "48")
@@ -18,7 +18,7 @@ public class SpiritCairn extends Card {
                 CreateTokenEffect.whiteSpirit(1),
                 "Pay {W} to create a 1/1 white Spirit creature token with flying?"
         );
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, trigger);
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, trigger);
+        addTrigger(Triggers.opponentDiscardsCard(), trigger);
+        addTrigger(Triggers.youDiscardCard(), trigger);
     }
 }

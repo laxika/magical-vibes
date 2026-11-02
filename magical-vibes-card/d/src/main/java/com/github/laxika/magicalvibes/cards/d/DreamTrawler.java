@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -21,7 +20,7 @@ import java.util.List;
 public class DreamTrawler extends Card {
 
     public DreamTrawler() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new BoostSelfEffect(1, 0));
+        addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 0));
         addTrigger(Triggers.attacks(), new DrawCardEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,

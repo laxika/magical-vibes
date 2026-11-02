@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -25,7 +24,7 @@ public class Fasting extends Card {
 
         addStaticEffect(new FastingEffect());
 
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
+        addTrigger(Triggers.youDrawCard(),
                 new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
     }
 }

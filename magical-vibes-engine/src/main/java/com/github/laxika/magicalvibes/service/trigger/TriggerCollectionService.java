@@ -2693,7 +2693,7 @@ public class TriggerCollectionService {
 
             for (Permanent perm : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DISCARDS)) {
+                for (CardEffect effect : LibraryWatch.ON_OPPONENT_DISCARDS.effectsOf(perm.getCard())) {
                     // "Whenever an opponent discards a creature/land/noncreature-nonland card, …"
                     // (Waste Not) — the discarded card gates the trigger.
                     CardEffect resolved = !characteristicsKnown
@@ -2701,7 +2701,7 @@ public class TriggerCollectionService {
                             : unwrapTriggeringCardConditional(effect, discardedCard, gameData, playerId);
                     if (resolved == null) continue;
                     if (dispatchSlotEffect(gameData, perm, playerId,
-                            EffectSlot.ON_OPPONENT_DISCARDS, ctx, resolved)) {
+                            LibraryWatch.ON_OPPONENT_DISCARDS, ctx, resolved)) {
                         anyTriggered[0] = true;
                     }
                 }
@@ -2716,7 +2716,7 @@ public class TriggerCollectionService {
         List<Permanent> ownBattlefield = gameData.playerBattlefields.get(discardingPlayerId);
         if (ownBattlefield != null) {
             for (Permanent perm : List.copyOf(ownBattlefield)) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DISCARDS)) {
+                for (CardEffect effect : LibraryWatch.ON_CONTROLLER_DISCARDS.effectsOf(perm.getCard())) {
                     CardEffect resolved = !characteristicsKnown
                             ? (effect instanceof TriggeringCardConditionalEffect ? null : effect)
                             : unwrapTriggeringCardConditional(effect, discardedCard, gameData, discardingPlayerId);
@@ -2737,7 +2737,7 @@ public class TriggerCollectionService {
                         if (resolved == null) continue;
                     }
                     var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, resolved);
-                    boolean triggered = dispatch(match, EffectSlot.ON_CONTROLLER_DISCARDS, resolved, ctx);
+                    boolean triggered = dispatch(match, LibraryWatch.ON_CONTROLLER_DISCARDS, resolved, ctx);
                     if (triggered && oncePerTurn) {
                         gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
                     }
@@ -2767,7 +2767,7 @@ public class TriggerCollectionService {
             // "When you discard this card" — any discard (Edgar's Awakening). Non-targeting effects
             // (e.g. MayPayManaEffect) go straight onto the stack; any-target effects use the
             // DiscardTriggerAnyTarget pipeline (same as Guerrilla Tactics).
-            List<CardEffect> anyDiscardTriggers = discardedCard.getEffects(EffectSlot.ON_SELF_DISCARDED);
+            List<CardEffect> anyDiscardTriggers = LibraryWatch.ON_SELF_DISCARDED.effectsOf(discardedCard);
             if (!anyDiscardTriggers.isEmpty()) {
                 boolean needsAnyTarget = anyDiscardTriggers.stream()
                         .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -2793,7 +2793,7 @@ public class TriggerCollectionService {
 
             // Skip EnterBattlefieldOnDiscardEffect — it's a replacement effect handled earlier in the discard flow
             if (gameData.discardCausedByOpponent) {
-                List<CardEffect> selfTriggers = discardedCard.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                List<CardEffect> selfTriggers = LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(discardedCard).stream()
                         .filter(e -> !(e instanceof EnterBattlefieldOnDiscardEffect))
                         .filter(e -> !(e instanceof ConditionalEffect conditional) || !conditional.interveningIf()
                                 || conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -2851,7 +2851,7 @@ public class TriggerCollectionService {
     public void checkCycleTriggers(GameData gameData, UUID cyclingPlayerId, Card cycledCard, int cyclingXValue,
                                    com.github.laxika.magicalvibes.model.ActivatedAbility targetingCyclingAbility,
                                    List<UUID> announcedTargetIds) {
-        List<CardEffect> selfEffects = cycledCard.getEffects(EffectSlot.ON_SELF_CYCLED).stream()
+        List<CardEffect> selfEffects = LibraryWatch.ON_SELF_CYCLED.effectsOf(cycledCard).stream()
                 .filter(e -> !(e instanceof ConditionalEffect conditional) || !conditional.interveningIf()
                         || conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forCard(cycledCard, cyclingPlayerId)))
@@ -2909,7 +2909,7 @@ public class TriggerCollectionService {
         TriggerContext ctx = new TriggerContext.Cycle(cyclingPlayerId, cycledCard);
         boolean[] anyTriggered = {false};
         gameData.forEachPermanent((playerId, perm) -> {
-            if (dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_PLAYER_CYCLES, ctx)) {
+            if (dispatchWatch(gameData, perm, playerId, LibraryWatch.ON_ANY_PLAYER_CYCLES, ctx)) {
                 anyTriggered[0] = true;
             }
         });
@@ -2926,7 +2926,7 @@ public class TriggerCollectionService {
 
         boolean triggered = false;
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_OPPONENT_DISCARDS
+            if (!watcher.ability().hasTrigger(LibraryWatch.ON_OPPONENT_DISCARDS.trigger())
                     || !watcher.controllerId().equals(discardingPlayerId)) {
                 continue;
             }
@@ -2970,7 +2970,7 @@ public class TriggerCollectionService {
         List<Permanent> ownBattlefield = gameData.playerBattlefields.get(scryingPlayerId);
         if (ownBattlefield != null) {
             for (Permanent perm : List.copyOf(ownBattlefield)) {
-                dispatchSlot(gameData, perm, scryingPlayerId, EffectSlot.ON_CONTROLLER_SCRIES, ctx);
+                dispatchWatch(gameData, perm, scryingPlayerId, LibraryWatch.ON_CONTROLLER_SCRIES, ctx);
             }
         }
 
@@ -2979,7 +2979,7 @@ public class TriggerCollectionService {
                 return;
             }
             for (Permanent perm : List.copyOf(battlefield)) {
-                dispatchSlot(gameData, perm, controllerId, EffectSlot.ON_OPPONENT_SCRIES, ctx);
+                dispatchWatch(gameData, perm, controllerId, LibraryWatch.ON_OPPONENT_SCRIES, ctx);
             }
         });
     }
@@ -3167,7 +3167,7 @@ public class TriggerCollectionService {
         List<Permanent> ownBattlefield = gameData.playerBattlefields.get(surveilingPlayerId);
         if (ownBattlefield != null) {
             for (Permanent perm : List.copyOf(ownBattlefield)) {
-                dispatchSlot(gameData, perm, surveilingPlayerId, EffectSlot.ON_CONTROLLER_SURVEILS, ctx);
+                dispatchWatch(gameData, perm, surveilingPlayerId, LibraryWatch.ON_CONTROLLER_SURVEILS, ctx);
             }
         }
 
@@ -3176,7 +3176,7 @@ public class TriggerCollectionService {
                 return;
             }
             for (Permanent perm : List.copyOf(battlefield)) {
-                dispatchSlot(gameData, perm, controllerId, EffectSlot.ON_OPPONENT_SURVEILS, ctx);
+                dispatchWatch(gameData, perm, controllerId, LibraryWatch.ON_OPPONENT_SURVEILS, ctx);
             }
         });
 
@@ -3186,8 +3186,8 @@ public class TriggerCollectionService {
         }
 
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_SURVEILS)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card, LibraryWatch.GRAVEYARD_ON_CONTROLLER_SURVEILS.trigger())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -10930,8 +10930,8 @@ public class TriggerCollectionService {
         boolean[] triggered = {false};
         var ctx = new TriggerContext.DiscardEvent(discardingPlayerId, discardedCount, discardedCards);
         for (Permanent perm : List.copyOf(ownBattlefield)) {
-            if (dispatchSlot(gameData, perm, discardingPlayerId,
-                    EffectSlot.ON_CONTROLLER_DISCARD_EVENT, ctx)) {
+            if (dispatchWatch(gameData, perm, discardingPlayerId,
+                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx)) {
                 triggered[0] = true;
             }
         }
@@ -16496,7 +16496,7 @@ public class TriggerCollectionService {
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
             Object slot, TriggerContext ctx, CardEffect effect) {
         CardEffect conditionedEffect = effect;
-        if (slot == EffectSlot.ON_CONTROLLER_DISCARD_EVENT
+        if (slot == LibraryWatch.ON_CONTROLLER_DISCARD_EVENT
                 && ctx instanceof TriggerContext.DiscardEvent discardEvent
                 && effect instanceof TriggeringCardConditionalEffect conditional) {
             boolean matches = discardEvent.discardedCards().stream()
@@ -16545,7 +16545,7 @@ public class TriggerCollectionService {
             return false;
         }
 
-        if (slot == EffectSlot.ON_CONTROLLER_DISCARD_EVENT
+        if (slot == LibraryWatch.ON_CONTROLLER_DISCARD_EVENT
                 && ctx instanceof TriggerContext.DiscardEvent firstDiscardEvent
                 && conditionedEffect instanceof OncePerTurnTriggerEffect firstOnly
                 && OncePerTurnTriggerEffect.FIRST_DISCARD_EVENT_KEY.equals(firstOnly.key())
@@ -16553,7 +16553,7 @@ public class TriggerCollectionService {
                         != firstDiscardEvent.discardedCount()) {
             return false;
         }
-        if (slot == EffectSlot.ON_CONTROLLER_SURVEILS
+        if (slot == LibraryWatch.ON_CONTROLLER_SURVEILS
                 && ctx instanceof TriggerContext.Surveil surveil
                 && !surveil.firstThisTurn()
                 && conditionedEffect instanceof OncePerTurnTriggerEffect firstOnly

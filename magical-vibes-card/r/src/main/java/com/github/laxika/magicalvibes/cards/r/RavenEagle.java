@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -20,7 +19,7 @@ public class RavenEagle extends Card {
                 ExileGraveyardCardCreateTokenIfCreatureEffect.upToOne(CreateTokenEffect.ofClueToken(1)));
         addTrigger(Triggers.attacks(),
                 ExileGraveyardCardCreateTokenIfCreatureEffect.upToOne(CreateTokenEffect.ofClueToken(1)));
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1)));

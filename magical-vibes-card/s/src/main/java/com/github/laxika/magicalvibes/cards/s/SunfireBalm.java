@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class SunfireBalm extends Card {
                 List.of(),
                 0,
                 1).withCyclingTriggerTargets());
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
+        addTrigger(Triggers.youCycleThisCard(), new MayEffect(
                 PreventDamageEffect.nextToTarget(1),
                 "Prevent the next 1 damage that would be dealt to any target?"));
     }

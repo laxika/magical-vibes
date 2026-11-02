@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class JolraelMwonvuliRecluse extends Card {
 
     public JolraelMwonvuliRecluse() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new NthCardDrawTriggerEffect(2,
+        addTrigger(Triggers.youDrawCard(), new NthCardDrawTriggerEffect(2,
                 new CreateTokenEffect("Cat", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.CAT), Set.of(), Set.of())));
 

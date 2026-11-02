@@ -1313,4 +1313,110 @@ public final class Triggers {
         return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_INSTANT_OR_SORCERY_SPELL,
                 ObjectRelation.YOU_CONTROL, CREATURE);
     }
+
+    /** "Whenever you draw a card", once for each card */
+    public static LibraryTrigger youDrawCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you draw your second card each turn" */
+    public static LibraryTrigger youDrawSecondCardEachTurn() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS_SECOND_CARD, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent draws their second card each turn" */
+    public static LibraryTrigger opponentDrawsSecondCardEachTurn() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS_SECOND_CARD, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever an opponent draws a card", once for each card */
+    public static LibraryTrigger opponentDrawsCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DRAWS, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever enchanted player draws a card", once for each card */
+    public static LibraryTrigger enchantedPlayerDrawsCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.ENCHANTED_PLAYER_DRAWS, PlayerRelation.ANY);
+    }
+
+    /** "Whenever an opponent discards a card", once for each card, cycling included */
+    public static LibraryTrigger opponentDiscardsCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DISCARDS, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you discard a card", once for each card, cycling included */
+    public static LibraryTrigger youDiscardCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DISCARDS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you discard one or more cards", once for each discard event */
+    public static LibraryTrigger youDiscardOneOrMoreCards() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.DISCARDS_ONE_OR_MORE, PlayerRelation.YOU);
+    }
+
+    /** "Whenever a player cycles a card" */
+    public static LibraryTrigger playerCyclesCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.CYCLES, PlayerRelation.ANY);
+    }
+
+    /** "When you cycle this card" */
+    public static LibraryTrigger youCycleThisCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.THIS_CYCLED, PlayerRelation.YOU);
+    }
+
+    /** "When you discard this card", whatever causes the discard */
+    public static LibraryTrigger youDiscardThisCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.THIS_DISCARDED, PlayerRelation.ANY);
+    }
+
+    /** "When a spell or ability an opponent controls causes you to discard this card" */
+    public static LibraryTrigger opponentCausesYouToDiscardThisCard() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.THIS_DISCARDED, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you scry" */
+    public static LibraryTrigger youScry() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SCRIES, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent scries" */
+    public static LibraryTrigger opponentScries() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SCRIES, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you surveil" */
+    public static LibraryTrigger youSurveil() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SURVEILS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent surveils" */
+    public static LibraryTrigger opponentSurveils() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SURVEILS, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you search your library" */
+    public static LibraryTrigger youSearchYourLibrary() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SEARCHES_OWN_LIBRARY, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent searches their library" */
+    public static LibraryTrigger opponentSearchesTheirLibrary() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SEARCHES_OWN_LIBRARY, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever an opponent shuffles their library" */
+    public static LibraryTrigger opponentShufflesLibrary() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SHUFFLES_LIBRARY, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever a player shuffles their library" */
+    public static LibraryTrigger playerShufflesLibrary() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SHUFFLES_LIBRARY, PlayerRelation.ANY);
+    }
+
+    /** "Whenever a spell or ability causes its controller to shuffle their library" */
+    public static LibraryTrigger spellOrAbilityCausesItsControllerToShuffle() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.SPELL_OR_ABILITY_CAUSES_ITS_CONTROLLER_TO_SHUFFLE,
+                PlayerRelation.ANY);
+    }
 }

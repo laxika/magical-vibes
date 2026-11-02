@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
@@ -31,7 +30,7 @@ public class IntiSeneschalOfTheSun extends Card {
                         "a card"),
                 "Discard a card to put a +1/+1 counter on target attacking creature and give it trample?"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,
+        addTrigger(Triggers.youDiscardOneOrMoreCards(),
                 new ExileTopCardsMayPlayUntilNextEndStepEffect(1));
     }
 }

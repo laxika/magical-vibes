@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect
 import com.github.laxika.magicalvibes.model.effect.RevealEachDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "33")
 @CardRegistration(set = "OPCA", collectorNumber = "68")
@@ -22,8 +23,8 @@ public class SeaOfSand extends Card {
         CardEffect nonlandDraw = new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER);
         RevealEachDrawEffect drawEffect = new RevealEachDrawEffect(landDraw, nonlandDraw);
 
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, drawEffect);
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, drawEffect);
+        addTrigger(Triggers.youDrawCard(), drawEffect);
+        addTrigger(Triggers.opponentDrawsCard(), drawEffect);
         target(TargetFilters.permanent()).addEffect(
                 EffectSlot.CHAOS_TRIGGERED, new PutTargetOnTopOfLibraryEffect());
     }

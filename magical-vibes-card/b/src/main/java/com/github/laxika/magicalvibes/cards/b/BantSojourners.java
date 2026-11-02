@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -22,7 +21,7 @@ public class BantSojourners extends Card {
                 "Create a 1/1 white Soldier creature token?"));
 
         // Cycling {2}{W} ({2}{W}, Discard this card: Draw a card.) — discard cost is intrinsic.
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(CreateTokenEffect.whiteSoldier(1),
+        addTrigger(Triggers.youCycleThisCard(), new MayEffect(CreateTokenEffect.whiteSoldier(1),
                 "Create a 1/1 white Soldier creature token?"));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{W}",
                 List.of(new DrawCardEffect(1)),

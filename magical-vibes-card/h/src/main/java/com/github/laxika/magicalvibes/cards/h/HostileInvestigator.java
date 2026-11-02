@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -25,7 +24,7 @@ public class HostileInvestigator extends Card {
 
         OncePerTurnTriggerEffect investigate = new OncePerTurnTriggerEffect(
                 CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, investigate);
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, investigate);
+        addTrigger(Triggers.youDiscardOneOrMoreCards(), investigate);
+        addTrigger(Triggers.opponentDiscardsCard(), investigate);
     }
 }

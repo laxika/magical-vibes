@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 6: families 1 to 6 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 7: families 1 to 7 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3147,7 +3147,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 ### Step 13
 
 Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
-run 4 family 4, run 5 family 5, run 6 family 6.
+run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7.
 
 #### Run 1: steps and phases
 
@@ -3813,6 +3813,124 @@ ability"), the skills and `ARCHITECTURE.md`. `effect-slot-inventory.md` was re-r
   `TargetLegalityServiceTest` and `CounterSpellEffectHandlerTest`, and the known ones in `CardImmutabilityArchTest`,
   `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 5 (the modal-mode, kicker and Reign of
+  Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
+- The full suite was not run here.
+
+#### Run 7: library, draw and discard
+
+The 23 library, draw and discard constants are gone: `ON_CONTROLLER_DRAWS`, `ON_OPPONENT_DRAWS`,
+`ON_ENCHANTED_PLAYER_DRAWS`, `ON_CONTROLLER_DRAWS_SECOND_CARD` and the two `GRAVEYARD_` second-card slots; the
+controller, opponent and discard-event discard slots, `ON_SELF_DISCARDED` and `ON_SELF_DISCARDED_BY_OPPONENT`;
+`ON_ANY_PLAYER_CYCLES` and `ON_SELF_CYCLED`; the scry and surveil slots and `GRAVEYARD_ON_CONTROLLER_SURVEILS`; the two
+library-search slots; the three shuffle slots. Family 8 (tap and untap) is next; families 8 to 11 are left.
+
+**Authoring.**
+
+- `model.trigger.LibraryTrigger(LibraryEvent event, PlayerRelation player)`: a player draws a card (**CR 121.1**,
+  checked), discards one (**CR 701.9a**, checked) or cycles one, scries (**CR 701.22a**, checked), surveils
+  (**CR 701.25a**, checked), searches their library (**CR 701.23a**, checked) or shuffles it (**CR 701.24a**, checked).
+  `LibraryEvent` is `DRAWS`, `DRAWS_SECOND_CARD`, `ENCHANTED_PLAYER_DRAWS`, `DISCARDS` (cycling included),
+  `DISCARDS_ONE_OR_MORE` (once per discard event), `CYCLES`, `THIS_CYCLED`, `THIS_DISCARDED`, `SCRIES`, `SURVEILS`,
+  `SEARCHES_OWN_LIBRARY`, `SHUFFLES_LIBRARY` and `SPELL_OR_ABILITY_CAUSES_ITS_CONTROLLER_TO_SHUFFLE`; the player is who
+  does it. For `THIS_DISCARDED` the player is the controller of the spell or ability that causes the discard:
+  `youDiscardThisCard()` is `ANY`, `opponentCausesYouToDiscardThisCard()` is `OPPONENT`. "Enchanted player draws" is
+  its own event because `trigger.PlayerRelation` has no enchanted value and `TriggerMatcher.causedBy` switches over it
+  exhaustively.
+- **Zones.** "When you cycle this card" triggers from whatever zone the card winds up in (**CR 702.29c**, checked), and
+  a discard is a move to the graveyard, so `THIS_CYCLED` and `THIS_DISCARDED` function by default from the graveyard,
+  exile and library (the last two for madness-style and Library of Leng-style replacements). The old abilities
+  functioned from the battlefield by default but their collectors read the card's slot in any zone; the
+  `LibraryWatch` constants read them as graveyard abilities, which all of them now are, so no card behaves differently.
+  `TriggerIndex` only indexes zone-change and permanent-change triggers, so the new zones reach no other reader.
+- One named `Triggers` factory per slot reading (21; the two graveyard forms reuse the battlefield factory with a
+  `TriggerCondition` zone): `youDrawCard()`, `youDrawSecondCardEachTurn()`, `opponentDrawsSecondCardEachTurn()`,
+  `opponentDrawsCard()`, `enchantedPlayerDrawsCard()`, `opponentDiscardsCard()`, `youDiscardCard()`,
+  `youDiscardOneOrMoreCards()`, `playerCyclesCard()`, `youCycleThisCard()`, `youDiscardThisCard()`,
+  `opponentCausesYouToDiscardThisCard()`, `youScry()`, `opponentScries()`, `youSurveil()`, `opponentSurveils()`,
+  `youSearchYourLibrary()`, `opponentSearchesTheirLibrary()`, `opponentShufflesLibrary()`, `playerShufflesLibrary()`,
+  `spellOrAbilityCausesItsControllerToShuffle()` (`scripts/step13-library-slots.tsv` maps each slot to its factory,
+  zone, event and player).
+- **Kept as the slots were:** "whenever you cycle a card" is still `youDiscardCard()` + `CyclingTriggerEffect` on 12
+  cards, beside `playerCyclesCard()`; about 9 cards still say "your second card each turn" as `youDrawCard()` +
+  `NthCardDrawTriggerEffect(2, …)`; Pure Intentions' temporary global ability still registers `opponentDiscardsCard()`
+  with the opposite meaning (it fires when its own controller is made to discard by an opponent); Psychogenic Probe's
+  `playerShufflesLibrary()` doesn't check that a spell or ability caused the shuffle; Obstinate Baloth-style
+  `EnterBattlefieldOnDiscardEffect` replacements still sit in an `opponentCausesYouToDiscardThisCard()` ability and are
+  read in place by the seven discard paths. The step 1 inventory's per-collector differences (ability-loss checks,
+  granted triggers, may handling) are unchanged.
+- `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect.retainedAbilitySlot` is `retainedTrigger` (Crystalline
+  Resonance keeps its `youDiscardCard()` ability by trigger; its handler re-adds the registration with `addTrigger`).
+- `LegacySlotGrouping.ALL` lost its 5 library slots (`ON_SELF_CYCLED`, `ON_SELF_DISCARDED`,
+  `ON_SELF_DISCARDED_BY_OPPONENT` and the two search slots); `LegacySlots.slotOf` knows `LibraryTrigger`.
+
+**No rules event, no index.** As in runs 1 to 6, `DrawService`, the discard, discard-event, cycle, scry and surveil
+collectors in `TriggerCollectionService`, `LibrarySearchTriggerHelper` and `LibraryShuffleHelper` still run where the
+slots were collected. `service/trigger/LibraryWatch` (a `TriggerWatch`) has one constant per old slot, naming its
+trigger and the zone the collector reads. The 72 handler registrations of `DiscardTriggerCollectorService`,
+`ScryTriggerCollectorService` and `MiscTriggerCollectorService` moved from `@CollectsTrigger(slot = …)` to
+`@CollectsLibraryTrigger(watch = …)` (`scripts/step13-library-rekey.py`), scanned by `TriggerCollectorRegistry` and
+`GameEngineConfig`. The readers were converted by `scripts/step13-library-readers.py` (run 5's reader script on this
+family's TSV); by hand: `DrawService`'s three methods that took a slot take a `LibraryWatch` (and read granted
+abilities with `grantedTriggerEffects(…, watch.trigger())`), and `LibrarySearchTriggerHelper` picks its watch before
+reading. The run-time conjured Choking Tethers (`ConjureSkywriterDjinnSpellbookEffectHandler`) was converted by the
+card script. Grouping, target routing, wrapper checks, face-down and ability-loss checks are unchanged, so the run makes
+no rules change. Shadow mode was not run, for run 1's reason.
+
+**Cards.** `scripts/step13-library-triggers.py` (run 5's script reading the library TSV, with
+`BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` as one more trigger-argument head) converted 332 card classes (the
+step 1 inventory's count) and no card test (`HoofprintsOfTheStagTest`'s comment naming the slot was changed by hand),
+one ability per registration in the old order. Nothing needed `MANUAL`. The domain Javadoc that named a slot names its
+factory; engine comments, log lines and the collector tests' display names keep the slot name, which is the
+`LibraryWatch` constant's. `scripts/step13-library-docs.py` rewrote agent-docs (148 lines); by hand: Pure Intentions'
+`ORACLE_TEXT_EFFECT_MAP.md` row shows `new TriggeredAbility(…)`, the skills and `ARCHITECTURE.md`.
+`effect-slot-inventory.md` was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the collectors still read their wrappers: `NthCardDrawTriggerEffect`, `FirstOrSecondCardDrawTriggerEffect`,
+  `ExceptFirstDrawStepTriggerEffect`, `FirstDrawStepDrawOnlyTriggerEffect`, `DrawRevealTriggerEffect` /
+  `FirstDrawRevealTriggerEffect`, `CyclingTriggerEffect`, `OpponentCausedDiscardTriggerEffect`,
+  `TriggeringCardConditionalEffect` (any discarded card for a discard event), `OncePerTurnTriggerEffect` with the
+  first-cycling, first-nonland-discard, first-discard-event and first-surveil keys, `OnceOnlyTriggerEffect`, and the
+  intervening-if `ConditionalEffect`s of the self-cycle and self-discard abilities. The "second card" pair and the
+  "whenever you cycle" pair above merge there.
+- Step 15: the drawn card, the discarded cards and their count (`eventValue`), the scry's bottomed and looked-at counts,
+  the drawing, discarding, scrying, searching and shuffling player (`targetId`) are still bound by the collectors.
+- `EnterBattlefieldOnDiscardEffect` is a replacement effect (step 8's kind) left in a trigger; the step that deletes
+  the legacy paths should move it to the replacement model.
+
+**Tests changed.**
+
+- New `LibraryTriggerTest` (`model/trigger/`): default zones (battlefield for a player's action; graveyard, exile and
+  library for this card being cycled or discarded), the factories' events and players, null rejection, a card's
+  second-card abilities read by zone, and a cycling ability read from the graveyard.
+- New `LibraryWatchTest`: every library, target, counter, damage, combat and spell-and-ability watch has its own
+  (trigger, zone) pair, every library watch reads a zone its trigger functions from (the `GRAVEYARD_` forms by their
+  condition), a watch reads only its trigger's abilities from its zone, and the self-cycle and self-discard watches
+  read the card.
+- `DiscardTriggerCollectorServiceTest`, `ScryTriggerCollectorServiceTest`, `MiscTriggerCollectorServiceTest` and
+  `TriggerCollectorRegistryTest` dispatch to the watches (by the reader script).
+- `DrawServiceTest`, `ShuffleHandIntoLibraryAndDrawEffectHandlerTest` and `CardAbilitiesTest`'s Death Pulse target
+  group add the triggers (by the card script's call and reader passes).
+- `CardAbilitiesTest`, `GrantedAbilitiesTest`, `TriggeredAbilityTest` and `GameDataDeepCopyTest` used
+  `ON_SELF_CYCLED` and `GRAVEYARD_ON_CONTROLLER_SURVEILS` as arbitrary legacy slots (the first as the all-grouped
+  one): they use `ON_CONTROLLER_CLASHES` (also all-grouped) and `GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME`, both in family
+  11. `LegacySlotTriggerTest`'s graveyard row uses the latter, and its per-slot case runs 23 fewer times (it is
+  parameterised over `EffectSlot.values()`).
+
+**Test runs.**
+
+- Card: every test class of a converted card (and Skywriter Djinn's, which conjures Choking Tethers) and every card
+  test that references one (706 classes, 5,991 tests): all passing.
+- Application: the trigger-model, watch, registry, discard, scry and misc collector, draw, shuffle-hand, step, planar,
+  spell-cast collector, card-ability, granted-ability, freeze, architecture, simulation-copy, targeting-consistency,
+  pipeline and legacy-binding classes (27 classes; 682 tests, 695 at HEAD: 23 deleted cases, 10 new): 29 failures,
+  exactly the tests that fail at HEAD (`4ee79ba960`, same classes run in a worktree with the main tree's
+  `card-data-cache`): mock wiring in `StepTriggerServiceTest`, `SpellCastTriggerCollectorServiceTest`,
+  `PlanechaseServiceTest`, `ShuffleHandIntoLibraryAndDrawEffectHandlerTest` (3) and `DrawServiceTest` (the
+  additional-trigger copy), and the known ones in `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and
+  `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 6 (the modal-mode, kicker and Reign of
   Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
 - The full suite was not run here.
 

@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTriggers;
+import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTrigger;
+import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
@@ -259,6 +261,20 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
+                CollectsLibraryTrigger librarySingle = method.getAnnotation(CollectsLibraryTrigger.class);
+                if (librarySingle != null) {
+                    registerTriggerHandler(bean, method, librarySingle.watch(), librarySingle.value());
+                    count++;
+                }
+
+                CollectsLibraryTriggers libraryContainer = method.getAnnotation(CollectsLibraryTriggers.class);
+                if (libraryContainer != null) {
+                    for (CollectsLibraryTrigger clt : libraryContainer.value()) {
+                        registerTriggerHandler(bean, method, clt.watch(), clt.value());
+                        count++;
+                    }
+                }
+
                 CollectsEmblemTrigger emblemSingle = method.getAnnotation(CollectsEmblemTrigger.class);
                 if (emblemSingle != null) {
                     registerEmblemTriggerHandler(bean, method, emblemSingle);
@@ -284,7 +300,8 @@ public class GameEngineConfig implements SmartInitializingSingleton {
 
     /**
      * Registers a handler for {@code key}, an {@code EffectSlot}, a {@code ZoneChangeWatch}, a
-     * {@code SpellAbilityWatch}, a {@code CombatWatch}, a {@code DamageWatch} or a {@code CounterWatch}.
+     * {@code SpellAbilityWatch}, a {@code CombatWatch}, a {@code DamageWatch}, a {@code CounterWatch} or a
+     * {@code LibraryWatch}.
      */
     @SuppressWarnings("unchecked")
     private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {

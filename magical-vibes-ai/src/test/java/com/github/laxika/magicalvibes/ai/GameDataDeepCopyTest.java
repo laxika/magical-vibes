@@ -128,7 +128,7 @@ class GameDataDeepCopyTest {
         Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
         origPerm.addTemporaryTriggeredEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new DrawCardEffect(1));
         origPerm.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(2)));
-        origPerm.addUntilNextUpkeepTriggeredEffect(player1.getId(), EffectSlot.ON_SELF_CYCLED, new DrawCardEffect(3));
+        origPerm.addUntilNextUpkeepTriggeredEffect(player1.getId(), EffectSlot.ON_CONTROLLER_CLASHES, new DrawCardEffect(3));
 
         GameData copy = gd.simulationCopy();
         Permanent copyPerm = copy.playerBattlefields.get(player1.getId()).getFirst();
@@ -140,7 +140,7 @@ class GameDataDeepCopyTest {
                 .containsExactly(new DrawCardEffect(2), new DrawCardEffect(4));
         assertThat(origPerm.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU)))
                 .containsExactly(new DrawCardEffect(2));
-        assertThat(origPerm.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_CYCLED)).containsExactly(new DrawCardEffect(3));
+        assertThat(origPerm.getTemporaryTriggeredEffects(EffectSlot.ON_CONTROLLER_CLASHES)).containsExactly(new DrawCardEffect(3));
     }
 
     @Test

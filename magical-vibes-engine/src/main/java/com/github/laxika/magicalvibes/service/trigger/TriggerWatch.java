@@ -10,8 +10,9 @@ import java.util.List;
 
 /**
  * An old slot collector that reads triggered abilities with a real trigger: a {@link SpellAbilityWatch}, a
- * {@link CombatWatch}, a {@link DamageWatch} or a {@link CounterWatch}. It names the trigger the slot's cards were
- * converted to and the zone the collector reads them in, and keys the collector's handlers.
+ * {@link CombatWatch}, a {@link DamageWatch}, a {@link CounterWatch}, a {@link TargetWatch} or a {@link LibraryWatch}.
+ * It names the trigger the slot's cards were converted to and the zone the collector reads them in, and keys the
+ * collector's handlers.
  */
 public interface TriggerWatch {
 

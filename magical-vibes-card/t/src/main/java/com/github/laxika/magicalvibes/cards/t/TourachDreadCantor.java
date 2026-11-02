@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -26,7 +25,7 @@ public class TourachDreadCantor extends Card {
     public TourachDreadCantor() {
         addStaticEffect(new KickerEffect("{B}{B}"));
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS,
+        addTrigger(Triggers.opponentDiscardsCard(),
                 new PutCountersOnSourceEffect(1, 1, 1));
 
         targetWhenKicked(new PlayerPredicateTargetFilter(

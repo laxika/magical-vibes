@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -27,9 +27,9 @@ public class DivinersWand extends Card {
 
     public DivinersWand() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_CONTROLLER_DRAWS,
+                new TriggeredAbility(Triggers.youDrawCard(),
                 SequenceEffect.of(new BoostSelfEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF))),
                 GrantScope.EQUIPPED_CREATURE));
 
         // Equipped creature has "{4}: Draw a card."

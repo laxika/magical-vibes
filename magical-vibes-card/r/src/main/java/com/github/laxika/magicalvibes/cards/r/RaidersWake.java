@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
@@ -20,7 +19,7 @@ public class RaidersWake extends Card {
 
     public RaidersWake() {
         // Whenever an opponent discards a card, that player loses 2 life.
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
+        addTrigger(Triggers.opponentDiscardsCard(), new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));
         // Raid — At the beginning of your end step, if you attacked this turn,
         // target opponent discards a card.
         target(new PlayerPredicateTargetFilter(

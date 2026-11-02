@@ -176,15 +176,15 @@ class CardAbilitiesTest {
 
     @Test
     void aSlotGroupedAllGetsOneAbilityAtThePositionOfItsFirstRegistration() {
-        card.addEffect(EffectSlot.ON_SELF_CYCLED, DRAW_ONE);
+        card.addEffect(EffectSlot.ON_CONTROLLER_CLASHES, DRAW_ONE);
         card.addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, GAIN_ONE);
-        card.addEffect(EffectSlot.ON_SELF_CYCLED, DRAW_TWO, TriggerMode.ONCE_PER_BLOCK);
+        card.addEffect(EffectSlot.ON_CONTROLLER_CLASHES, DRAW_TWO, TriggerMode.ONCE_PER_BLOCK);
 
         assertThat(card.getAbilities()).containsExactly(
-                legacy(EffectSlot.ON_SELF_CYCLED, new EffectRegistration(DRAW_ONE),
+                legacy(EffectSlot.ON_CONTROLLER_CLASHES, new EffectRegistration(DRAW_ONE),
                         new EffectRegistration(DRAW_TWO, TriggerMode.ONCE_PER_BLOCK)),
                 legacy(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new EffectRegistration(GAIN_ONE)));
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_SELF_CYCLED)).containsExactly(
+        assertThat(card.getEffectRegistrations(EffectSlot.ON_CONTROLLER_CLASHES)).containsExactly(
                 new EffectRegistration(DRAW_ONE), new EffectRegistration(DRAW_TWO, TriggerMode.ONCE_PER_BLOCK));
     }
 
@@ -195,8 +195,8 @@ class CardAbilitiesTest {
         assertThatThrownBy(() -> card.getEffectRegistrations(EffectSlot.ON_SELF_BECOMES_UNTAPPED).clear())
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> card.getAbilities().clear()).isInstanceOf(UnsupportedOperationException.class);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_CYCLED)).isEmpty();
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_SELF_CYCLED)).isEmpty();
+        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CLASHES)).isEmpty();
+        assertThat(card.getEffectRegistrations(EffectSlot.ON_CONTROLLER_CLASHES)).isEmpty();
     }
 
     @Test
@@ -352,7 +352,7 @@ class CardAbilitiesTest {
     void groupsOfOtherAbilitiesAfterTheSpellsStayOnTheCardOnly() {
         // Death Pulse: the spell's target, then its cycling trigger's.
         card.target(TargetFilters.creature()).addSpellEffect(DRAW_ONE);
-        card.target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_CYCLED, DRAW_TWO);
+        card.target(TargetFilters.creature()).addTrigger(Triggers.youCycleThisCard(), DRAW_TWO);
 
         assertThat(card.getTargetGroups()).hasSize(2);
         assertThat(card.getSpellTargetGroups()).containsExactly(card.getTargetGroups().getFirst());

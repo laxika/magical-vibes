@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardDuplicate
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -93,7 +93,7 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
             return;
         }
         boolean entersBattlefield = gameData.discardCausedByOpponent
-                && card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                && LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(card).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
         if (entersBattlefield) {
             battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(

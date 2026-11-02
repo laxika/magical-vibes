@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONS", collectorNumber = "272")
 @CardRegistration(set = "ARC", collectorNumber = "62")
@@ -25,7 +25,7 @@ public class KrosanTusker extends Card {
 
     public KrosanTusker() {
         addCycling("{2}{G}");
-        addEffect(EffectSlot.ON_SELF_CYCLED,
+        addTrigger(Triggers.youCycleThisCard(),
                 new MayEffect(new SearchLibraryEffect(
                         CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND),
                         "Search your library for a basic land card?"));

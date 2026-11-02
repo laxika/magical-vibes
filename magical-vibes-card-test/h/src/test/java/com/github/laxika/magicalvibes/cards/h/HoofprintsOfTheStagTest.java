@@ -67,7 +67,7 @@ class HoofprintsOfTheStagTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
 
-        assertThat(gd.stack).isEmpty(); // player1's ON_CONTROLLER_DRAWS does not fire on the opponent's draw
+        assertThat(gd.stack).isEmpty(); // player1's youDrawCard() ability does not fire on the opponent's draw
         assertThat(hoofprints.getCounterCount(CounterType.HOOFPRINT)).isZero();
     }
 

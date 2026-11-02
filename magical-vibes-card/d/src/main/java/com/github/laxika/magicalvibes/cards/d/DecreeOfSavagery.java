@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SCG", collectorNumber = "115")
 @CardRegistration(set = "AFC", collectorNumber = "156")
@@ -19,7 +19,7 @@ public class DecreeOfSavagery extends Card {
         addSpellEffect(new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 4, new PermanentIsCreaturePredicate()));
 
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
+        addTrigger(Triggers.youCycleThisCard(), new MayEffect(
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 4, new PermanentIsCreaturePredicate()),
                 PROMPT));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +27,7 @@ public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
         Set<CardSupertype> additionalSupertypesOverride,
         Set<Keyword> additionalKeywordsOverride,
         PermanentPredicate targetPredicate,
-        EffectSlot retainedAbilitySlot,
+        Trigger retainedTrigger,
         boolean retainSourceActivatedAbilities
 ) implements CardEffect {
 
@@ -57,9 +57,9 @@ public record BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
     }
 
     public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
-            PermanentPredicate targetPredicate, EffectSlot retainedAbilitySlot) {
+            PermanentPredicate targetPredicate, Trigger retainedTrigger) {
         this(null, null, null, Set.of(), Set.of(), Set.of(), Set.of(),
-                targetPredicate, retainedAbilitySlot, false);
+                targetPredicate, retainedTrigger, false);
     }
 
     public BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(

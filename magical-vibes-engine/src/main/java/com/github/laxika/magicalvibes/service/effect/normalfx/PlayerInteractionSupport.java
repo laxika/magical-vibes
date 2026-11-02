@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -36,6 +35,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -433,7 +433,7 @@ public class PlayerInteractionSupport {
             if (candidates.isEmpty()) break;
             Card discarded = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
             boolean entersBattlefield = gameData.discardCausedByOpponent
-                    && discarded.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                    && LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(discarded).stream()
                     .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
             if (replacementSource != null && !entersBattlefield && !discarded.isToken()) {
                 // The owner chooses whether each randomly chosen card goes on top of the library
@@ -510,7 +510,7 @@ public class PlayerInteractionSupport {
         int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
         Card discarded = hand.remove(chosen);
         boolean entersBattlefield = gameData.discardCausedByOpponent
-                && discarded.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                && LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(discarded).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
         if (entersBattlefield) {
             battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(

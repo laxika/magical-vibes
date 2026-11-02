@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOneOfDiscardedCardsFromGraveyardEffect;
@@ -20,7 +19,7 @@ public class ConspiracyTheorist extends Card {
     public ConspiracyTheorist() {
         addTrigger(Triggers.attacks(), new MayPayManaEffect(
                 "{1}", new DiscardAndDrawCardEffect(), "Pay {1} and discard a card to draw a card?"));
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new MayEffect(
+        addTrigger(Triggers.youDiscardOneOrMoreCards(), new MayEffect(
                 new ExileOneOfDiscardedCardsFromGraveyardEffect(),
                 "Exile one of the discarded nonland cards?"));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(

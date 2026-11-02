@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessWaterbendsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
@@ -14,7 +13,7 @@ public class TheUnagiOfKyoshiIsland extends Card {
     public TheUnagiOfKyoshiIsland() {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessWaterbendsEffect(4));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        addTrigger(Triggers.opponentDrawsCard(),
                 new NthCardDrawTriggerEffect(2, new DrawCardEffect(2)));
     }
 }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.library;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,8 +23,8 @@ public final class LibrarySearchTriggerHelper {
      * those still count as searching.
      * <p>
      * Both trigger kinds are covered: permanents controlled by the searching
-     * player fire their {@link EffectSlot#ON_CONTROLLER_SEARCHES_LIBRARY} effects, and permanents
-     * controlled by every other player fire their {@link EffectSlot#ON_OPPONENT_SEARCHES_LIBRARY}
+     * player fire their {@link LibraryWatch#ON_CONTROLLER_SEARCHES_LIBRARY} effects, and permanents
+     * controlled by every other player fire their {@link LibraryWatch#ON_OPPONENT_SEARCHES_LIBRARY}
      * effects with the searching player as the trigger's target. Triggers are only enqueued (and
      * logged) here; they go on the stack the next time pending triggers are processed.
      *
@@ -40,9 +40,9 @@ public final class LibrarySearchTriggerHelper {
             for (var perm : List.copyOf(battlefield)) {
                 if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
                 boolean controllerSearch = controllerId.equals(searchingPlayerId);
-                List<CardEffect> effects = perm.getCard().getEffects(controllerSearch
-                        ? EffectSlot.ON_CONTROLLER_SEARCHES_LIBRARY
-                        : EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY);
+                List<CardEffect> effects = (controllerSearch
+                        ? LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY
+                        : LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY).effectsOf(perm.getCard());
                 if (effects.isEmpty()) continue;
 
                 StackEntry trigger = new StackEntry(
@@ -72,8 +72,8 @@ public final class LibrarySearchTriggerHelper {
         boolean[] found = {false};
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (var perm : battlefield) {
-                if (!perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_SEARCHES_LIBRARY).isEmpty()
-                        || !perm.getCard().getEffects(EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY).isEmpty()) {
+                if (!LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY.effectsOf(perm.getCard()).isEmpty()
+                        || !LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY.effectsOf(perm.getCard()).isEmpty()) {
                     found[0] = true;
                 }
             }

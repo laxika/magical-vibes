@@ -202,13 +202,13 @@ combat damage step is processed.
 | `Triggers.leavesGraveyard(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_OWN)` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
 | `Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerInstantOrSorceryCardLeavesGraveyardTriggers` (one trigger per nontoken instant or sorcery card) | Non-targeting |
 | `Triggers.becomesMonstrous()` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
-| `ON_SELF_CYCLED` | `TriggerCollectionService.checkCycleTriggers` | Self-cycle (non-targeting → stack; targeted → `DiscardControllerTriggerTarget` with no source permanent) |
-| `ON_SELF_DISCARDED` | `TriggerCollectionService.checkDiscardTriggers` | Discard-self (any cause; non-targeting → stack, any-target → `DiscardTriggerAnyTarget`) |
-| `ON_SELF_DISCARDED_BY_OPPONENT` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
-| `ON_CONTROLLER_DISCARDS` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
-| `ON_CONTROLLER_SCRIES` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
-| `ON_OPPONENT_SCRIES` | `ScryTriggerCollectorService` | Opponent scry; the scrying player is supplied as the implicit player context and event-driven effects enqueue directly |
-| `ON_CONTROLLER_SEARCHES_LIBRARY` | `LibrarySearchTriggerHelper` | Controller searches their own library; non-targeting effects enqueue directly |
+| `Triggers.youCycleThisCard()` | `TriggerCollectionService.checkCycleTriggers` | Self-cycle (non-targeting → stack; targeted → `DiscardControllerTriggerTarget` with no source permanent) |
+| `Triggers.youDiscardThisCard()` | `TriggerCollectionService.checkDiscardTriggers` | Discard-self (any cause; non-targeting → stack, any-target → `DiscardTriggerAnyTarget`) |
+| `Triggers.opponentCausesYouToDiscardThisCard()` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
+| `Triggers.youDiscardCard()` (targeting variants) | `DiscardTriggerCollectorService` → `DiscardControllerTriggerTarget` (queued when a controller-discard effect's `targetSpec()` includes permanents, e.g. Zenith Seeker's "target creature gains flying"). Non-targeting controller-discard effects (Hekma Sentinels self-boost, Curator of Mysteries scry, Necropotence exile) still enqueue a `TRIGGERED_ABILITY` straight onto the stack. | Controller-discard (reuses `TriggerTargetCollector.Options.ATTACK`; honours the effect's `targetSpec().predicate()`) |
+| `Triggers.youScry()` | `ScryTriggerCollectorService` | Controller scry; non-targeting effects enqueue directly, while targeted effects use the standard spell-target trigger choice |
+| `Triggers.opponentScries()` | `ScryTriggerCollectorService` | Opponent scry; the scrying player is supplied as the implicit player context and event-driven effects enqueue directly |
+| `Triggers.youSearchYourLibrary()` | `LibrarySearchTriggerHelper` | Controller searches their own library; non-targeting effects enqueue directly |
 | `Triggers.putIntoHandFrom(Zone.LIBRARY, null, ObjectRelation.YOU_OWN)` | `TriggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers` + `MiscTriggerCollectorService` | Controller's card enters their hand from their library; non-targeting effects enqueue directly |
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
@@ -217,10 +217,10 @@ combat damage step is processed.
 | `ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT` | `TriggerCollectionService.checkControllerRollsHighestNaturalResultTriggers` → ordinary trigger dispatch | One trigger for each non-ignored die whose natural face is that die's highest result |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
-| `ON_CONTROLLER_SURVEILS` | `MiscTriggerCollectorService` | Controller surveils; non-targeting effects enqueue directly |
-| `ON_OPPONENT_SURVEILS` | `MiscTriggerCollectorService` | Opponent surveils; the surveiling player is supplied as the implicit player context and event-driven effects enqueue directly |
+| `Triggers.youSurveil()` | `MiscTriggerCollectorService` | Controller surveils; non-targeting effects enqueue directly |
+| `Triggers.opponentSurveils()` | `MiscTriggerCollectorService` | Opponent surveils; the surveiling player is supplied as the implicit player context and event-driven effects enqueue directly |
 | `ON_CONTROLLER_SEEKS` | `SeekTriggerCollectorService` | Controller seeks one or more cards; the sought cards are carried in `TriggerContext.Seek` and non-targeting effects enqueue directly |
-| `ON_CONTROLLER_DISCARD_EVENT` | `TriggerCollectionService.checkDiscardEventTriggers` → `DiscardTriggerCollectorService` | One trigger for a one-or-more-card discard event; the count is carried by the trigger context and stack entry |
+| `Triggers.youDiscardOneOrMoreCards()` | `TriggerCollectionService.checkDiscardEventTriggers` → `DiscardTriggerCollectorService` | One trigger for a one-or-more-card discard event; the count is carried by the trigger context and stack entry |
 | `Triggers.becomesTargetOfSpell()` / `becomesTargetOfSpellOrAbility()` / `becomesTargetOfOpponentSpellOrAbility()` / `becomesTargetOfOpponentSpell()` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `Triggers.youBecomeTargetOfSpell()` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted player; spell path only) | Spell-target |
 | `Triggers.playerChoosesTargets()` | `TriggerCollectionService.checkTargetChoiceTriggers` after spell/ability target selection | Target-choice event; the chosen spell/ability is carried as non-targeting `triggeringCardId`. `AbilityTargetChoiceTriggerEffect` narrows this event to an activated or triggered ability controlled by the source controller that targets a player or permanent |
@@ -232,13 +232,13 @@ combat damage step is processed.
 | `Triggers.creatureDealsCombatDamageToYou()` | `TriggerCollectionService.queueCreatureCombatDamageToYouTriggers` — never targets; the damaging creature is baked in as the stack entry's `targetId` with `nonTargeting = true`, so no pending-choice is queued. Teysa, Envoy of Ghosts. | None (baked-in subject) |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain; the legacy creature/player path is used when no card-level permanent target filter is declared, while declared permanent filters are evaluated for target selection |
 | `ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` + `MiscTriggerCollectorService` | Life-gain |
-| `ON_CONTROLLER_DRAWS` / `ON_CONTROLLER_DRAWS_SECOND_CARD` (targeted effects) | `DrawService.checkControllerDrawTriggers` queues `DrawTriggerPermanentTarget` for a permanent-target effect bound to the card's `target(...)` filter (e.g. Mantle of Tides). `TriggeredAbilityQueueService.processNextDrawTriggerPermanentTarget` uses the shared `TriggerTargetCollector`; the controller chooses the permanent before the ability goes on the stack. | Draw (permanent target) |
+| `Triggers.youDrawCard()` / `Triggers.youDrawSecondCardEachTurn()` (targeted effects) | `DrawService.checkControllerDrawTriggers` queues `DrawTriggerPermanentTarget` for a permanent-target effect bound to the card's `target(...)` filter (e.g. Mantle of Tides). `TriggeredAbilityQueueService.processNextDrawTriggerPermanentTarget` uses the shared `TriggerTargetCollector`; the controller chooses the permanent before the ability goes on the stack. | Draw (permanent target) |
 | `GRAVEYARD_ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `GRAVEYARD_ON_CONTROLLER_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` | `TriggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers` | None (graveyard-resident, non-targeting; one trigger per nonland card milled) |
-| `GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
-| `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
-| `ON_OPPONENT_DRAWS` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
+| `Triggers.opponentDrawsSecondCardEachTurn() from the graveyard` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
+| `Triggers.youDrawCard()` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
+| `Triggers.opponentDrawsCard()` (any-target effects) | `DrawService.checkOpponentDrawTriggers` → `DrawTriggerAnyTarget` (the source controller chooses the target before the ability goes on the stack). | Draw (any target) |
 | `Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.ANY)` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
 | `Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL)` / `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` / `Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)` / `Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS)` / `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)` / `Triggers.enters(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL)` (targeting effects) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects on `Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL)` also queue this choice because the entering player's identity is not a default target; other player-targeting enter effects may use their pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — permanents honouring the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`; true "any target" effects are narrowed by evaluating `TargetPredicates.anyTarget()`) |
 | `Triggers.enters(null, ObjectRelation.ANY)` | `TriggerCollectionService.checkAllyPermanentEntersTriggers` scans the controller's graveyard for each permanent entering under that controller's control; `TriggeringPermanentConditionalEffect` filters the entering permanent and `MayEffect` is queued as a may-ability. | None (graveyard-resident, non-targeting) |
@@ -271,10 +271,10 @@ The controller-draw slots are an exception when an effect declares a target: any
 `Triggers.dealsDamage()`, `Triggers.instantOrSorceryYouControlDealsDamage()`, `Triggers.becomesBlocked()` (only the non-targeting flavour; a
 permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the mapping table above),
 `Triggers.drawStep(ActivePlayer.YOU)`, `Triggers.drawStep(ActivePlayer.ANY)`,
-`ON_CONTROLLER_DRAWS` (only the non–any-target flavour; the any-target variant is routed through the
-`DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS` (only the
+`Triggers.youDrawCard()` (only the non–any-target flavour; the any-target variant is routed through the
+`DrawTriggerAnyTarget` pipeline — see the mapping table above), `Triggers.opponentDrawsCard()` (only the
 non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget` pipeline),
-`ON_ENCHANTED_PLAYER_DRAWS`, `ON_OPPONENT_DISCARDS`,
+`Triggers.enchantedPlayerDrawsCard()`, `Triggers.opponentDiscardsCard()`,
 `Triggers.enters(Triggers.LAND, ObjectRelation.ENCHANTED_PLAYER_CONTROLS)`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
 `Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)`, `Triggers.sacrificed(null, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificing player as a non-targeting player reference), `Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `Triggers.youAttack()`,
@@ -370,9 +370,9 @@ the phased-out permanent is removed), and `Triggers.exiledFrom(Set.of(), Trigger
 watcher dispatched after a non-token card enters exile),
 `Triggers.enchantedCreatureDealtDamage()`,
 `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)`, `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)`,
-`ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
-`ON_ANY_PLAYER_SHUFFLES_LIBRARY`,
-`ON_OPPONENT_SEARCHES_LIBRARY` (Ob Nixilis, Unshackled; fired by `LibrarySearchTriggerHelper` from
+`ON_OPPONENT_LOSES_LIFE`, `Triggers.opponentShufflesLibrary()`,
+`Triggers.playerShufflesLibrary()`,
+`Triggers.opponentSearchesTheirLibrary()` (Ob Nixilis, Unshackled; fired by `LibrarySearchTriggerHelper` from
 `LibrarySearchSupport.sendLibrarySearchToPlayer` — the choke point every card-presenting search passes
 through — plus the empty-library / no-match early returns of `performLibrarySearch`, which are searches
 too. Only a player searching **their own** library counts (`params.targetPlayerId()` unset); a search
@@ -750,7 +750,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "At the beginning of your upkeep, enchanted permanent's controller ..." | `Triggers.upkeep(ActivePlayer.YOU)` | Aura controller is the active player; enchanted permanent's controller baked in as `targetId` (`TARGET_PLAYER` recipients) | Strangling Grasp |
 | "At the beginning of enchanted player's upkeep, ..." | `Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER)` | Enchanted player is the active player (curses) | Curse of Oblivion, Curse of the Bloody Tome |
 | "At the beginning of enchanted player's draw step, ..." | `Triggers.drawStep(ActivePlayer.ENCHANTED_PLAYER)` | Enchanted player is the active player (curses) | Curse of Obsession (`MIC`) |
-| "Whenever enchanted opponent draws a card, ..." | `ON_ENCHANTED_PLAYER_DRAWS` | The player attached to this player Aura draws a card | Psychic Possession (`DIS`) |
+| "Whenever enchanted opponent draws a card, ..." | `Triggers.enchantedPlayerDrawsCard()` | The player attached to this player Aura draws a card | Psychic Possession (`DIS`) |
 | "At the beginning of each upkeep, ..." | `Triggers.upkeep(ActivePlayer.ANY)` | Every player's upkeep; targeted permanents are chosen by the source controller as the trigger is put on the stack | — |
 | "At the beginning of each player's upkeep, if this card is suspended, ..." | `Triggers.upkeep(ActivePlayer.ANY) from exile` | Every player's upkeep while the card is exiled with a positive time-counter entry | Curse of the Cabal (`TSP`) |
 | "At the beginning of your upkeep, if this card is exiled with a scream counter on it, remove a scream counter from it. If there are no more scream counters on it, put it into your graveyard and each player returns all creature cards from their graveyard to the battlefield." | `Triggers.upkeep(ActivePlayer.YOU) from exile` | The card owner's upkeep while it is exiled with a positive scream-counter entry; the last-counter handler moves it to its owner's graveyard and inserts the existing mass-reanimation effect | All Hallow's Eve (`LEG`) |
@@ -798,9 +798,9 @@ when the trigger should fire only for spells controlled by the source permanent'
 wrapper is evaluated while the becomes-target trigger is collected and then removed before the
 effect is put on the stack.
 
-`ON_CONTROLLER_DRAWS_SECOND_CARD` is checked by `DrawService.checkControllerDrawTriggers` after
+`Triggers.youDrawSecondCardEachTurn()` is checked by `DrawService.checkControllerDrawTriggers` after
 the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target
-handling as `ON_CONTROLLER_DRAWS`, but does not fire on later draws in the same turn.
+handling as `Triggers.youDrawCard()`, but does not fire on later draws in the same turn.
 
 `Triggers.creatureDealtDamage()` also captures the damaged creature's controller as
 `triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`

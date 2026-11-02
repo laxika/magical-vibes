@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,9 +31,9 @@ public class PlanetariumOfWanShiTong extends Card {
                 List.of(new ScryEffect(2)),
                 "{1}, {T}: Scry 2."));
 
-        addEffect(EffectSlot.ON_CONTROLLER_SCRIES, OncePerTurnTriggerEffect.markOnAcceptance(
+        addTrigger(Triggers.youScry(), OncePerTurnTriggerEffect.markOnAcceptance(
                 new CastTopOfLibraryWithoutPayingManaCostEffect(CASTABLE_CARD_TYPES)));
-        addEffect(EffectSlot.ON_CONTROLLER_SURVEILS, OncePerTurnTriggerEffect.markOnAcceptance(
+        addTrigger(Triggers.youSurveil(), OncePerTurnTriggerEffect.markOnAcceptance(
                 new CastTopOfLibraryWithoutPayingManaCostEffect(CASTABLE_CARD_TYPES)));
     }
 }

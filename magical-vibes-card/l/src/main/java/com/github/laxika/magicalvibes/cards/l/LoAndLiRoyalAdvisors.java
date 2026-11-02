@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -26,7 +25,7 @@ public class LoAndLiRoyalAdvisors extends Card {
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                         new PermanentHasSubtypePredicate(CardSubtype.ADVISOR));
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, counterEffect);
+        addTrigger(Triggers.opponentDiscardsCard(), counterEffect);
         addTrigger(new TriggerCondition(Triggers.mills(null, ObjectRelation.OPPONENT_OWNS)),
                 TriggerOptions.ONE_OR_MORE, counterEffect);
 

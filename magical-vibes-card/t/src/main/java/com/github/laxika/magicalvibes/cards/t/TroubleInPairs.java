@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,7 +23,7 @@ public class TroubleInPairs extends Card {
         addTrigger(Triggers.playerAttacks(),
                 new ConditionalEffect(new OpponentAttacksWithAtLeastCreatures(2, false), new DrawCardEffect()));
 
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS,
+        addTrigger(Triggers.opponentDrawsCard(),
                 new NthCardDrawTriggerEffect(2, new DrawCardEffect()));
 
         addTrigger(Triggers.opponentCastsSpell(),

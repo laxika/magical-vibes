@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
  *
  * <p>Used to model equipment-granted triggered abilities such as Diviner's Wand's "Whenever you
  * draw a card, this creature gets +1/+1 and gains flying until end of turn" (placed in the
- * {@code ON_CONTROLLER_DRAWS} slot on the equipment).
+ * {@code Triggers.youDrawCard()} ability the equipment grants).
  */
 public record BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(
         int powerBoost,

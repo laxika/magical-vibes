@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -122,7 +122,7 @@ public class ZyymRevealHandEffectMayHandler implements MayEffectHandlerBean {
         triggerCollectionService.beginDiscardEvent(gameData, playerId);
 
         boolean replacedByBattlefield = gameData.discardCausedByOpponent
-                && card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                && LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(card).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
         if (replacedByBattlefield) {
             battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(

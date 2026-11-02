@@ -19,11 +19,6 @@ enum LegacySlotGrouping {
 
     private static final Set<EffectSlot> ALL_SLOTS = EnumSet.of(
             EffectSlot.ON_SELF_TAPPED_FOR_MANA,
-            EffectSlot.ON_SELF_CYCLED,
-            EffectSlot.ON_CONTROLLER_SEARCHES_LIBRARY,
-            EffectSlot.ON_SELF_DISCARDED,
-            EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT,
-            EffectSlot.ON_OPPONENT_SEARCHES_LIBRARY,
             EffectSlot.SAGA_CHAPTER_I,
             EffectSlot.SAGA_CHAPTER_II,
             EffectSlot.SAGA_CHAPTER_III,

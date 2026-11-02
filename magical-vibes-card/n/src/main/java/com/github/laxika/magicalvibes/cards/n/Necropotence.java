@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.NecropotenceSetAsideTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class Necropotence extends Card {
         addStaticEffect(new SkipDrawStepEffect());
 
         // Whenever you discard a card, exile that card from your graveyard.
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new ExileDiscardedCardFromGraveyardEffect());
+        addTrigger(Triggers.youDiscardCard(), new ExileDiscardedCardFromGraveyardEffect());
 
         // Pay 1 life: Exile the top card of your library face down. Put that card into your hand at
         // the beginning of your next end step.

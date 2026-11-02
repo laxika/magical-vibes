@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,7 +14,7 @@ public class JundSojourners extends Card {
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(new DealDamageToAnyTargetEffect(1),
                 "Have Jund Sojourners deal 1 damage to any target?"));
 
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(new DealDamageToAnyTargetEffect(1),
+        addTrigger(Triggers.youCycleThisCard(), new MayEffect(new DealDamageToAnyTargetEffect(1),
                 "Have Jund Sojourners deal 1 damage to any target?"));
         addCycling("{2}{R}");
     }

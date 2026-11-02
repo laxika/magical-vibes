@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "52")
 public class TelekineticBonds extends Card {
@@ -16,7 +16,7 @@ public class TelekineticBonds extends Card {
                 new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target permanent?"),
                 "Pay {1}{U} to tap or untap target permanent?"
         );
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, trigger);
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, trigger);
+        addTrigger(Triggers.opponentDiscardsCard(), trigger);
+        addTrigger(Triggers.youDiscardCard(), trigger);
     }
 }

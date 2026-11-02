@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -26,7 +25,7 @@ public class InquisitorEisenhorn extends Card {
                 false, false, List.of(), List.of(), false, false, true, 0, Set.of(),
                 Set.of(CardSupertype.LEGENDARY));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
+        addTrigger(Triggers.youDrawCard(),
                 new RevealFirstDrawInstantOrSorceryCreateTokenEffect(cherubael));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 CreateTokenEffect.ofClueToken(new EventValue()));

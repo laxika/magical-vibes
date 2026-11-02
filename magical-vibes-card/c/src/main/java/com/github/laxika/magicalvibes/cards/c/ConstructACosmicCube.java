@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class ConstructACosmicCube extends Card {
 
     public ConstructACosmicCube() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, SequenceEffect.of(
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), SequenceEffect.of(
                 new CreateTokenEffect(
                         "Villain",
                         2,

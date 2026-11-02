@@ -79,9 +79,9 @@ class TriggerCollectorRegistryTest {
         void prefersExactMayEffectHandler() {
             boolean[] exactCalled = {false};
             boolean[] innerCalled = {false};
-            registry.register(EffectSlot.ON_OPPONENT_DISCARDS, MayEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DISCARDS, MayEffect.class,
                     (match, inner, context) -> { exactCalled[0] = true; return true; });
-            registry.register(EffectSlot.ON_OPPONENT_DISCARDS, SpellCastTriggerEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DISCARDS, SpellCastTriggerEffect.class,
                     (match, inner, context) -> { innerCalled[0] = true; return true; });
 
             var innerEffect = new SpellCastTriggerEffect(null, java.util.List.of());
@@ -89,7 +89,7 @@ class TriggerCollectorRegistryTest {
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), mayEffect);
             var ctx = new TriggerContext.Discard(UUID.randomUUID(), null);
 
-            boolean result = registry.dispatch(match, EffectSlot.ON_OPPONENT_DISCARDS, mayEffect, ctx);
+            boolean result = registry.dispatch(match, LibraryWatch.ON_OPPONENT_DISCARDS, mayEffect, ctx);
 
             assertThat(result).isTrue();
             assertThat(exactCalled[0]).isTrue();
@@ -125,7 +125,7 @@ class TriggerCollectorRegistryTest {
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
             // Wrong slot
-            boolean result = registry.dispatch(match, EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
+            boolean result = registry.dispatch(match, LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(called[0]).isFalse();

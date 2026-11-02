@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
  * the trigger, decides whether something that happens in the game matches it.
  */
 public sealed interface Trigger permits AbilityTrigger, CombatTrigger, CounterTrigger, DamageTrigger,
-        LandPlayTrigger, LegacySlotTrigger, PermanentChangeTrigger, SpellTrigger, StepTrigger, TargetTrigger, ZoneChangeTrigger {
+        LandPlayTrigger, LegacySlotTrigger, LibraryTrigger, PermanentChangeTrigger, SpellTrigger, StepTrigger,
+        TargetTrigger, ZoneChangeTrigger {
 
     /**
      * The zones a trigger condition on this trigger functions from when the card doesn't say

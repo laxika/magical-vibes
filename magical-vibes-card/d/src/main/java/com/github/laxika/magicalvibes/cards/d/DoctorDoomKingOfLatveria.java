@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -26,7 +25,7 @@ import java.util.List;
 public class DoctorDoomKingOfLatveria extends Card {
 
     public DoctorDoomKingOfLatveria() {
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.youDiscardOneOrMoreCards(), new TriggeringCardConditionalEffect(
                 new CardTypePredicate(CardType.LAND),
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)));
 

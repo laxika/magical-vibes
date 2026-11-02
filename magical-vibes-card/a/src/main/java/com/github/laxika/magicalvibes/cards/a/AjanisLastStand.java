@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -30,7 +29,7 @@ public class AjanisLastStand extends Card {
 
         // When a spell or ability an opponent controls causes you to discard this card, if you
         // control a Plains, create a 4/4 white Avatar creature token with flying.
-        addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT,
+        addTrigger(Triggers.opponentCausesYouToDiscardThisCard(),
                 new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
                         avatarToken()));

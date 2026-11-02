@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -42,7 +41,7 @@ public class BrallinSkysharkRider extends Card {
                 MayChoicePlayer.TARGET_PLAYER
         ));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, SequenceEffect.of(
+        addTrigger(Triggers.youDiscardCard(), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
 

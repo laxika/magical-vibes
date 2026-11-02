@@ -1701,7 +1701,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
-     *  ({@code ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
+     *  ({@code Triggers.youDiscardCard()}), e.g. Zenith Seeker — "target creature gains
      *  flying until end of turn." The controller chooses the target when the discard trigger is
      *  serviced; mirrors {@link EntersTriggerTarget}'s any-permanent target flow. */
     record DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

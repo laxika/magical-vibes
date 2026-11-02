@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
@@ -113,6 +112,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -2837,12 +2837,12 @@ public class DrawService {
     }
 
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
-        checkControllerDrawTriggerSlot(gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS, drawn);
+        checkControllerDrawTriggerSlot(gameData, drawingPlayerId, LibraryWatch.ON_CONTROLLER_DRAWS, drawn);
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) == 2) {
             checkControllerDrawTriggerSlot(
-                    gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, drawn);
+                    gameData, drawingPlayerId, LibraryWatch.ON_CONTROLLER_DRAWS_SECOND_CARD, drawn);
             checkGraveyardControllerDrawTriggerSlot(
-                    gameData, drawingPlayerId, EffectSlot.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD);
+                    gameData, drawingPlayerId, LibraryWatch.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD);
         }
 
         // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
@@ -2850,16 +2850,16 @@ public class DrawService {
     }
 
     private void checkControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
-                                                EffectSlot slot, Card drawn) {
+                                                LibraryWatch watch, Card drawn) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
         if (battlefield == null) return;
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
 
         for (Permanent perm : battlefield) {
-            List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
+            List<CardEffect> drawEffects = watch.effectsOf(perm.getCard());
             drawEffects = drawEffects == null || gameQueryService.hasLostAllAbilities(gameData, perm)
                     ? new ArrayList<>() : new ArrayList<>(drawEffects);
-            drawEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot));
+            drawEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, watch.trigger()));
             if (drawEffects.isEmpty()) continue;
 
             for (CardEffect authoredEffect : drawEffects) {
@@ -3017,14 +3017,14 @@ public class DrawService {
     }
 
     private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
-                                                         EffectSlot slot) {
+                                                         LibraryWatch watch) {
         if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) return;
         List<Card> graveyard = gameData.playerGraveyards.get(drawingPlayerId);
         if (graveyard == null) return;
 
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : card.getEffects(slot)) {
+            for (CardEffect effect : watch.effectsOf(card)) {
                 if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) continue;
 
                 StackEntry trigger = new StackEntry(
@@ -3057,7 +3057,7 @@ public class DrawService {
             if (graveyard == null) continue;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD);
+                List<CardEffect> effects = LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD.effectsOf(card);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect authoredEffect : effects) {
@@ -3155,7 +3155,7 @@ public class DrawService {
 
             for (Permanent perm : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_DRAWS);
+                List<CardEffect> drawEffects = LibraryWatch.ON_OPPONENT_DRAWS.effectsOf(perm.getCard());
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect authoredEffect : drawEffects) {
@@ -3232,13 +3232,13 @@ public class DrawService {
         }
 
         UUID planarControllerId = gameData.planechase.controllerId;
-        EffectSlot slot = planarControllerId.equals(drawingPlayerId)
-                ? EffectSlot.ON_CONTROLLER_DRAWS : EffectSlot.ON_OPPONENT_DRAWS;
+        LibraryWatch watch = planarControllerId.equals(drawingPlayerId)
+                ? LibraryWatch.ON_CONTROLLER_DRAWS : LibraryWatch.ON_OPPONENT_DRAWS;
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
 
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             Card card = object.getCard();
-            List<CardEffect> drawEffects = card.getEffects(slot);
+            List<CardEffect> drawEffects = watch.effectsOf(card);
             for (CardEffect authoredEffect : drawEffects) {
                 CardEffect effect = authoredEffect;
                 if (effect instanceof DrawRevealTriggerEffect drawReveal) {
@@ -3291,7 +3291,7 @@ public class DrawService {
             for (Permanent perm : battlefield) {
                 if (!perm.isAttached() || !drawingPlayerId.equals(perm.getAttachedTo())) continue;
 
-                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PLAYER_DRAWS);
+                List<CardEffect> drawEffects = LibraryWatch.ON_ENCHANTED_PLAYER_DRAWS.effectsOf(perm.getCard());
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect authoredEffect : drawEffects) {

@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONS", collectorNumber = "232")
 @CardRegistration(set = "DMR", collectorNumber = "138")
@@ -19,7 +19,7 @@ public class SliceAndDice extends Card {
         addCycling("{2}{R}");
         // "When you cycle this card" is its own triggered ability, so it goes on the stack above the
         // cycling draw and resolves first.
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
+        addTrigger(Triggers.youCycleThisCard(), new MayEffect(
                 new MassDamageEffect(1),
                 "Have Slice and Dice deal 1 damage to each creature?"));
     }

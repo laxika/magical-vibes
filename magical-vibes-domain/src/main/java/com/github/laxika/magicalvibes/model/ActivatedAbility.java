@@ -818,9 +818,10 @@ public non-sealed class ActivatedAbility implements Ability {
     }
 
     /**
-     * Routes the targets announced with this cycling ability to the card's {@code ON_SELF_CYCLED}
-     * trigger ("When you cycle this card, destroy up to X target artifacts"), so the cycling
-     * ability's draw is a separate stack object that doesn't depend on those targets.
+     * Routes the targets announced with this cycling ability to the card's
+     * {@code Triggers.youCycleThisCard()} trigger ("When you cycle this card, destroy up to X target
+     * artifacts"), so the cycling ability's draw is a separate stack object that doesn't depend on
+     * those targets.
      */
     public ActivatedAbility withCyclingTriggerTargets() {
         this.cyclingTriggerTargets = true;
@@ -829,7 +830,7 @@ public non-sealed class ActivatedAbility implements Ability {
 
     /**
      * As {@link #withCyclingTriggerTargets()}, but when no target is announced with the cycling
-     * ability the card's {@code ON_SELF_CYCLED} trigger chooses its target when it is put on the
+     * ability the card's {@code Triggers.youCycleThisCard()} trigger chooses its target when it is put on the
      * stack (CR 603.3d) instead of being dropped; the card must carry a card-level target filter.
      */
     public ActivatedAbility withCyclingTriggerTargetsChosenOnTriggerIfOmitted() {
@@ -840,7 +841,7 @@ public non-sealed class ActivatedAbility implements Ability {
 
     /**
      * As {@link #withCyclingTriggerTargets()}, for a trigger that reads "up to N target ...": choosing
-     * no targets is legal, so the card's {@code ON_SELF_CYCLED} trigger still goes on the stack when
+     * no targets is legal, so the card's {@code Triggers.youCycleThisCard()} trigger still goes on the stack when
      * none are announced (CR 601.2c, CR 603.3d).
      */
     public ActivatedAbility withCyclingTriggerUpToTargets() {

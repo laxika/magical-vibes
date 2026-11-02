@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -53,7 +52,7 @@ public class CoolButRude extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "This Class must be level 2."));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new ConditionalEffect(
+        addTrigger(Triggers.youDiscardCard(), new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
         addTrigger(Triggers.reachesLevelThree(), new SearchLibraryEffect());

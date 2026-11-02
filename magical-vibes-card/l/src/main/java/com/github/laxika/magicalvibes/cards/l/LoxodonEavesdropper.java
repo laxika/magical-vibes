@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -18,7 +17,7 @@ public class LoxodonEavesdropper extends Card {
 
     public LoxodonEavesdropper() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new NthCardDrawTriggerEffect(2,
+        addTrigger(Triggers.youDrawCard(), new NthCardDrawTriggerEffect(2,
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF))));

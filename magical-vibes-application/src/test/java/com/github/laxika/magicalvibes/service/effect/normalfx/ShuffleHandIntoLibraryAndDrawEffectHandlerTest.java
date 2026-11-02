@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -45,7 +46,7 @@ class ShuffleHandIntoLibraryAndDrawEffectHandlerTest extends AbstractPlayerInter
                 ShuffleHandIntoLibraryAndDrawEffect effect = new ShuffleHandIntoLibraryAndDrawEffect();
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
                 Card watcher = createCard("Shuffle watcher");
-                watcher.addEffect(com.github.laxika.magicalvibes.model.EffectSlot.ON_OPPONENT_SHUFFLES_LIBRARY,
+                watcher.addTrigger(Triggers.opponentShufflesLibrary(),
                         new com.github.laxika.magicalvibes.model.effect.DrawCardEffect());
                 gd.playerBattlefields.get(player1Id).add(new com.github.laxika.magicalvibes.model.Permanent(watcher));
                 // Both players have empty hands

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,7 +25,7 @@ public class StarscreamPowerHungry extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new ConditionalEffect(
+        )).addTrigger(Triggers.youDrawCard(), new ConditionalEffect(
                 new ControllerIsMonarch(),
                 new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
 

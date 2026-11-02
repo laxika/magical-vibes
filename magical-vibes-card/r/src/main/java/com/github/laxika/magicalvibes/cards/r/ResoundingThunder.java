@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALA", collectorNumber = "110")
 public class ResoundingThunder extends Card {
@@ -15,7 +15,7 @@ public class ResoundingThunder extends Card {
 
         // "When you cycle this card, it deals 6 damage to any target." The cycle trigger is separate
         // from the cycling draw, so its target fizzling never stops the draw, and it resolves first.
-        addEffect(EffectSlot.ON_SELF_CYCLED, new DealDamageToAnyTargetEffect(6));
+        addTrigger(Triggers.youCycleThisCard(), new DealDamageToAnyTargetEffect(6));
 
         addCycling("{5}{B}{R}{G}");
     }

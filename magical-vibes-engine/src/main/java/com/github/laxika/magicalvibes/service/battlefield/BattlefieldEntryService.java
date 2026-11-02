@@ -10,13 +10,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -173,8 +173,7 @@ public class BattlefieldEntryService {
 
     public void putPermanentOntoBattlefieldFromOpponentDiscard(GameData gameData, UUID controllerId,
                                                                Permanent permanent) {
-        EnterBattlefieldOnDiscardEffect replacement = permanent.getCard()
-                .getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+        EnterBattlefieldOnDiscardEffect replacement = LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT.effectsOf(permanent.getCard()).stream()
                 .filter(EnterBattlefieldOnDiscardEffect.class::isInstance)
                 .map(EnterBattlefieldOnDiscardEffect.class::cast)
                 .findFirst()
