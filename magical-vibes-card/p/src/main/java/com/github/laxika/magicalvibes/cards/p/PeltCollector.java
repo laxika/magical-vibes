@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GRN", collectorNumber = "141")
@@ -27,7 +28,9 @@ public class PeltCollector extends Card {
                         new TriggeringPermanentPowerGreaterThanSourcePower(),
                         new PutCountersOnSourceEffect(1, 1, 1)));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), growWhenLarger);
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), growWhenLarger);
+        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentPowerGreaterThanSourcePower()),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         addStaticEffect(new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),

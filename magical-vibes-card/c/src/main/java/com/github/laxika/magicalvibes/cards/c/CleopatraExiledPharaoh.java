@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -42,8 +41,7 @@ public class CleopatraExiledPharaoh extends Card {
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                 new PermanentHasCountersPredicate(CounterType.ANY)
         ));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new TriggeringPermanentConditionalEffect(
-                legendaryCreatureWithCounters,
-                new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2))));
+        addTrigger(Triggers.creatureDies(legendaryCreatureWithCounters, ObjectRelation.ANY),
+                new DrawCardForEachDyingSourceCounterEffect(null, new LoseLifeEffect(2)));
     }
 }

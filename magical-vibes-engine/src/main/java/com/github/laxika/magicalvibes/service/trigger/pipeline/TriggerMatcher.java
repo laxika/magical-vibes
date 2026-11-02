@@ -11,10 +11,25 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsMonocoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
@@ -215,7 +230,8 @@ final class TriggerMatcher {
      * Whether the moving object passes the trigger's filter. A departed object is judged by its last-known copy,
      * whose card holds the types, colors and keywords it left with (CR 603.10a), and an entered one by its copy with
      * the characteristics it has as its enters abilities are processed (CR 603.6a), so no layered query runs on it:
-     * one would read the game as it is after the departure.
+     * one would read the game as it is after the departure. A permanent that left the battlefield is judged as
+     * {@link #departedMatches} says.
      */
     private static boolean filterMatches(GameData gameData, PredicateEvaluationService predicates,
                                          ZoneChangeTrigger trigger, TriggerCandidate candidate,
@@ -223,8 +239,92 @@ final class TriggerMatcher {
         if (trigger.filter() == null) {
             return true;
         }
-        Permanent moved = event.permanent() != null ? event.permanent() : new Permanent(event.card());
-        return predicates.matchesPermanentPredicate(moved, trigger.filter(), null);
+        if (event.permanent() == null || !event.leftBattlefield()) {
+            Permanent moved = event.permanent() != null ? event.permanent() : new Permanent(event.card());
+            return predicates.matchesPermanentPredicate(moved, trigger.filter(), null);
+        }
+        Permanent watcher = candidate.sourceAsPermanent();
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceControllerId(candidate.controllerId())
+                .withSourceCardId(watcher.getOriginalCard().getId())
+                .withSourcePermanentId(watcher.getId())
+                .withSourcePermanentSnapshot(watcher)
+                .withTriggeringPermanentId(event.permanent().getId())
+                .withTriggeringPermanentControllerId(event.controllerId());
+        return departedMatches(predicates, trigger.filter(), event.permanent(), event.attachments(), context);
+    }
+
+    /**
+     * Whether a permanent that left the battlefield, seen by another object's ability, matches {@code predicate} as
+     * it last existed (CR 603.10a): "whenever another Zombie you control dies", "a creature with power 5 or greater",
+     * "a creature with a -1/-1 counter on it", "a creature blocking this creature". Its subtypes and colors are the
+     * last-known ones the departure recorded, its other characteristics the ones its last-known card left with, its
+     * power and toughness the last-known ones, its Auras and Equipment those attached as it left. Anything else reads
+     * the game with the watching ability's source as the filter's source and the departed permanent as the
+     * triggering one.
+     */
+    private static boolean departedMatches(PredicateEvaluationService predicates, PermanentPredicate predicate,
+                                           Permanent departed, DepartedAttachments attachments,
+                                           FilterContext context) {
+        return switch (predicate) {
+            case PermanentAllOfPredicate allOf -> allOf.predicates().stream()
+                    .allMatch(part -> departedMatches(predicates, part, departed, attachments, context));
+            case PermanentAnyOfPredicate anyOf -> anyOf.predicates().stream()
+                    .anyMatch(part -> departedMatches(predicates, part, departed, attachments, context));
+            case PermanentNotPredicate not -> !departedMatches(predicates, not.predicate(), departed, attachments,
+                    context);
+            case PermanentIsEnchantedPredicate ignored -> !attachments.auraCardIds().isEmpty()
+                    || predicates.matchesPermanentPredicate(departed, predicate, context);
+            case PermanentIsEquippedPredicate ignored -> !attachments.equipmentPermanentIds().isEmpty()
+                    || predicates.matchesPermanentPredicate(departed, predicate, context);
+            case PermanentHasSubtypePredicate subtype when departed.getLastKnownSubtypes() != null ->
+                    departed.getLastKnownSubtypes().contains(subtype.subtype());
+            case PermanentHasAnySubtypePredicate any when departed.getLastKnownSubtypes() != null ->
+                    any.subtypes().stream().anyMatch(departed.getLastKnownSubtypes()::contains);
+            case PermanentColorInPredicate color when departed.getLastKnownColors() != null ->
+                    color.colors().stream().anyMatch(departed.getLastKnownColors()::contains);
+            case PermanentIsColorlessPredicate ignored when departed.getLastKnownColors() != null ->
+                    departed.getLastKnownColors().isEmpty();
+            case PermanentIsMonocoloredPredicate ignored when departed.getLastKnownColors() != null ->
+                    departed.getLastKnownColors().size() == 1;
+            case PermanentIsMulticoloredPredicate ignored when departed.getLastKnownColors() != null ->
+                    departed.getLastKnownColors().size() > 1;
+            default -> {
+                if (isCharacteristic(predicate)) {
+                    yield predicates.matchesPermanentPredicate(departed, predicate, null);
+                }
+                Boolean stats = departed.getLastKnownToughness() == null ? null
+                        : TriggerCollectionService.matchesDyingStats(predicate, departed.getLastKnownPower() != null
+                        ? departed.getLastKnownPower() : departed.getEffectivePower(),
+                        departed.getLastKnownToughness());
+                yield stats != null ? stats : predicates.matchesPermanentPredicate(departed, predicate, context);
+            }
+        };
+    }
+
+    /**
+     * Whether {@code predicate} asks about a characteristic the departed copy's card holds (types, subtypes,
+     * supertypes, colors, keywords, being a token or face down), which a layered query would read from the game as
+     * it is after the departure.
+     */
+    private static boolean isCharacteristic(PermanentPredicate predicate) {
+        return predicate instanceof PermanentIsCreaturePredicate
+                || predicate instanceof PermanentIsArtifactPredicate
+                || predicate instanceof PermanentIsLandPredicate
+                || predicate instanceof PermanentIsEnchantmentPredicate
+                || predicate instanceof PermanentIsPlaneswalkerPredicate
+                || predicate instanceof PermanentIsBattlePredicate
+                || predicate instanceof PermanentIsTokenPredicate
+                || predicate instanceof PermanentIsFaceDownPredicate
+                || predicate instanceof PermanentIsHistoricPredicate
+                || predicate instanceof PermanentHasSubtypePredicate
+                || predicate instanceof PermanentHasAnySubtypePredicate
+                || predicate instanceof PermanentHasSupertypePredicate
+                || predicate instanceof PermanentColorInPredicate
+                || predicate instanceof PermanentIsColorlessPredicate
+                || predicate instanceof PermanentIsMonocoloredPredicate
+                || predicate instanceof PermanentIsMulticoloredPredicate
+                || predicate instanceof PermanentHasKeywordPredicate;
     }
 
     /**

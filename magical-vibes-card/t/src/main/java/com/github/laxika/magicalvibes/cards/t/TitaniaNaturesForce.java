@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -34,10 +33,9 @@ public class TitaniaNaturesForce extends Card {
                                 CardColor.GREEN, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(), Set.of())));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(
                         new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
-                        new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER),
-                                "Mill three cards?")));
+                        ObjectRelation.YOU_CONTROL),
+                new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"));
     }
 }

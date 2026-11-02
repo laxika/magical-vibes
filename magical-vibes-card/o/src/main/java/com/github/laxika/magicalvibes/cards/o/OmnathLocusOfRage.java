@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,8 +28,9 @@ public class OmnathLocusOfRage extends Card {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new CreateTokenEffect(
                 "Elemental", 5, 5, CardColor.RED, Set.of(CardColor.RED, CardColor.GREEN),
                 List.of(CardSubtype.ELEMENTAL)));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.ELEMENTAL), DEATH_DAMAGE));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_DAMAGE);
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                DEATH_DAMAGE);
     }
 }

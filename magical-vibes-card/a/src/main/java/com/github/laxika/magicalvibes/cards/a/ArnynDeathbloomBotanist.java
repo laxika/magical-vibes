@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -32,8 +32,8 @@ public class ArnynDeathbloomBotanist extends Card {
                     new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
                     new GainLifeEffect(2));
 
-    private static final TriggeringPermanentConditionalEffect CONDITIONAL_DRAIN =
-            new TriggeringPermanentConditionalEffect(POWER_OR_TOUGHNESS_ONE_OR_LESS, DRAIN);
+    private static final CardEffect CONDITIONAL_DRAIN =
+            DRAIN;
 
     public ArnynDeathbloomBotanist() {
         // Deathtouch is applied automatically from the Scryfall keyword.
@@ -43,6 +43,7 @@ public class ArnynDeathbloomBotanist extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), CONDITIONAL_DRAIN);
+        )).addTrigger(Triggers.creatureDies(POWER_OR_TOUGHNESS_ONE_OR_LESS, ObjectRelation.YOU_CONTROL),
+                CONDITIONAL_DRAIN);
     }
 }

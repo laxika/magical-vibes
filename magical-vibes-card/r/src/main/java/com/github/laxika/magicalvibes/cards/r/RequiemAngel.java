@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,9 +15,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RequiemAngel extends Card {
 
     public RequiemAngel() {
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.SPIRIT)),
-                CreateTokenEffect.whiteSpirit(1)
-        ));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                CreateTokenEffect.whiteSpirit(1));
     }
 }

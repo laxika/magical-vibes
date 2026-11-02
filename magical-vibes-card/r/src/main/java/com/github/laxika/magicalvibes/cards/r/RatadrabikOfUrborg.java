@@ -12,9 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatur
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -59,8 +58,9 @@ public class RatadrabikOfUrborg extends Card {
                 Keyword.VIGILANCE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                new CreateTokenCopyOfDyingCreatureEffect(LEGENDARY_DEATH_COPY)));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new CreateTokenCopyOfDyingCreatureEffect(LEGENDARY_DEATH_COPY));
     }
 }

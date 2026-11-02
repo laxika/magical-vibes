@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,9 +16,8 @@ public class SpeciesSpecialist extends Card {
     public SpeciesSpecialist() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
 
-        var deathTrigger = new TriggeringPermanentConditionalEffect(
-                new PermanentHasSourceChosenSubtypePredicate(),
-                new MayEffect(new DrawCardEffect(), "Draw a card?"));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), deathTrigger);
+        var deathTrigger = new MayEffect(new DrawCardEffect(), "Draw a card?");
+        addTrigger(Triggers.creatureDies(new PermanentHasSourceChosenSubtypePredicate(), ObjectRelation.ANY),
+                deathTrigger);
     }
 }

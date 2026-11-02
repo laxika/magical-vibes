@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -29,9 +28,10 @@ public class JackdawSavior extends Card {
                 .dynamicMaxManaValue(new SourceManaValueMinusOne())
                 .build();
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentHasKeywordPredicate(Keyword.FLYING), returnCreature));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
+        // "Return another target creature card": its own half's filter leaves this card out, which covers both.
+        addTrigger(Triggers.creatureDies(new PermanentHasKeywordPredicate(Keyword.FLYING),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

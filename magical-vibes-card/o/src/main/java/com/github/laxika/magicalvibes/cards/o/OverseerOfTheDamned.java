@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,9 +23,9 @@ public class OverseerOfTheDamned extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target creature?"));
-        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
-                        CreateTokenEffect.blackZombie(1).withTapped(true)));
+                        ObjectRelation.OPPONENT_CONTROLS),
+                CreateTokenEffect.blackZombie(1).withTapped(true));
     }
 }

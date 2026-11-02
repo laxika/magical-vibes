@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,11 +26,12 @@ public class RampartArchitect extends Card {
                 "Wall", 1, 3, CardColor.WHITE, List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS), wallToken);
         addTrigger(Triggers.attacks(), wallToken);
-        var defenderDeathSearch = new TriggeringPermanentConditionalEffect(
-                new PermanentHasKeywordPredicate(Keyword.DEFENDER),
-                new MayEffect(new SearchLibraryEffect(
+        var defenderDeathSearch = new MayEffect(new SearchLibraryEffect(
                         CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        "Search your library for a basic land card?"));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), defenderDeathSearch);
+                        "Search your library for a basic land card?");
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasKeywordPredicate(Keyword.DEFENDER),
+                        ObjectRelation.YOU_CONTROL),
+                defenderDeathSearch);
     }
 }

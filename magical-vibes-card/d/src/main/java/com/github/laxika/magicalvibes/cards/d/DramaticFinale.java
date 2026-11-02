@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,8 +25,9 @@ public class DramaticFinale extends Card {
                 new PermanentIsTokenPredicate()));
 
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
-                new OncePerTurnTriggerEffect(new CreateTokenEffect(1, "Inkling", 2, 1,
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CreateTokenEffect(1, "Inkling", 2, 1,
                         CardColor.WHITE, Set.of(CardColor.WHITE, CardColor.BLACK),
-                        List.of(CardSubtype.INKLING), Set.of(Keyword.FLYING), Set.of())));
+                        List.of(CardSubtype.INKLING), Set.of(Keyword.FLYING), Set.of()));
     }
 }

@@ -13,9 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -42,15 +41,14 @@ public class RakishCrew extends Card {
                 )),
                 false, false, false, 0, Set.of()));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.ASSASSIN),
-                        new CardSubtypePredicate(CardSubtype.MERCENARY),
-                        new CardSubtypePredicate(CardSubtype.PIRATE),
-                        new CardSubtypePredicate(CardSubtype.ROGUE),
-                        new CardSubtypePredicate(CardSubtype.WARLOCK))),
-                SequenceEffect.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(1))));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
+                                new PermanentHasSubtypePredicate(CardSubtype.MERCENARY),
+                                new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
+                                new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
+                                new PermanentHasSubtypePredicate(CardSubtype.WARLOCK))),
+                        ObjectRelation.YOU_CONTROL),
+                SequenceEffect.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1)));
     }
 }

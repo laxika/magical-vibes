@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -35,10 +35,11 @@ public class MinnWilyIllusionist extends Card {
                         List.of(CardSubtype.ILLUSION), Set.of(), Set.of(),
                         List.of(StaticAbility.of(illusionBoost))));
 
-        TriggeringPermanentConditionalEffect illusionDies = new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.ILLUSION),
-                new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent")
-                        .boundedByEventValue());
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), illusionDies);
+        CardEffect illusionDies = new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent")
+                        .boundedByEventValue();
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.ILLUSION),
+                        ObjectRelation.YOU_CONTROL),
+                illusionDies);
     }
 }

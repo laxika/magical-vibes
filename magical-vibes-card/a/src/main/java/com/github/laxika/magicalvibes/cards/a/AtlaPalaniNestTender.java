@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -34,10 +33,11 @@ public class AtlaPalaniNestTender extends Card {
                 "{2}, {T}: Create a 0/1 green Egg creature token with defender."
         ));
 
-        var eggDeath = new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.EGG),
-                new RevealUntilCardPredicateRestOnBottomRandomEffect(
-                        new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.BATTLEFIELD));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), eggDeath);
+        var eggDeath = new RevealUntilCardPredicateRestOnBottomRandomEffect(
+                        new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.BATTLEFIELD);
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.EGG),
+                        ObjectRelation.YOU_CONTROL),
+                eggDeath);
     }
 }

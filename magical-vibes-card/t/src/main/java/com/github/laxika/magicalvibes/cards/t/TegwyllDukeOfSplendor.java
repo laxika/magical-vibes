@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +30,9 @@ public class TegwyllDukeOfSplendor extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FAERIE))));
 
         // Whenever another Faerie you control dies, you draw a card and you lose 1 life.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.FAERIE), DEATH_TRIGGER));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.FAERIE),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                DEATH_TRIGGER);
     }
 }

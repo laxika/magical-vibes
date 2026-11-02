@@ -422,9 +422,6 @@ public class DeathTriggerCollectorService {
                 RegisterDelayedReturnCardFromGraveyardToHandEffect.class,
                 (match, effect, context) -> handleAllyNontokenDelayedReturn(match,
                         (RegisterDelayedReturnCardFromGraveyardToHandEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, TriggeringPermanentConditionalEffect.class,
-                (match, effect, context) -> handleAllyNontokenPermanentConditional(match,
-                        (TriggeringPermanentConditionalEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, CardEffect.class,
                 (match, effect, context) -> handleAllyNontokenDefault(match, (CardEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, ConditionalEffect.class,
@@ -3200,16 +3197,6 @@ public class DeathTriggerCollectorService {
                         match.gameData().graveyardEntryVersion(cd.dyingCard().getId()))
                 : delayedReturn;
         return handleAllyNontokenDefault(match, bound, ctx);
-    }
-
-    boolean handleAllyNontokenPermanentConditional(TriggerMatchContext match,
-            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
-        if (death.dyingPermanent() == null || !predicateEvaluationService.matchesPermanentPredicate(
-                match.gameData(), death.dyingPermanent(), conditional.predicate())) {
-            return false;
-        }
-        return handleAllyNontokenDefault(match, conditional.wrapped(), ctx);
     }
 
     boolean handleAllyNontokenDefault(TriggerMatchContext match,

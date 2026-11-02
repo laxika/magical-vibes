@@ -3103,6 +3103,11 @@ public class PredicateEvaluationService {
                 if (controllerId == null) {
                     controllerId = gameData.simultaneousDyingControllers.get(permanent.getId());
                 }
+                if (controllerId == null && filterContext != null
+                        && permanent.getId().equals(filterContext.triggeringPermanentId())) {
+                    // A creature that died, as a death trigger's filter sees it: its last-known controller.
+                    controllerId = filterContext.triggeringPermanentControllerId();
+                }
                 if (controllerId == null) {
                     controllerId = sourceControllerId;
                 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -37,8 +36,10 @@ public class SkirkDrillSergeant extends Card {
         // Whenever this creature or another Goblin dies, you may pay {2}{R}. If you do, reveal the
         // top card of your library. If it's a Goblin permanent card, put it onto the battlefield.
         // Otherwise, put it into your graveyard.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.GOBLIN), DRILL_SERGEANT_ABILITY));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
+                        ObjectRelation.THIS_OR_ANOTHER),
+                DRILL_SERGEANT_ABILITY);
         // A noncreature Goblin permanent that dies is not a creature, so it reaches this card through the
         // ally and opponent permanent slots instead (CR 700.4: "dies" means put into a graveyard from the battlefield).
         TriggeringPermanentConditionalEffect noncreatureGoblinDies = new TriggeringPermanentConditionalEffect(
@@ -48,6 +49,5 @@ public class SkirkDrillSergeant extends Card {
                 DRILL_SERGEANT_ABILITY);
         addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER_YOU_CONTROL), noncreatureGoblinDies);
         addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS), noncreatureGoblinDies);
-        addTrigger(Triggers.dies(ObjectRelation.THIS), DRILL_SERGEANT_ABILITY);
     }
 }

@@ -9,9 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -32,8 +31,9 @@ public class RakdosJoinsUp extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)));
+        )).addTrigger(Triggers.creatureDies(
+                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                        ObjectRelation.YOU_CONTROL),
+                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER));
     }
 }

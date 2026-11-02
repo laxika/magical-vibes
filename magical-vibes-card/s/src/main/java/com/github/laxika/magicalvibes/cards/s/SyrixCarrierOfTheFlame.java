@@ -9,12 +9,10 @@ import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardT
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -53,12 +51,13 @@ public class SyrixCarrierOfTheFlame extends Card {
                 new ConditionalEffect(new CreatureCardLeftGraveyardThisTurn(),
                         new TargetCreatureDealsPowerDamageToAnyTargetEffect()));
 
-        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.PHOENIX),
-                        new CastCardFromGraveyardEffect(new CardIsSelfPredicate(),
-                                GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                                new CardNotPredicate(new CardTruePredicate()), false)));
+        addTrigger(new TriggerCondition(Triggers.creatureDies(
+                                new PermanentHasSubtypePredicate(CardSubtype.PHOENIX),
+                                ObjectRelation.ANOTHER_YOU_CONTROL),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new CastCardFromGraveyardEffect(new CardIsSelfPredicate(),
+                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                        new CardNotPredicate(new CardTruePredicate()), false));
     }
 }

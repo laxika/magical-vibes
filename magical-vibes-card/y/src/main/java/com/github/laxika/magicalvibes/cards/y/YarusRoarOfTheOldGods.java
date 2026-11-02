@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldFaceDownThenTurnFaceUpEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,8 +20,7 @@ public class YarusRoarOfTheOldGods extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new AllyCombatDamageTriggerEffect(
                 new PermanentIsFaceDownPredicate(), new DrawCardEffect(1), false, true));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentIsFaceDownPredicate(),
-                new ReturnDyingCreatureToOwnerBattlefieldFaceDownThenTurnFaceUpEffect()));
+        addTrigger(Triggers.creatureDies(new PermanentIsFaceDownPredicate(), ObjectRelation.YOU_CONTROL),
+                new ReturnDyingCreatureToOwnerBattlefieldFaceDownThenTurnFaceUpEffect());
     }
 }

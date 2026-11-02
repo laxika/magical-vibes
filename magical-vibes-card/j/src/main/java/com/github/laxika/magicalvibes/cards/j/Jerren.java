@@ -18,8 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -44,8 +42,10 @@ public class Jerren extends Card {
         setBackFaceCard(new OrmendahlTheCorrupter());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), DEATH_REWARD);
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.HUMAN), DEATH_REWARD));
+        addTrigger(Triggers.nontokenCreatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                DEATH_REWARD);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

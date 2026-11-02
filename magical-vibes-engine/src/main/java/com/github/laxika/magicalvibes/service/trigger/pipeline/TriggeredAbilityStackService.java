@@ -143,7 +143,7 @@ public class TriggeredAbilityStackService {
         Permanent source = candidate.sourceAsPermanent();
         Condition interveningIf = options.interveningIf();
         if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
-                ConditionContext.forPermanent(source, candidate.controllerId()))) {
+                triggeringContext(source, candidate.controllerId(), events.getFirst()))) {
             return;
         }
         UUID sourceId = candidate.sourceObjectId();
@@ -166,9 +166,9 @@ public class TriggeredAbilityStackService {
         List<CreatureDeath> deaths = events.stream().map(CreatureDeath::of).toList();
         boolean triggered = options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE
                 ? triggerCollectionService.triggerCreatureDeaths(gameData, watch, source, candidate.controllerId(),
-                        effects, deaths)
+                        effects, options.limit(), deaths)
                 : triggerCollectionService.triggerCreatureDeath(gameData, watch, source, candidate.controllerId(),
-                        effects, deaths.getFirst());
+                        effects, options.limit(), deaths.getFirst());
         if (triggered) {
             markLimit(gameData, options.limit(), sourceId, limitKey);
         }
@@ -272,6 +272,22 @@ public class TriggeredAbilityStackService {
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
         return true;
+    }
+
+    /**
+     * The context an intervening "if" is checked in as the ability triggers (CR 603.4): its source and controller,
+     * and the permanent that moved, with its last-known power, for "if that creature's power is greater than this
+     * creature's".
+     */
+    private static ConditionContext triggeringContext(Permanent source, UUID controllerId, ZoneChangeEvent event) {
+        ConditionContext context = ConditionContext.forPermanent(source, controllerId);
+        Permanent moved = event.permanent();
+        if (moved == null) {
+            return context;
+        }
+        int power = moved.getLastKnownPower() != null ? moved.getLastKnownPower() : moved.getEffectivePower();
+        return context.withTriggeringPermanentId(moved.getId())
+                .withTriggeringPermanentPowerAtTrigger(Math.max(0, power));
     }
 
     /** The key the source's limits are kept under for this ability: equal abilities of one source share it. */

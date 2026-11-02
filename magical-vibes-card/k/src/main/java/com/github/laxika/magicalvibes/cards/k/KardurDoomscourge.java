@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEff
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -25,10 +24,7 @@ public class KardurDoomscourge extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 GoadCreaturesUntilNextTurnEffect.requirementOnly(new PermanentNotPredicate(
                         new PermanentControlledBySourceControllerPredicate())));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new TriggeringPermanentConditionalEffect(
-                new PermanentIsAttackingPredicate(),
-                SequenceEffect.of(
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(1))));
+        addTrigger(Triggers.creatureDies(new PermanentIsAttackingPredicate(), ObjectRelation.ANY),
+                SequenceEffect.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1)));
     }
 }

@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,8 +17,7 @@ public class RienneAngelOfRebirth extends Card {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentIsMulticoloredPredicate()));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardIsMulticoloredPredicate(),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(null)));
+        addTrigger(Triggers.creatureDies(new PermanentIsMulticoloredPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
+                new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
     }
 }

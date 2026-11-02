@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,8 +26,9 @@ public class ArchghoulOfThraben extends Card {
         //
         // "This creature" counts whatever its types are, so it is its own "when this dies" ability and the
         // Zombie restriction applies only to another creature.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), LOOK));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), LOOK);
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                LOOK);
     }
 }

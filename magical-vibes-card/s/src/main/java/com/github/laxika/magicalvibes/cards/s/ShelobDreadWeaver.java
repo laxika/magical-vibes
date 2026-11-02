@@ -10,10 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGr
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,10 +24,10 @@ import java.util.List;
 public class ShelobDreadWeaver extends Card {
 
     public ShelobDreadWeaver() {
-        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardIsTokenPredicate()),
-                        new ExileTriggeringCreatureAndTrackWithSourceEffect()));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                new ExileTriggeringCreatureAndTrackWithSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

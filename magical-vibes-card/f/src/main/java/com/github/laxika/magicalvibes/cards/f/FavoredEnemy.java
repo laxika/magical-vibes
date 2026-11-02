@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteMostPrevalentCreatureTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +22,9 @@ public class FavoredEnemy extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new FightTargetsEffect());
 
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                        new TriggeringCardConditionalEffect(
-                                new CardHasSourceChosenSubtypePredicate(),
-                                new PutCounterOnTargetPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE)));
+                .addTrigger(Triggers.creatureDies(
+                                new PermanentHasSourceChosenSubtypePredicate(),
+                                ObjectRelation.OPPONENT_CONTROLS),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

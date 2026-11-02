@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,9 +20,9 @@ public class UndeadAugur extends Card {
     public UndeadAugur() {
         // Whenever this creature or another Zombie you control dies, you draw a card and you lose
         // 1 life.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
     }
 }

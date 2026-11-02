@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -4517,7 +4517,8 @@ was re-rendered with `--keep-baseline`.
 
 ### Step 14
 
-Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes.
+Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes, run 2
+the creature-death family.
 
 #### Run 1: the source's own zone changes
 
@@ -4617,6 +4618,97 @@ library. No other test changed.
   ten `…WatchTest` classes: the only failures are `SpellCastingServiceTest`'s 10, which fail at HEAD.
 - AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 (the four decision engines' modal, kicker
   and Reign of Chaos cases, two `TargetPolarityGuardTest`).
+- The full suite was not run here.
+
+#### Run 2: creature death
+
+Every "whenever [another] creature dies" ability that step 11's `CreatureDeathWatch` collects is free of trigger-only
+wrappers but four (below), and the 32 "this creature or another [restricted] creature" cards step 11 left split are one
+ability each. The creature-death collectors no longer read `TriggeringCardConditionalEffect`,
+`TriggeringPermanentConditionalEffect`, `OncePerTurnTriggerEffect` or a chosen-mode `ConditionalEffect`.
+
+**Authoring.**
+
+- A restriction on the creature that died is the trigger's filter: `Triggers.creatureDies(new
+  PermanentHasSubtypePredicate(ZOMBIE), ANOTHER_YOU_CONTROL)`, `nontokenCreatureDies(filter, R)`, `dies(new
+  PermanentAllOfPredicate(List.of(Triggers.CREATURE_OR_PLANESWALKER, filter)), R)`. A card predicate becomes its
+  permanent form (`CardSubtypePredicate` → `PermanentHasSubtypePredicate`, `CardColorPredicate(c)` →
+  `PermanentColorInPredicate(Set.of(c))`, …).
+- "This creature or another [restricted] creature" is `THIS_OR_ANOTHER_YOU_CONTROL` / `THIS_OR_ANOTHER` with the filter
+  (the source matches whatever it was). An intervening "if" about whichever creature died ("if it had counters on it",
+  "if it was enchanted or equipped") covers the source too, which such a filter can't say, so those are one
+  `TriggeredAbility` with two trigger conditions and the same filter, `dies(filter, THIS)` and `creatureDies(filter,
+  ANOTHER_YOU_CONTROL)`: Reluctant Role Model, Host of the Hereafter, Slurrk, Basri's Lieutenant, Cass, Hand of
+  Vengeance. `SpellTarget.addTriggeredAbility` (new) binds such an ability to a target group.
+- "Dies during your turn" is `.onlyDuringYourTurn()` (Vogar); any other intervening "if" is
+  `TriggerOptions.withInterveningIf` (Mausoleum Harpy, Battle of Hoover Dam's and Phenomenon Investigators' chosen mode,
+  Embalmed Ascendant's max speed, Pelt Collector's power comparison); "triggers only once each turn" is
+  `TriggerLimit.ONCE_EACH_TURN`, "do this only once each turn" `DO_ONLY_ONCE_EACH_TURN` (CR 603.2h, checked: The Reaper,
+  Puca's Covenant). A `ConditionalEffect(SourceCardInGraveyard, …)` stays an effect, as in run 1 (Snarlfang Vermin).
+
+**The engine.**
+
+- `TriggerMatcher.filterMatches` judges another object's departure with `departedMatches`, the observer counterpart of
+  run 1's `lastKnownMatches`: last-known subtypes and colors from the departure, other characteristics from the
+  last-known card, last-known power and toughness, the Auras and Equipment attached as it left, and anything else
+  through `PredicateEvaluationService` with the watcher as the filter's source and the departed permanent as the
+  triggering one (its id and last-known controller). That is the context the wrappers were judged in.
+  `PermanentHasGreatestPowerAmongControllerCreaturesPredicate` reads the triggering permanent's controller from that
+  context (Kraven, the Hunter), where the old opponent collector passed the dying creature's controller as the source's.
+- `TriggeredAbilityStackService.triggerOnce` checks an intervening "if" with the moved permanent as the triggering one
+  (its last-known power), and passes the ability's limit to `TriggerCollectionService.triggerCreatureDeath(s)`: it
+  says whether accepting a "you may" uses up "do this only once each turn" and whether effects like Teysa's may add
+  copies ("triggers only once each turn" can't). The limit itself is checked and marked by the pipeline, keyed by the
+  ability, where the wrappers marked the source unkeyed.
+- `CreatureDeathWatch.of` routes `OPPONENT_CONTROLS` before the nontoken check: `creatureDies(Not(token),
+  OPPONENT_CONTROLS)` equals `NONTOKEN_CREATURE` and would otherwise reach the "any nontoken" collector (Shelob).
+- The ally collector leaves the physical card that died out of its graveyard targets, so a copy's "another target
+  creature card" no longer offers the copy's own card (Jackdaw Savior on a Mockingbird). Its separate stack entries
+  for wrapped effects are gone: one ability is one stack object.
+- `DeathTriggerCollectorService.handleAllyNontokenPermanentConditional` is deleted. `unwrapCreatureDeathConditional`,
+  `unwrapTriggeringCardConditional` and `matchesDyingStats` stay: other families, planes and the kept cards read them.
+
+**Cards.** `scripts/step14-death-scan.py` lists the family's abilities and wrappers; `scripts/step14-death-options.py`
+(per letter module) converted 174 card classes, following local variables and constants to their one definition (and
+refusing one shared with another family's ability: Pelt Collector's enters half keeps its wrapper for run 4), merging
+the "this or another" halves (`MERGE`), with exact replacements for Jackdaw Savior, The Ghoul, Pelt Collector and the
+five two-condition cards. `scripts/step14-death-docs.py` rewrote 56 agent-docs rows; the implement-card and
+review-card skills were edited by hand.
+
+**Kept for later runs.**
+
+- Oathkeeper, Takeno's Daisho: "return that card ... if it's a Samurai card" is about the card, not the creature as it
+  died, so its `TriggeringCardConditionalEffect` stays (checked as it triggers, on the printed card, as before).
+- Kami of Mourning's granted ability: no permanent predicate compares with the source card's mana value yet.
+- Agyrem: a plane, collected at the choke point by its exact trigger (`collectPlanarCreatureDeathTriggers`).
+- The Master, Gallifrey's End: without the wrapper its "you may" would reach the nontoken may handler, which asks it
+  before the ability is on the stack (CR 603.5, checked). Run 16 removes the may-unwrapping, then it converts.
+- Effect-level conditions nested in a `SequenceEffect` stay effects (Venom, Overgrowth Elemental, Sephiroth, Blood
+  Spatter Analysis, Silumgar Scavenger).
+- Rinoa, Angel Wing says "do this only once each turn" but keeps `ONCE_EACH_TURN`, as its wrapper did: its "you may
+  return one of them" isn't modeled as a "may", so nothing would mark the action taken. A pre-existing deviation.
+
+**Behaviour changes.** Only the wording-driven ones above: a merged "this or another [X]" card's own death goes through
+the creature-death collector instead of the "when this dies" one, and the one-ability merges are one stack object.
+
+**Tests changed.** `TriggerPipelineTest`: four new tests through the engine: a "this or another Zombie" ability
+triggers for its non-Zombie source and another Zombie but not another non-Zombie; another creature's filter ("had a
++1/+1 counter") is judged as it last existed; a creature-death ability limited to once each turn triggers once for two
+deaths; an intervening "if that creature's power is greater than this creature's" is checked with the dying creature's
+last-known power as it triggers and again as it resolves. No card test changed.
+
+**Test runs.**
+
+- Card: the test class of every converted card and every card test that constructs one (199 classes). The first run
+  had 14 failures in 10 classes (the counters "if" on three "this or another" cards, Kraven's and Hawkeye's filter
+  context, Amoeboid Changeling's lost types, Shelob's routing, Susurian Voidborn's lost target group, Jackdaw Savior on
+  a copy), all fixed above; the second run passed.
+- Application: `TriggerPipelineTest`, `LegacyTriggerBindingsTest`, `CardAbilitiesTest`, `ZoneChangeTriggerTest`,
+  `TriggeredAbilityTest`, `TriggerConditionTest`, `TriggerOptionsTest`, `ZoneChangeRulesEventTest`,
+  `RulesEventLogTest`, `CardFreezeTest`, `MiscTriggerTest`, `ActionTriggerTest`, `GrantedAbilitiesTest`,
+  `TriggerCollectionServiceTest`, `DeathTriggerCollectorServiceTest` and the `…WatchTest` classes (272 tests): only
+  `DeathTriggerCollectorServiceTest`'s 6 mock-wired cases fail, as at HEAD (checked in a HEAD worktree).
+- AI: the whole module (1,620 tests), the same 10 failures as before.
 - The full suite was not run here.
 
 ## Prompt

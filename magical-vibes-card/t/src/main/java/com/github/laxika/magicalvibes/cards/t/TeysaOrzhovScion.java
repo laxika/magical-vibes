@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,9 +37,9 @@ public class TeysaOrzhovScion extends Card {
                 TargetFilters.creature()
         ));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardColorPredicate(CardColor.BLACK),
-                CreateTokenEffect.whiteSpirit(1)
-        ));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                CreateTokenEffect.whiteSpirit(1));
     }
 }

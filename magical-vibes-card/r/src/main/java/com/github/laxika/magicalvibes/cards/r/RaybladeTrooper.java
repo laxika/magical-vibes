@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -38,7 +37,6 @@ public class RaybladeTrooper extends Card {
         CreateTokenEffect humanSoldier = new CreateTokenEffect(
                 1, "Human Soldier", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of());
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(NONTOKEN_WITH_PLUS_ONE_COUNTER, humanSoldier));
+        addTrigger(Triggers.creatureDies(NONTOKEN_WITH_PLUS_ONE_COUNTER, ObjectRelation.YOU_CONTROL), humanSoldier);
     }
 }

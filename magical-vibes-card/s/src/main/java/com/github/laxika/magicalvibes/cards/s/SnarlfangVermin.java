@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,11 +20,12 @@ public class SnarlfangVermin extends Card {
     public SnarlfangVermin() {
         addTrigger(Triggers.dealsCombatDamageToCreature(),
                 new SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffect());
-        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSuspectedPredicate(),
-                        new ConditionalEffect(new SourceCardInGraveyard(),
-                                new LoseLifeEffect(1, LoseLifeRecipient.DYING_CREATURE_CONTROLLER))));
+        addTrigger(new TriggerCondition(Triggers.creatureDies(
+                                new PermanentIsSuspectedPredicate(),
+                                ObjectRelation.OPPONENT_CONTROLS),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new ConditionalEffect(new SourceCardInGraveyard(),
+                        new LoseLifeEffect(1, LoseLifeRecipient.DYING_CREATURE_CONTROLLER)));
     }
 }

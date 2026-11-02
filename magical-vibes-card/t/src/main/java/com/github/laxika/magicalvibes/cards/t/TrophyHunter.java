@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,9 +33,9 @@ public class TrophyHunter extends Card {
                 )
         ));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(
                         new PermanentHasKeywordPredicate(Keyword.FLYING),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
+                        ObjectRelation.DAMAGED_BY_THIS),
+                new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

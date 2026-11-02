@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +22,10 @@ public class ScionOfOpulence extends Card {
     private static final CardEffect CREATE_TREASURE = CreateTokenEffect.ofTreasureToken(1);
 
     public ScionOfOpulence() {
-        addTrigger(Triggers.dies(ObjectRelation.THIS), CREATE_TREASURE);
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.VAMPIRE), CREATE_TREASURE));
+        addTrigger(Triggers.nontokenCreatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                CREATE_TREASURE);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

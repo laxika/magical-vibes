@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.BlightEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,8 +15,9 @@ public class ShadowUrchin extends Card {
 
     public ShadowUrchin() {
         addTrigger(Triggers.attacks(), new BlightEffect(1, null));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentHasCountersPredicate(CounterType.ANY),
-                new ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect()));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasCountersPredicate(CounterType.ANY),
+                        ObjectRelation.YOU_CONTROL),
+                new ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect());
     }
 }

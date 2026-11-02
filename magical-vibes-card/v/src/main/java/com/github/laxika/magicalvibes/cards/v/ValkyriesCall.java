@@ -6,11 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,11 +23,12 @@ import java.util.Set;
 public class ValkyriesCall extends Card {
 
     public ValkyriesCall() {
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardNotPredicate(new CardIsTokenPredicate()),
-                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.ANGEL)))),
+        addTrigger(Triggers.creatureDies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ANGEL)))),
+                        ObjectRelation.YOU_CONTROL),
                 new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, CardSubtype.ANGEL, Set.of(Keyword.FLYING))));
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, CardSubtype.ANGEL, Set.of(Keyword.FLYING)));
     }
 }

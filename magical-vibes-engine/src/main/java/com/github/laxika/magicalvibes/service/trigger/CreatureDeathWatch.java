@@ -63,6 +63,10 @@ public enum CreatureDeathWatch {
         if (zone == Zone.GRAVEYARD) {
             return relation == ObjectRelation.OPPONENT_CONTROLS ? GRAVEYARD_OPPONENT : GRAVEYARD_ALLY;
         }
+        if (relation == ObjectRelation.OPPONENT_CONTROLS) {
+            // "A nontoken creature an opponent controls" too: the trigger's filter decides which creatures count.
+            return OPPONENT;
+        }
         PermanentPredicate base = base(trigger.filter());
         if (Triggers.NONTOKEN_CREATURE.equals(base)) {
             return relation.youControl() ? ALLY_NONTOKEN : ANY_NONTOKEN;
@@ -72,9 +76,6 @@ public enum CreatureDeathWatch {
         }
         if (Triggers.ARTIFACT_OR_CREATURE.equals(base)) {
             return ALLY_ARTIFACT_OR_CREATURE;
-        }
-        if (relation == ObjectRelation.OPPONENT_CONTROLS) {
-            return OPPONENT;
         }
         return relation.youControl() ? ALLY : ANY;
     }

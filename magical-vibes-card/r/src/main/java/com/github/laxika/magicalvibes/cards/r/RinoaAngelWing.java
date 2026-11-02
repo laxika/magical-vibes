@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -41,8 +41,10 @@ public class RinoaAngelWing extends Card {
                 .enterWithCounter(CounterType.FLYING)
                 .enterWithCounterCount(1)
                 .build();
-        addTrigger(new TriggerCondition(Triggers.creatureDies(new PermanentIsAttackingPredicate(),
-                        ObjectRelation.YOU_CONTROL)),
-                TriggerOptions.ONE_OR_MORE, new OncePerTurnTriggerEffect(returnAttacker));
+        addTrigger(new TriggerCondition(Triggers.creatureDies(
+                                new PermanentIsAttackingPredicate(),
+                                ObjectRelation.YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                returnAttacker);
     }
 }

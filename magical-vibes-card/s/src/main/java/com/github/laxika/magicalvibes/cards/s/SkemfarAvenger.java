@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,12 +20,11 @@ public class SkemfarAvenger extends Card {
     public SkemfarAvenger() {
         // Whenever another nontoken Elf or Berserker you control dies, you draw a card and you
         // lose 1 life.
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(CardSubtype.ELF),
-                        new CardSubtypePredicate(CardSubtype.BERSERKER)
-                )),
-                SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));
+        addTrigger(Triggers.nontokenCreatureDies(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                                new PermanentHasSubtypePredicate(CardSubtype.BERSERKER))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
     }
 }

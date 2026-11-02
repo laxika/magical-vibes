@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,11 +24,10 @@ public class MarchesaTheBlackRose extends Card {
 
         // Whenever a creature you control with a +1/+1 counter on it dies, return that card to the
         // battlefield under your control at the beginning of the next end step.
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
-                        new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                                false, null, 0, null, null)));
+                        ObjectRelation.YOU_CONTROL),
+                new RegisterDelayedReturnDyingCreatureUnderControlEffect(false, null, 0, null, null));
 
     }
 }

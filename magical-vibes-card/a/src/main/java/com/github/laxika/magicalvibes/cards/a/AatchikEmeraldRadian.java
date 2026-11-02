@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,10 +37,11 @@ public class AatchikEmeraldRadian extends Card {
 
         // Whenever another Insect you control dies, put a +1/+1 counter on Aatchik. Each opponent loses 1 life.
         // One triggered ability with two instructions, so both share one stack entry.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.INSECT),
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.INSECT),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT))));
+                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
     }
 }

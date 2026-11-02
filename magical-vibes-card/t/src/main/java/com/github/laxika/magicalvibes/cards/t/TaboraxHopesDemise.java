@@ -14,9 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,15 +28,16 @@ public class TaboraxHopesDemise extends Card {
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
 
-        var cleric = new CardSubtypePredicate(CardSubtype.CLERIC);
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(cleric, SequenceEffect.of(
+        var cleric = new PermanentHasSubtypePredicate(CardSubtype.CLERIC);
+        addTrigger(Triggers.nontokenCreatureDies(cleric, ObjectRelation.ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(
                         new PutCountersOnSourceEffect(1, 1, 1),
                         new MayEffect(
                                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)),
-                                "Draw a card?"))));
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardNotPredicate(cleric),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
+                                "Draw a card?")));
+        addTrigger(Triggers.nontokenCreatureDies(
+                        new PermanentNotPredicate(cleric),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

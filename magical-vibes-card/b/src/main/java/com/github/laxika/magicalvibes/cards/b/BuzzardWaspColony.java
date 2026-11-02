@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,8 +30,9 @@ public class BuzzardWaspColony extends Card {
                         "an artifact or creature", false, false),
                 "Sacrifice an artifact or creature?"));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentHasCountersPredicate(CounterType.ANY),
-                new MoveDyingSourceCountersToSourceEffect()));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasCountersPredicate(CounterType.ANY),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new MoveDyingSourceCountersToSourceEffect());
     }
 }

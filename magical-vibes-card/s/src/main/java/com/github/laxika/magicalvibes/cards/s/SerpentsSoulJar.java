@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,10 +19,10 @@ import java.util.List;
 public class SerpentsSoulJar extends Card {
 
     public SerpentsSoulJar() {
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ELF),
-                        new ExileTriggeringCreatureAndTrackWithSourceEffect()));
+        addTrigger(Triggers.nontokenCreatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.ELF),
+                        ObjectRelation.YOU_CONTROL),
+                new ExileTriggeringCreatureAndTrackWithSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

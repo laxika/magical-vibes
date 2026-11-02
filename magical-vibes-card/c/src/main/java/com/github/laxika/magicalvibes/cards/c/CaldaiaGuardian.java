@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,9 +30,10 @@ public class CaldaiaGuardian extends Card {
         CreateTokenEffect citizenTokens = new CreateTokenEffect(2, "Citizen", 1, 1,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.CITIZEN));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardMinManaValuePredicate(4), citizenTokens));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), citizenTokens);
+        addTrigger(Triggers.creatureDies(
+                        new PermanentMinManaValuePredicate(4),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                citizenTokens);
 
         // Blitz (CR 702.152a): haste while the blitz cost was paid; the end-step sacrifice is
         // created as the spell resolves.

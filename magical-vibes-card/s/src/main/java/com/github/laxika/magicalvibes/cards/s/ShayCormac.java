@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -35,9 +34,7 @@ public class ShayCormac extends Card {
 
         addTrigger(Triggers.creatureOpponentControlsBecomesTargetOfYourSpellOrAbility(),
                 new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY, 1));
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.BOUNTY),
-                        new PutCountersOnSourceEffect(1, 1, 2)));
+        addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.BOUNTY), ObjectRelation.ANY),
+                new PutCountersOnSourceEffect(1, 1, 2));
     }
 }

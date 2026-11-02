@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,9 +19,9 @@ public class HeadlessRider extends Card {
     public HeadlessRider() {
         // Whenever this creature or another nontoken Zombie you control dies, create a 2/2 black
         // Zombie creature token.
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.ZOMBIE), ZOMBIE_TOKEN));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), ZOMBIE_TOKEN);
+        addTrigger(Triggers.nontokenCreatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                ZOMBIE_TOKEN);
     }
 }

@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterTransformSourceAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,9 +30,10 @@ public class ArchangelAvacyn extends Card {
 
         // When a non-Angel creature you control dies, transform Archangel Avacyn at the beginning
         // of the next upkeep.
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.ANGEL)),
-                new RegisterTransformSourceAtNextUpkeepEffect()));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ANGEL)),
+                        ObjectRelation.YOU_CONTROL),
+                new RegisterTransformSourceAtNextUpkeepEffect());
     }
 
     @Override

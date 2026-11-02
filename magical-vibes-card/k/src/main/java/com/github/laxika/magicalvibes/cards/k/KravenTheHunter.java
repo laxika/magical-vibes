@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,10 +15,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KravenTheHunter extends Card {
 
     public KravenTheHunter() {
-        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), new TriggeringPermanentConditionalEffect(
-                new PermanentHasGreatestPowerAmongControllerCreaturesPredicate(),
-                SequenceEffect.of(
-                        new DrawCardEffect(1),
-                        new PutCountersOnSourceEffect(1, 1, 1))));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasGreatestPowerAmongControllerCreaturesPredicate(),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                SequenceEffect.of(new DrawCardEffect(1), new PutCountersOnSourceEffect(1, 1, 1)));
     }
 }

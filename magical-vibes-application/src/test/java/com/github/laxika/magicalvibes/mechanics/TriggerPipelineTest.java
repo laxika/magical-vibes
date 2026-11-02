@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,12 +21,14 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -311,6 +315,78 @@ class TriggerPipelineTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @CardUsed(WalkingCorpse.class)
+    void aThisOrAnotherAbilityTriggersForItsSourceWhateverItWasAndForAnotherCreatureOnlyIfItMatches() {
+        Permanent watcher = battlefieldCreatureWith(Triggers.creatureDies(
+                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL), GAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, zombie));
+        assertThat(triggersOf(watcher.getCard())).hasSize(1);
+        harness.passBothPriorities();
+
+        // "This creature or another Zombie": a Grizzly Bears isn't a Zombie, but it is "this creature".
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, watcher));
+        assertThat(triggersOf(watcher.getCard())).hasSize(1);
+    }
+
+    @Test
+    void anotherCreaturesFilterIsJudgedOnItAsItLastExisted() {
+        Permanent watcher = battlefieldCreatureWith(Triggers.creatureDies(
+                new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE), ObjectRelation.ANOTHER_YOU_CONTROL),
+                DRAW);
+        Permanent countered = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        countered.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent plain = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, plain));
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, countered));
+
+        // CR 603.10a: the counter left the game with the creature, but the ability looks back at it.
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+    }
+
+    @Test
+    void aCreatureDeathAbilityThatTriggersOnlyOnceEachTurnTriggersOnceForTwoDeaths() {
+        Permanent watcher = battlefieldCreatureWith(
+                new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL)),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second));
+
+        assertThat(triggersOf(watcher.getCard())).hasSize(1);
+    }
+
+    @Test
+    void aCreatureDeathInterveningIfReadsTheCreatureThatDied() {
+        Permanent watcher = battlefieldCreatureWith(
+                new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL)),
+                TriggerOptions.DEFAULT.withInterveningIf(new TriggeringPermanentPowerGreaterThanSourcePower()), GAIN);
+        Permanent equal = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bigger = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bigger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, equal));
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bigger));
+
+        // "If that creature's power is greater than this creature's" (CR 603.4): checked as it triggers, with the
+        // creature's last-known power, and again as it resolves.
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(
+                new ConditionalEffect(new TriggeringPermanentPowerGreaterThanSourcePower(), GAIN, true));
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 3);
     }
 
     @Test

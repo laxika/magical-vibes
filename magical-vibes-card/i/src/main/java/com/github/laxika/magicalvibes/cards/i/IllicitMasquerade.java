@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureFromGr
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -32,12 +31,12 @@ public class IllicitMasquerade extends Card {
         var otherCreature = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
                 new CardNotPredicate(new CardIsSelfPredicate())));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.creatureDies(
                         new PermanentHasCountersPredicate(CounterType.IMPOSTOR),
-                        SequenceEffect.of(
-                                new ExileTriggeringCreatureFromGraveyardEffect(),
-                                new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
-                                        otherCreature, 1, false, false))));
+                        ObjectRelation.YOU_CONTROL),
+                SequenceEffect.of(
+                        new ExileTriggeringCreatureFromGraveyardEffect(),
+                        new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                                otherCreature, 1, false, false)));
     }
 }

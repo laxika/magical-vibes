@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingInstantOrSorceryAndMayCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
@@ -25,8 +24,7 @@ public class CrypticPursuit extends Card {
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
                 List.of(new ManifestTopCardEffect())));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentIsFaceDownPredicate(),
-                new ExileDyingInstantOrSorceryAndMayCastUntilNextTurnEffect()));
+        addTrigger(Triggers.creatureDies(new PermanentIsFaceDownPredicate(), ObjectRelation.YOU_CONTROL),
+                new ExileDyingInstantOrSorceryAndMayCastUntilNextTurnEffect());
     }
 }

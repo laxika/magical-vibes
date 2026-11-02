@@ -9,9 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -28,18 +27,15 @@ public class TheGhoulGunslinger extends Card {
             new ConditionalEffect(new TargetPlayerIsController(),
                     CreateTokenEffect.ofTreasureToken(1)));
 
-    private static final CardEffect ZOMBIE_OR_MUTANT_RAD_AND_TREASURE = new TriggeringCardConditionalEffect(
-            new CardAnyOfPredicate(List.of(
-                    new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                    new CardSubtypePredicate(CardSubtype.MUTANT))),
-            RAD_AND_TREASURE);
 
     public TheGhoulGunslinger() {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), RAD_AND_TREASURE);
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                ZOMBIE_OR_MUTANT_RAD_AND_TREASURE);
+        addTrigger(Triggers.nontokenCreatureDies(new PermanentAnyOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
+                                new PermanentHasSubtypePredicate(CardSubtype.MUTANT))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                RAD_AND_TREASURE);
     }
 }

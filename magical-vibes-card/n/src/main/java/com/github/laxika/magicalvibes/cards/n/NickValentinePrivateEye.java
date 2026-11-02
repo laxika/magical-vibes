@@ -2,12 +2,9 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,8 +21,9 @@ public class NickValentinePrivateEye extends Card {
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
 
         MayEffect investigate = new MayEffect(CreateTokenEffect.ofClueToken(1), "Investigate?");
-        addTrigger(Triggers.dies(ObjectRelation.THIS), investigate);
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardTypePredicate(CardType.ARTIFACT), investigate));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentIsArtifactPredicate(),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                investigate);
     }
 }

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,9 +35,10 @@ public class EmbroseDeanOfShadow extends Card {
                         "Target must be another creature")
         ));
 
-        TriggeringPermanentConditionalEffect drawForCounteredCreatureDeath = new TriggeringPermanentConditionalEffect(
-                new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
-                new DrawCardEffect(1));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drawForCounteredCreatureDeath);
+        CardEffect drawForCounteredCreatureDeath = new DrawCardEffect(1);
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
+                        ObjectRelation.YOU_CONTROL),
+                drawForCounteredCreatureDeath);
     }
 }

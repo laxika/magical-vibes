@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicatesOfDyingCreatureIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,12 +26,13 @@ public class GyoxBrutalCarnivora extends Card {
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new PutCounterOnTargetPermanentEffect(CounterType.OIL));
 
-        TriggeringPermanentConditionalEffect deathTrigger = new TriggeringPermanentConditionalEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate()),
-                        new PermanentHasCountersPredicate(CounterType.OIL))),
-                new ConjureDuplicatesOfDyingCreatureIntoLibraryEffect());
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), deathTrigger);
+        CardEffect deathTrigger = new ConjureDuplicatesOfDyingCreatureIntoLibraryEffect();
+        addTrigger(Triggers.creatureDies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                                new PermanentHasCountersPredicate(CounterType.OIL))),
+                        ObjectRelation.YOU_CONTROL),
+                deathTrigger);
     }
 }

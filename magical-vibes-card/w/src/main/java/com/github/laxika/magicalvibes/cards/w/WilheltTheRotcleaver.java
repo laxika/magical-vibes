@@ -8,12 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,13 +27,12 @@ public class WilheltTheRotcleaver extends Card {
     public WilheltTheRotcleaver() {
         // Whenever another Zombie you control dies, if it didn't have decayed, create a 2/2 black
         // Zombie creature token with decayed.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                                new CardNotPredicate(new CardKeywordPredicate(Keyword.DECAYED))
-                        )),
-                        CreateTokenEffect.blackZombieWithDecayed(1)));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
+                                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.DECAYED)))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                CreateTokenEffect.blackZombieWithDecayed(1));
 
         // At the beginning of your end step, you may sacrifice a Zombie. If you do, draw a card.
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(

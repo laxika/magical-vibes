@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -40,8 +40,9 @@ public class HaviTheAllFather extends Card {
                 .enterTapped(true)
                 .build();
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), returnLegendaryCreature);
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSupertypePredicate(CardSupertype.LEGENDARY), returnLegendaryCreature));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                returnLegendaryCreature);
     }
 }

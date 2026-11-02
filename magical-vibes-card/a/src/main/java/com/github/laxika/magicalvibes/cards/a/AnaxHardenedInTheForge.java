@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -37,9 +36,10 @@ public class AnaxHardenedInTheForge extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED), new Fixed(3)));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))), SATYR_TOKEN));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), SATYR_TOKEN);
+        addTrigger(Triggers.creatureDies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                SATYR_TOKEN);
     }
 }

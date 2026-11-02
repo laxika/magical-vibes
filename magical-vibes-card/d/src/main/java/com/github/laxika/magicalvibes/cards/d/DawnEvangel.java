@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -20,15 +19,16 @@ import java.util.List;
 public class DawnEvangel extends Card {
 
     public DawnEvangel() {
-        CardEffect returnEligibleCreature = new TriggeringPermanentConditionalEffect(
-                new PermanentIsEnchantedBySourceControllerAuraPredicate(),
-                ReturnCardFromGraveyardEffect.builder()
+        CardEffect returnEligibleCreature = ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardMaxManaValuePredicate(2))))
                         .targetGraveyard(true)
-                        .build());
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), returnEligibleCreature);
+                        .build();
+        addTrigger(Triggers.creatureDies(
+                        new PermanentIsEnchantedBySourceControllerAuraPredicate(),
+                        ObjectRelation.ANY),
+                returnEligibleCreature);
     }
 }

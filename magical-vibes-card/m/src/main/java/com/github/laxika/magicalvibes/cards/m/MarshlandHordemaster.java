@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSour
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -36,9 +37,9 @@ public class MarshlandHordemaster extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        deathTrigger.addTrigger(Triggers.dies(ObjectRelation.THIS), DEATH_TRIGGER);
-        deathTrigger.addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.LIZARD), DEATH_TRIGGER));
+        deathTrigger.addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.LIZARD),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                DEATH_TRIGGER);
     }
 }

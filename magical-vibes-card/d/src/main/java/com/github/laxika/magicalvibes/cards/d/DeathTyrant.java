@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -20,10 +19,10 @@ import java.util.List;
 public class DeathTyrant extends Card {
 
     public DeathTyrant() {
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentIsAttackingPredicate(), CreateTokenEffect.blackZombie(1)));
-        addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), new TriggeringPermanentConditionalEffect(
-                new PermanentIsBlockingPredicate(), CreateTokenEffect.blackZombie(1)));
+        addTrigger(Triggers.creatureDies(new PermanentIsAttackingPredicate(), ObjectRelation.YOU_CONTROL),
+                CreateTokenEffect.blackZombie(1));
+        addTrigger(Triggers.creatureDies(new PermanentIsBlockingPredicate(), ObjectRelation.OPPONENT_CONTROLS),
+                CreateTokenEffect.blackZombie(1));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

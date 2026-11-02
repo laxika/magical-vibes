@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,9 +16,9 @@ public class VengefulDead extends Card {
 
     public VengefulDead() {
         // Whenever this creature or another Zombie dies, each opponent loses 1 life.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.ZOMBIE),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
+                        ObjectRelation.THIS_OR_ANOTHER),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }
 }

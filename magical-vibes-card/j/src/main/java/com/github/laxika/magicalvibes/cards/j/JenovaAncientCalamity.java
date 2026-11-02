@@ -6,12 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -45,9 +43,10 @@ public class JenovaAncientCalamity extends Card {
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.MUTANT));
 
         // "Whenever a Mutant you control dies during your turn" — Jenova herself counts while she is a Mutant.
-        TriggeringPermanentConditionalEffect drawForDyingMutant = new TriggeringPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.MUTANT),
-                new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(new EventValue())));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), drawForDyingMutant);
+        CardEffect drawForDyingMutant = new DrawCardEffect(new EventValue());
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.MUTANT),
+                        ObjectRelation.YOU_CONTROL).onlyDuringYourTurn(),
+                drawForDyingMutant);
     }
 }

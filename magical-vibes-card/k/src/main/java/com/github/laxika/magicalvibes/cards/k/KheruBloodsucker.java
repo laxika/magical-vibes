@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,15 +19,14 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "75")
 public class KheruBloodsucker extends Card {
 
-    private static final TriggeringPermanentConditionalEffect DEATH_TRIGGER =
-            new TriggeringPermanentConditionalEffect(
-                    new PermanentToughnessAtLeastPredicate(4),
-                    SequenceEffect.of(
+    private static final CardEffect DEATH_TRIGGER =
+            SequenceEffect.of(
                             new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
-                            new GainLifeEffect(2)));
+                            new GainLifeEffect(2));
 
     public KheruBloodsucker() {
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), DEATH_TRIGGER);
+        addTrigger(Triggers.creatureDies(new PermanentToughnessAtLeastPredicate(4), ObjectRelation.YOU_CONTROL),
+                DEATH_TRIGGER);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

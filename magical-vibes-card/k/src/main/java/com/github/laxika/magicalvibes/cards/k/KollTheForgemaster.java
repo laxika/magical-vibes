@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
@@ -27,11 +26,12 @@ public class KollTheForgemaster extends Card {
                 new PermanentIsEnchantedPredicate(),
                 new PermanentIsEquippedPredicate()));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate()),
-                        enchantedOrEquipped)),
-                new ReturnTriggeringCardToOwnerHandEffect()));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()),
+                                enchantedOrEquipped)),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new ReturnTriggeringCardToOwnerHandEffect());
 
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

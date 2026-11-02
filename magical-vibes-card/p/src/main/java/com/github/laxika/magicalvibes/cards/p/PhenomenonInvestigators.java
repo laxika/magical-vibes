@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,10 +33,11 @@ public class PhenomenonInvestigators extends Card {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(BELIEVE, DOUBT)));
 
         // Believe: "a nontoken creature you control" includes this creature, so it also triggers on its own death.
-        var believeHorror = new ConditionalEffect(new SourceHasChosenMode(BELIEVE),
-                new CreateTokenEffect(1, "Horror", 2, 2, CardColor.BLACK,
-                        List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT)));
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), believeHorror);
+        var believeHorror = new CreateTokenEffect(1, "Horror", 2, 2, CardColor.BLACK,
+                        List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT));
+        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(BELIEVE)),
+                believeHorror);
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceHasChosenMode(DOUBT),

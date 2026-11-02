@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -46,8 +47,8 @@ public class BattleOfHooverDam extends Card {
                         .build()));
 
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new ConditionalEffect(
-                        new SourceHasChosenMode(LEGION),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)));
+                .addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(LEGION)),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

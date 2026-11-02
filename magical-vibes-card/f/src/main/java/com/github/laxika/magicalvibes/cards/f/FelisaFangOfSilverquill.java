@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -45,13 +45,14 @@ public class FelisaFangOfSilverquill extends Card {
                 .withTapped(true);
         CreateTokensForEachDyingSourceCounterEffect createInklings =
                 new CreateTokensForEachDyingSourceCounterEffect(inkling);
-        TriggeringPermanentConditionalEffect nontokenWithCounters =
-                new TriggeringPermanentConditionalEffect(
+        CardEffect nontokenWithCounters =
+                createInklings;
+
+        addTrigger(Triggers.creatureDies(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                                 new PermanentHasCountersPredicate(CounterType.ANY))),
-                        createInklings);
-
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), nontokenWithCounters);
+                        ObjectRelation.YOU_CONTROL),
+                nontokenWithCounters);
     }
 }

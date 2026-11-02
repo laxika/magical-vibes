@@ -13,8 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -47,14 +45,13 @@ public class HungryLynx extends Card {
                         List.of(CardSubtype.RAT), Set.of(Keyword.DEATHTOUCH), Set.of()),
                 PlayerRelation.OPPONENT));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.RAT),
+        addTrigger(Triggers.creatureDies(new PermanentHasSubtypePredicate(CardSubtype.RAT), ObjectRelation.ANY),
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.CAT),
                                 new PermanentControlledBySourceControllerPredicate())),
-                        EachPermanentScope.ALL_PLAYERS)));
+                        EachPermanentScope.ALL_PLAYERS));
     }
 }

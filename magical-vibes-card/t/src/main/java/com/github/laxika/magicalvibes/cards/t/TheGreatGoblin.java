@@ -6,12 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -37,12 +36,12 @@ public class TheGreatGoblin extends Card {
                                 new PermanentHasAnySubtypePredicate(GOBLIN_ORC_ARMY),
                                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER))));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.GOBLIN),
-                                new CardSubtypePredicate(CardSubtype.ORC),
-                                new CardSubtypePredicate(CardSubtype.ARMY))),
-                        new ExileTopCardsMayPlayUntilNextTurnEffect(1)));
+        addTrigger(Triggers.creatureDies(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
+                                new PermanentHasSubtypePredicate(CardSubtype.ORC),
+                                new PermanentHasSubtypePredicate(CardSubtype.ARMY))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new ExileTopCardsMayPlayUntilNextTurnEffect(1));
     }
 }

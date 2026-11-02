@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,8 +14,8 @@ public class AresGodOfWar extends Card {
     public AresGodOfWar() {
         addStaticEffect(new MustAttackEffect());
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), new TriggeringPermanentConditionalEffect(
-                new PermanentIsAttackingPredicate(), new ReturnTriggeringCardToOwnerHandEffect()));
+        addTrigger(Triggers.creatureDies(new PermanentIsAttackingPredicate(), ObjectRelation.YOU_CONTROL),
+                new ReturnTriggeringCardToOwnerHandEffect());
 
     }
 }

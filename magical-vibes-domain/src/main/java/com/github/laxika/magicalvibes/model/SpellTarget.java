@@ -110,6 +110,19 @@ public final class SpellTarget {
     }
 
     /**
+     * Adds {@code ability} ({@link Card#addTriggeredAbility}) and binds its effects to this group: one ability with
+     * several trigger conditions, "whenever this creature or another creature you control dies, if it had counters
+     * on it, put those counters on up to one target creature".
+     */
+    public SpellTarget addTriggeredAbility(TriggeredAbility ability) {
+        card.addTriggeredAbility(ability);
+        for (EffectRegistration registration : ability.effects()) {
+            card.registerEffectTargetIndex(registration.effect(), this.index);
+        }
+        return this;
+    }
+
+    /**
      * Adds a triggered ability whose registrations carry {@code triggerMode} ({@link Card#addTrigger(Trigger,
      * TriggerMode, CardEffect...)}) and binds the effects to this group.
      */

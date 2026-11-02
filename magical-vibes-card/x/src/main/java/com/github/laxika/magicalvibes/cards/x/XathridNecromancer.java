@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,11 +22,10 @@ public class XathridNecromancer extends Card {
     public XathridNecromancer() {
         // "This creature" is its own "when this dies" ability, so the Human restriction applies only to another
         // creature.
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.HUMAN),
-                tappedZombie()
-        ));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), tappedZombie());
+        addTrigger(Triggers.creatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                        ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                tappedZombie());
     }
 
     private static CreateTokenEffect tappedZombie() {

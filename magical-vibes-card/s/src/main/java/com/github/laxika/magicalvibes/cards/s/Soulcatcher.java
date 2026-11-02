@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,10 +14,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Soulcatcher extends Card {
 
     public Soulcatcher() {
-        TriggeringPermanentConditionalEffect flyingCreatureDies = new TriggeringPermanentConditionalEffect(
-                new PermanentHasKeywordPredicate(Keyword.FLYING),
-                new PutCountersOnSourceEffect(1, 1, 1)
-        );
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), flyingCreatureDies);
+        CardEffect flyingCreatureDies = new PutCountersOnSourceEffect(1, 1, 1);
+        addTrigger(Triggers.creatureDies(new PermanentHasKeywordPredicate(Keyword.FLYING), ObjectRelation.ANY),
+                flyingCreatureDies);
     }
 }

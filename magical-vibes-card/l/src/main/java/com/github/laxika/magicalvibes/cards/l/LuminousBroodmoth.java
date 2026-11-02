@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,10 +20,11 @@ import java.util.Set;
 public class LuminousBroodmoth extends Card {
 
     public LuminousBroodmoth() {
-        TriggeringPermanentConditionalEffect returnWithoutFlying = new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)),
-                new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                        CounterType.FLYING, 1, null, Set.of()));
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL), returnWithoutFlying);
+        CardEffect returnWithoutFlying = new ReturnDyingCreatureToOwnerBattlefieldEffect(
+                        CounterType.FLYING, 1, null, Set.of());
+        addTrigger(Triggers.creatureDies(
+                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)),
+                        ObjectRelation.YOU_CONTROL),
+                returnWithoutFlying);
     }
 }

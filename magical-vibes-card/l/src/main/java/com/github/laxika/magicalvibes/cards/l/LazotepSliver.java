@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,9 +27,10 @@ public class LazotepSliver extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
 
         // Whenever a nontoken Sliver you control dies, amass Slivers 2. Lazotep Sliver is one of them.
-        CardEffect sliverDeath = new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.SLIVER),
-                new AmassGoblinsEffect(2, CardSubtype.SLIVER));
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), sliverDeath);
+        CardEffect sliverDeath = new AmassGoblinsEffect(2, CardSubtype.SLIVER);
+        addTrigger(Triggers.nontokenCreatureDies(
+                        new PermanentHasSubtypePredicate(CardSubtype.SLIVER),
+                        ObjectRelation.YOU_CONTROL),
+                sliverDeath);
     }
 }
