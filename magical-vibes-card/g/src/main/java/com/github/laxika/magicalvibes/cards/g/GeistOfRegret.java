@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutRandomCardFromLibraryIntoGraveyardEffect;
@@ -26,7 +25,7 @@ public class GeistOfRegret extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutRandomCardFromLibraryIntoGraveyardEffect(instant),
                 new PutRandomCardFromLibraryIntoGraveyardEffect(sorcery)));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new CopyControllerCastSpellOnSpellCastEffect(instantOrSorcery, Zone.GRAVEYARD));
     }
 }

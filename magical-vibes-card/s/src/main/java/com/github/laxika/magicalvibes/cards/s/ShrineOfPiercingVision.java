@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -25,7 +24,7 @@ public class ShrineOfPiercingVision extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a blue spell, put a charge counter on Shrine of Piercing Vision.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLUE),
                         List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))));
 

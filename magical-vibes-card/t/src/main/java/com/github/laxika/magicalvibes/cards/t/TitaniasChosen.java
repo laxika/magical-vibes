@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -14,7 +14,7 @@ import java.util.Set;
 public class TitaniasChosen extends Card {
 
     public TitaniasChosen() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 new PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
                         Set.of(CardColor.GREEN), 1, false));
     }

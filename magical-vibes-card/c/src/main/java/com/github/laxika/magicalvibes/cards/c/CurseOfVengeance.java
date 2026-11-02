@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class CurseOfVengeance extends Card {
 
     public CurseOfVengeance() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
                 null,
                 List.of(new PutCountersOnSelfEffect(CounterType.SPITE)),
                 null,

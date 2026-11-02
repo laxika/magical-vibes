@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,9 +35,9 @@ public class ProfessorOnyx extends Card {
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(2));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(instantOrSorcery, magecraft));
-        addEffect(EffectSlot.ON_CONTROLLER_COPIES_SPELL,
+        addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(instantOrSorcery, magecraft));
 
         addActivatedAbility(new ActivatedAbility(

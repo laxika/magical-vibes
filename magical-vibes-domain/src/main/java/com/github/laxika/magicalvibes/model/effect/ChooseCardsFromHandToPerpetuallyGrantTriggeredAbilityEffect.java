@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -14,6 +16,15 @@ public record ChooseCardsFromHandToPerpetuallyGrantTriggeredAbilityEffect(
         List<Ability> grantedAbilities,
         CardPredicate cardFilter)
         implements CardEffect {
+
+    /** One triggered ability with {@code trigger} for each of {@code grantedEffects}, in order. */
+    public ChooseCardsFromHandToPerpetuallyGrantTriggeredAbilityEffect(int maxCount,
+                                                                       Trigger trigger,
+                                                                       List<CardEffect> grantedEffects,
+                                                                       CardPredicate cardFilter) {
+        this(maxCount, grantedEffects.stream().<Ability>map(effect -> new TriggeredAbility(trigger, effect)).toList(),
+                cardFilter);
+    }
 
     /** The grant as the slot and effects that stand for it. */
     public ChooseCardsFromHandToPerpetuallyGrantTriggeredAbilityEffect(int maxCount,

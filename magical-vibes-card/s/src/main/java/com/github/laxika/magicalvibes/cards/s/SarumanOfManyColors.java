@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class SarumanOfManyColors extends Card {
 
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessDiscardsEffect(noncreatureSpell));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 SpellCastTriggerEffect.nth(2, null, List.of(
                         new MillEachOpponentThenIfMilledEffect(
                                 2,

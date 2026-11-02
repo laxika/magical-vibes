@@ -43,7 +43,7 @@ public class EnduringFriendship extends Card {
                         new ConjureDuplicateOfSourceCardIntoHandEffect("YDSK", "20", Set.of(Keyword.DOUBLE)),
                         new RemoveKeywordEffect(Keyword.DOUBLE, GrantScope.SELF, null, EffectDuration.PERMANENT))));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),

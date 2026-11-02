@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +36,7 @@ public class ArixmethesSlumberingIsle extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SLUMBER),
                 new SetCardTypesEffect(Set.of(CardType.LAND), GrantScope.SELF)));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        addTrigger(Triggers.youCastSpell(), new MayEffect(
                 new SpellCastTriggerEffect(null, List.of(
                         new RemoveCounterFromSourceEffect(CounterType.SLUMBER, 1))),
                 "Remove a slumber counter from Arixmethes?"));

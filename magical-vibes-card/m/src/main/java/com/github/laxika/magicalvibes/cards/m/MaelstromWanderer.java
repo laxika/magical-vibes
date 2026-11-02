@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PC2", collectorNumber = "101")
 @CardRegistration(set = "EMA", collectorNumber = "204")
@@ -23,7 +23,7 @@ public class MaelstromWanderer extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
 
         // Maelstrom Wanderer has cascade twice.
-        addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
-        addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
     }
 }

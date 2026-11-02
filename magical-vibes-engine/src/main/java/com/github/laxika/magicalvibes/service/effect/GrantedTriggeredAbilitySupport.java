@@ -69,8 +69,17 @@ public class GrantedTriggeredAbilitySupport {
      * {@code permanent}, as it is now: "creatures you control have 'when this creature enters, …'".
      */
     public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent, Trigger trigger) {
-        return grantedTriggeredAbilities(gameData, permanent,
-                gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null),
+        return grantedTriggerEffects(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null), trigger);
+    }
+
+    /**
+     * Form for callers that already hold the permanent's static bonus for the current game state, sparing a second
+     * layered query.
+     */
+    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent,
+                                                  GameQueryService.StaticBonus staticBonus, Trigger trigger) {
+        return grantedTriggeredAbilities(gameData, permanent, staticBonus,
                 ability -> ability.hasTrigger(trigger)).stream()
                 .flatMap(ability -> ability.effects().stream().map(EffectRegistration::effect))
                 .toList();

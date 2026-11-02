@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +39,7 @@ public class TheCircleOfLoyalty extends Card {
                 List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of());
 
         // Whenever you cast a legendary spell, create a 2/2 white Knight creature token with vigilance.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardSupertypePredicate(CardSupertype.LEGENDARY), List.of(knightToken)));
 
         // {3}{W}, {T}: Create a 2/2 white Knight creature token with vigilance.

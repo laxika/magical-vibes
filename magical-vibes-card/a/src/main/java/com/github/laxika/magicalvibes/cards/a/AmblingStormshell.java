@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class AmblingStormshell extends Card {
         addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSelfEffect(CounterType.STUN, 3));
         addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect(3));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.TURTLE),
                 List.of(new UntapPermanentsEffect(TapUntapScope.SELF))
         ));

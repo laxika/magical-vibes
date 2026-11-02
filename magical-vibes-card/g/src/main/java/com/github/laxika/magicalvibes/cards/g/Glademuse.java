@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
 public class Glademuse extends Card {
 
     public Glademuse() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 SpellCastTriggerEffect.whenCasterIsNotActiveTurn(
                         List.of(new DrawCardForTargetPlayerEffect(1))));
     }

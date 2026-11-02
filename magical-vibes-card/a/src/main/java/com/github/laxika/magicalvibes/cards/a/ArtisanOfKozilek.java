@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ROE", collectorNumber = "2")
 @CardRegistration(set = "CM2", collectorNumber = "14")
@@ -25,7 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class ArtisanOfKozilek extends Card {
 
     public ArtisanOfKozilek() {
-        addEffect(EffectSlot.ON_SELF_CAST, new MayEffect(
+        addTrigger(Triggers.youCastThisSpell(), new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))

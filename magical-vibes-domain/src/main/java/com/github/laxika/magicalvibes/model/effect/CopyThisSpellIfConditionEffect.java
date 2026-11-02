@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 
 /**
- * Trigger descriptor for {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_SELF_CAST}:
+ * Trigger descriptor for {@code Triggers.youCastThisSpell()}:
  * "When you cast this spell, copy it if {@code condition}. You may choose new targets for the copy."
  * <p>
  * At cast time {@code TriggerCollectionService.checkSpellCastTriggers} snapshots the just-cast spell

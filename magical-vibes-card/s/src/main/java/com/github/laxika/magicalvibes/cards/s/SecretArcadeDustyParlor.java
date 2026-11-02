@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public class SecretArcadeDustyParlor extends Card {
                 new SourceRoomDoorUnlocked(0),
                 new GrantCardTypeToOwnNonlandPermanentsEffect(CardType.ENCHANTMENT, false)));
 
-        target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.ENCHANTMENT),
                         List.of(new PutCounterOnTargetPermanentEffect(

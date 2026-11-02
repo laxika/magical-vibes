@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -21,7 +20,7 @@ public class HoardersOverflow extends Card {
 
     public HoardersOverflow() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(CounterType.STASH));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.wheneverYouExpend(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.wheneverYouExpend(
                 4, List.of(new PutCountersOnSelfEffect(CounterType.STASH))));
 
         addActivatedAbility(new ActivatedAbility(

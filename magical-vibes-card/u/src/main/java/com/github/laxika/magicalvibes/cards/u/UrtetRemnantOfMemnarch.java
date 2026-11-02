@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -30,7 +29,7 @@ public class UrtetRemnantOfMemnarch extends Card {
 
     public UrtetRemnantOfMemnarch() {
         // Whenever you cast a Myr spell, create a 1/1 colorless Myr artifact creature token.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(
                         new CardSubtypePredicate(CardSubtype.MYR),
                         List.of(new CreateTokenEffect(

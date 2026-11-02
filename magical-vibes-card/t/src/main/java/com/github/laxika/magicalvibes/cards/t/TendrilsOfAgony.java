@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SCG", collectorNumber = "75")
 @CardRegistration(set = "VMA", collectorNumber = "142")
@@ -19,6 +19,6 @@ public class TendrilsOfAgony extends Card {
     public TendrilsOfAgony() {
         addSpellEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
         addSpellEffect(new GainLifeEffect(2));
-        addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
+        addTrigger(Triggers.youCastThisSpell(), new StormEffect());
     }
 }

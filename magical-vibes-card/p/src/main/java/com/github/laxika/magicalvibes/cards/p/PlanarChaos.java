@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -18,7 +17,7 @@ public class PlanarChaos extends Card {
     public PlanarChaos() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new FlipCoinWinEffect(null, new SacrificeSelfEffect()));
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 new SpellCastTriggerEffect(null,
                         List.of(FlipCoinWinEffect.forTriggeringSpellController(null, new CounterSpellEffect()))));
     }

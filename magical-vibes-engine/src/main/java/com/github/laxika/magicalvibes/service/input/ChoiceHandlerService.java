@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -83,6 +82,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
@@ -6222,7 +6222,7 @@ public class ChoiceHandlerService {
             source.setChosenSubtype(subtype);
             if (ctx.untilEndOfTurn()) {
                 gameData.temporaryChosenSubtypePermanentIds.add(source.getId());
-                if (source.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY).stream()
+                if (source.getCard().getTriggerEffects(Triggers.youActivateAbility()).stream()
                         .anyMatch(CopyControllerActivatedAbilityTriggerEffect.class::isInstance)) {
                     gameData.chosenSubtypeActivationCopiesThisTurn.add(new GameData.ChosenSubtypeActivationCopy(
                             player.getId(), source.getCard(), source.getId(), subtype));

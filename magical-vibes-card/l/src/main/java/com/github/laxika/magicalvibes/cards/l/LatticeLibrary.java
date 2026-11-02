@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -30,7 +29,7 @@ public class LatticeLibrary extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), createFractalWithStudyCounters());
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
                 1,
                 new CardHasXInManaCostPredicate(),
                 List.of(createFractalWithStudyCounters())));

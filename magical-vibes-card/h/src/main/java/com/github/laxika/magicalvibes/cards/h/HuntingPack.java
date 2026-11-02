@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,6 +21,6 @@ public class HuntingPack extends Card {
     public HuntingPack() {
         addSpellEffect(new CreateTokenEffect(
                 "Beast", 4, 4, CardColor.GREEN, List.of(CardSubtype.BEAST), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
+        addTrigger(Triggers.youCastThisSpell(), new StormEffect());
     }
 }

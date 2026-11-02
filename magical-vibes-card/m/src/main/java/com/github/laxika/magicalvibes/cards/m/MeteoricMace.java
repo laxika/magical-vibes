@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "243")
 public class MeteoricMace extends Card {
@@ -16,7 +16,7 @@ public class MeteoricMace extends Card {
     public MeteoricMace() {
         // Cascade: when you cast Meteoric Mace, dig for a nonland card with lesser mana value,
         // may cast it for free, and put the remaining exiled cards on the bottom randomly.
-        addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
 
         // Equipped creature gets +4/+0 and has trample.
         addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));

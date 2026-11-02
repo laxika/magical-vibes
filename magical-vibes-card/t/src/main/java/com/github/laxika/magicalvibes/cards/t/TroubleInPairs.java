@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraTurnSkipReplacementEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class TroubleInPairs extends Card {
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,
                 new NthCardDrawTriggerEffect(2, new DrawCardEffect()));
 
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
+        addTrigger(Triggers.opponentCastsSpell(),
                 new NthSpellCastTriggerEffect(2, List.of(new DrawCardEffect())));
     }
 }

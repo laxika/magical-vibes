@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -28,7 +27,7 @@ public class VoidmageHusher extends Card {
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.ACTIVATED_ABILITY)))),
                 "Target must be an activated ability."
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new CounterSpellEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new MayEffect(new SpellCastTriggerEffect(null, List.of(ReturnToHandEffect.self())),
                         "Return Voidmage Husher to its owner's hand?"));
     }

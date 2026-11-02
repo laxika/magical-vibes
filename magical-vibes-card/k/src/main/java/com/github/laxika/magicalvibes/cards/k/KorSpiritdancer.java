@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class KorSpiritdancer extends Card {
         addStaticEffect(new BoostSelfEffect(twicePerAura, twicePerAura));
 
         // Whenever you cast an Aura spell, you may draw a card.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        addTrigger(Triggers.youCastSpell(), new MayEffect(
                 new SpellCastTriggerEffect(new CardIsAuraPredicate(), List.of(new DrawCardEffect())),
                 "Draw a card?"
         ));

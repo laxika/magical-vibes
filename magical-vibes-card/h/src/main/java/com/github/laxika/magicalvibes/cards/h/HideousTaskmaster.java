@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -29,13 +30,13 @@ public class HideousTaskmaster extends Card {
                 1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 EffectSlot.ON_ATTACK,
                                 new SacrificePermanentsEffect(

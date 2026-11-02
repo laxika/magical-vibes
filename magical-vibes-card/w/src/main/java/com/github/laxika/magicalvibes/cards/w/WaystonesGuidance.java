@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class WaystonesGuidance extends Card {
                         new PermanentIsTokenPredicate(),
                         new PermanentIsAttackingPredicate()))));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.nth(
                 1,
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(new GrantTriggeredAbilityToCastSpellEffect(

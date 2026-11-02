@@ -6,7 +6,7 @@
 
 `MultiTargetConstraint.ONE_PER_OPPONENT` requires one legal permanent target controlled by every opponent, even when an opponent has no legal targets. Spells using it cannot be cast without satisfying every opponent's target requirement. `ONE_PER_CONTROLLER_IF_ABLE` retains its optional omission for opponents without legal targets. `ONE_PER_OPPONENT_IF_ABLE` is the same optional omission applied to opponents only, with the controller never required (Sylvan Primordial, "for each opponent").
 
-`ON_CONTROLLER_CASTS_SPELL` same-name graveyard casts use the dedicated `CastSameNameCardFromGraveyardOnSpellCastEffect` collector path: the cast spell's name is snapshotted, the graveyard card is chosen through `SpellGraveyardTargetTrigger`, and the existing graveyard-cast effect offers the normal-cost cast after targeting.
+`Triggers.youCastSpell()` same-name graveyard casts use the dedicated `CastSameNameCardFromGraveyardOnSpellCastEffect` collector path: the cast spell's name is snapshotted, the graveyard card is chosen through `SpellGraveyardTargetTrigger`, and the existing graveyard-cast effect offers the normal-cost cast after targeting.
 
 Quick lookup for deciding whether a given `EffectSlot` can carry a targeted triggered ability, what kind of target (player / permanent) it supports, and which `TargetFilter` types the engine will honour on the card itself.
 
@@ -224,9 +224,9 @@ combat damage step is processed.
 | `ON_BECOMES_TARGET_OF_SPELL` / `…_OR_ABILITY` / `…_OF_OPPONENT_SPELL` / `…_OF_OPPONENT_SPELL_ONLY` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `ON_CONTROLLER_BECOMES_TARGET_OF_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted player; spell path only) | Spell-target |
 | `ON_ANY_PLAYER_CHOOSES_TARGETS` | `TriggerCollectionService.checkTargetChoiceTriggers` after spell/ability target selection | Target-choice event; the chosen spell/ability is carried as non-targeting `triggeringCardId`. `AbilityTargetChoiceTriggerEffect` narrows this event to an activated or triggered ability controlled by the source controller that targets a player or permanent |
-| `ON_CONTROLLER_CASTS_SPELL` / `ON_ANY_PLAYER_CASTS_SPELL` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
-| `ON_CONTROLLER_COPIES_SPELL` / `ON_OPPONENT_COPIES_SPELL` (targeting variants) | `TriggerCollectionService.checkSpellCopyTriggers` + `SpellCastTriggerCollectorService` | Spell-target when `SpellCopyTriggerEffect` carries a `TargetFilter`; otherwise non-targeting |
-| `ON_SELF_CAST` (targeting variants) | `TriggerCollectionService.checkSpellCastTriggers` | Spell-target (single); multi-target (`maxTargets > 1`) reuses `ETBTokenMultiTargetTrigger` |
+| `Triggers.youCastSpell()` / `Triggers.playerCastsSpell()` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
+| `Triggers.youCopySpell()` / `Triggers.opponentCopiesSpell()` (targeting variants) | `TriggerCollectionService.checkSpellCopyTriggers` + `SpellCastTriggerCollectorService` | Spell-target when `SpellCopyTriggerEffect` carries a `TargetFilter`; otherwise non-targeting |
+| `Triggers.youCastThisSpell()` (targeting variants) | `TriggerCollectionService.checkSpellCastTriggers` | Spell-target (single); multi-target (`maxTargets > 1`) reuses `ETBTokenMultiTargetTrigger` |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT` | `TriggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers` + `DamageTriggerCollectorService` | Non-targeting; source permanent and controller are bound in the queued may ability |
 | `ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU` | `TriggerCollectionService.queueCreatureCombatDamageToYouTriggers` — never targets; the damaging creature is baked in as the stack entry's `targetId` with `nonTargeting = true`, so no pending-choice is queued. Teysa, Envoy of Ghosts. | None (baked-in subject) |
@@ -412,7 +412,7 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, `STATE_TRIGGERED`, `Triggers.beginningOfCombat(ActivePlayer.YOU)`,
 `Triggers.beginningOfCombat(ActivePlayer.ANY)`, `Triggers.beginningOfCombat(ActivePlayer.OPPONENT)`,
-`ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
+`ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `Triggers.youCastSpell() from the graveyard`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
 `ON_SELF_TRAINS` (Savior of Ollenbock; fires only when training successfully puts its +1/+1 counter on the source),
@@ -488,14 +488,14 @@ other permanent predicate — Endless Ranks of HYDRA),
 creatures that entered from that graveyard or were cast from it; Prized Amalgam),
 `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
 `Triggers.transformsToBackFace(ObjectRelation.THIS)`, `Triggers.transformsToFrontFace(ObjectRelation.THIS)`,
-`ON_CONTROLLER_ACTIVATES_ABILITY` (Ceaseless Searblades; fires on every permanent with this slot on
+`Triggers.youActivateAbility()` (Ceaseless Searblades; fires on every permanent with this slot on
 the activating player's battlefield, once per activated-ability activation incl. mana abilities;
 wrap in `TriggeringPermanentConditionalEffect` to filter by the permanent whose ability was activated),
-`ON_OPPONENT_ACTIVATES_NONMANA_ABILITY` (Harsh Mentor; the opponent-scoped mirror — fires on every
+`Triggers.opponentActivatesNonManaAbility()` (Harsh Mentor; the opponent-scoped mirror — fires on every
 permanent NOT controlled by the activating player, only on the non-mana activation path so mana
 abilities never trigger it; wrap in `TriggeringPermanentConditionalEffect` to filter by the activated
 permanent's type; the activating opponent is baked as the non-targeting `targetId`),
-`ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM` (Vizier of the Anointed; fires once per activation on
+`Triggers.youActivateEternalizeOrEmbalm()` (Vizier of the Anointed; fires once per activation on
 every permanent with this slot on the activating player's battlefield when the activated graveyard
 ability is embalm/eternalize — `ActivatedAbility.isEmbalmOrEternalize()`; no conditional wrapper, the
 keyword gate is applied at the call site in `AbilityActivationService.completeGraveyardAbilityActivation`).

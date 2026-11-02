@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class DecimatorOfTheProvinces extends Card {
         ), true));
 
         // When you cast this spell, creatures you control get +2/+2 and gain trample until end of turn.
-        addEffect(EffectSlot.ON_SELF_CAST, new BoostAllOwnCreaturesEffect(2, 2));
-        addEffect(EffectSlot.ON_SELF_CAST, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addTrigger(Triggers.youCastThisSpell(), new BoostAllOwnCreaturesEffect(2, 2));
+        addTrigger(Triggers.youCastThisSpell(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
     }
 }

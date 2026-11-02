@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "STX", collectorNumber = "81")
 @CardRegistration(set = "SOC", collectorNumber = "224")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class PlumbTheForbidden extends Card {
 
     public PlumbTheForbidden() {
-        addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForXValueEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellForXValueEffect());
         addCastingCost(new SacrificeAnyNumberOfPermanentsCost(new PermanentIsCreaturePredicate()));
         addSpellEffect(new DrawCardEffect());
         addSpellEffect(new LoseLifeEffect(1));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -271,8 +270,8 @@ public class SpellCastTriggerCollectorService {
 
     // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
 
-    @CollectsTrigger(value = com.github.laxika.magicalvibes.model.effect.TrackCastSpellCardTypesEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = com.github.laxika.magicalvibes.model.effect.TrackCastSpellCardTypesEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleTrackCastSpellCardTypes(TriggerMatchContext match,
             com.github.laxika.magicalvibes.model.effect.TrackCastSpellCardTypesEffect effect,
             TriggerContext ctx) {
@@ -289,14 +288,14 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleAnyPlayerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = FirstMulticoloredSpellCastTriggerEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = FirstMulticoloredSpellCastTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleFirstMulticoloredSpellCastTrigger(TriggerMatchContext match,
             FirstMulticoloredSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -314,8 +313,8 @@ public class SpellCastTriggerCollectorService {
                 sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = FirstSpellCastTriggerEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = FirstSpellCastTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleFirstSpellCastTrigger(TriggerMatchContext match,
             FirstSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -330,8 +329,8 @@ public class SpellCastTriggerCollectorService {
                 sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = FirstMatchingSpellCastTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = FirstMatchingSpellCastTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleFirstMatchingSpellCastTrigger(TriggerMatchContext match,
             FirstMatchingSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -351,8 +350,8 @@ public class SpellCastTriggerCollectorService {
                 sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = FirstNoncreatureSpellCastTriggerEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = FirstNoncreatureSpellCastTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleFirstNoncreatureSpellCastTrigger(TriggerMatchContext match,
             FirstNoncreatureSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -371,8 +370,8 @@ public class SpellCastTriggerCollectorService {
                 sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = SpellweaverHelixTriggerEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellweaverHelixTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleSpellweaverHelixTrigger(TriggerMatchContext match,
                                                    SpellweaverHelixTriggerEffect trigger,
                                                    TriggerContext ctx) {
@@ -408,8 +407,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SpellweaverVoluteTriggerEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellweaverVoluteTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleSpellweaverVoluteTrigger(TriggerMatchContext match,
                                                     SpellweaverVoluteTriggerEffect trigger,
                                                     TriggerContext ctx) {
@@ -445,8 +444,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCreateSquirrelTokensForSameNameCardsOnSpellCast(
             TriggerMatchContext match, CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
             TriggerContext ctx) {
@@ -468,8 +467,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleDamageForSameNameCardsOnSpellCast(
             TriggerMatchContext match, DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
             TriggerContext ctx) {
@@ -492,8 +491,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleGainLifeForSameNameCardsOnSpellCast(
             TriggerMatchContext match, GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
             TriggerContext ctx) {
@@ -515,8 +514,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCounterUnlessPaysForSameNameCardsOnSpellCast(
             TriggerMatchContext match,
             CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
@@ -541,8 +540,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCounterUnlessOtherPlayerPaysManaCostOnSpellCast(
             TriggerMatchContext match,
             CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect trigger,
@@ -575,8 +574,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DiscardForSameNameCardsInGraveyardsOnSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DiscardForSameNameCardsInGraveyardsOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleDiscardForSameNameCardsOnSpellCast(
             TriggerMatchContext match, DiscardForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
             TriggerContext ctx) {
@@ -596,7 +595,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleAnyPlayerColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -606,8 +605,8 @@ public class SpellCastTriggerCollectorService {
         return addColorCounterTrigger(match, trigger);
     }
 
-    @CollectsTrigger(value = CounterSpellIfManaValueEqualsSourceCountersEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CounterSpellIfManaValueEqualsSourceCountersEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCounterSpellIfManaValueEqualsSourceCounters(
             TriggerMatchContext match,
             CounterSpellIfManaValueEqualsSourceCountersEffect trigger,
@@ -637,8 +636,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CounterSpellIfNoColoredManaSpentEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CounterSpellIfNoColoredManaSpentEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCounterSpellIfNoColoredManaSpent(
             TriggerMatchContext match,
             CounterSpellIfNoColoredManaSpentEffect trigger,
@@ -660,7 +659,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = KnowledgePoolCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = KnowledgePoolCastTriggerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleKnowledgePoolCast(TriggerMatchContext match,
             KnowledgePoolCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -677,7 +676,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PossibilityStormCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PossibilityStormCastTriggerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handlePossibilityStormCast(TriggerMatchContext match,
             PossibilityStormCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -694,7 +693,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EyeOfTheStormCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = EyeOfTheStormCastTriggerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleEyeOfTheStormCast(TriggerMatchContext match,
             EyeOfTheStormCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -722,8 +721,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopySpellForEachOtherPermanentOrPlayerEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherPermanentOrPlayerEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherPermanentOrPlayer(TriggerMatchContext match,
             CopySpellForEachOtherPermanentOrPlayerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -754,7 +753,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopySpellForEachOtherSubtypePermanentEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherSubtypePermanentEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCopySpellForSubtype(TriggerMatchContext match,
             CopySpellForEachOtherSubtypePermanentEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -783,8 +782,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopySpellForAnotherOpponentPermanentEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForAnotherOpponentPermanentEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopySpellForAnotherOpponentPermanent(TriggerMatchContext match,
             CopySpellForAnotherOpponentPermanentEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -819,8 +818,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
-    @CollectsTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherControlledCreature(TriggerMatchContext match,
             CopySpellForEachOtherControlledCreatureEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -849,7 +848,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopySpellForEachOtherCreatureEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherCreatureEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherCreature(TriggerMatchContext match,
             CopySpellForEachOtherCreatureEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -873,8 +872,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopySpellForEachOtherCreatureWithManaEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherCreatureWithManaEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherCreatureWithMana(TriggerMatchContext match,
             CopySpellForEachOtherCreatureWithManaEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1022,7 +1021,7 @@ public class SpellCastTriggerCollectorService {
         return target != null && gameQueryService.isCreature(gameData, target) ? targetId : null;
     }
 
-    @CollectsTrigger(value = CopySpellForEachOtherPlayerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherPlayerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCopySpellForEachOtherPlayer(TriggerMatchContext match,
             CopySpellForEachOtherPlayerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1061,8 +1060,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DuelistsConvocationInternationalTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
-    @CollectsTrigger(value = DuelistsConvocationInternationalTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = DuelistsConvocationInternationalTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DuelistsConvocationInternationalTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleDuelistsConvocationInternational(TriggerMatchContext match,
             DuelistsConvocationInternationalTriggerEffect trigger, TriggerContext ctx) {
         Permanent source = match.permanent();
@@ -1093,9 +1092,9 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
-    @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
-    @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CasterLosesLifeOnSpellCastEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CasterLosesLifeOnSpellCastEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CasterLosesLifeOnSpellCastEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleCasterLosesLifeOnSpellCast(TriggerMatchContext match,
             CasterLosesLifeOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1119,8 +1118,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CasterLosesLifeOnChosenColorSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CasterLosesLifeOnChosenColorSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCasterLosesLifeOnChosenColorSpellCast(TriggerMatchContext match,
             CasterLosesLifeOnChosenColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1142,7 +1141,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnPermanentControlledByPlayerToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ReturnPermanentControlledByPlayerToHandEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleReturnLandOnSpellCast(TriggerMatchContext match,
             ReturnPermanentControlledByPlayerToHandEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1161,7 +1160,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DiscardEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DiscardEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleDiscardOnSpellCast(TriggerMatchContext match,
             DiscardEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1180,7 +1179,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CounterSpellIfNameFoundElsewhereEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CounterSpellIfNameFoundElsewhereEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleCounterIfNameFoundElsewhere(TriggerMatchContext match,
             CounterSpellIfNameFoundElsewhereEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1199,8 +1198,8 @@ public class SpellCastTriggerCollectorService {
 
     // ── ON_CONTROLLER_CASTS_SPELL ──────────────────────────────────────
 
-    @CollectsTrigger(value = CardAdvantageSpellCastTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CardAdvantageSpellCastTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCardAdvantageSpellCastTrigger(TriggerMatchContext match,
                                                           CardAdvantageSpellCastTriggerEffect trigger,
                                                           TriggerContext ctx) {
@@ -1228,8 +1227,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = FlurryCopyOrDrawTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = FlurryCopyOrDrawTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleFlurryCopyOrDrawTrigger(TriggerMatchContext match,
                                                    FlurryCopyOrDrawTriggerEffect trigger,
                                                    TriggerContext ctx) {
@@ -1267,7 +1266,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1276,8 +1275,8 @@ public class SpellCastTriggerCollectorService {
         return addColorCounterTrigger(match, trigger);
     }
 
-    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerChosenColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnChosenColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1292,7 +1291,7 @@ public class SpellCastTriggerCollectorService {
      * A "when you spend this mana to cast ..." rider on a mana ability is a separate delayed trigger for
      * each mana produced by its source that was spent on the spell (CR 106.6), so it fires once per such mana.
      */
-    @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         int copies = trigger.requiresManaProducedBySource() && match.permanent() != null
@@ -1306,8 +1305,8 @@ public class SpellCastTriggerCollectorService {
         return collected;
     }
 
-    @CollectsTrigger(value = SpellCastTriggerEffect.class,
-            slot = EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class,
+            watch = SpellAbilityWatch.EXILE_ON_CONTROLLER_CASTS_SPELL)
     private boolean handleExileResidentSpellCastTrigger(TriggerMatchContext match,
             SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1315,8 +1314,8 @@ public class SpellCastTriggerCollectorService {
                 sc.exiledSourcePermanentId());
     }
 
-    @CollectsTrigger(value = GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleGainControlOfSingleTargetCreatureSpell(TriggerMatchContext match,
             GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1344,13 +1343,13 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
-                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
-            @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
-                    slot = EffectSlot.ON_OPPONENT_CASTS_SPELL),
-            @CollectsTrigger(value = SpellCastFromHandTriggerEffect.class,
-                    slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = SpellCastFromHandTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsSpellAbilityTrigger(value = SpellCastFromHandTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL),
+            @CollectsSpellAbilityTrigger(value = SpellCastFromHandTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     })
     private boolean handleControllerSpellCastFromHandTrigger(TriggerMatchContext match,
             SpellCastFromHandTriggerEffect trigger, TriggerContext ctx) {
@@ -1363,8 +1362,8 @@ public class SpellCastTriggerCollectorService {
                 sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = TeamworkSpellCastTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = TeamworkSpellCastTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerTeamworkSpellCastTrigger(TriggerMatchContext match,
             TeamworkSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1377,8 +1376,8 @@ public class SpellCastTriggerCollectorService {
                 sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = DiscordCopyCastTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DiscordCopyCastTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleDiscordCopyCastTrigger(TriggerMatchContext match,
             DiscordCopyCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1406,8 +1405,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnOnSpellCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ChooseModeNotYetChosenThisTurnOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleTurnScopedModalOnSpellCast(TriggerMatchContext match,
             ChooseModeNotYetChosenThisTurnOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1433,8 +1432,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleSameNameArtifactSpellCastTrigger(TriggerMatchContext match,
             SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1470,8 +1469,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CastSameNameCardFromGraveyardOnSpellCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CastSameNameCardFromGraveyardOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCastSameNameCardFromGraveyard(TriggerMatchContext match,
             CastSameNameCardFromGraveyardOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1496,8 +1495,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleReturnSameNameCardsFromGraveyardsOnCreatureSpellCast(
             TriggerMatchContext match,
             ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect trigger,
@@ -1523,8 +1522,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GainLifeForEachChosenColorSpellCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = GainLifeForEachChosenColorSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleGainLifeForEachChosenColor(TriggerMatchContext match,
             GainLifeForEachChosenColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1552,7 +1551,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostEquippedCreatureUntilEndOfTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = BoostEquippedCreatureUntilEndOfTurnEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleBoostEquippedOnSpellCast(TriggerMatchContext match,
             BoostEquippedCreatureUntilEndOfTurnEffect trigger, TriggerContext ctx) {
         // "Whenever you cast a spell, equipped creature gets +X/+Y until end of turn" (Leering Emblem).
@@ -1572,8 +1571,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopyEnchantedHandCardOnCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopyEnchantedHandCardOnCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopyEnchantedHandCardOnCast(TriggerMatchContext match,
             CopyEnchantedHandCardOnCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1601,7 +1600,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopyControllerCastSpellOnSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopyControllerCastSpellOnSpellCastEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopyControllerCastSpellOnSpellCast(TriggerMatchContext match,
             CopyControllerCastSpellOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1778,8 +1777,8 @@ public class SpellCastTriggerCollectorService {
         return null;
     }
 
-    @CollectsTrigger(value = CreateTokenCopyOfTargetedSpellPermanentEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CreateTokenCopyOfTargetedSpellPermanentEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCreateTokenCopyOfTargetedSpellPermanent(TriggerMatchContext match,
             CreateTokenCopyOfTargetedSpellPermanentEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1834,8 +1833,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CopySpellForEachPriorInstantOrSorceryEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CopySpellForEachPriorInstantOrSorceryEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCopySpellForEachPriorInstantOrSorcery(TriggerMatchContext match,
             CopySpellForEachPriorInstantOrSorceryEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1870,7 +1869,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ChosenSubtypeSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ChosenSubtypeSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleChosenSubtypeSpellCastTrigger(TriggerMatchContext match,
             ChosenSubtypeSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1901,10 +1900,10 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = NthSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
-            @CollectsTrigger(value = NthSpellCastTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL),
-            @CollectsTrigger(value = NthSpellCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = NthSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsSpellAbilityTrigger(value = NthSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL),
+            @CollectsSpellAbilityTrigger(value = NthSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     })
     private boolean handleNthSpellCastTrigger(TriggerMatchContext match, NthSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -1962,8 +1961,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CounterOpponentFirstSpellEachTurnEffect.Marker.class,
-            slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CounterOpponentFirstSpellEachTurnEffect.Marker.class,
+            watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleCounterOpponentFirstSpell(TriggerMatchContext match,
                                                      CounterOpponentFirstSpellEachTurnEffect.Marker trigger,
                                                      TriggerContext ctx) {
@@ -1987,9 +1986,9 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL),
-            @CollectsTrigger(value = KickedSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = KickedSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL),
+            @CollectsSpellAbilityTrigger(value = KickedSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     })
     private boolean handleKickedSpellCastTrigger(TriggerMatchContext match,
             KickedSpellCastTriggerEffect trigger, TriggerContext ctx) {
@@ -2064,7 +2063,7 @@ public class SpellCastTriggerCollectorService {
         return count + repeatedMultikickerCount;
     }
 
-    @CollectsTrigger(value = CastFromGraveyardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CastFromGraveyardTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCastFromGraveyardTrigger(TriggerMatchContext match,
             CastFromGraveyardTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2094,8 +2093,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CastFromLibraryTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CastFromLibraryTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleCastFromLibraryTrigger(TriggerMatchContext match,
             CastFromLibraryTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2119,8 +2118,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleFoodWhenCastingFromLibraryTop(TriggerMatchContext match,
             CreateFoodWhenPlayingCardFromTopOfLibraryEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2148,7 +2147,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SunbirdsInvocationTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SunbirdsInvocationTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleSunbirdsInvocationCast(TriggerMatchContext match,
             SunbirdsInvocationTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2169,8 +2168,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = JodahTheUnifierTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = JodahTheUnifierTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleJodahTheUnifierCast(TriggerMatchContext match,
             JodahTheUnifierTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2207,8 +2206,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = KioraSovereignOfTheDeepTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = KioraSovereignOfTheDeepTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleKioraSovereignOfTheDeep(TriggerMatchContext match,
             KioraSovereignOfTheDeepTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2237,7 +2236,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RashmiTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = RashmiTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleRashmiFirstSpell(TriggerMatchContext match,
             RashmiTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2258,8 +2257,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageEqualToSpellManaValueToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
-    @CollectsTrigger(value = DealDamageEqualToSpellManaValueToAnyTargetEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DealDamageEqualToSpellManaValueToAnyTargetEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DealDamageEqualToSpellManaValueToAnyTargetEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleManaValueDamage(TriggerMatchContext match,
             DealDamageEqualToSpellManaValueToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2279,8 +2278,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GainControlOfTargetCreatureByCastSpellManaValueEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = GainControlOfTargetCreatureByCastSpellManaValueEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleGainControlByCastSpellManaValue(
             TriggerMatchContext match, GainControlOfTargetCreatureByCastSpellManaValueEffect trigger,
             TriggerContext ctx) {
@@ -2310,8 +2309,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnTargetPermanentByCastSpellManaValueEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ReturnTargetPermanentByCastSpellManaValueEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleReturnTargetPermanentByCastSpellManaValue(
             TriggerMatchContext match, ReturnTargetPermanentByCastSpellManaValueEffect trigger,
             TriggerContext ctx) {
@@ -2352,8 +2351,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MillTargetPlayerByCastSpellManaValueEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = MillTargetPlayerByCastSpellManaValueEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleManaValueMill(TriggerMatchContext match,
             MillTargetPlayerByCastSpellManaValueEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2378,8 +2377,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GainLifeEqualToCastSpellManaValueEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = GainLifeEqualToCastSpellManaValueEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleManaValueLifeGain(TriggerMatchContext match,
             GainLifeEqualToCastSpellManaValueEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2413,8 +2412,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DiscardAllCardsWithCastSpellManaValueEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DiscardAllCardsWithCastSpellManaValueEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleManaValueDiscard(TriggerMatchContext match,
             DiscardAllCardsWithCastSpellManaValueEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2447,8 +2446,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyAllPermanentsWithCastSpellManaValueEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DestroyAllPermanentsWithCastSpellManaValueEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleDestroyAllPermanentsWithCastSpellManaValue(
             TriggerMatchContext match, DestroyAllPermanentsWithCastSpellManaValueEffect trigger,
             TriggerContext ctx) {
@@ -2474,7 +2473,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageEqualToManaSpentToCastToAnyTargetEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DealDamageEqualToManaSpentToCastToAnyTargetEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleManaSpentDamage(TriggerMatchContext match,
             DealDamageEqualToManaSpentToCastToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2496,7 +2495,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostSelfByCastSpellManaValueEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = BoostSelfByCastSpellManaValueEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleManaValueSelfBoost(TriggerMatchContext match,
             BoostSelfByCastSpellManaValueEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2530,8 +2529,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BecomeCreatureByCastSpellManaValueEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = BecomeCreatureByCastSpellManaValueEffect.class,
+            watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleBecomeCreatureByCastSpellManaValue(TriggerMatchContext match,
             BecomeCreatureByCastSpellManaValueEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2558,7 +2557,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GivePoisonCountersEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = GivePoisonCountersEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handlePoisonOnSpellCast(TriggerMatchContext match,
             GivePoisonCountersEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2579,14 +2578,14 @@ public class SpellCastTriggerCollectorService {
 
     // ── ON_OPPONENT_CASTS_SPELL ────────────────────────────────────────
 
-    @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleOpponentSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
     }
 
-    @CollectsTrigger(value = RemoveTimeCounterWhenOpponentCastsSpellEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = RemoveTimeCounterWhenOpponentCastsSpellEffect.class,
+            watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleSuspendedCardOpponentSpellCastTrigger(TriggerMatchContext match,
             RemoveTimeCounterWhenOpponentCastsSpellEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2608,7 +2607,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ConditionalEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleSuspendedCardMayPutTimeCounterTrigger(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (match.permanent() != null
@@ -2637,8 +2636,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect.class,
-            slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect.class,
+            watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleExileTopCardOfTriggeringPlayerLibraryAndMayCastFree(
             TriggerMatchContext match, ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect trigger,
             TriggerContext ctx) {
@@ -2660,7 +2659,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PutCountersOnSourceEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleOpponentSpellCastPutCountersOnSource(TriggerMatchContext match,
             PutCountersOnSourceEffect trigger, TriggerContext ctx) {
         // "Whenever an opponent casts a spell, put a counter on this creature" (Ammit Eternal, -1/-1).
@@ -2680,7 +2679,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeUnlessDiscardEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = LoseLifeUnlessDiscardEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleLoseLifeUnlessDiscard(TriggerMatchContext match,
             LoseLifeUnlessDiscardEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2696,7 +2695,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DealDamageToPlayersEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleDamageToCastingOpponent(TriggerMatchContext match,
             DealDamageToPlayersEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2715,7 +2714,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DrawCardForTargetPlayerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleCastingOpponentDraws(TriggerMatchContext match,
             DrawCardForTargetPlayerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2732,7 +2731,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MillEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = MillEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleCastingOpponentMills(TriggerMatchContext match,
             MillEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2752,7 +2751,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CounterUnlessPaysEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CounterUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleCounterUnlessPays(TriggerMatchContext match,
             CounterUnlessPaysEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2769,7 +2768,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RevealTopCardCreatureToBattlefieldOrMayBottomEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = RevealTopCardCreatureToBattlefieldOrMayBottomEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleRevealTopCardCreatureToBattlefield(TriggerMatchContext match,
             RevealTopCardCreatureToBattlefieldOrMayBottomEffect trigger, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
@@ -2782,7 +2781,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeUnlessPaysEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = LoseLifeUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleLoseLifeUnlessPays(TriggerMatchContext match,
             LoseLifeUnlessPaysEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2805,7 +2804,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DamageUnlessPaysEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DamageUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleDamageUnlessPays(TriggerMatchContext match,
             DamageUnlessPaysEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2830,7 +2829,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardUnlessPaysEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = DrawCardUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleDrawCardUnlessPays(TriggerMatchContext match,
             DrawCardUnlessPaysEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2853,7 +2852,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SpellCastLifeDrainEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastLifeDrainEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleOpponentSpellCastDrain(TriggerMatchContext match,
             SpellCastLifeDrainEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2883,8 +2882,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SpellCastDamageToCasterEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
-    @CollectsTrigger(value = SpellCastDamageToCasterEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastDamageToCasterEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastDamageToCasterEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleSpellCastDamage(TriggerMatchContext match,
             SpellCastDamageToCasterEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2927,7 +2926,7 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleOpponentColorCounter(TriggerMatchContext match,
             PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -2938,8 +2937,8 @@ public class SpellCastTriggerCollectorService {
 
     // ── Shared helpers ─────────────────────────────────────────────────
 
-    @CollectsTrigger(value = SpellCopyTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_COPIES_SPELL)
-    @CollectsTrigger(value = SpellCopyTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_COPIES_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCopyTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_COPIES_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCopyTriggerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_COPIES_SPELL)
     private boolean handleSpellCopyTrigger(TriggerMatchContext match,
             SpellCopyTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCopy spellCopy = (TriggerContext.SpellCopy) ctx;
@@ -3569,7 +3568,7 @@ public class SpellCastTriggerCollectorService {
         return snapshotted;
     }
 
-    @CollectsTrigger(value = ModalSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = ModalSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleModalSpellCastTrigger(TriggerMatchContext match,
             ModalSpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast spellCast = (TriggerContext.SpellCast) ctx;
@@ -3872,8 +3871,8 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostAllOwnCreaturesByColorsSpentOnSpellCastEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = BoostAllOwnCreaturesByColorsSpentOnSpellCastEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleColorsSpentMassBoost(TriggerMatchContext match,
             BoostAllOwnCreaturesByColorsSpentOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;

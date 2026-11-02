@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MB1", collectorNumber = "23")
 public class InnocuousInsect extends Card {
@@ -19,6 +19,6 @@ public class InnocuousInsect extends Card {
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
 
         // When you cast this spell, draw a card.
-        addEffect(EffectSlot.ON_SELF_CAST, new DrawCardEffect());
+        addTrigger(Triggers.youCastThisSpell(), new DrawCardEffect());
     }
 }

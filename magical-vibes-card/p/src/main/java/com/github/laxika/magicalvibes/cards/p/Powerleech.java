@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringNonTapAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ATQ", collectorNumber = "34")
 public class Powerleech extends Card {
@@ -19,7 +20,7 @@ public class Powerleech extends Card {
 
         // Whenever an opponent activates an artifact's ability without {T} in its activation cost,
         // you gain 1 life.
-        addEffect(EffectSlot.ON_OPPONENT_ACTIVATES_ABILITY, new TriggeringNonTapAbilityConditionalEffect(
+        addTrigger(Triggers.opponentActivatesAbility(), new TriggeringNonTapAbilityConditionalEffect(
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsArtifactPredicate(),
                         new GainLifeEffect(1))));

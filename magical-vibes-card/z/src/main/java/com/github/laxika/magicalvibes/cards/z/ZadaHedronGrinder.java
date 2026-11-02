@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "162")
 @CardRegistration(set = "A25", collectorNumber = "156")
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 public class ZadaHedronGrinder extends Card {
 
     public ZadaHedronGrinder() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new CopySpellForEachOtherControlledCreatureEffect());
     }
 }

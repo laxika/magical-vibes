@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControlledCreatureWithTakeoverCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "143")
 @CardRegistration(set = "WHO", collectorNumber = "426")
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class TheMasterFormedAnew extends Card {
 
     public TheMasterFormedAnew() {
-        addEffect(EffectSlot.ON_SELF_CAST, new MayEffect(
+        addTrigger(Triggers.youCastThisSpell(), new MayEffect(
                 new ExileControlledCreatureWithTakeoverCounterEffect(),
                 "Exile a creature you control and put a takeover counter on it?"));
         addStaticEffect(new CopyCreatureCardInExileOnEnterEffect());

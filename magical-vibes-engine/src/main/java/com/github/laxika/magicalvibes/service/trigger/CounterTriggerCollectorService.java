@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -18,22 +17,22 @@ import java.util.UUID;
 @Service
 public class CounterTriggerCollectorService {
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_COUNTERS_SPELL)
+    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_COUNTERS_SPELL)
     private boolean handleControllerCountersSpell(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SpellCountered countered = (TriggerContext.SpellCountered) ctx;
         enqueueTrigger(match, effect, countered.counteringPlayerId());
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SPELL_COUNTERED)
+    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_SPELL_COUNTERED)
     private boolean handleControllerSpellCountered(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SpellCastCountered countered = (TriggerContext.SpellCastCountered) ctx;
         enqueueTrigger(match, effect, countered.spellControllerId());
         return true;
     }
 
-    @CollectsTrigger(value = CopyThisSpellWhenCounteredOrFizzlesEffect.class,
-            slot = EffectSlot.ON_SELF_SPELL_COUNTERED_OR_FIZZLED)
+    @CollectsSpellAbilityTrigger(value = CopyThisSpellWhenCounteredOrFizzlesEffect.class,
+            watch = SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED)
     private boolean handleSelfSpellCounteredOrFizzled(TriggerMatchContext match,
             CopyThisSpellWhenCounteredOrFizzlesEffect effect, TriggerContext ctx) {
         TriggerContext.SpellCounteredOrFizzled countered = (TriggerContext.SpellCounteredOrFizzled) ctx;

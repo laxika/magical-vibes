@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.cards.g.GaleConduitOfTheArcane;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeGaleEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -86,7 +86,7 @@ public class SpecializeGaleEffectHandler implements NormalEffectHandlerBean {
                     + specialize.color());
         }
 
-        specialized.addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        specialized.addTrigger(Triggers.youCastSpell(),
                 GaleConduitOfTheArcane.specializedSpellCastTrigger(specialize.color()));
         source.exchangeCard(specialized);
     }

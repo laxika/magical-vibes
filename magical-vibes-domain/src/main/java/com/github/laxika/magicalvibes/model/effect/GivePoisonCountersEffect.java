@@ -13,7 +13,7 @@ import java.util.UUID;
  * controller).
  *
  * <p>When {@code recipient == TARGET_PLAYER} and {@code spellFilter} is non-null, this doubles as a
- * trigger descriptor for {@code ON_CONTROLLER_CASTS_SPELL}: the trigger fires only when the
+ * trigger descriptor for {@code Triggers.youCastSpell()}: the trigger fires only when the
  * controller casts a spell matching the predicate. {@code SpellCastTriggerCollectorService}
  * resolves it into a stack entry with a resolution-only copy ({@code spellFilter == null}).
  *

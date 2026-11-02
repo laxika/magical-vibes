@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOM", collectorNumber = "73")
 @CardRegistration(set = "FDN", collectorNumber = "179")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 public class PainfulQuandary extends Card {
 
     public PainfulQuandary() {
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new LoseLifeUnlessDiscardEffect(5));
+        addTrigger(Triggers.opponentCastsSpell(), new LoseLifeUnlessDiscardEffect(5));
     }
 }

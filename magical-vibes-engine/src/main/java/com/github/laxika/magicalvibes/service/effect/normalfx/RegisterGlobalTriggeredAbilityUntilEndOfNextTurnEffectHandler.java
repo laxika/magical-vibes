@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Stores a global trigger through the end of its controller's next turn. */
@@ -41,13 +44,15 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffectHandler imple
                 expirationPlayerId = targetPlayerId;
             }
         }
+        TriggeredAbility ability = ((TriggeredAbility) registration.grantedAbility())
+                .withEffects(List.of(new EffectRegistration(triggeredEffect)));
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                entry.getControllerId(), entry.getCard(), registration.slot(), triggeredEffect,
-                registration.targetFilter(), true, false, gameData.turnNumber, expirationPlayerId));
+                entry.getControllerId(), entry.getCard(), ability, registration.targetFilter(), true, false,
+                gameData.turnNumber, expirationPlayerId, null));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until the end of their next turn."));
-        log.info("Game {} - {} registers a global {} trigger until the end of their next turn",
-                gameData.id, entry.getCard().getName(), registration.slot().name());
+        log.info("Game {} - {} registers a global triggered ability until the end of their next turn",
+                gameData.id, entry.getCard().getName());
     }
 
     private UUID resolveTargetPlayerId(GameData gameData, StackEntry entry) {

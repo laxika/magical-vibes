@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -16,7 +15,7 @@ public class UpTheBeanstalk extends Card {
 
     public UpTheBeanstalk() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardMinManaValuePredicate(5),
                 List.of(new DrawCardEffect())));
     }

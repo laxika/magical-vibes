@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentAndAllWithSameManaValueToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,6 +22,6 @@ public class MistsOfLRien extends Card {
         target(TargetFilters.nonlandPermanent())
                 .addSpellEffect(new ReturnTargetPermanentAndAllWithSameManaValueToHandEffect(
                                 nonlandPermanent, nonlandPermanent));
-        addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{U}"));
+        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{U}"));
     }
 }

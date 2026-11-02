@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ import java.util.List;
 public class TardisBay extends Card {
 
     public TardisBay() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 SpellCastTriggerEffect.nth(1, new CardMinManaValuePredicate(2, true),
                         List.of(new CascadeEffect())));
         target(TargetFilters.artifact()).addEffect(EffectSlot.CHAOS_TRIGGERED,

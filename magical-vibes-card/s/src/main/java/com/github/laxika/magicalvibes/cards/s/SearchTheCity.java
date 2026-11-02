@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,9 +24,9 @@ public class SearchTheCity extends Card {
 
     public SearchTheCity() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTopCardsToSourceEffect(5, false));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new PlayedCardNameMatchesCardExiledWithSourceTriggerEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,
+        addTrigger(Triggers.youPlayLand(),
                 new PlayedCardNameMatchesCardExiledWithSourceTriggerEffect());
     }
 }

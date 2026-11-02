@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromHandToPerpetuallyGrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovePerpetualTriggeredAbilityEffect;
@@ -22,11 +21,11 @@ public class RacketeerBoss extends Card {
         CreateTokenEffect createTreasure = CreateTokenEffect.ofTreasureToken(1);
         SequenceEffect treasureAbility = SequenceEffect.of(
                 createTreasure,
-                new RemovePerpetualTriggeredAbilityEffect(EffectSlot.ON_SELF_CAST, SequenceEffect.class));
+                new RemovePerpetualTriggeredAbilityEffect(Triggers.youCastThisSpell(), SequenceEffect.class));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChooseCardsFromHandToPerpetuallyGrantTriggeredAbilityEffect(
                         2,
-                        EffectSlot.ON_SELF_CAST,
+                        Triggers.youCastThisSpell(),
                         List.of(treasureAbility),
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

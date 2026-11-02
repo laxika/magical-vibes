@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -195,12 +196,13 @@ class GrantedAbilitiesTest {
         GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
         UUID cardId = UUID.randomUUID();
 
-        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_SELF_CAST, DRAW_ONE);
-        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_SELF_CAST, DRAW_ONE);
-        gameData.grantPerpetualAbilityOnce(cardId, EffectSlot.ON_SELF_CAST, DRAW_ONE);
+        TriggeredAbility castDraw = new TriggeredAbility(Triggers.youCastThisSpell(), DRAW_ONE);
+        gameData.grantPerpetualAbility(cardId, castDraw);
+        gameData.grantPerpetualAbility(cardId, castDraw);
+        gameData.grantPerpetualAbilityOnce(cardId, castDraw);
         gameData.grantPerpetualAbilityOnce(cardId, EffectSlot.ON_SELF_BECOMES_UNTAPPED, GAIN_ONE);
 
-        assertThat(gameData.perpetualAbilityEffects(cardId, EffectSlot.ON_SELF_CAST))
+        assertThat(gameData.perpetualTriggerEffects(cardId, Triggers.youCastThisSpell(), Zone.STACK))
                 .containsExactly(DRAW_ONE, DRAW_ONE);
         assertThat(gameData.perpetualAbilityEffects(cardId, EffectSlot.ON_SELF_BECOMES_UNTAPPED)).containsExactly(GAIN_ONE);
     }
@@ -227,10 +229,11 @@ class GrantedAbilitiesTest {
         assertThat(grant.slot()).isEqualTo(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
         assertThat(grant.grantedEffect()).isEqualTo(DRAW_ONE);
 
-        var handGrant = new PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect(EffectSlot.ON_SELF_CAST,
+        var handGrant = new PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect(Triggers.youCastThisSpell(),
                 List.of(DRAW_ONE, DRAW_TWO), new CardAllOfPredicate(List.of()));
-        assertThat(handGrant.grantedAbilities()).hasSize(2);
-        assertThat(handGrant.slot()).isEqualTo(EffectSlot.ON_SELF_CAST);
+        assertThat(handGrant.grantedAbilities()).containsExactly(
+                new TriggeredAbility(Triggers.youCastThisSpell(), DRAW_ONE),
+                new TriggeredAbility(Triggers.youCastThisSpell(), DRAW_TWO));
         assertThat(handGrant.grantedEffects()).containsExactly(DRAW_ONE, DRAW_TWO);
     }
 

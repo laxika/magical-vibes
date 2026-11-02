@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,7 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         Set<CardType> additionalTypesOverride,
         Set<CardSubtype> additionalSubtypesOverride,
         Set<Keyword> additionalKeywordsOverride,
-        EffectSlot retainedEffectSlot,
+        Trigger retainedTrigger,
         List<Ability> additionalAbilitiesOverride
 ) implements TemporaryCopyEffect {
 
@@ -76,10 +76,10 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             String nameOverride, Set<CardSupertype> additionalSupertypesOverride,
             Integer powerOverride, Integer toughnessOverride,
             Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
-            Set<Keyword> additionalKeywordsOverride, EffectSlot retainedEffectSlot) {
+            Set<Keyword> additionalKeywordsOverride, Trigger retainedTrigger) {
         this(nameOverride, additionalSupertypesOverride, powerOverride, toughnessOverride,
                 additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride,
-                retainedEffectSlot, List.of());
+                retainedTrigger, List.of());
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import java.util.UUID;
 
 /**
- * Trigger descriptor for {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_SELF_CAST}
+ * Trigger descriptor for {@code Triggers.youCastThisSpell()}
  * implementing the Storm keyword: "When you cast this spell, copy it for each spell cast before it
  * this turn. You may choose new targets for the copies."
  *

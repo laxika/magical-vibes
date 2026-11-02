@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGiveSpellCastLifeLossToRandomNonlandCardInDamagedHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public class PerpetuallyGiveSpellCastLifeLossToRandomNonlandCardInDamagedHandEff
 
         int handIndex = nonlandIndices.get(ThreadLocalRandom.current().nextInt(nonlandIndices.size()));
         Card modifiedCard = hand.get(handIndex).createRuntimeCopy();
-        modifiedCard.addEffect(EffectSlot.ON_SELF_CAST, new LoseLifeEffect(2));
+        modifiedCard.addTrigger(Triggers.youCastThisSpell(), new LoseLifeEffect(2));
         modifiedCard.freeze();
         hand.set(handIndex, modifiedCard);
     }

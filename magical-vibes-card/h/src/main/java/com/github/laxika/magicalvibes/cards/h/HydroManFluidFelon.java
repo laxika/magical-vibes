@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -30,7 +29,7 @@ import java.util.Set;
 public class HydroManFluidFelon extends Card {
 
     public HydroManFluidFelon() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 SpellCastTriggerEffect.withIntervening(
                         new CardColorPredicate(CardColor.BLUE),
                         List.of(new BoostSelfEffect(1, 1)),

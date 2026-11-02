@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -28,12 +27,12 @@ public class PinkHorror extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public PinkHorror() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 INSTANT_OR_SORCERY,
                 List.of(new DealDamageToAnyTargetEffect(2))));
 
         List<Ability> blueHorrorEffects = List.of(
-                LegacySlots.triggered(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                         INSTANT_OR_SORCERY,
                         List.of(new DealDamageToAnyTargetEffect(1)))));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(

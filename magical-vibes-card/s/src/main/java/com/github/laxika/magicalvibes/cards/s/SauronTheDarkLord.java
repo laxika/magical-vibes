@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class SauronTheDarkLord extends Card {
                         legendaryArtifactOrCreature,
                         "legendary artifact or legendary creature"));
 
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
+        addTrigger(Triggers.opponentCastsSpell(),
                 new SpellCastTriggerEffect(null,
                         List.of(new AmassGoblinsEffect(1, CardSubtype.ORC))));
 

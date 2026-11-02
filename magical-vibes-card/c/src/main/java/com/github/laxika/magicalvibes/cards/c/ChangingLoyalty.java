@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldOnDeathEffect;
@@ -24,6 +23,6 @@ public class ChangingLoyalty extends Card {
         addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(true));
 
-        addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}", true));
+        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{2}", true));
     }
 }

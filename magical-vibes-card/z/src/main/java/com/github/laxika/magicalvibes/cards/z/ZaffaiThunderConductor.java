@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -37,7 +37,7 @@ public class ZaffaiThunderConductor extends Card {
                 new ConditionalEffect(new EventValueAtLeast(5), ELEMENTAL_TOKEN),
                 new ConditionalEffect(new EventValueAtLeast(10), new DealDamageToRandomOpponentEffect(10)));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(INSTANT_OR_SORCERY, magecraft));
-        addEffect(EffectSlot.ON_CONTROLLER_COPIES_SPELL, new SpellCopyTriggerEffect(INSTANT_OR_SORCERY, magecraft));
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(INSTANT_OR_SORCERY, magecraft));
+        addTrigger(Triggers.youCopySpell(), new SpellCopyTriggerEffect(INSTANT_OR_SORCERY, magecraft));
     }
 }

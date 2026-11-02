@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutResolvingSpellIntoCommandZoneEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +18,7 @@ public class EssenceOfAjani extends Card {
 
     public EssenceOfAjani() {
         addSpellEffect(new PutResolvingSpellIntoCommandZoneEffect());
-        addEffect(EffectSlot.COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.COMMAND), TriggerOptions.DEFAULT,
                 new SpellCastTriggerEffect(null, List.of(new GainLifeEffect(1))));
     }
 }

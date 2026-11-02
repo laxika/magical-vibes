@@ -42,6 +42,6 @@ public class ChooseCardsFromHandToPerpetuallyGrantTriggeredAbilityEffectHandler
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualTriggeredAbilityCardsChoice(
                 entry.getControllerId(), matchingCards.stream().map(Card::getId).toList(),
                 "Choose up to " + choice.maxCount() + " matching cards in your hand.",
-                choice.maxCount(), choice.slot(), choice.grantedEffects(), choice.cardFilter()));
+                choice.maxCount(), choice.grantedAbilities(), choice.cardFilter()));
     }
 }

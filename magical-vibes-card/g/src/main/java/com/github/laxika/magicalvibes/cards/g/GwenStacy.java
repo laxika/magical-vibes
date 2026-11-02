@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
@@ -55,11 +54,11 @@ class GhostSpider extends Card {
     GhostSpider() {
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 null,
                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 new StackEntryCastFromZonePredicate(Zone.EXILE)));
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,
+        addTrigger(Triggers.youPlayLand(),
                 new LandPlayFromExileTriggerEffect(
                         List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
 

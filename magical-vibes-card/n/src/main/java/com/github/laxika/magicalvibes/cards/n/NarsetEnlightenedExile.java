@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePo
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,10 +34,10 @@ public class NarsetEnlightenedExile extends Card {
 
     public NarsetEnlightenedExile() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+                new TriggeredAbility(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new BoostSelfEffect(1, 1))),
+                        List.of(new BoostSelfEffect(1, 1)))),
                 GrantScope.ALL_OWN_CREATURES));
 
         target(new GraveyardCardPredicateTargetFilter(

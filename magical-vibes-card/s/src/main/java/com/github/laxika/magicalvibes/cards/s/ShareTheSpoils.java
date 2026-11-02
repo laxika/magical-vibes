@@ -22,8 +22,8 @@ public class ShareTheSpoils extends Card {
 
         PlayedCardExiledWithSourceTriggerEffect exileTopCard = new PlayedCardExiledWithSourceTriggerEffect(
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, exileTopCard);
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, exileTopCard);
-        addEffect(EffectSlot.ON_OPPONENT_PLAYS_LAND, exileTopCard);
+        addTrigger(Triggers.playerCastsSpell(), exileTopCard);
+        addTrigger(Triggers.youPlayLand(), exileTopCard);
+        addTrigger(Triggers.opponentPlaysLand(), exileTopCard);
     }
 }

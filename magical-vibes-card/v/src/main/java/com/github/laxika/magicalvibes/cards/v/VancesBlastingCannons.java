@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SpitfireBastion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
@@ -37,7 +36,7 @@ public class VancesBlastingCannons extends Card {
 
         // Whenever you cast your third spell in a turn, you may transform
         // Vance's Blasting Cannons.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new NthSpellCastTriggerEffect(3, List.of(
                         new MayEffect(new TransformSelfEffect(),
                                 "Transform Vance's Blasting Cannons?"))));

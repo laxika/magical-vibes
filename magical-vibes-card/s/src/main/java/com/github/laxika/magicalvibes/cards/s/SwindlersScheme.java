@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class SwindlersScheme extends Card {
 
     public SwindlersScheme() {
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new MayEffect(
+        addTrigger(Triggers.opponentCastsSpell(), new MayEffect(
                 new SpellCastFromHandTriggerEffect(null,
                         List.of(new RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect())),
                 "Reveal the top card of your library?"));

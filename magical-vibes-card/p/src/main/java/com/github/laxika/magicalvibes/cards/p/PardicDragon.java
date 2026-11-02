@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ public class PardicDragon extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(2));
 
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new ConditionalEffect(
+        addTrigger(Triggers.opponentCastsSpell(), new ConditionalEffect(
                 new SourceCardSuspended(),
                 new MayEffect(
                         new PutTimeCountersOnSuspendedCardEffect(1),

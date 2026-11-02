@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ import java.util.Set;
 public class LaezelGithyankiWarrior extends Card {
 
     public LaezelGithyankiWarrior() {
-        addEffect(EffectSlot.ON_SELF_CAST,
+        addTrigger(Triggers.youCastThisSpell(),
                 new GrantTriggeredAbilityToCastSpellEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                         new TriggeringSpellOpponentControllerConditionalEffect(

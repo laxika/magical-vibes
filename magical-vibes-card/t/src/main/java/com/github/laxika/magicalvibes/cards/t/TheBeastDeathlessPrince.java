@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "114")
 @CardRegistration(set = "WHO", collectorNumber = "403")
@@ -26,13 +27,13 @@ public class TheBeastDeathlessPrince extends Card {
 
     public TheBeastDeathlessPrince() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
 
         addStaticEffect(new EntersTappedEffect());

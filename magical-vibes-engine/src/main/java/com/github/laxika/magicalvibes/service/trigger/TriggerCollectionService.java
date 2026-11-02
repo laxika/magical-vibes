@@ -602,9 +602,9 @@ public class TriggerCollectionService {
         TriggerContext.SpellCopy context = new TriggerContext.SpellCopy(copiedSpell, copyingPlayerId);
         gameData.forEachPermanent((playerId, permanent) -> {
             if (playerId.equals(copyingPlayerId)) {
-                dispatchSlot(gameData, permanent, playerId, EffectSlot.ON_CONTROLLER_COPIES_SPELL, context);
+                dispatchWatch(gameData, permanent, playerId, SpellAbilityWatch.ON_CONTROLLER_COPIES_SPELL, context);
             } else {
-                dispatchSlot(gameData, permanent, playerId, EffectSlot.ON_OPPONENT_COPIES_SPELL, context);
+                dispatchWatch(gameData, permanent, playerId, SpellAbilityWatch.ON_OPPONENT_COPIES_SPELL, context);
             }
         });
     }
@@ -1012,20 +1012,20 @@ public class TriggerCollectionService {
 
         // ON_ANY_PLAYER_CASTS_SPELL
         gameData.forEachPermanent((playerId, perm) -> {
-            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, ctx);
+            dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, ctx);
         });
-        dispatchFaceUpSchemes(gameData, EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, ctx, ownerId -> true);
+        dispatchFaceUpSchemes(gameData, SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, ctx, ownerId -> true);
 
         collectTemporaryGlobalSpellCastTriggers(gameData, castingPlayerId, castZone,
                 exiledSourcePermanentId);
 
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)) {
+                for (CardEffect effect : SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL.effectsOf(object.getCard())) {
                     registry.dispatch(new TriggerMatchContext(gameData, null,
                                     gameData.planechase.controllerId, effect,
                                     object.getCard(), object.copy()),
-                            EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+                            SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
                 }
             }
         }
@@ -1033,17 +1033,17 @@ public class TriggerCollectionService {
         // ON_CONTROLLER_CASTS_SPELL (only controller's own spells)
         gameData.forEachPermanent((playerId, perm) -> {
             if (!playerId.equals(castingPlayerId)) return;
-            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx);
+            dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, ctx);
         });
         dispatchDepartedManaSourceSpellCastTriggers(gameData, spellCard, castingPlayerId, ctx);
-        dispatchFaceUpSchemes(gameData, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx, castingPlayerId::equals);
+        dispatchFaceUpSchemes(gameData, SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, ctx, castingPlayerId::equals);
 
         if (gameData.planechase != null && castingPlayerId.equals(gameData.planechase.controllerId)) {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
+                for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.effectsOf(object.getCard())) {
                     registry.dispatch(new TriggerMatchContext(gameData, null, castingPlayerId, effect,
                                     object.getCard(), object.copy()),
-                            EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+                            SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
                 }
             }
         }
@@ -1056,9 +1056,9 @@ public class TriggerCollectionService {
         // ON_OPPONENT_CASTS_SPELL (only opponents' permanents)
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(castingPlayerId)) return;
-            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx);
+            dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, ctx);
         });
-        dispatchFaceUpSchemes(gameData, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx,
+        dispatchFaceUpSchemes(gameData, SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, ctx,
                 ownerId -> !ownerId.equals(castingPlayerId));
 
         dispatchSuspendedExiledCardSpellCastTriggers(gameData, castingPlayerId, ctx);
@@ -1357,8 +1357,8 @@ public class TriggerCollectionService {
         List<Card> castingPlayerGraveyard = gameData.playerGraveyards.get(castingPlayerId);
         if (castingPlayerGraveyard != null) {
             for (Card card : new ArrayList<>(castingPlayerGraveyard)) {
-                List<CardEffect> graveyardEffects = gameQueryService.getEffectiveGraveyardEffects(
-                        gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL);
+                List<CardEffect> graveyardEffects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                        gameData, card, SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL.trigger());
                 if (graveyardEffects == null || graveyardEffects.isEmpty()) continue;
 
                 for (CardEffect effect : graveyardEffects) {
@@ -1434,7 +1434,7 @@ public class TriggerCollectionService {
         if (castingPlayerHand != null) {
             for (Card card : new ArrayList<>(castingPlayerHand)) {
                 if (card.getId().equals(spellCard.getId())) continue;
-                for (CardEffect effect : card.getEffects(EffectSlot.HAND_ON_CONTROLLER_CASTS_SPELL)) {
+                for (CardEffect effect : SpellAbilityWatch.HAND_ON_CONTROLLER_CASTS_SPELL.effectsOf(card)) {
                     if (!(effect instanceof SpellCastTriggerEffect trigger)
                             || !predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)
                             || !spellManaSpentGatesMet(trigger, spellManaSpent)) {
@@ -1461,9 +1461,9 @@ public class TriggerCollectionService {
                 continue;
             }
             Card card = exiledEntry.card();
-            for (CardEffect effect : card.getEffects(EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL)) {
+            for (CardEffect effect : SpellAbilityWatch.EXILE_ON_CONTROLLER_CASTS_SPELL.effectsOf(card)) {
                 registry.dispatch(new TriggerMatchContext(gameData, null, castingPlayerId, effect, card),
-                        EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+                        SpellAbilityWatch.EXILE_ON_CONTROLLER_CASTS_SPELL, effect, ctx);
             }
         }
 
@@ -1548,7 +1548,7 @@ public class TriggerCollectionService {
         List<Card> castingPlayerCommandZone = gameData.playerCommandZones.get(castingPlayerId);
         if (castingPlayerCommandZone != null) {
             for (Card card : new ArrayList<>(castingPlayerCommandZone)) {
-                List<CardEffect> commandEffects = card.getEffects(EffectSlot.COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL);
+                List<CardEffect> commandEffects = SpellAbilityWatch.COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL.effectsOf(card);
                 if (commandEffects == null || commandEffects.isEmpty()) continue;
 
                 for (CardEffect effect : commandEffects) {
@@ -1904,7 +1904,7 @@ public class TriggerCollectionService {
                             gameData, castingPlayerId, spellCard, Keyword.REPLICATE, castZone).stream()
                     .map(value -> value > 0 ? "{" + value + "}" : spellCard.getManaCost())
                     .distinct()
-                    .filter(replicateCost -> spellCard.getEffects(EffectSlot.ON_SELF_CAST).stream()
+                    .filter(replicateCost -> SpellAbilityWatch.ON_SELF_CAST.effectsOf(spellCard).stream()
                             .noneMatch(effect -> effect instanceof ReplicateEffect replicate
                                     && replicateCost.equals(replicate.manaCost())))
                     .map(ReplicateEffect::new)
@@ -1951,9 +1951,10 @@ public class TriggerCollectionService {
                         gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)
                 .forEach(grant -> selfCastEffects.add(new MayEffect(
                         new DemonstrateEffect(), "Copy " + spellCard.getName() + "?")));
-        selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
+        selfCastEffects.addAll(SpellAbilityWatch.ON_SELF_CAST.effectsOf(spellCard));
         List<CardEffect> perpetualSelfCastEffects =
-                gameData.perpetualAbilityEffects(spellCard.getId(), EffectSlot.ON_SELF_CAST);
+                gameData.perpetualTriggerEffects(spellCard.getId(),
+                        SpellAbilityWatch.ON_SELF_CAST.trigger(), SpellAbilityWatch.ON_SELF_CAST.zone());
         if (!perpetualSelfCastEffects.isEmpty()) {
             for (CardEffect grantedAbility : perpetualSelfCastEffects) {
                 if (!grantedAbility.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)
@@ -2510,9 +2511,9 @@ public class TriggerCollectionService {
             }
 
             Card card = exiledEntry.card();
-            for (CardEffect effect : card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL.effectsOf(card)) {
                 registry.dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card),
-                        EffectSlot.ON_OPPONENT_CASTS_SPELL, effect, context);
+                        SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, context);
             }
         }
     }
@@ -2557,7 +2558,7 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.SpellCountered(counteringPlayerId);
         gameData.forEachPermanent((playerId, perm) -> {
             if (!playerId.equals(counteringPlayerId)) return;
-            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_COUNTERS_SPELL, ctx);
+            dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_CONTROLLER_COUNTERS_SPELL, ctx);
         });
     }
 
@@ -2568,7 +2569,7 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.SpellCastCountered(spellControllerId);
         gameData.forEachPermanent((playerId, perm) -> {
             if (!playerId.equals(spellControllerId)) return;
-            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_SPELL_COUNTERED, ctx);
+            dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_CONTROLLER_SPELL_COUNTERED, ctx);
         });
     }
 
@@ -2582,9 +2583,9 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.SpellCounteredOrFizzled(new StackEntry(spellEntry));
         Card spellCard = spellEntry.getCard();
-        for (CardEffect effect : spellCard.getEffects(EffectSlot.ON_SELF_SPELL_COUNTERED_OR_FIZZLED)) {
+        for (CardEffect effect : SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED.effectsOf(spellCard)) {
             dispatch(new TriggerMatchContext(gameData, null, spellEntry.getControllerId(), effect, spellCard),
-                    EffectSlot.ON_SELF_SPELL_COUNTERED_OR_FIZZLED, effect, context);
+                    SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED, effect, context);
         }
     }
 
@@ -4671,10 +4672,10 @@ public class TriggerCollectionService {
 
     public void checkManaAbilityResolutionTriggers(GameData gameData, Permanent sourcePermanent,
                                                     UUID controllerId, int manaProduced) {
-        List<CardEffect> effects = new ArrayList<>(sourcePermanent.getCard().getEffects(
-                EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, sourcePermanent, EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES));
+        List<CardEffect> effects = new ArrayList<>(
+                SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES.effectsOf(sourcePermanent.getCard()));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, sourcePermanent, SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES.trigger()));
         if (effects.isEmpty()) return;
 
         TriggerContext context = new TriggerContext.ManaAbilityResolved(controllerId, manaProduced);
@@ -4683,7 +4684,7 @@ public class TriggerCollectionService {
             if (resolved == null) continue;
             boolean triggered = dispatch(new TriggerMatchContext(
                     gameData, sourcePermanent, controllerId, effect),
-                    EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES, resolved, context);
+                    SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES, resolved, context);
             if (triggered) {
                 OncePerTurnTriggerSupport.markIfNeeded(gameData, sourcePermanent, effect);
             }
@@ -10593,7 +10594,7 @@ public class TriggerCollectionService {
     /**
      * "Whenever you activate an ability of {a permanent}" triggers (e.g. Ceaseless Searblades).
      * Fires on every permanent the activating player controls that has an
-     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_ABILITY} effect, filtered (when wrapped in
+     * {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_ABILITY} effect, filtered (when wrapped in
      * {@link TriggeringPermanentConditionalEffect}) by the permanent whose ability was activated.
      */
     public void checkControllerActivatesAbilityTriggers(GameData gameData, UUID activatingPlayerId,
@@ -10603,7 +10604,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(activatingPlayerId)) return;
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY.effectsOf(perm.getCard())) {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) continue;
                 // Copy descriptors are collected after the activated ability has been put on the
                 // stack so their snapshot contains the activation's targets and X value.
@@ -10707,7 +10708,7 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Collects copy descriptors placed in {@link EffectSlot#ON_CONTROLLER_ACTIVATES_ABILITY}.
+     * Collects copy descriptors placed in {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_ABILITY}.
      * This runs with the completed stack entry so the copied ability retains its chosen targets and
      * X value. Mana abilities use a synthetic entry because they resolve without using the stack.
      */
@@ -10741,7 +10742,7 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(activatingPlayerId)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY.effectsOf(perm.getCard())) {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) {
                     continue;
                 }
@@ -10814,7 +10815,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(activatingPlayerId)) return;
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY.effectsOf(perm.getCard())) {
                 if (!(effect instanceof TriggeringNinjutsuAbilityConditionalEffect)) continue;
                 CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
@@ -10848,7 +10849,7 @@ public class TriggerCollectionService {
     public void checkControllerActivatesExhaustAbilityTriggers(GameData gameData, UUID activatingPlayerId) {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(activatingPlayerId)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY.effectsOf(perm.getCard())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -10874,8 +10875,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card, SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY.trigger())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -10967,14 +10968,14 @@ public class TriggerCollectionService {
     /**
      * "Whenever you activate an eternalize or embalm ability" triggers (Vizier of the Anointed).
      * Fires once per activation on every permanent the activating player controls that has an
-     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM} effect. Called from the
+     * {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM} effect. Called from the
      * graveyard-ability activation path only when the activated ability is an embalm/eternalize
      * ability, so no per-permanent condition is needed.
      */
     public void checkControllerActivatesEternalizeOrEmbalmTriggers(GameData gameData, UUID activatingPlayerId) {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(activatingPlayerId)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM.effectsOf(perm.getCard())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -11007,10 +11008,10 @@ public class TriggerCollectionService {
             // Sacrificed for this activation's costs, so gone by the time the ability is activated.
             if (gameData.pendingActivationCostSacrificeIds.contains(perm.getId())) return;
             boolean watchesController = ownerId.equals(activatingPlayerId);
-            EffectSlot slot = watchesController
-                    ? EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY
-                    : EffectSlot.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY;
-            for (CardEffect effect : perm.getCard().getEffects(slot)) {
+            SpellAbilityWatch watch = watchesController
+                    ? SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY
+                    : SpellAbilityWatch.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY;
+            for (CardEffect effect : watch.effectsOf(perm.getCard())) {
                 if (!(effect instanceof TriggeringNonTapAbilityConditionalEffect)) continue;
                 CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
@@ -11044,7 +11045,7 @@ public class TriggerCollectionService {
     /**
      * "Whenever an opponent activates an ability of {a permanent}, if it isn't a mana ability, ..."
      * triggers (e.g. Harsh Mentor). Fires on every permanent NOT controlled by the activating player
-     * that has an {@link EffectSlot#ON_OPPONENT_ACTIVATES_NONMANA_ABILITY} effect, optionally filtered
+     * that has an {@link SpellAbilityWatch#ON_OPPONENT_ACTIVATES_NONMANA_ABILITY} effect, optionally filtered
      * (when wrapped in {@link TriggeringPermanentConditionalEffect}) by the permanent whose ability was
      * activated. Called only from the non-mana activation path, so mana abilities never trigger it (the
      * "if it isn't a mana ability" clause). The activating player is baked as the non-targeting
@@ -11061,7 +11062,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(activatingPlayerId)) return;
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY.effectsOf(perm.getCard())) {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) continue;
                 CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
@@ -11122,7 +11123,7 @@ public class TriggerCollectionService {
      * "Whenever you activate an ability, if it isn't a mana ability, you may pay {N} to copy it"
      * triggers (Rings of Brighthearth). Called after the non-mana ability has been put on the stack
      * so it can be snapshotted. Fires on every permanent the activating player controls that has an
-     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} effect — except for
+     * {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} effect — except for
      * {@code equippedCreatureOnly} triggers (Illusionist's Bracers), which instead fire on any
      * permanent attached to the ability's source permanent, and copy the ability for free.
      *
@@ -11218,7 +11219,7 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY.effectsOf(perm.getCard())) {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) continue;
                 if (!(effect instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) {
                     if (!ownerId.equals(activatingPlayerId)) continue;
@@ -11359,7 +11360,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(activatingPlayerId)) return;
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_ACTIVATES_ABILITY)) {
+            for (CardEffect effect : SpellAbilityWatch.ON_OPPONENT_ACTIVATES_ABILITY.effectsOf(perm.getCard())) {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) continue;
                 CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
@@ -15236,7 +15237,7 @@ public class TriggerCollectionService {
                                                                UUID castingPlayerId, Zone castZone,
                                                                UUID exiledSourcePermanentId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_CONTROLLER_CASTS_SPELL
+            if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.trigger())
                     || !watcher.controllerId().equals(castingPlayerId)) {
                 continue;
             }
@@ -15304,7 +15305,7 @@ public class TriggerCollectionService {
                                                           UUID exiledSourcePermanentId) {
         for (TemporaryGlobalTriggeredAbility watcher
                 : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_ANY_PLAYER_CASTS_SPELL) {
+            if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL.trigger())) {
                 continue;
             }
 
@@ -15650,23 +15651,23 @@ public class TriggerCollectionService {
         }
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(playingPlayerId)) {
-                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_LAND, ctx);
+                dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND, ctx);
                 if (!perm.getOriginalCard().getId().equals(landCard.getId())) {
-                    dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_PLAYS_ANOTHER_LAND, ctx);
+                    dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_CONTROLLER_PLAYS_ANOTHER_LAND, ctx);
                 }
             } else {
-                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_PLAYS_LAND, ctx);
+                dispatchWatch(gameData, perm, playerId, SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND, ctx);
             }
         });
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
-            EffectSlot slot = gameData.planechase.controllerId.equals(playingPlayerId)
-                    ? EffectSlot.ON_CONTROLLER_PLAYS_LAND : EffectSlot.ON_OPPONENT_PLAYS_LAND;
+            SpellAbilityWatch watch = gameData.planechase.controllerId.equals(playingPlayerId)
+                    ? SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND : SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND;
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : object.getCard().getEffects(slot)) {
+                for (CardEffect effect : watch.effectsOf(object.getCard())) {
                     registry.dispatch(new TriggerMatchContext(gameData, null,
                                     gameData.planechase.controllerId, effect,
                                     object.getCard(), object.copy()),
-                            slot, effect, ctx);
+                            watch, effect, ctx);
                 }
             }
         }
@@ -15676,7 +15677,7 @@ public class TriggerCollectionService {
     private void collectTemporaryControllerLandPlayTriggers(GameData gameData, UUID playingPlayerId,
                                                             Zone playZone, UUID exiledSourcePermanentId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != EffectSlot.ON_CONTROLLER_PLAYS_LAND
+            if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND.trigger())
                     || !watcher.controllerId().equals(playingPlayerId)
                     || !(watcher.effect() instanceof TemporaryGlobalTriggerEffect trigger)) {
                 continue;
@@ -16423,6 +16424,16 @@ public class TriggerCollectionService {
         });
     }
 
+    /** {@link #dispatchFaceUpSchemes} for the abilities {@code watch} reads. */
+    private void dispatchFaceUpSchemes(GameData gameData, SpellAbilityWatch watch, TriggerContext ctx,
+                                       Predicate<UUID> ownerFilter) {
+        gameData.forEachFaceUpSchemeSource((ownerId, scheme) -> {
+            if (ownerFilter.test(ownerId)) {
+                dispatchWatch(gameData, scheme, ownerId, watch, ctx);
+            }
+        });
+    }
+
     /**
      * "When you spend this mana to cast ..." riders on a mana ability are delayed triggers created when the
      * mana is produced (CR 106.6), so they still fire if the producing permanent has left the battlefield
@@ -16436,13 +16447,12 @@ public class TriggerCollectionService {
             Permanent departed = gameData.departedPermanentSnapshots.values().stream()
                     .filter(snapshot -> snapshot.getId().equals(sourceId)).findFirst().orElse(null);
             if (departed == null) continue;
-            for (EffectRegistration registration : departed.getCard().getEffectRegistrations(
-                    EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
+            for (EffectRegistration registration : SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.registrationsOf(departed.getCard())) {
                 CardEffect rider = registration.effect() instanceof MayEffect may ? may.wrapped() : registration.effect();
                 if (rider instanceof SpellCastTriggerEffect trigger
                         && trigger.requiresManaProducedBySource()) {
                     dispatchSlotEffect(gameData, departed, castingPlayerId,
-                            EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx, registration.effect());
+                            SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, ctx, registration.effect());
                 }
             }
         }
@@ -16454,6 +16464,35 @@ public class TriggerCollectionService {
 
     private boolean dispatchSlot(GameData gameData, Permanent perm, UUID controllerId,
                                  EffectSlot slot, TriggerContext ctx, Boolean oncePerBatchOnly) {
+        return dispatchRegistrations(gameData, perm, controllerId, slot, ctx, oncePerBatchOnly,
+                perm.getCard().getEffectRegistrations(slot),
+                staticBonus -> staticBonus == null
+                        ? grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot)
+                        : grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, staticBonus, slot));
+    }
+
+    /**
+     * {@link #dispatchSlot} for the abilities {@code watch} reads: the permanent's own abilities with its trigger, and
+     * those other permanents grant it, each dispatched to {@code watch}'s handlers.
+     */
+    private boolean dispatchWatch(GameData gameData, Permanent perm, UUID controllerId, SpellAbilityWatch watch,
+                                  TriggerContext ctx) {
+        return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, null,
+                watch.registrationsOf(perm.getCard()),
+                staticBonus -> staticBonus == null
+                        ? grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, watch.trigger())
+                        : grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, perm, staticBonus,
+                                watch.trigger()));
+    }
+
+    /**
+     * Dispatches {@code printedRegistrations}, then the effects {@code granted} returns for the permanent's static
+     * bonus ({@code null} when that bonus may be stale), to {@code key}'s handlers.
+     */
+    private boolean dispatchRegistrations(GameData gameData, Permanent perm, UUID controllerId, Object key,
+                                          TriggerContext ctx, Boolean oncePerBatchOnly,
+                                          List<EffectRegistration> printedRegistrations,
+                                          java.util.function.Function<GameQueryService.StaticBonus, List<CardEffect>> granted) {
         if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
         if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
@@ -16461,7 +16500,6 @@ public class TriggerCollectionService {
         // Reused for the granted-trigger lookup below unless a printed trigger was processed in
         // between and may have changed the game state.
         boolean staticBonusCurrent = true;
-        List<EffectRegistration> printedRegistrations = perm.getCard().getEffectRegistrations(slot);
         if (!printedRegistrations.isEmpty() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
             staticBonusCurrent = false;
             List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
@@ -16474,7 +16512,7 @@ public class TriggerCollectionService {
                 // text-changed words (Glamerdye on Riverfall Mimic).
                 CardEffect effect = TextChangeTransformer.transform(
                         registration.effect(), perm.getTextReplacements(), globalWordChange);
-                if (dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effect)) {
+                if (dispatchSlotEffect(gameData, perm, controllerId, key, ctx, effect)) {
                     triggered = true;
                 }
             }
@@ -16482,10 +16520,8 @@ public class TriggerCollectionService {
         // Triggered abilities granted continuously by another permanent (e.g. Pontiff of Blight
         // giving other creatures you control extort) fire off the permanent that has them.
         for (CardEffect effect : Boolean.TRUE.equals(oncePerBatchOnly) ? List.<CardEffect>of()
-                : staticBonusCurrent
-                ? grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, staticBonus, slot)
-                : grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot)) {
-            if (dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effect)) {
+                : granted.apply(staticBonusCurrent ? staticBonus : null)) {
+            if (dispatchSlotEffect(gameData, perm, controllerId, key, ctx, effect)) {
                 triggered = true;
             }
         }

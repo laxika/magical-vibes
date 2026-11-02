@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class SaintTraftAndRemKarolus extends Card {
                                         new CreateTokenEffect("Angel", 4, 4, CardColor.WHITE,
                                                 List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), Set.of())))));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardKeywordPredicate(Keyword.CONVOKE),
                 List.of(new UntapPermanentsEffect(TapUntapScope.SELF))));
     }

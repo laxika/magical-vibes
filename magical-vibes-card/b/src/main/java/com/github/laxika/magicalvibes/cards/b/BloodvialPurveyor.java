@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public class BloodvialPurveyor extends Card {
 
     public BloodvialPurveyor() {
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
                 null,
                 List.of(new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofBloodToken(1)))
         ));

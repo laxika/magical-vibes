@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -64,7 +64,7 @@ public class StormchasersTalent extends Card {
                         .targetGraveyard(true)
                         .build());
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
@@ -87,7 +87,7 @@ public class StormchasersTalent extends Card {
                 false,
                 false,
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                        new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                                 List.of(new BoostSelfEffect(1, 1))))),
                 List.of(),

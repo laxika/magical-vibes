@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -23,7 +22,7 @@ public class RoilingVortex extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new DealDamageToPlayersEffect(1, DamageRecipient.ACTIVE_PLAYER));
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
+        addTrigger(Triggers.playerCastsSpell(), SpellCastTriggerEffect.withIntervening(
                 null,
                 List.of(new DealDamageToPlayersEffect(5, DamageRecipient.TRIGGERING_PLAYER)),
                 new NotCondition(new SpellManaSpentAtLeast(1))));

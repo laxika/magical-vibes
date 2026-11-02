@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class GaleWaterdeepProdigy extends Card {
         target(new GraveyardCardPredicateTargetFilter(graveyardFilter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
                 0, 1)
                 .bindEffect(castFromGraveyard);
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastFromHandTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastFromHandTriggerEffect(
                 new CardTypePredicate(castType), List.of(castFromGraveyard)));
     }
 }

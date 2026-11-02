@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -31,7 +30,7 @@ public class ThoughtPrison extends Card {
                 "Have target player reveal their hand?"
         ));
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(
                 null,
                 List.of(new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER)),
                 new StackEntrySharesColorOrManaValueWithImprintedCardPredicate()

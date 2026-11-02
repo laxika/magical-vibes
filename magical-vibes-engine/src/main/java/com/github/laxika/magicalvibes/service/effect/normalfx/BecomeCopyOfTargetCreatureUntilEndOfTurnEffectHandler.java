@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -102,8 +103,13 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         }
         if (retainedRegistration != null) {
             sourcePermanent.getCard().copyTargetingFrom(originalCard);
-            sourcePermanent.getCard().addEffect(copyEffect.retainedEffectSlot(),
-                    retainedRegistration.effect(), retainedRegistration.triggerMode());
+            if (copyEffect.retainedTrigger() instanceof LegacySlotTrigger legacy) {
+                sourcePermanent.getCard().addEffect(legacy.slot(),
+                        retainedRegistration.effect(), retainedRegistration.triggerMode());
+            } else {
+                sourcePermanent.getCard().addTrigger(copyEffect.retainedTrigger(),
+                        retainedRegistration.triggerMode(), retainedRegistration.effect());
+            }
         }
         copyEffect.additionalAbilitiesOverride().forEach(sourcePermanent.getCard()::addAbility);
         sourcePermanent.setCopyUntilEndOfTurn(true);
@@ -123,10 +129,10 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
 
     private EffectRegistration findRetainedRegistration(
             Card sourceCard, BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect) {
-        if (copyEffect.retainedEffectSlot() == null) {
+        if (copyEffect.retainedTrigger() == null) {
             return null;
         }
-        return sourceCard.getEffectRegistrations(copyEffect.retainedEffectSlot()).stream()
+        return sourceCard.getTriggerEffectRegistrations(copyEffect.retainedTrigger()).stream()
                 .filter(registration -> containsEffect(registration.effect(), copyEffect))
                 .findFirst()
                 .orElse(null);

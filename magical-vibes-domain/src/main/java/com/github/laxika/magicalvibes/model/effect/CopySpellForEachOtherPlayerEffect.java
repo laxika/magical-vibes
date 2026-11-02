@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import java.util.UUID;
 
 /**
- * Trigger descriptor for {@code ON_ANY_PLAYER_CASTS_SPELL}: whenever a player casts a spell
+ * Trigger descriptor for {@code Triggers.playerCastsSpell()}: whenever a player casts a spell
  * matching {@code spellFilter}, each other player copies that spell. Each of those players may
  * choose new targets for their copy.
  * <p>

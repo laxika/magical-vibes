@@ -35,7 +35,7 @@ public class FireNationOccupation extends Card {
 
         // Whenever you cast a spell during an opponent's turn, create a 2/2 red Soldier creature
         // token with firebending 1.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(null, List.of(SOLDIER_TOKEN), true));
     }
 }

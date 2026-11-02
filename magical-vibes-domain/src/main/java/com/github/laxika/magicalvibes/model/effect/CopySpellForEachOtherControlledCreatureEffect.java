@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import java.util.UUID;
 
 /**
- * Trigger descriptor for {@code ON_ANY_PLAYER_CASTS_SPELL}: whenever a player casts an
+ * Trigger descriptor for {@code Triggers.playerCastsSpell()}: whenever a player casts an
  * instant or sorcery spell that targets only the source creature, that player copies the
  * spell for each other creature they control that the spell could target. Each copy targets a
  * different one of those creatures. The {@code chooseOne} form instead lets the caster choose one

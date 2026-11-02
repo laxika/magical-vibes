@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * Trigger descriptor for ability-activation slots: copy an activated ability when its trigger
  * condition matches. The copy's controller may choose new targets for the copy. The normal form is
- * used in {@code ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY}; the {@code activationCostContainsX}
- * form is also used in {@code ON_CONTROLLER_ACTIVATES_ABILITY} for triggers that include mana
+ * used in {@code Triggers.youActivateNonManaAbility()}; the {@code activationCostContainsX}
+ * form is also used in {@code Triggers.youActivateAbility()} for triggers that include mana
  * abilities.
  * <p>
  * At trigger time, the relevant trigger collector snapshots the activated ability on the stack and places a

@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedHandCardOnCastEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEnchantedHandCardCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.HandCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,6 +48,6 @@ public class DontWorryAboutIt extends Card {
                 new CardTruePredicate(), "Target must be a card in your hand"));
         addSpellEffect(new EnchantCardInHandEffect());
         addStaticEffect(new ReduceEnchantedHandCardCastCostEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new CopyEnchantedHandCardOnCastEffect());
+        addTrigger(Triggers.youCastSpell(), new CopyEnchantedHandCardOnCastEffect());
     }
 }

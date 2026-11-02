@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTriggeringAttackersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MAT", collectorNumber = "48")
 @CardRegistration(set = "MAT", collectorNumber = "98")
@@ -25,9 +27,9 @@ public class TyvarTheBellicose extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new GrantKeywordToTriggeringAttackersEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.ELF), Keyword.DEATHTOUCH));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES,
+                new TriggeredAbility(Triggers.thisManaAbilityResolves(),
                 OncePerTurnTriggerEffect.perGrant(new PutCountersOnSelfEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue())),
+                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue()))),
                 GrantScope.ALL_OWN_CREATURES));
     }
 }

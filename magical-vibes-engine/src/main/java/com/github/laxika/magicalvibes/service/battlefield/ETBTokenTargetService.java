@@ -974,7 +974,7 @@ public class ETBTokenTargetService {
                             pending.chosenTargetsSoFar(), Map.of(), total, 0));
             return;
         }
-        // Shared by ETB token copies, ON_SELF_CAST, and multi-target ON_ATTACK — keep the label generic.
+        // Shared by ETB token copies, Triggers.youCastThisSpell(), and multi-target ON_ATTACK — keep the label generic.
         String abilityLabel = card.getName() + "'s ability";
         Zone targetZone = pending.chosenTargetsSoFar().stream()
                 .map(id -> gameQueryService.findStackEntryByCardId(gameData, id))

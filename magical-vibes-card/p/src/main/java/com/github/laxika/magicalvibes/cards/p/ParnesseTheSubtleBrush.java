@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class ParnesseTheSubtleBrush extends Card {
         var targetOpponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
-        addEffect(EffectSlot.ON_CONTROLLER_COPIES_SPELL,
+        addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(null,
                         List.of(new MayEffect(new CopyCopiedSpellForTargetPlayerEffect(),
                                 "Copy that spell?", null, MayChoicePlayer.TARGET_PLAYER)), targetOpponent, null, true, true));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringLandNotFromHandConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
@@ -22,7 +21,7 @@ public class TheLostAndTheDamned extends Card {
                 "Spawn", 3, 3, CardColor.RED, List.of(CardSubtype.SPAWN), Set.of(), Set.of());
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new EnteringLandNotFromHandConditionalEffect(spawn));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new PlayFromOutsideHandTriggerEffect(List.of(spawn)));
     }
 }

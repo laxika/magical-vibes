@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
@@ -37,12 +36,12 @@ public class TophHardheadedTeacher extends Card {
                         "a card", null, true, null, null, DiscardRecipient.CONTROLLER, true),
                 "Discard a card to return target instant or sorcery card from your graveyard to your hand?"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardSubtypePredicate(CardSubtype.LESSON)),
                 List.of(new EarthbendTargetLandEffect(1)),
                 null,
                 TargetFilters.landYouControl()));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.LESSON),
                 List.of(new EarthbendTargetLandEffect(1),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),

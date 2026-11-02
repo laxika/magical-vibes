@@ -132,6 +132,7 @@ import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPower
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -722,7 +723,7 @@ public class PredicateEvaluationService {
             case CardHasAwakenPredicate ignored ->
                     card.getCardText() != null && AWAKEN_ABILITY_PATTERN.matcher(card.getCardText()).find();
             case CardHasCascadePredicate ignored ->
-                    card.getEffects(EffectSlot.ON_SELF_CAST).stream().anyMatch(CascadeEffect.class::isInstance)
+                    card.getTriggerEffects(Triggers.youCastThisSpell()).stream().anyMatch(CascadeEffect.class::isInstance)
                             || gameData != null && cardOwnerId != null
                             && gameData.getDelayedActions(
                                     com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger.class)

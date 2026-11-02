@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -21,7 +21,7 @@ public class ReflectionsOfLittjara extends Card {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
         // "Whenever you cast a spell of the chosen type, copy that spell." The Oracle text grants no
         // new-target choice, so the copy keeps its targets (CR 707.10c).
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new CopyControllerCastSpellOnSpellCastEffect(
+        addTrigger(Triggers.youCastSpell(), new CopyControllerCastSpellOnSpellCastEffect(
                 new CardHasSourceChosenSubtypePredicate(false),
                 null,
                 null,

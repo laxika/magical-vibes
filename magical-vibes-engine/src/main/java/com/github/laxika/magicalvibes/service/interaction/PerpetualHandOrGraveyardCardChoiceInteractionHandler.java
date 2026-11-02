@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -52,7 +53,7 @@ public class PerpetualHandOrGraveyardCardChoiceInteractionHandler
         gameData.interaction.clearAwaitingInput();
         gameData.perpetualManaCostIncreases.merge(
                 chosenCard.getId(), new ManaCost(interaction.perpetualManaCostIncrease()), ManaCost::increasedBy);
-        gameData.grantPerpetualAbilityOnce(chosenCard.getId(), EffectSlot.ON_SELF_CAST, interaction.selfCastAbility());
+        gameData.grantPerpetualAbilityOnce(chosenCard.getId(), new TriggeredAbility(Triggers.youCastThisSpell(), interaction.selfCastAbility()));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

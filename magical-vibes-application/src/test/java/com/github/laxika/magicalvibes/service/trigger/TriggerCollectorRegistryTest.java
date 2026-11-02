@@ -60,7 +60,7 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Unwraps MayEffect and dispatches to inner effect handler")
         void unwrapsMayEffect() {
             boolean[] called = {false};
-            registry.register(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, SpellCastTriggerEffect.class,
+            registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, SpellCastTriggerEffect.class,
                     (match, inner, context) -> { called[0] = true; return true; });
 
             var innerEffect = new SpellCastTriggerEffect(null, java.util.List.of());
@@ -68,7 +68,7 @@ class TriggerCollectorRegistryTest {
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), mayEffect);
             var ctx = new TriggerContext.SpellCast(null, UUID.randomUUID(), true);
 
-            boolean result = registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
+            boolean result = registry.dispatch(match, SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, mayEffect, ctx);
 
             assertThat(result).isTrue();
             assertThat(called[0]).isTrue();

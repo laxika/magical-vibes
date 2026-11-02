@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlaye
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,7 @@ public class SharkTyphoon extends Card {
         CreateTokenEffect castShark = new CreateTokenEffect(
                 "Shark", new EventValue(), new EventValue(), CardColor.BLUE,
                 List.of(CardSubtype.SHARK), Set.of(Keyword.FLYING), Set.of());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new CreateTokenForTriggeringPlayerEffect(castShark))));
 

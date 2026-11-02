@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
@@ -26,7 +25,7 @@ import java.util.Set;
 public class VeiledApparition extends Card {
 
     public VeiledApparition() {
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
+        addTrigger(Triggers.opponentCastsSpell(), SpellCastTriggerEffect.withIntervening(
                 null,
                 List.of(new BecomeCreatureEffect(3, 3, CardSubtype.ILLUSION, Set.of(Keyword.FLYING))),
                 new SourceIsEnchantment()));

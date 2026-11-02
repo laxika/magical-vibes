@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGivePoisonCounterOnCastToRandomNonlandCardInDamagedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -42,7 +42,7 @@ public class PerpetuallyGivePoisonCounterOnCastToRandomNonlandCardInDamagedHandE
 
         int handIndex = nonlandIndices.get(ThreadLocalRandom.current().nextInt(nonlandIndices.size()));
         Card modifiedCard = hand.get(handIndex).createRuntimeCopy();
-        modifiedCard.addEffect(EffectSlot.ON_SELF_CAST,
+        modifiedCard.addTrigger(Triggers.youCastThisSpell(),
                 new GivePoisonCountersEffect(1, PoisonRecipient.CONTROLLER));
         modifiedCard.freeze();
         hand.set(handIndex, modifiedCard);

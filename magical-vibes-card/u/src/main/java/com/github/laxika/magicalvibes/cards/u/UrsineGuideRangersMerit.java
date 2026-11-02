@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.r.RangersMerit;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastFromOutsideStartingDeckTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class UrsineGuideRangersMerit extends Card {
         setBackFaceCard(new RangersMerit());
 
         addStaticEffect(new BecomePreparedEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastFromOutsideStartingDeckTriggerEffect(List.of(
                         new ConjureCardToBattlefieldEffect("FDN", "552"),
                         new BecomePreparedEffect())));

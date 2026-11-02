@@ -15,7 +15,7 @@ public class TreacherousBlessing extends Card {
 
     public TreacherousBlessing() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new CasterLosesLifeOnSpellCastEffect(null, 1));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, new SacrificeSelfEffect());
     }

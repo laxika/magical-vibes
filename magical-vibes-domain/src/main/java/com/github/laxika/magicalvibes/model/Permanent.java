@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.AbstractMap;
@@ -2192,7 +2193,16 @@ public class Permanent {
 
     /** Removes the indefinitely granted abilities in {@code slot} whose effect matches {@code filter}. */
     public void removePersistentTriggeredEffectsIf(EffectSlot slot, Predicate<CardEffect> filter) {
-        persistentAbilities.removeIf(ability -> LegacySlots.slotOf(ability) == slot
+        removePersistentTriggeredEffectsIf(new LegacySlotTrigger(slot), filter);
+    }
+
+    /**
+     * Removes the indefinitely granted triggered abilities with {@code trigger} that have an effect that matches
+     * {@code filter}.
+     */
+    public void removePersistentTriggeredEffectsIf(Trigger trigger, Predicate<CardEffect> filter) {
+        persistentAbilities.removeIf(ability -> ability instanceof TriggeredAbility triggered
+                && triggered.hasTrigger(trigger)
                 && LegacySlots.effectsOf(ability).stream().anyMatch(filter));
     }
 

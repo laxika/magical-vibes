@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,6 +21,6 @@ public class LimitlessRekindling extends Card {
                         new ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect.CardPrintingReference("YECL", "19"),
                         new ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect.CardPrintingReference("YECL", "33")
                 )));
-        addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
+        addTrigger(Triggers.youCastThisSpell(), new StormEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -32,7 +31,7 @@ public class Jokulmorder extends Card {
                 List.of(new SacrificeSelfEffect()),
                 true));
 
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, new TriggeringCardConditionalEffect(
+        addTrigger(Triggers.youPlayLand(), new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.ISLAND),
                 new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
                         "Untap Jokulmorder?")));

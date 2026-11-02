@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -31,12 +32,12 @@ public class FlayerOfLoyalties extends Card {
         // Untap it. Until end of turn, it has base power and toughness 10/10 and gains trample,
         // annihilator 2, and haste.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_SELF_CAST, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addEffect(EffectSlot.ON_SELF_CAST, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.ON_SELF_CAST, new SetBasePowerToughnessEffect(10, 10))
-                .addEffect(EffectSlot.ON_SELF_CAST,
+                .addTrigger(Triggers.youCastThisSpell(), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addTrigger(Triggers.youCastThisSpell(), new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addTrigger(Triggers.youCastThisSpell(), new SetBasePowerToughnessEffect(10, 10))
+                .addTrigger(Triggers.youCastThisSpell(),
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_SELF_CAST, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addTrigger(Triggers.youCastThisSpell(), new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_ATTACK,
                         new SacrificePermanentsEffect(
                                 2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER)));

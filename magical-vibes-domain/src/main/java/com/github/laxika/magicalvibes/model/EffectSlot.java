@@ -12,8 +12,6 @@ public enum EffectSlot {
      *  {@code GameData.pendingManaAbilityTriggers} until a player would next receive priority
      *  (CR 603.3). */
     ON_SELF_TAPPED_FOR_MANA,
-    /** "Whenever a mana ability of this permanent resolves." */
-    ON_SELF_MANA_ABILITY_RESOLVES,
     /** Triggers when this permanent changes control to another player. */
     ON_SELF_BECOMES_CONTROLLED,
     /** Triggers when this permanent changes control away from its current controller. */
@@ -21,40 +19,12 @@ public enum EffectSlot {
     ON_BLOCK,
     /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
     ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
-    ON_ANY_PLAYER_CASTS_SPELL,
-    ON_CONTROLLER_CASTS_SPELL,
     /** Triggers when this permanent's controller sets a scheme in motion. */
     ON_CONTROLLER_SETS_SCHEME_IN_MOTION,
     ON_CONTROLLER_GIVES_GIFT,
     /** Triggers whenever a Case is solved by the controller. */
     ON_ALLY_CASE_SOLVES,
     ON_CONTROLLER_FORETELLS,
-    /** Triggers when the controller copies an instant or sorcery spell. */
-    ON_CONTROLLER_COPIES_SPELL,
-    /** Triggers when an opponent copies an instant or sorcery spell. */
-    ON_OPPONENT_COPIES_SPELL,
-    ON_CONTROLLER_COUNTERS_SPELL,
-    /** "Whenever a spell you've cast is countered, ..." */
-    ON_CONTROLLER_SPELL_COUNTERED,
-    /** Triggers when this spell is countered or fizzles. */
-    ON_SELF_SPELL_COUNTERED_OR_FIZZLED,
-    /**
-     * "Whenever you play a land" — fired at the actual land-play sites (from hand, from graveyard,
-     * from exile, and the may-cast/free-play paths), NOT when a land merely enters the battlefield.
-     * Use {@link #ON_ALLY_LAND_ENTERS_BATTLEFIELD} for landfall, which also sees lands put onto the
-     * battlefield by an effect.
-     */
-    ON_CONTROLLER_PLAYS_LAND,
-    /** Triggers when the controller plays a land other than the source permanent. */
-    ON_CONTROLLER_PLAYS_ANOTHER_LAND,
-    /**
-     * "Whenever an opponent plays a land" — the opponent-side mirror of
-     * {@link #ON_CONTROLLER_PLAYS_LAND}: fired at the actual land-play sites only, NOT when a land
-     * merely enters the battlefield. Use {@link #ON_OPPONENT_LAND_ENTERS_BATTLEFIELD} for the
-     * enters-based version. Dirtcowl Wurm.
-     */
-    ON_OPPONENT_PLAYS_LAND,
-    ON_OPPONENT_CASTS_SPELL,
     ON_COMBAT_DAMAGE_TO_PLAYER,
     ON_COMBAT_DAMAGE_TO_CREATURE,
     /** Triggers once per combat damage step when the source deals combat damage to one or more blockers. */
@@ -414,15 +384,6 @@ public enum EffectSlot {
     ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
     /** Triggers whenever a creature controlled by this permanent's controller fights. */
     ON_ALLY_CREATURE_FIGHTS,
-    /** Triggers when the controller casts a spell matching the filter, while this card is in
-     *  the controller's graveyard.  Checked per-card inside
-     *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
-    GRAVEYARD_ON_CONTROLLER_CASTS_SPELL,
-    /** Triggers when the controller casts a spell matching the filter, while this card is in the
-     *  controller's hand and is not the spell being cast (Covercast). */
-    HAND_ON_CONTROLLER_CASTS_SPELL,
-    /** Triggers whenever the controller casts a spell while this card is in exile. */
-    EXILE_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
     /** Triggers whenever the controller surveils, while this card is in the controller's
@@ -433,15 +394,6 @@ public enum EffectSlot {
     GRAVEYARD_ON_CONTROLLER_CONJURES,
     /** Triggers whenever the controller rolls a natural 20, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20,
-    /** Triggers whenever the controller activates an exhaust ability, while this card is in the
-     *  controller's graveyard. Checked per-card inside
-     *  {@code TriggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard}. */
-    GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
-    /** Triggers when the controller casts a spell matching the filter, while this card is in
-     *  the controller's command zone (Eminence — e.g. Edgar Markov). Checked per-card inside
-     *  {@code TriggerCollectionService.checkSpellCastTriggers}. Pair with an intervening-if
-     *  {@code SourceCardInCommandZone} so the ability fails if the card left the command zone. */
-    COMMAND_ZONE_ON_CONTROLLER_CASTS_SPELL,
     /** Triggers whenever the controller of this permanent loses life (damage or direct life loss).
      *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
      *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
@@ -741,11 +693,6 @@ public enum EffectSlot {
      *  player-scoped effects (e.g. {@code EachPermanentScope.TARGET_PLAYER}) act on "that player".
      *  Checked in {@code CombatAttackService.declareAttackers}. Used by Total War. */
     ON_ANY_PLAYER_ATTACKS,
-    /** Triggers when this instant/sorcery spell is cast (a "when you cast this spell" ability on the
-     *  spell itself). Scanned against the just-cast card in
-     *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
-     *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
-    ON_SELF_CAST,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
@@ -781,22 +728,6 @@ public enum EffectSlot {
      *  the {@code PermanentChoiceContext.ChampionedTriggerTarget} interaction. Used by Mistbind Clique
      *  ("When a Faerie is championed with this creature, tap all lands target player controls"). */
     ON_CHAMPIONED,
-    /** Triggers whenever the controller of this permanent activates an activated ability (including
-     *  mana abilities) of a permanent they control. Fires on every permanent with this slot on the
-     *  activating player's battlefield. Wrap the effect in {@code TriggeringPermanentConditionalEffect}
-     *  to filter by the permanent whose ability was activated (e.g. Ceaseless Searblades —
-     *  "whenever you activate an ability of an Elemental"). Checked in
-     *  {@code TriggerCollectionService.checkControllerActivatesAbilityTriggers}, driven from
-     *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. */
-    ON_CONTROLLER_ACTIVATES_ABILITY,
-    /** Triggers whenever an opponent of this permanent's controller activates an activated ability
-     *  (including mana abilities) of a permanent. Fires on every permanent NOT controlled by the
-     *  activating player that has this slot. Wrap the effect in
-     *  {@code TriggeringPermanentConditionalEffect} to filter by the permanent whose ability was
-     *  activated. Checked in {@code TriggerCollectionService.checkOpponentActivatesAbilityTriggers}. */
-    ON_OPPONENT_ACTIVATES_ABILITY,
-    /** Triggers whenever the controller activates an exhaust ability. */
-    ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
     /** Triggers whenever this creature saddles a Mount or crews a Vehicle during its controller's
      *  main phase. The Mount or Vehicle is stored as the non-targeting source permanent on the
      *  triggered ability's stack entry. Checked from {@code CrewCostHandler} as each creature is
@@ -804,32 +735,6 @@ public enum EffectSlot {
     ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE,
     /** Triggers whenever a creature stations this Spacecraft. */
     ON_SELF_BECOMES_STATIONED,
-    /** Triggers whenever the controller of this permanent activates a non-mana activated ability
-     *  (CR 605.1a). Unlike {@link #ON_CONTROLLER_ACTIVATES_ABILITY} this excludes mana abilities and
-     *  fires only after the ability has been put on the stack, so the triggering ability can be
-     *  snapshotted and copied. Carries a {@link CopyControllerActivatedAbilityTriggerEffect}; the
-     *  trigger is built in {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}.
-     *  Used by Rings of Brighthearth. */
-    ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
-    /** Triggers whenever the controller of this permanent activates an embalm or eternalize ability
-     *  (a graveyard-activated ability that creates a token copy of its source, see
-     *  {@code ActivatedAbility.isEmbalmOrEternalize()}). Fires once per activation on every permanent
-     *  with this slot on the activating player's battlefield, after the ability is on the stack.
-     *  Checked in {@code TriggerCollectionService.checkControllerActivatesEternalizeOrEmbalmTriggers},
-     *  driven from {@code AbilityActivationService.completeGraveyardAbilityActivation}. Used by
-     *  Vizier of the Anointed ("whenever you activate an eternalize or embalm ability, draw a card"). */
-    ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM,
-    /** Triggers whenever an <em>opponent</em> of this permanent's controller activates a non-mana
-     *  activated ability (CR 605.1a) of a permanent. Fires on every permanent NOT controlled by the
-     *  activating player that has this slot; like mana abilities never reach the check, the
-     *  "if it isn't a mana ability" clause is automatic. Wrap the effect in
-     *  {@code TriggeringPermanentConditionalEffect} to filter by the permanent whose ability was
-     *  activated (e.g. Harsh Mentor — "an ability of an artifact, creature, or land"). The activating
-     *  player is baked as the non-targeting {@code targetId} so a player-directed effect (e.g.
-     *  {@code DealDamageToPlayersEffect(2, TARGET_PLAYER)}) acts on "that player". Checked in
-     *  {@code TriggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers}, driven from
-     *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. Used by Harsh Mentor. */
-    ON_OPPONENT_ACTIVATES_NONMANA_ABILITY,
     /** Triggers whenever a creature the controller controls becomes blocked. Fires once per blocked
      *  attacker, on every permanent with this slot on the blocked creature's controller's battlefield
      *  (not just the blocked creature). The blocked creature's permanent ID is set as the non-targeting

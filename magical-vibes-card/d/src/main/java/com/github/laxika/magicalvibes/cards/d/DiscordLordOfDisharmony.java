@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscordCopyCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -13,6 +12,6 @@ public class DiscordLordOfDisharmony extends Card {
 
     public DiscordLordOfDisharmony() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new DiscordRandomCardCopyEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new DiscordCopyCastTriggerEffect());
+        addTrigger(Triggers.youCastSpell(), new DiscordCopyCastTriggerEffect());
     }
 }

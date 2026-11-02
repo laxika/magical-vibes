@@ -358,7 +358,7 @@ public class CardChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        choice.grantedEffects().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), choice.slot(), granted));
+        choice.grantedAbilities().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), granted));
         gameLogService.append(gameData, GameLog.cardThen(
                 selectedCard, " perpetually gains the triggered ability."));
 
@@ -392,7 +392,7 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         for (Card selectedCard : selectedCards) {
-            choice.grantedEffects().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), choice.slot(), granted));
+            choice.grantedAbilities().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), granted));
             gameLogService.append(gameData, GameLog.cardThen(
                     selectedCard, " perpetually gains the triggered ability."));
         }
@@ -418,9 +418,7 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         Card copy = hand.get(cardIndex).createRuntimeCopy();
-        for (CardEffect grantedEffect : choice.grantedEffects()) {
-            copy.addEffect(choice.slot(), grantedEffect);
-        }
+        choice.grantedAbilities().forEach(copy::addAbility);
         copy.freeze();
         hand.set(cardIndex, copy);
 

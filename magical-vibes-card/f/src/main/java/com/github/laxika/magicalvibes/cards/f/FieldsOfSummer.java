@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class FieldsOfSummer extends Card {
 
     public FieldsOfSummer() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(null, List.of(
+        addTrigger(Triggers.playerCastsSpell(), new SpellCastTriggerEffect(null, List.of(
                 new MayEffect(new GainLifeEffect(new Fixed(2), GainLifeRecipient.TRIGGERING_PLAYER),
                         "Gain 2 life?", null, MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER))));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(new GainLifeEffect(10), "Gain 10 life?"));

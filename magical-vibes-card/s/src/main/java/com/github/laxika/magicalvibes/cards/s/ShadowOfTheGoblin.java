@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -26,7 +25,7 @@ public class ShadowOfTheGoblin extends Card {
         // enchantment deals 1 damage to each opponent.
         List<CardEffect> damage = List.of(
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new PlayFromOutsideHandTriggerEffect(damage));
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, new PlayFromOutsideHandTriggerEffect(damage));
+        addTrigger(Triggers.youCastSpell(), new PlayFromOutsideHandTriggerEffect(damage));
+        addTrigger(Triggers.youPlayLand(), new PlayFromOutsideHandTriggerEffect(damage));
     }
 }

@@ -22,7 +22,7 @@ class TriggeredAbilityTest {
 
     @Test
     void aSingleTriggerFunctionsFromItsDefaultZones() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL);
+        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_CONTROLLER_SURVEILS);
 
         TriggeredAbility ability = new TriggeredAbility(trigger, TriggerOptions.DEFAULT, ZOMBIE);
 
@@ -89,7 +89,7 @@ class TriggeredAbilityTest {
 
     @Test
     void aLegacySlotTriggerTakesNoTriggerOptions() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL);
+        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_CONTROLLER_SURVEILS);
 
         assertThatThrownBy(() -> new TriggeredAbility(trigger,
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()), ZOMBIE))

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardDrawnThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class BaralChiefOfCompliance extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
 
-        addEffect(EffectSlot.ON_CONTROLLER_COUNTERS_SPELL, new MayEffect(
+        addTrigger(Triggers.youCounterSpell(), new MayEffect(
                 SequenceEffect.of(new DrawCardEffect(1), ConditionalEffect.unless(new CardDrawnThisWay(),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
                 "Draw a card? If you do, discard a card."));

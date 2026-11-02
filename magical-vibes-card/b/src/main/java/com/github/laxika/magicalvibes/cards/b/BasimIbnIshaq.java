@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class BasimIbnIshaq extends Card {
     public BasimIbnIshaq() {
         // Whenever you cast a historic spell, draw a card. Basim Ibn Ishaq can't be blocked this
         // turn. This ability triggers only once each turn.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new OncePerTurnTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new OncePerTurnTriggerEffect(
                 new SpellCastTriggerEffect(
                         new CardIsHistoricPredicate(),
                         List.of(new DrawCardEffect(), new MakeCreatureUnblockableEffect(true))

@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class LurkingSpinecrawlerTest extends BaseCardTest {
         ManaCost incorporation = gd.perpetualManaCostIncreases.get(chosen.getId());
         assertThat(incorporation.countColorSymbols(ManaColor.BLACK)).isEqualTo(1);
         assertThat(incorporation.getGenericCost()).isEqualTo(1);
-        assertThat(gd.perpetualAbilityEffects(chosen.getId(), EffectSlot.ON_SELF_CAST)).isNotEmpty();
+        assertThat(gd.perpetualTriggerEffects(chosen.getId(), Triggers.youCastThisSpell(), Zone.STACK)).isNotEmpty();
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

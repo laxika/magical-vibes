@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageBySelfToCreaturesAndShuffleEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class WeepingAngel extends Card {
 
     public WeepingAngel() {
         // Whenever an opponent casts a creature spell, Weeping Angel isn't a creature until end of turn.
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(new RemoveCardTypeFromTargetPermanentEffect(CardType.CREATURE, GrantScope.SELF))
         ));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -25,7 +24,7 @@ import java.util.Set;
 public class GodEternalOketra extends Card {
 
     public GodEternalOketra() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(new CreateTokenEffect("Zombie Warrior", 4, 4, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE, CardSubtype.WARRIOR),

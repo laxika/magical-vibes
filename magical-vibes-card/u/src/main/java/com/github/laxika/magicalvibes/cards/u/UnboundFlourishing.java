@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleXValueOfTriggeringSpellEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1331")
@@ -22,13 +22,13 @@ import java.util.List;
 public class UnboundFlourishing extends Card {
 
     public UnboundFlourishing() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardHasXInManaCostPredicate())),
                 List.of(new DoubleXValueOfTriggeringSpellEffect())));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new CopyControllerCastSpellOnSpellCastEffect(
+        addTrigger(Triggers.youCastSpell(), new CopyControllerCastSpellOnSpellCastEffect(
                 new CardAllOfPredicate(List.of(
                         new CardHasXInManaCostPredicate(),
                         new CardAnyOfPredicate(List.of(
@@ -36,7 +36,7 @@ public class UnboundFlourishing extends Card {
                                 new CardTypePredicate(CardType.SORCERY))))),
                 null, null));
 
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY,
+        addTrigger(Triggers.youActivateAbility(),
                 new CopyControllerActivatedAbilityTriggerEffect(null, null, false, false, null, true));
     }
 }

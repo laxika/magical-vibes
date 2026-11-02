@@ -8,9 +8,9 @@ import java.util.List;
 /**
  * Trigger descriptor for "whenever you cast your Nth spell in a turn" abilities.
  * <p>
- * Works in {@code ON_CONTROLLER_CASTS_SPELL} and {@code ON_OPPONENT_CASTS_SPELL} slots for the
+ * Works in {@code Triggers.youCastSpell()} and {@code Triggers.opponentCastsSpell()} abilities for the
  * relevant caster's count, or in
- * {@code ON_ANY_PLAYER_CASTS_SPELL} slot with {@link CountScope#ANY_PLAYER} for the total count
+ * {@code Triggers.playerCastsSpell()} ability with {@link CountScope#ANY_PLAYER} for the total count
  * across all players. The trigger fires only when the selected spell-cast count for the current
  * turn equals {@code spellNumber}.
  * <p>

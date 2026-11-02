@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasExhaustAbilityPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDFT", collectorNumber = "25")
 public class SalaDeckBoss extends Card {
@@ -18,7 +18,7 @@ public class SalaDeckBoss extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasExhaustAbilityPredicate()));
 
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
+        addTrigger(Triggers.youActivateNonManaAbility(),
                 new CopyControllerActivatedAbilityTriggerEffect(
                         null, null, false, false, null, false, true));
     }

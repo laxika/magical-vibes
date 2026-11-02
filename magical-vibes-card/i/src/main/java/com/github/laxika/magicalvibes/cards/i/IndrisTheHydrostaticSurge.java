@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoControllerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,7 +23,7 @@ public class IndrisTheHydrostaticSurge extends Card {
 
     public IndrisTheHydrostaticSurge() {
         CardEffect stormLightningBolt = new ConjureCardIntoControllerLibraryEffect(
-                "M10", "146", List.of(LegacySlots.triggered(EffectSlot.ON_SELF_CAST, List.of(new StormEffect()))));
+                "M10", "146", List.of(new TriggeredAbility(Triggers.youCastThisSpell(), new StormEffect())));
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 stormLightningBolt,
                 stormLightningBolt,
@@ -35,7 +34,7 @@ public class IndrisTheHydrostaticSurge extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(instantOrSorcery, List.of(new DrawCardEffect())));
     }
 }

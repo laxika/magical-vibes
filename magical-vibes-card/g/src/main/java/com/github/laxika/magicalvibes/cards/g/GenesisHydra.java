@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopXCardsMayPutPermanentToBattlefieldShuffleRestEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ import java.util.List;
 public class GenesisHydra extends Card {
 
     public GenesisHydra() {
-        addEffect(EffectSlot.ON_SELF_CAST, new RevealTopXCardsMayPutPermanentToBattlefieldShuffleRestEffect(
+        addTrigger(Triggers.youCastThisSpell(), new RevealTopXCardsMayPutPermanentToBattlefieldShuffleRestEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),

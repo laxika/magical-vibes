@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeast
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class MangaraTheDiplomat extends Card {
                 new ConditionalEffect(new OpponentAttacksWithAtLeastCreatures(2), new DrawCardEffect()));
 
         // Whenever an opponent casts their second spell each turn, draw a card.
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
+        addTrigger(Triggers.opponentCastsSpell(),
                 new NthSpellCastTriggerEffect(2, List.of(new DrawCardEffect())));
     }
 }

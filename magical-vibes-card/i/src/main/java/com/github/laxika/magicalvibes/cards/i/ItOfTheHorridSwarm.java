@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +28,7 @@ public class ItOfTheHorridSwarm extends Card {
         ), true));
 
         // When you cast this spell, create two 1/1 green Insect creature tokens.
-        addEffect(EffectSlot.ON_SELF_CAST, new CreateTokenEffect(2, "Insect", 1, 1, CardColor.GREEN,
+        addTrigger(Triggers.youCastThisSpell(), new CreateTokenEffect(2, "Insect", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.INSECT), Set.of(), Set.of()));
     }
 }

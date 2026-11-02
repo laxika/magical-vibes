@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -22,11 +21,11 @@ public class JujuBubble extends Card {
 
         // When you play a card, sacrifice this artifact.
         // "Play a card" = cast a spell or play a land (not put onto the battlefield by an effect).
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 null,
                 List.of(new SacrificeSelfEffect())
         ));
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, new SacrificeSelfEffect());
+        addTrigger(Triggers.youPlayLand(), new SacrificeSelfEffect());
 
         // {2}: You gain 1 life.
         addActivatedAbility(new ActivatedAbility(

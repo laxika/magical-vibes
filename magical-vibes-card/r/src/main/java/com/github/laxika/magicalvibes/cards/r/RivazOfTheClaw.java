@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
@@ -46,7 +45,7 @@ public class RivazOfTheClaw extends Card {
         addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 dragonCreature, null));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 dragonCreature,
                 List.of(new GrantTriggeredAbilityToCastSpellEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ExileSourceCardFromGraveyardEffect()))),

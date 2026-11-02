@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInExile;
@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBa
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,10 +35,11 @@ public class HexKellansCompanion extends Card {
                 ),
                 null, null, new StackEntryCastWithAdventurePredicate(), false, false,
                 new AnyOf(List.of(new SourceCardOnBattlefield(), new SourceCardInExile())), 0);
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, adventureTrigger);
-        addEffect(EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL, adventureTrigger);
+        addTrigger(Triggers.youCastSpell(), adventureTrigger);
+        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.EXILE),
+                TriggerOptions.DEFAULT, adventureTrigger);
 
-        addEffect(EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.EXILE), TriggerOptions.DEFAULT,
                 new SpellCastTriggerEffect(
                         null,
                         List.of(new ReturnSourceCardFromExileToBattlefieldEffect(false)),

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
@@ -35,7 +34,7 @@ import java.util.Set;
 public class ObNixilisTheAdversary extends Card {
 
     public ObNixilisTheAdversary() {
-        addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellIfCasualtyPaidEffect(
+        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellIfCasualtyPaidEffect(
                 Set.of(CardSupertype.LEGENDARY), true, true));
         addCastingCost(CasualtyCost.matchingChosenX());
         addCastingCost(new ChooseXValueCost(0, Integer.MAX_VALUE));

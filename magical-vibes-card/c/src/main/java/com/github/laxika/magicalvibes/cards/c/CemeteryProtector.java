@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImprintOnSourceEffect;
@@ -31,9 +30,9 @@ public class CemeteryProtector extends Card {
                 List.of(CardSubtype.HUMAN), Set.of(), Set.of());
         CardEffect conditionalHuman = new TriggeringCardConditionalEffect(sharedType, createHuman);
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(sharedType, List.of(conditionalHuman)));
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,
+        addTrigger(Triggers.youPlayLand(),
                 new TriggeringCardConditionalEffect(sharedType, createHuman));
     }
 }

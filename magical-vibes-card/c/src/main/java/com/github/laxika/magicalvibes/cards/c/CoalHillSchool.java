@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class CoalHillSchool extends Card {
 
     public CoalHillSchool() {
         // Whenever a player casts a historic spell, that player draws a card.
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 SpellCastTriggerEffect.anyPlayer(new CardIsHistoricPredicate(),
                         List.of(new DrawCardForTargetPlayerEffect(1))));
 

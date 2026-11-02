@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.model.effect.LandPlayFromExileTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,10 +23,10 @@ public class ScalesoulGnome extends Card {
 
         List<CardEffect> duplicate =
                 List.of(new ConjureDuplicateOfTriggeringCardIntoHandEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(null, duplicate,
                         new StackEntryCastFromZonePredicate(Zone.EXILE)));
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,
+        addTrigger(Triggers.youPlayLand(),
                 new LandPlayFromExileTriggerEffect(duplicate));
     }
 }

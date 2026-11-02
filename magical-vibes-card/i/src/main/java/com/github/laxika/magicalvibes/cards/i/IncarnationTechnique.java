@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -11,13 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1776")
 @CardRegistration(set = "C21", collectorNumber = "41")
 public class IncarnationTechnique extends Card {
 
     public IncarnationTechnique() {
-        addEffect(EffectSlot.ON_SELF_CAST,
+        addTrigger(Triggers.youCastThisSpell(),
                 new MayEffect(new DemonstrateEffect(), "Copy Incarnation Technique for an opponent?"));
         addSpellEffect(new MillEffect(5, MillRecipient.CONTROLLER));
         addSpellEffect(ReturnCardFromGraveyardEffect.builder()

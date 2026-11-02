@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class BloodbraidChallenger extends Card {
 
     public BloodbraidChallenger() {
-        addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
         addCastingOption(new GraveyardCast(null, "{3}{R}{G}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));
     }

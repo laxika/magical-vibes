@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -31,7 +30,7 @@ public class ImpetuousLootmonger extends Card {
                         new HeistTargetOpponentLibraryEffect()));
 
         // Whenever you cast a spell you don't own, create a tapped Treasure token.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardControllerDoesNotOwnPredicate(),
                 List.of(CreateTokenEffect.ofTappedTreasureToken(1))));
     }

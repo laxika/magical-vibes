@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringOutlastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,7 @@ public class HeraldOfAnafenza extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withOutlast());
 
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY, new TriggeringOutlastAbilityConditionalEffect(
+        addTrigger(Triggers.youActivateAbility(), new TriggeringOutlastAbilityConditionalEffect(
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(),
                         new CreateTokenEffect("Warrior", 1, 1, CardColor.WHITE,

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToRandomMatchingHandCardEffect;
@@ -39,9 +40,10 @@ public class PerpetuallyGrantTriggeredAbilityToRandomMatchingHandCardEffectHandl
         }
 
         Card selected = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
-        CardEffect grantedAbility = grant.grantedEffects().size() == 1
-                ? grant.grantedEffects().getFirst()
-                : new com.github.laxika.magicalvibes.model.effect.SequenceEffect(grant.grantedEffects());
-        gameData.grantPerpetualAbility(selected.getId(), grant.slot(), grantedAbility);
+        // Several granted effects are one ability, in order.
+        gameData.grantPerpetualAbility(selected.getId(), grant.grantedAbilities().size() == 1
+                ? grant.grantedAbilities().getFirst()
+                : LegacySlots.withEffect(grant.grantedAbilities().getFirst(),
+                        new com.github.laxika.magicalvibes.model.effect.SequenceEffect(grant.grantedEffects())));
     }
 }

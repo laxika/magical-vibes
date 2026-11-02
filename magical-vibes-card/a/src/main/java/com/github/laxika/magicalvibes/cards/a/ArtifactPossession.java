@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringNonTapAbilityCondit
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ATQ", collectorNumber = "15")
 public class ArtifactPossession extends Card {
@@ -23,7 +24,7 @@ public class ArtifactPossession extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsHostOfSourceAuraPredicate(),
                         new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)));
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY, activationTrigger);
-        addEffect(EffectSlot.ON_OPPONENT_ACTIVATES_ABILITY, activationTrigger);
+        addTrigger(Triggers.youActivateAbility(), activationTrigger);
+        addTrigger(Triggers.opponentActivatesAbility(), activationTrigger);
     }
 }

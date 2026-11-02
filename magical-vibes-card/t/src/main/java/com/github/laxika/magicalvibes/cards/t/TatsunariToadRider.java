@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -25,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -43,14 +43,14 @@ public class TatsunariToadRider extends Card {
             new PermanentHasKeywordPredicate(Keyword.REACH)));
 
     public TatsunariToadRider() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
                 new CardTypePredicate(CardType.ENCHANTMENT),
                 List.of(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Keimi", 3, 3,
                         CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                         List.of(CardSubtype.FROG), Set.of(), Set.of(), false, false,
                         List.of(
-                                LegacySlots.triggered(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                                new TriggeredAbility(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                                         new CardTypePredicate(CardType.ENCHANTMENT),
                                         List.of(
                                                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true))))),

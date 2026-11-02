@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForEachCounterKindEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "32")
 @CardRegistration(set = "NCC", collectorNumber = "133")
@@ -14,6 +14,6 @@ public class StormOfForms extends Card {
     public StormOfForms() {
         target(TargetFilters.nonlandPermanent())
                 .addSpellEffect(ReturnToHandEffect.target());
-        addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForEachCounterKindEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellForEachCounterKindEffect());
     }
 }

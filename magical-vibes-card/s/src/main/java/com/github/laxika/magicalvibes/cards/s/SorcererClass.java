@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
@@ -83,7 +82,7 @@ public class SorcererClass extends Card {
                 "this Class is level 2"
         ));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
                 instantOrSorcery,
                 List.of(new DealDamageToEachOpponentFromTriggeringSpellEffect(
                         new SpellsCastThisTurn(instantOrSorcery, CountScope.CONTROLLER))),

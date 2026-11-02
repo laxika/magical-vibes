@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOU", collectorNumber = "57")
 @CardRegistration(set = "HA4", collectorNumber = "8")
@@ -18,8 +19,8 @@ public class AmmitEternal extends Card {
         // (once per becoming blocked, not per blocker). Heads-up, so the sole opponent is the defender.
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
         // Whenever an opponent casts a spell, put a -1/-1 counter on this creature (mandatory —
-        // the source is bound by the dedicated ON_OPPONENT_CASTS_SPELL collector).
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new PutCountersOnSourceEffect(-1, -1, 1));
+        // the source is bound by the dedicated Triggers.opponentCastsSpell() collector).
+        addTrigger(Triggers.opponentCastsSpell(), new PutCountersOnSourceEffect(-1, -1, 1));
         // Whenever this creature deals combat damage to a player, remove all -1/-1 counters from it.
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }

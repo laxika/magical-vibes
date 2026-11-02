@@ -8,7 +8,7 @@ import java.util.Set;
  * Spell-cast trigger descriptor: put {@code amount} +1/+1 counters on the source permanent whenever a
  * spell of one of {@code triggerColors} is cast. An empty {@code triggerColors} set means any spell,
  * colorless ones included (Managorger Hydra); {@code onlyOwnSpells} restricts the
- * {@code ON_ANY_PLAYER_CASTS_SPELL} slot to the source's controller.
+ * {@code Triggers.playerCastsSpell()} ability to the source's controller.
  */
 public record PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect(
         Set<CardColor> triggerColors,

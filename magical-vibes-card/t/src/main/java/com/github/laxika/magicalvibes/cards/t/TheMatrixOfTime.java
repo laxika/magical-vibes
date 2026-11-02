@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithPlanarSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "589")
 public class TheMatrixOfTime extends Card {
@@ -24,9 +25,9 @@ public class TheMatrixOfTime extends Card {
         CardEffect playedCardFollowUp = SequenceEffect.of(
                 new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER),
                 new ExileTopCardOfTriggeringPlayerLibraryEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new PlayedCardExiledWithPlanarSourceTriggerEffect(playedCardFollowUp));
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,
+        addTrigger(Triggers.youPlayLand(),
                 new PlayedCardExiledWithPlanarSourceTriggerEffect(playedCardFollowUp));
         addEffect(EffectSlot.CHAOS_TRIGGERED, CreateTokenEffect.ofTreasureToken(2));
     }

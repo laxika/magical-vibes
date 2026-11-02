@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -24,7 +23,7 @@ public class MysticRemora extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{1}"));
 
         // Whenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
+        addTrigger(Triggers.opponentCastsSpell(),
                 new DrawCardUnlessPaysEffect(1, 4,
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
     }

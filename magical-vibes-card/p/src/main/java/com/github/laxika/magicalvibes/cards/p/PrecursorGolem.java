@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +25,7 @@ public class PrecursorGolem extends Card {
         // Whenever a player casts an instant or sorcery spell that targets only a single Golem,
         // that player copies that spell for each other Golem that spell could target.
         // Each copy targets a different one of those Golems.
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class TheMyriadPools extends Card {
                 "Target must be another permanent you control");
         CardEffect copyEffect = new BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect();
 
-        target(targetFilter, 0, 1).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        target(targetFilter, 0, 1).addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(
                         new CardIsPermanentPredicate(),
                         List.of(copyEffect),

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Trigger descriptor for {@code ON_CONTROLLER_CASTS_SPELL}: whenever the controller casts a spell
+ * Trigger descriptor for {@code Triggers.youCastSpell()}: whenever the controller casts a spell
  * matching {@code spellFilter}, they may pay a cost to copy that spell. The copy's controller may
  * choose new targets.
  * <p>

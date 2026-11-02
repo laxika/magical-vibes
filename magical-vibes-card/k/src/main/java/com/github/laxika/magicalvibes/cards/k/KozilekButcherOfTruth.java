@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class KozilekButcherOfTruth extends Card {
 
     public KozilekButcherOfTruth() {
-        addEffect(EffectSlot.ON_SELF_CAST, new DrawCardEffect(4));
+        addTrigger(Triggers.youCastThisSpell(), new DrawCardEffect(4));
 
         addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
                 4, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));

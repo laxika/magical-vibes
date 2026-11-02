@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,7 @@ public class PoeticIngenuity extends Card {
                         new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
                         CreateTokenEffect.ofTreasureToken(new EventValue())));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new OncePerTurnTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new OncePerTurnTriggerEffect(
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.ARTIFACT),
                         List.of(new CreateTokenEffect(

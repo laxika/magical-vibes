@@ -372,4 +372,99 @@ public final class Triggers {
     public static StepTrigger endStep(ActivePlayer player) {
         return new StepTrigger(StepTrigger.Moment.END_STEP, player);
     }
+
+    /** "Whenever you cast a spell". */
+    public static SpellTrigger youCastSpell() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.CAST, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent casts a spell". */
+    public static SpellTrigger opponentCastsSpell() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.CAST, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever a player casts a spell". */
+    public static SpellTrigger playerCastsSpell() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.CAST, PlayerRelation.ANY);
+    }
+
+    /** "When you cast this spell", functioning from the stack. */
+    public static SpellTrigger youCastThisSpell() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.CAST_THIS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you copy a spell". */
+    public static SpellTrigger youCopySpell() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.COPIED, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent copies a spell". */
+    public static SpellTrigger opponentCopiesSpell() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.COPIED, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you counter a spell". */
+    public static SpellTrigger youCounterSpell() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.COUNTERS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever a spell you control is countered". */
+    public static SpellTrigger yourSpellCountered() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.COUNTERED, PlayerRelation.YOU);
+    }
+
+    /** "When this spell is countered or doesn't resolve because its targets are illegal", from the stack. */
+    public static SpellTrigger thisSpellCounteredOrFizzles() {
+        return new SpellTrigger(SpellTrigger.SpellEvent.THIS_COUNTERED_OR_FIZZLES, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you play a land", this one included. */
+    public static LandPlayTrigger youPlayLand() {
+        return new LandPlayTrigger(ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever you play another land". */
+    public static LandPlayTrigger youPlayAnotherLand() {
+        return new LandPlayTrigger(ObjectRelation.ANOTHER_YOU_CONTROL);
+    }
+
+    /** "Whenever an opponent plays a land". */
+    public static LandPlayTrigger opponentPlaysLand() {
+        return new LandPlayTrigger(ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever you activate an ability", mana abilities included. */
+    public static AbilityTrigger youActivateAbility() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.ACTIVATED, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent activates an ability", mana abilities included. */
+    public static AbilityTrigger opponentActivatesAbility() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.ACTIVATED, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you activate an ability that isn't a mana ability". */
+    public static AbilityTrigger youActivateNonManaAbility() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.NONMANA_ACTIVATED, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent activates an ability that isn't a mana ability". */
+    public static AbilityTrigger opponentActivatesNonManaAbility() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.NONMANA_ACTIVATED, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you activate an exhaust ability". */
+    public static AbilityTrigger youActivateExhaustAbility() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.EXHAUST_ACTIVATED, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you activate an embalm or eternalize ability". */
+    public static AbilityTrigger youActivateEternalizeOrEmbalm() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.ETERNALIZE_OR_EMBALM_ACTIVATED, PlayerRelation.YOU);
+    }
+
+    /** "Whenever a mana ability of this permanent resolves". */
+    public static AbilityTrigger thisManaAbilityResolves() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.THIS_MANA_ABILITY_RESOLVES, PlayerRelation.YOU);
+    }
 }

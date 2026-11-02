@@ -31,11 +31,11 @@ public class RemovePerpetualTriggeredAbilityEffectHandler implements NormalEffec
         UUID cardId = source != null && source.getOriginalCard() != null
                 ? source.getOriginalCard().getId() : entry.getCard().getId();
 
-        gameData.removePerpetualAbilitiesIf(cardId, removal.triggeredAbilitySlot(),
+        gameData.removePerpetualAbilitiesIf(cardId, removal.triggeredAbilityTrigger(),
                 removal.triggeredAbilityType()::isInstance);
 
         if (source != null) {
-            source.removePersistentTriggeredEffectsIf(removal.triggeredAbilitySlot(),
+            source.removePersistentTriggeredEffectsIf(removal.triggeredAbilityTrigger(),
                     removal.triggeredAbilityType()::isInstance);
         }
     }

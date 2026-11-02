@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Generic trigger descriptor for "whenever [someone] casts a spell [matching filter]" abilities.
  * <p>
- * Works in both {@code ON_ANY_PLAYER_CASTS_SPELL} and {@code ON_CONTROLLER_CASTS_SPELL} slots —
+ * Works in both {@code Triggers.playerCastsSpell()} and {@code Triggers.youCastSpell()} abilities —
  * the EffectSlot determines which loop fires it.
  * <p>
  * When wrapped in {@link MayEffect}, the player is prompted before the effects resolve.

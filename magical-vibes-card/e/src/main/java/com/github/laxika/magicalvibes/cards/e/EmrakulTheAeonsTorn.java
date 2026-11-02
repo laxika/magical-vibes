@@ -23,7 +23,7 @@ public class EmrakulTheAeonsTorn extends Card {
     public EmrakulTheAeonsTorn() {
         addStaticEffect(new CantBeCounteredEffect());
 
-        addEffect(EffectSlot.ON_SELF_CAST, new ControllerExtraTurnEffect(1));
+        addTrigger(Triggers.youCastThisSpell(), new ControllerExtraTurnEffect(1));
 
         addStaticEffect(new ProtectionFromColoredSpellsEffect());
 

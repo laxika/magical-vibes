@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,6 +26,6 @@ public class SiegeOfTowers extends Card {
                 .addSpellEffect(new AnimatePermanentsEffect(
                         3, 1, List.of(), Set.of(), null, Set.of(),
                         GrantScope.TARGET, EffectDuration.PERMANENT));
-        addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{1}{R}"));
+        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{1}{R}"));
     }
 }

@@ -210,10 +210,10 @@ new ActivatedAbility(false, "{4}", List.of(effect),
     .withExhaust()
 ```
 
-Use `EffectSlot.ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY` for a trigger that watches the
+Use `Triggers.youActivateExhaustAbility()` for a trigger that watches the
 controller's exhaust activations. The trigger is collected before the activated ability resolves.
 For a trigger that functions while its source card is in the graveyard and returns that card from
-there (Afterburner Expert), use `EffectSlot.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY`;
+there (Afterburner Expert), use `Triggers.youActivateExhaustAbility() from the graveyard`;
 the graveyard collector scans every card in the activating player's graveyard.
 
 ---
@@ -876,7 +876,7 @@ legality checks run.
 
 `Card.ninjutsuAbility(cost)` builds the same flagged ability for static grants to creature cards in
 hand. A battlefield trigger watching those grants can use
-`TriggeringNinjutsuAbilityConditionalEffect` in `ON_CONTROLLER_ACTIVATES_ABILITY`; the hand-ninjutsu
+`TriggeringNinjutsuAbilityConditionalEffect` in `Triggers.youActivateAbility()`; the hand-ninjutsu
 activation path collects that trigger after the activation costs are paid.
 
 Only a creature matching `PermanentIsUnblockedAttackingPredicate` **on the activating player's own
@@ -1091,8 +1091,8 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 | `Triggers.upkeep(ActivePlayer.YOU) from the graveyard` | Upkeep trigger from graveyard |
 | `Triggers.endStep(ActivePlayer.ANY) from the graveyard` | End-step trigger from graveyard ("At the beginning of the end step, if this card is in your graveyard …"). Fires at EVERY end step, scanned across all players' graveyards in APNAP order by `StepTriggerService.handleEndStepTriggers`; a wrapping `ConditionalEffect` is an intervening-if checked at trigger time. Used by Krovikan Horror |
 | `Triggers.endStep(ActivePlayer.YOU) from the graveyard` | End-step trigger from a graveyard card during its owner's end step ("At the beginning of your end step …"). Scans only the active player's graveyard when that player is the card's owner; a wrapping `ConditionalEffect` is checked at trigger time. Used by Silversmote Ghoul |
-| `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL` | Spell-cast trigger from graveyard — fires when the controller casts a spell matching the `SpellCastTriggerEffect.spellFilter()` while this card is in their graveyard (e.g. Lingering Phantom). Supports `manaCost` for "you may pay" patterns |
-| `HAND_ON_CONTROLLER_CASTS_SPELL` | Spell-cast trigger from hand — fires when the controller casts another spell matching `SpellCastTriggerEffect.spellFilter()` while this card is in their hand; a `ConditionalEffect(SpellManaSpentAtLeast)` payload is checked as an intervening-if before the trigger goes on the stack (Summitfest Closing Ceremony covercast) |
+| `Triggers.youCastSpell() from the graveyard` | Spell-cast trigger from graveyard — fires when the controller casts a spell matching the `SpellCastTriggerEffect.spellFilter()` while this card is in their graveyard (e.g. Lingering Phantom). Supports `manaCost` for "you may pay" patterns |
+| `Triggers.youCastSpell() from the hand` | Spell-cast trigger from hand — fires when the controller casts another spell matching `SpellCastTriggerEffect.spellFilter()` while this card is in their hand; a `ConditionalEffect(SpellManaSpentAtLeast)` payload is checked as an intervening-if before the trigger goes on the stack (Summitfest Closing Ceremony covercast) |
 | `GRAVEYARD_ON_CONTROLLER_SURVEILS` | Surveil trigger from graveyard — fires whenever the controller surveils while this card is in their graveyard. Effects are queued from the card's graveyard entry; Blood Operative uses `ConditionalEffect(SourceCardInGraveyard, MayPayManaEffect("{0}", 3, ReturnSourceCardFromGraveyardToOwnerHandEffect(), ...))` |
 | `Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)` | Permanent-sacrifice trigger from graveyard — fires whenever the controller sacrifices a permanent while this card is in their graveyard. Wrap in `TriggeringCardConditionalEffect` to filter the sacrificed permanent (e.g. `CardSubtypePredicate(CLUE)`). A source card sacrificed in the same event does not trigger. Scanned in `TriggerCollectionService.checkGraveyardAllyPermanentSacrificedTriggers`. Used by Curious Cadaver |
 | `Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)` | Fires once when one or more cards leave the controller's graveyard, batching simultaneous departures |
@@ -1198,10 +1198,10 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 | `Triggers.dies(null, ObjectRelation.YOU_OWN)` | A permanent of any type, including a token, is put into your graveyard from the battlefield. Fires only for the graveyard owner. Used by Scrapheap with `TriggeringCardConditionalEffect(CardAnyOfPredicate(ARTIFACT, ENCHANTMENT), GainLifeEffect(1))`. |
 | `ON_CONTROLLER_TAPS_OPPONENT_PERMANENT` | The controller is instructed to tap an opponent's permanent. Unlike `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, it does not trigger when an opponent is instructed to tap their own permanent. Wrap in `TriggeringPermanentConditionalEffect` to filter the tapped permanent. Used by Solitary Sanctuary |
 | `Triggers.creatureDies(DAMAGED_BY_THIS)` | A creature damaged by this permanent dies |
-| `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
-| `ON_CONTROLLER_CASTS_SPELL` | Controller casts a spell ("whenever you cast...") |
+| `Triggers.playerCastsSpell()` | Any player casts a spell |
+| `Triggers.youCastSpell()` | Controller casts a spell ("whenever you cast...") |
 | `ON_RING_TEMPTS_YOU` | The controller is tempted by the Ring |
-| `ON_CONTROLLER_COPIES_SPELL` | Controller copies an instant or sorcery spell |
+| `Triggers.youCopySpell()` | Controller copies an instant or sorcery spell |
 | `ON_ANY_PLAYER_TAPS_LAND` | Any player taps a land |
 | `ON_CONTROLLER_TAPS_CREATURE_FOR_MANA` | The controller taps a creature they control for mana |
 | `ON_SELF_TAPPED_FOR_MANA` | You tap **this** permanent for mana. Dispatched from the mana-ability tap path only (`TriggerCollectionService.checkSelfTappedForManaTriggers`), so it never fires when the permanent is tapped to attack or by an opponent. Deferred into `pendingManaAbilityTriggers` like every other mana-ability trigger (CR 603.3) — see the timing note below this table. Used by Zhur-Taa Druid (`DealDamageToPlayersEffect(1, EACH_OPPONENT)`) |
@@ -1236,9 +1236,9 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 | `Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED)` | Enchanted permanent leaves battlefield (any destination) |
 | `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)` | Opponent's land enters. Wrap with `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` for "second+ land" |
 | `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)` | Your land enters (landfall). Register with `TriggerMode.ONCE_PER_BATCH` for "whenever one or more lands enter": lands entering in one simultaneous event join one trigger's `triggeringPermanentIds` (Mythweaver Poq) |
-| `ON_CONTROLLER_PLAYS_LAND` | You **play** a land ("whenever you play a land"; land-play special action only — not every land ETB). Fired from the land-play sites (hand, graveyard, exile, free-play) via `TriggerCollectionService.checkControllerPlaysLandTriggers`, so a land put onto the battlefield by an effect does NOT trigger it — use `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)` for landfall. Pair with `ON_CONTROLLER_CASTS_SPELL` to cover "whenever you play a card" (Search the City, Juju Bubble) |
-| `ON_CONTROLLER_PLAYS_ANOTHER_LAND` | The controller plays a land other than the source itself. Uses the land-play path, not general landfall (City of Traitors). |
-| `ON_OPPONENT_PLAYS_LAND` | An **opponent** plays a land ("whenever an opponent plays a land"). Opponent-side mirror of `ON_CONTROLLER_PLAYS_LAND`, fired from the same land-play sites, so an opponent's land put onto the battlefield by an effect does NOT trigger it — use `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)` for that. Dirtcowl Wurm |
+| `Triggers.youPlayLand()` | You **play** a land ("whenever you play a land"; land-play special action only — not every land ETB). Fired from the land-play sites (hand, graveyard, exile, free-play) via `TriggerCollectionService.checkControllerPlaysLandTriggers`, so a land put onto the battlefield by an effect does NOT trigger it — use `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)` for landfall. Pair with `Triggers.youCastSpell()` to cover "whenever you play a card" (Search the City, Juju Bubble) |
+| `Triggers.youPlayAnotherLand()` | The controller plays a land other than the source itself. Uses the land-play path, not general landfall (City of Traitors). |
+| `Triggers.opponentPlaysLand()` | An **opponent** plays a land ("whenever an opponent plays a land"). Opponent-side mirror of `Triggers.youPlayLand()`, fired from the same land-play sites, so an opponent's land put onto the battlefield by an effect does NOT trigger it — use `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)` for that. Dirtcowl Wurm |
 | `GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER` | Combat damage is dealt to the controller or to a planeswalker they control, while this card is in their graveyard. Fires once per combat damage step per damaged player in `CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers`. Unlike every other graveyard slot this one **targets**: the trigger is routed through the `AttackTriggerTarget` pending-choice pipeline, so the card's `target(...)` filter narrows the legal targets and the ability is skipped when none exist (CR 603.3c). Used by Vengeful Pharaoh (`ConditionalEffect(SourceCardInGraveyard, DestroyTargetPermanentEffect)` + `PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(0)`, `TargetFilters.attackingCreature()`) |
 | `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)` | Like Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL) but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect(new CardSubtypePredicate(...), wrapped)` to filter by the entering land, and wrap the inner effect in `MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).build(), ...)` for "you may return this card from your graveyard to your hand". Scanned over the land controller's graveyard in `TriggerCollectionService.checkAllyLandEntersTriggers`. Used by Reach of Branches ("whenever a Forest you control enters") |
 | `Triggers.creatureDies(OPPONENT_CONTROLS)` | An opponent's creature dies |

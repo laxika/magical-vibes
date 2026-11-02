@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,8 +25,9 @@ public class AccidentProneApprentice extends Card {
         SpellCastTriggerEffect noncreatureSpellTrigger = new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new PerpetuallyBoostCardEffect(this, 1, 1)));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, noncreatureSpellTrigger);
-        addEffect(EffectSlot.EXILE_ON_CONTROLLER_CASTS_SPELL, noncreatureSpellTrigger);
+        addTrigger(Triggers.youCastSpell(), noncreatureSpellTrigger);
+        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.EXILE),
+                TriggerOptions.DEFAULT, noncreatureSpellTrigger);
     }
 
     @Override

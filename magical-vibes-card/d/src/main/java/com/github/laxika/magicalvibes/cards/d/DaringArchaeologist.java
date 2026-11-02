@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -34,7 +33,7 @@ public class DaringArchaeologist extends Card {
 
         // Whenever you cast a historic spell, put a +1/+1 counter on Daring Archaeologist.
         // (Artifacts, legendaries, and Sagas are historic.)
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardIsHistoricPredicate(),
                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
         ));

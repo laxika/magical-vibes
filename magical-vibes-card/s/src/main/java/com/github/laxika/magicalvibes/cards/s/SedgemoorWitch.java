@@ -39,9 +39,9 @@ public class SedgemoorWitch extends Card {
                 List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new GainLifeEffect(1))),
                 List.of(), false, false, false, 0, Set.of()));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(instantOrSorcery, magecraft));
-        addEffect(EffectSlot.ON_CONTROLLER_COPIES_SPELL,
+        addTrigger(Triggers.youCopySpell(),
                 new SpellCopyTriggerEffect(instantOrSorcery, magecraft));
     }
 }

@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class OsgoodOperationDouble extends Card {
 
     public OsgoodOperationDouble() {
         // When you cast this spell, create a token that's a copy of it, except it isn't legendary.
-        addEffect(EffectSlot.ON_SELF_CAST, new CreateTokenCopyOfSourceEffect(true, 1));
+        addTrigger(Triggers.youCastThisSpell(), new CreateTokenCopyOfSourceEffect(true, 1));
 
         // {T}: Add {C}. Spend this mana only to cast an artifact spell or activate an ability of an artifact.
         addActivatedAbility(new ActivatedAbility(
@@ -33,7 +33,7 @@ public class OsgoodOperationDouble extends Card {
         ));
 
         // Paradox — Whenever you cast a spell from anywhere other than your hand, investigate.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new PlayFromOutsideHandTriggerEffect(List.of(CreateTokenEffect.ofClueToken(1))));
     }
 }

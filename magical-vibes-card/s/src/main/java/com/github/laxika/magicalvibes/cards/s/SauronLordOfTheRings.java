@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -24,9 +23,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SauronLordOfTheRings extends Card {
 
     public SauronLordOfTheRings() {
-        addEffect(EffectSlot.ON_SELF_CAST, new AmassGoblinsEffect(5, CardSubtype.ORC));
-        addEffect(EffectSlot.ON_SELF_CAST, new MillEffect(5, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_SELF_CAST, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.youCastThisSpell(), new AmassGoblinsEffect(5, CardSubtype.ORC));
+        addTrigger(Triggers.youCastThisSpell(), new MillEffect(5, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.youCastThisSpell(), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .mandatory(true)

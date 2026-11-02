@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilit
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class LeoriSparktouchedHunter extends Card {
                 new ChooseSubtypeForSourceEffect(
                         CardSubtype.planeswalkerTypes(), true, "Choose a planeswalker type."));
 
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY,
+        addTrigger(Triggers.youActivateAbility(),
                 new CopyControllerActivatedAbilityTriggerEffect(
                         null,
                         new StackEntryAllOfPredicate(List.of(

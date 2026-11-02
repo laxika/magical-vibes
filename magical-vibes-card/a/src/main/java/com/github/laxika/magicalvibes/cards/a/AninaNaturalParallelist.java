@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellXValue;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureWithMana
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import java.util.List;
 public class AninaNaturalParallelist extends Card {
 
     public AninaNaturalParallelist() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardHasXInManaCostPredicate(),
                 List.of(new ConjureRandomCreatureWithManaValueEffect(
                         new TriggeringSpellXValue(), false))));

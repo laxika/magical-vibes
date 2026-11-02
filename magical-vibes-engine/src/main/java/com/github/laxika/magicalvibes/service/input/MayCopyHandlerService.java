@@ -795,7 +795,9 @@ public class MayCopyHandlerService {
         TriggeredAbility retainedTrigger = retainedEffectSlot != null ? null
                 : sourcePermanent.getCard().getTriggeredAbilities().stream()
                 .filter(candidate -> candidate.effects().stream()
-                        .anyMatch(registration -> registration.effect().equals(copyEffect)))
+                        .anyMatch(registration -> registration.effect().equals(copyEffect)
+                                || registration.effect() instanceof SpellCastTriggerEffect trigger
+                                && trigger.resolvedEffects().contains(copyEffect)))
                 .findFirst()
                 .orElse(null);
         CardEffect retainedAbility = retainedEffectSlot == null ? copyEffect

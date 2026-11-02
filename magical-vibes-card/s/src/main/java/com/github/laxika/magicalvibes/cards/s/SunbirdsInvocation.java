@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "XLN", collectorNumber = "165")
 @CardRegistration(set = "C21", collectorNumber = "180")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffe
 public class SunbirdsInvocation extends Card {
 
     public SunbirdsInvocation() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SunbirdsInvocationTriggerEffect());
+        addTrigger(Triggers.youCastSpell(), new SunbirdsInvocationTriggerEffect());
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CastingPlayerMayDrawCardEffec
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
 public class Minamo extends Card {
 
     public Minamo() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 new SpellCastTriggerEffect(null, List.of(new CastingPlayerMayDrawCardEffect())));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new EachPlayerMayReturnCardFromGraveyardToHandEffect(new CardColorPredicate(CardColor.BLUE)));

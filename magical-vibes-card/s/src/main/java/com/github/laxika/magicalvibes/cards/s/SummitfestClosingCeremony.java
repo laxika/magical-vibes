@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,8 +37,9 @@ public class SummitfestClosingCeremony extends Card {
                         new IntensifySourceCardEffect(1))
                 )
         );
-        addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, covercast);
-        addEffect(EffectSlot.HAND_ON_CONTROLLER_CASTS_SPELL, covercast);
+        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT, covercast);
+        addTrigger(new TriggerCondition(Triggers.youCastSpell(), AbilityZones.HAND), TriggerOptions.DEFAULT, covercast);
         addSpellEffect(new AwardManaEffect(ManaColor.BLUE, new SourceIntensity()));
         addSpellEffect(new AwardManaEffect(ManaColor.RED, new SourceIntensity()));
         addSpellEffect(new DrawCardEffect());

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +26,7 @@ public class AlistairTheBrigadier extends Card {
 
     public AlistairTheBrigadier() {
         // Whenever you cast a historic spell, create a 1/1 white Soldier creature token.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardIsHistoricPredicate(),
                 List.of(new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.SOLDIER), Set.of(), Set.of()))));

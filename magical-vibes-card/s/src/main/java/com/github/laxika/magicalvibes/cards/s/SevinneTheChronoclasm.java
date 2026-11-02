@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class SevinneTheChronoclasm extends Card {
 
     public SevinneTheChronoclasm() {
         addStaticEffect(new PreventAllDamageEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, CopyControllerCastSpellOnSpellCastEffect.firstFromZoneEachTurn(
+        addTrigger(Triggers.youCastSpell(), CopyControllerCastSpellOnSpellCastEffect.firstFromZoneEachTurn(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)

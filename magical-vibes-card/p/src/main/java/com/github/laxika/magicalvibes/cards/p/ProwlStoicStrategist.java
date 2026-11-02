@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,11 +40,11 @@ public class ProwlStoicStrategist extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new ExileTargetPermanentAndTrackWithSourceAndAllowPlayEffect());
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 new PlayedCardExiledWithSourceDrawAndTransformTriggerEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,
+        addTrigger(Triggers.youPlayLand(),
                 new PlayedCardExiledWithSourceDrawAndTransformTriggerEffect());
-        addEffect(EffectSlot.ON_OPPONENT_PLAYS_LAND,
+        addTrigger(Triggers.opponentPlaysLand(),
                 new PlayedCardExiledWithSourceDrawAndTransformTriggerEffect());
     }
 

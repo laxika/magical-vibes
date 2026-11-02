@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -40,14 +39,14 @@ public class RoccoStreetChef extends Card {
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                 foodToken());
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+        addTrigger(Triggers.playerCastsSpell(),
                 new SpellCastTriggerEffect(null, List.of(reward), TargetFilters.creature(),
                         new StackEntryCastFromZonePredicate(Zone.EXILE)));
 
         LandPlayFromExileTriggerEffect landTrigger = new LandPlayFromExileTriggerEffect(
                 List.of(reward), TargetFilters.creature());
-        addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, landTrigger);
-        addEffect(EffectSlot.ON_OPPONENT_PLAYS_LAND, landTrigger);
+        addTrigger(Triggers.youPlayLand(), landTrigger);
+        addTrigger(Triggers.opponentPlaysLand(), landTrigger);
     }
 
     private static CreateTokenEffect foodToken() {

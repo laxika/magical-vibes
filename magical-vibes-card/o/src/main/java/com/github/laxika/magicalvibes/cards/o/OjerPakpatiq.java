@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.t.TempleOfCyclicalTime;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
@@ -27,7 +26,7 @@ public class OjerPakpatiq extends Card {
         setBackFaceCard(new TempleOfCyclicalTime());
 
         // Whenever you cast an instant spell from your hand, it gains rebound.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardTypePredicate(CardType.INSTANT),
                 List.of(new GrantKeywordsToCastSpellEffect(Set.of(Keyword.REBOUND))),
                 null,

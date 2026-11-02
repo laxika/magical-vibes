@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -25,8 +24,8 @@ public class PlayFromOutsideHandTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = PlayFromOutsideHandTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PlayFromOutsideHandTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerCastsSpellFromOutsideHand(TriggerMatchContext match,
             PlayFromOutsideHandTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast spellCast = (TriggerContext.SpellCast) ctx;
@@ -36,8 +35,8 @@ public class PlayFromOutsideHandTriggerCollectorService {
         return enqueue(match, trigger);
     }
 
-    @CollectsTrigger(value = PlayFromOutsideHandTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = PlayFromOutsideHandTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleControllerPlaysLandFromOutsideHand(TriggerMatchContext match,
             PlayFromOutsideHandTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;

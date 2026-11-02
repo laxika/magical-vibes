@@ -9,7 +9,7 @@ import java.util.List;
  * {@code chosenSubtype} field, so it works with the {@link ChooseSubtypeOnEnterEffect}
  * replacement effect.
  * <p>
- * Place this on the {@code ON_CONTROLLER_CASTS_SPELL} slot.
+ * Place this on the {@code Triggers.youCastSpell()} ability.
  * <p>
  * When {@code creatureSpellOnly} is true the triggering spell must be a creature spell of the
  * chosen type (Vanquisher's Banner). When false any spell of the chosen type triggers, including

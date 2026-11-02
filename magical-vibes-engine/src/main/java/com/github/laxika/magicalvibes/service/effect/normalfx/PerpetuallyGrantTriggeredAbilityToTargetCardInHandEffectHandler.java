@@ -58,6 +58,6 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffectHandler
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualTargetCardChoice(
                 entry.getControllerId(), targetPlayerId, validIndices,
                 "Choose a nonland card to receive this ability.",
-                grant.slot(), grant.grantedEffects()));
+                grant.grantedAbilities()));
     }
 }

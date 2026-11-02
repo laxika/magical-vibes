@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class GeralfTheFleshwright extends Card {
 
     public GeralfTheFleshwright() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 SpellCastTriggerEffect.atLeastDuringYourTurn(2, null, List.of(
                         new CreateTokenEffect("Zombie Rogue", 2, 2, CardColor.BLUE,
                                 Set.of(CardColor.BLUE, CardColor.BLACK),

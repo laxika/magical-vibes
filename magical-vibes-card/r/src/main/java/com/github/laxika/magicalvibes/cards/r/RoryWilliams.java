@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
@@ -41,7 +40,7 @@ public class RoryWilliams extends Card {
                 MayChoicePlayer.TARGET_PLAYER
         ));
 
-        addEffect(EffectSlot.ON_SELF_CAST,
+        addTrigger(Triggers.youCastThisSpell(),
                 ExileTriggeringSpellWithSuspendCountersEffect.unlessCastFromExile(
                         3, CreateTokenEffect.ofClueToken(1)));
     }

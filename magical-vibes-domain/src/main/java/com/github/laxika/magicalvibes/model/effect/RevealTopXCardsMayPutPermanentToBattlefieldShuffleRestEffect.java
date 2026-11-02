@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>Used by Genesis Hydra ({@code CardAllOfPredicate(CardIsPermanentPredicate,
  * CardNotPredicate(CardTypePredicate(LAND)))}, {@code maxSelections = 1}) from its
- * {@code ON_SELF_CAST} slot.
+ * {@code Triggers.youCastThisSpell()} ability.
  *
  * @param eligiblePredicate which revealed cards may be chosen (mana value &le; X is checked on top)
  * @param maxSelections how many revealed cards may be put onto the battlefield

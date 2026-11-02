@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
@@ -11592,9 +11593,17 @@ public class GameData {
 
     /** Removes the perpetual grants of the card {@code cardId} in {@code slot} whose effect matches {@code filter}. */
     public void removePerpetualAbilitiesIf(UUID cardId, EffectSlot slot, Predicate<CardEffect> filter) {
+        removePerpetualAbilitiesIf(cardId, new LegacySlotTrigger(slot), filter);
+    }
+
+    /**
+     * Removes the perpetual grants of the card {@code cardId} that are triggered abilities with {@code trigger} and
+     * have an effect that matches {@code filter}.
+     */
+    public void removePerpetualAbilitiesIf(UUID cardId, Trigger trigger, Predicate<CardEffect> filter) {
         perpetualTriggeredAbilityGrants.computeIfPresent(cardId, (ignored, existing) -> {
             List<Ability> kept = existing.stream()
-                    .filter(ability -> LegacySlots.slotOf(ability) != slot
+                    .filter(ability -> !(ability instanceof TriggeredAbility triggered && triggered.hasTrigger(trigger))
                             || LegacySlots.effectsOf(ability).stream().noneMatch(filter))
                     .toList();
             return kept.isEmpty() ? null : kept;

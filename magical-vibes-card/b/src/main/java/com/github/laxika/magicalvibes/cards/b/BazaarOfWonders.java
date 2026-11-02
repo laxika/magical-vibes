@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -15,6 +14,6 @@ public class BazaarOfWonders extends Card {
     public BazaarOfWonders() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS));
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new CounterSpellIfNameFoundElsewhereEffect());
+        addTrigger(Triggers.playerCastsSpell(), new CounterSpellIfNameFoundElsewhereEffect());
     }
 }

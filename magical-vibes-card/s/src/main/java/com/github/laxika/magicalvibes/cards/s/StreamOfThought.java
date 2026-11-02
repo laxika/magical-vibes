@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleChosenCardsFromControl
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,6 +24,6 @@ public class StreamOfThought extends Card {
                 "Target must be a player"
         )).addSpellEffect(new MillEffect(4, MillRecipient.TARGET_PLAYER));
         addSpellEffect(new ShuffleChosenCardsFromControllerGraveyardIntoLibraryEffect(4));
-        addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}{U}{U}"));
+        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{2}{U}{U}"));
     }
 }

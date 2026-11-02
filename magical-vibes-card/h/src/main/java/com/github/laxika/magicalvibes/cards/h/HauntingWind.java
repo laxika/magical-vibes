@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringNonTapAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ATQ", collectorNumber = "17")
 public class HauntingWind extends Card {
@@ -24,7 +25,7 @@ public class HauntingWind extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsArtifactPredicate(),
                         new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)));
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY, artifactActivationTrigger);
-        addEffect(EffectSlot.ON_OPPONENT_ACTIVATES_ABILITY, artifactActivationTrigger);
+        addTrigger(Triggers.youActivateAbility(), artifactActivationTrigger);
+        addTrigger(Triggers.opponentActivatesAbility(), artifactActivationTrigger);
     }
 }

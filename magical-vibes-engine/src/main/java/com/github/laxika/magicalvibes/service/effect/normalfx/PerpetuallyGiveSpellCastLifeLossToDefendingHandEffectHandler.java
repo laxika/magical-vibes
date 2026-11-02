@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGiveSpellCastLifeLossToDefendingHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -56,7 +56,7 @@ public class PerpetuallyGiveSpellCastLifeLossToDefendingHandEffectHandler implem
             }
 
             Card modifiedCard = card.createRuntimeCopy();
-            modifiedCard.addEffect(EffectSlot.ON_SELF_CAST, new LoseLifeEffect(1));
+            modifiedCard.addTrigger(Triggers.youCastThisSpell(), new LoseLifeEffect(1));
             hand.set(i, modifiedCard);
         }
     }

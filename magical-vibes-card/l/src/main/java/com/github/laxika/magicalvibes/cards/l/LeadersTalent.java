@@ -59,7 +59,7 @@ public class LeadersTalent extends Card {
                                 new SourceClassLevelAtLeast(2),
                                 new GainLifeEffect(2))));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
                 null,
                 List.of(new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,

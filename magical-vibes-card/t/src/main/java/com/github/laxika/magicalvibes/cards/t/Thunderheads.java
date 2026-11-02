@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,6 +25,6 @@ public class Thunderheads extends Card {
                 CardType.CREATURE, 1, "Weird", 3, 3, CardColor.BLUE, null,
                 List.of(CardSubtype.WEIRD), Set.of(Keyword.DEFENDER, Keyword.FLYING), Set.of(),
                 false, false, List.of(), List.of(), false, true, false, 0, Set.of()));
-        addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}{U}"));
+        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{2}{U}"));
     }
 }

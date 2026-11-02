@@ -1701,7 +1701,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
-     *  ({@code EffectSlot.ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
+     *  ({@code ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
      *  flying until end of turn." The controller chooses the target when the discard trigger is
      *  serviced; mirrors {@link EntersTriggerTarget}'s any-permanent target flow. */
     record DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1934,7 +1934,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
     /** "When a creature is championed with this permanent, [targeted effect]." Chooses the target for a
-     *  {@code EffectSlot.ON_CHAMPIONED} triggered ability (e.g. Mistbind Clique — tap all lands target
+     *  {@code ON_CHAMPIONED} triggered ability (e.g. Mistbind Clique — tap all lands target
      *  player controls). Fired mid-resolution when the Faerie is championed. */
     record ChampionedTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
@@ -2620,12 +2620,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /**
      * Multi-target trigger for creatures with multiple target groups or groups with
-     * {@code maxTargets > 1} (e.g. Burning Sun's Avatar ETB; Elder Deep-Fiend ON_SELF_CAST
+     * {@code maxTargets > 1} (e.g. Burning Sun's Avatar ETB; Elder Deep-Fiend Triggers.youCastThisSpell()
      * "tap up to four target permanents"). Targets are chosen slot-by-slot at trigger time:
      * each group can accept up to {@code maxTargets} targets before advancing. Chosen targets
      * accumulate in {@code chosenTargetsSoFar}. A response equal to {@code controllerId}
      * signals "done with this group" — only valid once the group's minimum has been met.
-     * {@code sourcePermanentId} is null for cast-time (ON_SELF_CAST) triggers.
+     * {@code sourcePermanentId} is null for cast-time (Triggers.youCastThisSpell()) triggers.
      */
     /**
      * Slot-by-slot target walk shared by ETB / self-cast / attack / beginning-of-combat triggers.
@@ -3098,7 +3098,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  an opponent controls gets -2/-2 until end of turn."). */
     record ExploreTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    /** Clash trigger ({@code EffectSlot.ON_CONTROLLER_CLASHES}) that needs to target a creature an
+    /** Clash trigger ({@code ON_CONTROLLER_CLASHES}) that needs to target a creature an
      *  opponent controls (e.g. Entangling Trap: "Whenever you clash, tap target creature an opponent
      *  controls. If you won, ..."). The {@code effects} have already been resolved for the clash
      *  outcome (win-conditional effects included only on a won clash). */

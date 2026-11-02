@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOC", collectorNumber = "200")
 @CardRegistration(set = "M3C", collectorNumber = "192")
@@ -16,7 +16,7 @@ public class ReplicationTechnique extends Card {
     public ReplicationTechnique() {
         target(TargetFilters.permanentYouControl())
                 .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect());
-        addEffect(EffectSlot.ON_SELF_CAST,
+        addTrigger(Triggers.youCastThisSpell(),
                 new MayEffect(new DemonstrateEffect(), "Copy Replication Technique?"));
     }
 }

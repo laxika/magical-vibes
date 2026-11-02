@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "70")
 @CardRegistration(set = "SLD", collectorNumber = "1180")
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlaye
 public class MindsDilation extends Card {
 
     public MindsDilation() {
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
+        addTrigger(Triggers.opponentCastsSpell(),
                 new ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect());
     }
 }

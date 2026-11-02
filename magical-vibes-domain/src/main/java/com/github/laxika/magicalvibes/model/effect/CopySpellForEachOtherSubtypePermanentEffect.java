@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import java.util.UUID;
 
 /**
- * Trigger descriptor for {@code ON_ANY_PLAYER_CASTS_SPELL}: whenever a player casts an
+ * Trigger descriptor for {@code Triggers.playerCastsSpell()}: whenever a player casts an
  * instant or sorcery spell that targets only a single permanent with the given subtype,
  * that player copies the spell for each other permanent with that subtype the spell could
  * target. Each copy targets a different one of those permanents.

@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ public class TrailtrackerScout extends Card {
 
     public TrailtrackerScout() {
         addActivatedAbility(ManaAbilities.tapForAnyColor());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.wheneverYouExpend(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.wheneverYouExpend(
                 8,
                 List.of(ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(
                         new CardIsPermanentPredicate(), 1))));

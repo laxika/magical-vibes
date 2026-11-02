@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH1", collectorNumber = "150")
 @CardRegistration(set = "WHO", collectorNumber = "818")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 public class ThroesOfChaos extends Card {
 
     public ThroesOfChaos() {
-        addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
         addCastingOption(new Retrace());
     }
 }

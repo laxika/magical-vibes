@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -21,7 +20,7 @@ public class SmaugWickedWorm extends Card {
     public SmaugWickedWorm() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.OPPONENTS), true));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.usingTreasureMana(
+        addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.usingTreasureMana(
                 List.of(new DrawCardEffect(), new LoseLifeEffect(1))));
     }
 }

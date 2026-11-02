@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -27,7 +26,7 @@ public class ErthaJoFrontierMentor extends Card {
 
     public ErthaJoFrontierMentor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), mercenaryToken());
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
+        addTrigger(Triggers.youActivateNonManaAbility(),
                 new CopyControllerActivatedAbilityTriggerEffect(
                         null,
                         null,

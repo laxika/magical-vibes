@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LEG", collectorNumber = "107")
 public class Imprison extends Card {
@@ -30,8 +31,8 @@ public class Imprison extends Card {
                                 new CounterSpellEffect(),
                                 "Pay {1} to counter that ability?",
                                 new DestroyReferencedPermanentEffect(PermanentReference.SOURCE))));
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY, activationTrigger);
-        addEffect(EffectSlot.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY, activationTrigger);
+        addTrigger(Triggers.youActivateNonManaAbility(), activationTrigger);
+        addTrigger(Triggers.opponentActivatesNonManaAbility(), activationTrigger);
 
         CardEffect combatTrigger = new MayPayManaEffect(
                 "{1}",

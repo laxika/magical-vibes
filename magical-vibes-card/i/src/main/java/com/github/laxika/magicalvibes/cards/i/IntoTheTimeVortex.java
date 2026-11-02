@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "88")
 @CardRegistration(set = "WHO", collectorNumber = "693")
@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 public class IntoTheTimeVortex extends Card {
 
     public IntoTheTimeVortex() {
-        addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
+        addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
     }
 }

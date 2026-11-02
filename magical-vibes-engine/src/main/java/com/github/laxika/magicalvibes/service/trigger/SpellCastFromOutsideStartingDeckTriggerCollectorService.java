@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,8 +19,8 @@ public class SpellCastFromOutsideStartingDeckTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = SpellCastFromOutsideStartingDeckTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = SpellCastFromOutsideStartingDeckTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handle(TriggerMatchContext match,
             SpellCastFromOutsideStartingDeckTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast spellCast = (TriggerContext.SpellCast) ctx;

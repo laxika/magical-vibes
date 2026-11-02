@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,6 +26,6 @@ public class WretchedGryff extends Card {
         ), true));
 
         // When you cast this spell, draw a card.
-        addEffect(EffectSlot.ON_SELF_CAST, new DrawCardEffect(1));
+        addTrigger(Triggers.youCastThisSpell(), new DrawCardEffect(1));
     }
 }

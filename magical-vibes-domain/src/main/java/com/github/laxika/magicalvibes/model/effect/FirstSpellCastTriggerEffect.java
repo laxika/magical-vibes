@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Trigger descriptor for "whenever a player casts their first spell each turn".
  * The trigger is evaluated independently for each casting player and is intended for the
- * {@code ON_ANY_PLAYER_CASTS_SPELL} slot.
+ * {@code Triggers.playerCastsSpell()} ability.
  *
  * @param resolvedEffects effects to put on the stack when the trigger fires
  */

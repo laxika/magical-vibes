@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -17,7 +17,7 @@ public class AshnodTheUncaring extends Card {
         // Whenever you activate an ability of an artifact or creature that isn't a mana ability,
         // if one or more permanents were sacrificed to activate it, you may copy that ability.
         // You may choose new targets for the copy.
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
+        addTrigger(Triggers.youActivateNonManaAbility(),
                 CopyControllerActivatedAbilityTriggerEffect.whenPermanentWasSacrificed(
                         new StackEntryCardTypeInPredicate(Set.of(CardType.ARTIFACT, CardType.CREATURE))));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -2041,7 +2042,7 @@ public class TriggeredAbilityQueueService {
                     + (power.value() >= 0 ? "+" : "") + power.value() + "/"
                     + (toughness.value() >= 0 ? "+" : "") + toughness.value();
         }
-        for (CardEffect effect : entry.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
+        for (CardEffect effect : entry.getCard().getTriggerEffects(Triggers.youCastSpell(), Zone.BATTLEFIELD)) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect trigger
                     && trigger.resolvedEffects().equals(entry.getEffectsToResolve())
                     && trigger.spellFilter() instanceof com.github.laxika.magicalvibes.model.filter.CardColorPredicate color) {

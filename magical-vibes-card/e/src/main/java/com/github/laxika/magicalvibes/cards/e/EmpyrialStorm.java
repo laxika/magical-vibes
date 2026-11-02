@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForEachCommanderCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +18,7 @@ public class EmpyrialStorm extends Card {
     public EmpyrialStorm() {
         // When you cast this spell, copy it for each time you've cast your commander from the
         // command zone this game.
-        addEffect(EffectSlot.ON_SELF_CAST, new CopyThisSpellForEachCommanderCastEffect(false));
+        addTrigger(Triggers.youCastThisSpell(), new CopyThisSpellForEachCommanderCastEffect(false));
 
         // Create a 4/4 white Angel creature token with flying.
         addSpellEffect(new CreateTokenEffect(

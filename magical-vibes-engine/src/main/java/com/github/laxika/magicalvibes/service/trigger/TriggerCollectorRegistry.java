@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Registry that maps (EffectSlot or {@link ZoneChangeWatch}, CardEffect class) pairs to trigger collector handlers.
+ * Registry that maps (EffectSlot, {@link ZoneChangeWatch} or {@link SpellAbilityWatch}, CardEffect class) pairs to trigger collector handlers.
  * <p>
  * Discovered automatically at startup by {@link com.github.laxika.magicalvibes.service.GameEngineConfig}.
  */
@@ -126,6 +126,17 @@ public class TriggerCollectorRegistry {
             if (watchContainer != null) {
                 for (CollectsWatchTrigger cwt : watchContainer.value()) {
                     registerMethod(bean, method, cwt.watch(), cwt.value(), registry);
+                }
+            }
+
+            CollectsSpellAbilityTrigger singleSpell = method.getAnnotation(CollectsSpellAbilityTrigger.class);
+            if (singleSpell != null) {
+                registerMethod(bean, method, singleSpell.watch(), singleSpell.value(), registry);
+            }
+            CollectsSpellAbilityTriggers spellContainer = method.getAnnotation(CollectsSpellAbilityTriggers.class);
+            if (spellContainer != null) {
+                for (CollectsSpellAbilityTrigger cst : spellContainer.value()) {
+                    registerMethod(bean, method, cst.watch(), cst.value(), registry);
                 }
             }
 

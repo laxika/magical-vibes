@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
@@ -35,7 +34,7 @@ public class MirrodinBesieged extends Card {
     public MirrodinBesieged() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(MIRRAN, PHYREXIAN)));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ConditionalEffect(
+        addTrigger(Triggers.youCastSpell(), new ConditionalEffect(
                 new SourceHasChosenMode(MIRRAN),
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.ARTIFACT),

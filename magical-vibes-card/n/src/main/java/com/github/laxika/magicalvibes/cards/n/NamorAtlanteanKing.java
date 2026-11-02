@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMor
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSameTargetAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class NamorAtlanteanKing extends Card {
 
     public NamorAtlanteanKing() {
         // Whenever you cast a noncreature spell, create a 1/1 blue Merfolk creature token.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.MERFOLK), Set.of(), Set.of()))

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,14 +20,14 @@ import java.util.List;
 public class AntManReformedRogue extends Card {
 
     public AntManReformedRogue() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardColorPredicate(CardColor.GREEN),
                 List.of(
                         new BoostSelfEffect(1, 0),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
                 )
         ));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardColorPredicate(CardColor.BLUE),
                 List.of(
                         new BoostSelfEffect(-1, 0),

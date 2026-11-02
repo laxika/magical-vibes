@@ -147,14 +147,14 @@ class GameDataDeepCopyTest {
     @DisplayName("Deep copy keeps perpetual ability grants, and the copy's grants stay its own")
     void deepCopyPreservesPerpetualGrantsIndependently() {
         Card card = new GrizzlyBears();
-        gd.grantPerpetualAbility(card.getId(), EffectSlot.ON_SELF_CAST, new DrawCardEffect(1));
+        gd.grantPerpetualAbility(card.getId(), EffectSlot.ON_SELF_BECOMES_UNTAPPED, new DrawCardEffect(1));
 
         GameData copy = gd.simulationCopy();
-        copy.grantPerpetualAbility(card.getId(), EffectSlot.ON_SELF_CAST, new DrawCardEffect(2));
+        copy.grantPerpetualAbility(card.getId(), EffectSlot.ON_SELF_BECOMES_UNTAPPED, new DrawCardEffect(2));
 
-        assertThat(copy.perpetualAbilityEffects(card.getId(), EffectSlot.ON_SELF_CAST))
+        assertThat(copy.perpetualAbilityEffects(card.getId(), EffectSlot.ON_SELF_BECOMES_UNTAPPED))
                 .containsExactly(new DrawCardEffect(1), new DrawCardEffect(2));
-        assertThat(gd.perpetualAbilityEffects(card.getId(), EffectSlot.ON_SELF_CAST))
+        assertThat(gd.perpetualAbilityEffects(card.getId(), EffectSlot.ON_SELF_BECOMES_UNTAPPED))
                 .containsExactly(new DrawCardEffect(1));
     }
 

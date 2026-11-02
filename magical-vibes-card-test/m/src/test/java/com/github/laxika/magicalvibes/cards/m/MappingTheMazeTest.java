@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.l.LightningHelix;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -34,7 +36,7 @@ class MappingTheMazeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.perpetualManaCostIncreases).containsKey(chosen.getId());
-        assertThat(gd.perpetualAbilityEffects(chosen.getId(), com.github.laxika.magicalvibes.model.EffectSlot.ON_SELF_CAST)).isNotEmpty();
+        assertThat(gd.perpetualTriggerEffects(chosen.getId(), Triggers.youCastThisSpell(), Zone.STACK)).isNotEmpty();
         harness.assertInHand(player1, "Lightning Helix");
         harness.assertNotInGraveyard(player1, "Lightning Helix");
     }

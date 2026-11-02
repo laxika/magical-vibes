@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -47,7 +47,7 @@ public class VileRedeemer extends Card {
             Set.of());
 
     public VileRedeemer() {
-        addEffect(EffectSlot.ON_SELF_CAST, new MayPayManaEffect(
+        addTrigger(Triggers.youCastThisSpell(), new MayPayManaEffect(
                 "{C}",
                 SCION_TOKEN,
                 "Pay {C} to create an Eldrazi Scion token for each nontoken creature that died under your control this turn?"));

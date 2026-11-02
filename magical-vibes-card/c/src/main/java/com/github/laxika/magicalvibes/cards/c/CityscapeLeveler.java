@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BRO", collectorNumber = "233")
 @CardRegistration(set = "TLE", collectorNumber = "53")
@@ -14,7 +15,7 @@ public class CityscapeLeveler extends Card {
 
     public CityscapeLeveler() {
         target(TargetFilters.nonlandPermanent(), 0, 1)
-                .addEffect(EffectSlot.ON_SELF_CAST, new DestroyTargetPermanentEffect(false,
+                .addTrigger(Triggers.youCastThisSpell(), new DestroyTargetPermanentEffect(false,
                         CreateTokenEffect.ofPowerstoneToken(new Fixed(1))))
                 .addEffect(EffectSlot.ON_ATTACK, new DestroyTargetPermanentEffect(false,
                         CreateTokenEffect.ofPowerstoneToken(new Fixed(1))));

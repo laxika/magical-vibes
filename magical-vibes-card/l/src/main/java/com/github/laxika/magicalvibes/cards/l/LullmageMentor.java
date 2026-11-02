@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +19,7 @@ import java.util.Set;
 public class LullmageMentor extends Card {
 
     public LullmageMentor() {
-        addEffect(EffectSlot.ON_CONTROLLER_COUNTERS_SPELL, new MayEffect(
+        addTrigger(Triggers.youCounterSpell(), new MayEffect(
                 new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.MERFOLK), Set.of(), Set.of()),
                 "Create a 1/1 blue Merfolk creature token?"));

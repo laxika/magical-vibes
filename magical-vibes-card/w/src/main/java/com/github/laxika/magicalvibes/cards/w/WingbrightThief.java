@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -28,7 +27,7 @@ public class WingbrightThief extends Card {
                 "Target must be an opponent."
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect(
-                        EffectSlot.ON_SELF_CAST,
+                        Triggers.youCastThisSpell(),
                         List.of(
                                 new EachOpponentDrawsCardEffect(1),
                                 new GainLifeEffect(new Fixed(3), GainLifeRecipient.OPPONENT)),

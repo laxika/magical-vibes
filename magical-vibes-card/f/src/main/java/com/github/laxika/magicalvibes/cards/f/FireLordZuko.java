@@ -27,7 +27,7 @@ public class FireLordZuko extends Card {
         PutCounterOnEachControlledPermanentEffect counterEffect =
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(null, List.of(counterEffect),
                         new StackEntryCastFromZonePredicate(Zone.EXILE)));
         addTrigger(Triggers.entersFrom(Zone.EXILE, null, ObjectRelation.YOU_CONTROL), counterEffect);

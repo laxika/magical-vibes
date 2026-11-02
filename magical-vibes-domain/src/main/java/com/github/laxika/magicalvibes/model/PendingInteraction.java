@@ -4331,12 +4331,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** Chooses a card in a revealed target hand to receive a perpetual triggered ability. */
     record PerpetualTargetCardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                      java.util.List<Integer> validIndices, String prompt,
-                                     EffectSlot slot, java.util.List<CardEffect> grantedEffects)
+                                     java.util.List<Ability> grantedAbilities)
             implements PendingInteraction {
 
         public PerpetualTargetCardChoice {
             validIndices = java.util.List.copyOf(validIndices);
-            grantedEffects = java.util.List.copyOf(grantedEffects);
+            grantedAbilities = java.util.List.copyOf(grantedAbilities);
         }
 
         @Override

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class MuddleTheEverChanging extends Card {
                 nonlegendaryCreatureYouControl,
                 "Target must be a nonlegendary creature you control");
 
-        target(targetFilter, 0, 1).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+        target(targetFilter, 0, 1).addTrigger(Triggers.youCastSpell(),
                 new SpellCastTriggerEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),

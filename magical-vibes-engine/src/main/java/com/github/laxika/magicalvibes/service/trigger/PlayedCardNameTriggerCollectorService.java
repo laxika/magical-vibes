@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,11 +56,11 @@ public class PlayedCardNameTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL),
-            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-                    slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL),
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     })
     private boolean handleControllerCastsExiledCard(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
@@ -71,11 +70,11 @@ public class PlayedCardNameTriggerCollectorService {
                 sc.spellCard(), trigger.followUpEffect());
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
-            @CollectsTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
-                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithSourceTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     })
     private boolean handleControllerPlaysExiledCardLand(TriggerMatchContext match,
             PlayedCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
@@ -85,9 +84,9 @@ public class PlayedCardNameTriggerCollectorService {
                 lp.landCard(), trigger.followUpEffect());
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = PlayedCardExiledWithPlanarSourceTriggerEffect.class,
-                    slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithPlanarSourceTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     })
     private boolean handleControllerCastsCardExiledWithPlanarSource(
             TriggerMatchContext match, PlayedCardExiledWithPlanarSourceTriggerEffect trigger,
@@ -99,9 +98,9 @@ public class PlayedCardNameTriggerCollectorService {
                 && enqueuePlanarFollowUp(match, sc.castingPlayerId(), sc.spellCard(), trigger.followUpEffect());
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = PlayedCardExiledWithPlanarSourceTriggerEffect.class,
-                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithPlanarSourceTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     })
     private boolean handleControllerPlaysCardExiledWithPlanarSource(
             TriggerMatchContext match, PlayedCardExiledWithPlanarSourceTriggerEffect trigger,
@@ -113,8 +112,8 @@ public class PlayedCardNameTriggerCollectorService {
                 && enqueuePlanarFollowUp(match, lp.playingPlayerId(), lp.landCard(), trigger.followUpEffect());
     }
 
-    @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
     private boolean handleAnyPlayerCastsExiledCard(TriggerMatchContext match,
             PlayedCardExiledWithSourceDrawAndTransformTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
@@ -122,11 +121,11 @@ public class PlayedCardNameTriggerCollectorService {
                 && collectDrawAndTransform(match, sc.exiledSourcePermanentId(), sc.spellCard());
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
-                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
-            @CollectsTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
-                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsSpellAbilityTrigger(value = PlayedCardExiledWithSourceDrawAndTransformTriggerEffect.class,
+                    watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     })
     private boolean handlePlayerPlaysExiledCardLand(TriggerMatchContext match,
             PlayedCardExiledWithSourceDrawAndTransformTriggerEffect trigger, TriggerContext ctx) {
@@ -135,24 +134,24 @@ public class PlayedCardNameTriggerCollectorService {
                 && collectDrawAndTransform(match, lp.exiledSourcePermanentId(), lp.landCard());
     }
 
-    @CollectsTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsSpellAbilityTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerCastsSpell(TriggerMatchContext match,
             PlayedCardNameMatchesCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return collect(match, sc.spellCard());
     }
 
-    @CollectsTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = PlayedCardNameMatchesCardExiledWithSourceTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleControllerPlaysLand(TriggerMatchContext match,
             PlayedCardNameMatchesCardExiledWithSourceTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
         return collect(match, lp.landCard());
     }
 
-    @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = LandPlayFromExileTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleControllerPlaysLandFromExile(TriggerMatchContext match,
             LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
@@ -162,8 +161,8 @@ public class PlayedCardNameTriggerCollectorService {
         return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId(), lp.landCard().getId());
     }
 
-    @CollectsTrigger(value = LandPlayFromExileTriggerEffect.class,
-            slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = LandPlayFromExileTriggerEffect.class,
+            watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandFromExile(TriggerMatchContext match,
             LandPlayFromExileTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
@@ -173,7 +172,7 @@ public class PlayedCardNameTriggerCollectorService {
         return enqueueLandPlayTrigger(match, trigger, lp.playingPlayerId());
     }
 
-    @CollectsTrigger(value = DrawCardForTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = DrawCardForTargetPlayerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDraws(TriggerMatchContext match,
             DrawCardForTargetPlayerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
@@ -194,11 +193,11 @@ public class PlayedCardNameTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-                    slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND),
-            @CollectsTrigger(value = TriggeringCardConditionalEffect.class,
-                    slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    @CollectsSpellAbilityTriggers({
+            @CollectsSpellAbilityTrigger(value = TriggeringCardConditionalEffect.class,
+                    watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND),
+            @CollectsSpellAbilityTrigger(value = TriggeringCardConditionalEffect.class,
+                    watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     })
     private boolean handleConditionalLandPlay(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
@@ -221,8 +220,8 @@ public class PlayedCardNameTriggerCollectorService {
                 landPlayed.landCard().getId());
     }
 
-    @CollectsTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
+            watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     private boolean handleFoodWhenPlayingLandFromLibraryTop(TriggerMatchContext match,
             CreateFoodWhenPlayingCardFromTopOfLibraryEffect trigger, TriggerContext ctx) {
         TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;
@@ -248,12 +247,12 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     /**
-     * Default for {@link EffectSlot#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
+     * Default for {@link SpellAbilityWatch#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
      * (e.g. Juju Bubble's {@code SacrificeSelfEffect}). Name-match triggers above take precedence
      * via exact-class registration.
      */
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_ANOTHER_LAND)
+    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_ANOTHER_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (effect instanceof TriggeringCardConditionalEffect) {
@@ -263,10 +262,10 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     /**
-     * Default for {@link EffectSlot#ON_OPPONENT_PLAYS_LAND}: put bare effects on the stack
+     * Default for {@link SpellAbilityWatch#ON_OPPONENT_PLAYS_LAND}: put bare effects on the stack
      * (e.g. Dirtcowl Wurm's {@code PutCountersOnSourceEffect}).
      */
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_PLAYS_LAND)
+    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (effect instanceof TriggeringCardConditionalEffect) {

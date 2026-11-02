@@ -56,7 +56,7 @@ public class TChallaTheBlackPanther extends Card {
     public TChallaTheBlackPanther() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), VIBRANIUM_TOKEN);
         addEffect(EffectSlot.ON_ATTACK, VIBRANIUM_TOKEN);
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+        addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardMinManaValuePredicate(4, true)

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -13,12 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OGW", collectorNumber = "96")
 public class EldraziObligator extends Card {
 
     public EldraziObligator() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_CAST, new MayPayManaEffect(
+        target(TargetFilters.creature()).addTrigger(Triggers.youCastThisSpell(), new MayPayManaEffect(
                 "{1}{C}",
                 SequenceEffect.of(
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),

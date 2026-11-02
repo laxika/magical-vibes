@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -27,6 +28,6 @@ public class PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffectHandler
         }
 
         gameData.perpetualAnyColorManaForCastCardIds.add(cardId);
-        gameData.grantPerpetualAbilityOnce(cardId, EffectSlot.ON_SELF_CAST, grant.selfCastAbility());
+        gameData.grantPerpetualAbilityOnce(cardId, new TriggeredAbility(Triggers.youCastThisSpell(), grant.selfCastAbility()));
     }
 }

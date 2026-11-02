@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class UlamogTheInfiniteGyre extends Card {
 
     public UlamogTheInfiniteGyre() {
-        target(TargetFilters.permanent()).addEffect(EffectSlot.ON_SELF_CAST,
+        target(TargetFilters.permanent()).addTrigger(Triggers.youCastThisSpell(),
                 new DestroyTargetPermanentEffect());
 
         addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(

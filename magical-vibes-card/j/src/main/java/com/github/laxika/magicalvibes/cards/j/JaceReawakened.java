@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -49,8 +50,8 @@ public class JaceReawakened extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                        EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                        new CopyControllerCastSpellOnSpellCastEffect(new CardTruePredicate(), null, null))),
+                        new TriggeredAbility(Triggers.youCastSpell(),
+                        new CopyControllerCastSpellOnSpellCastEffect(new CardTruePredicate(), null, null)))),
                 "-6: Until end of turn, whenever you cast a spell, copy it. You may choose new targets for the copy."
         ));
     }

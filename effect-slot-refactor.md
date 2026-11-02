@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (run 1: family 1 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 and 2: families 1 and 2 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3146,7 +3146,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 
 ### Step 13
 
-Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1.
+Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2.
 
 #### Run 1: steps and phases
 
@@ -3303,6 +3303,95 @@ Runs: the ten classes (with `--rerun`), and every card test of a card with anoth
 seek, ante, cascade, discover or a changed handler, or using one (1,614 classes, 14,034 tests): all passing.
 Application: `TriggerPipelineTest`, `RulesEventLogTest`, `ZoneChangeRulesEventTest`, `GameDataExileTrackingTest`,
 `LegacyTriggerBindingsTest`: passing; `SimulationCopyCompletenessTest` fails as at HEAD.
+
+#### Run 2: spells and abilities
+
+The 24 spell, land-play and activation constants are gone: `ON_ANY_PLAYER_CASTS_SPELL`, `ON_CONTROLLER_CASTS_SPELL`,
+`ON_OPPONENT_CASTS_SPELL` and their graveyard, hand, exile and command-zone forms; `ON_SELF_CAST`; the two copy, two
+counter and `ON_SELF_SPELL_COUNTERED_OR_FIZZLED` slots; the three land-play slots; the six activation slots and the
+graveyard exhaust form; `ON_SELF_MANA_ABILITY_RESOLVES`. Family 3 (combat) is next; families 3 to 11 are left.
+
+**Authoring.**
+
+- `model.trigger.SpellTrigger(SpellEvent event, PlayerRelation player)`: a spell is cast (**CR 601.2i**, checked),
+  copied (**CR 707.10**, checked) or countered (**CR 701.6a**, checked). `SpellEvent` is `CAST`, `CAST_THIS`, `COPIED`,
+  `COUNTERS` ("you counter a spell"), `COUNTERED` ("a spell you control is countered") and `THIS_COUNTERED_OR_FIZZLES`.
+  The two "this spell" events function from the stack by default.
+- `model.trigger.LandPlayTrigger(ObjectRelation relation)`: a land is played, a special action (**CR 116.2a**,
+  checked). `YOU_CONTROL` includes the source, `ANOTHER_YOU_CONTROL` doesn't, `OPPONENT_CONTROLS`.
+- `model.trigger.AbilityTrigger(AbilityEvent event, PlayerRelation player)`: `ACTIVATED` (mana abilities included),
+  `NONMANA_ACTIVATED`, `EXHAUST_ACTIVATED`, `ETERNALIZE_OR_EMBALM_ACTIVATED`, `THIS_MANA_ABILITY_RESOLVES`.
+- Named factories, so card classes import no relation enum (`trigger.PlayerRelation` clashes with
+  `filter.PlayerRelation`, as run 1 found): `Triggers.youCastSpell()`, `opponentCastsSpell()`, `playerCastsSpell()`,
+  `youCastThisSpell()`, `youCopySpell()`, `opponentCopiesSpell()`, `youCounterSpell()`, `yourSpellCountered()`,
+  `thisSpellCounteredOrFizzles()`, `youPlayLand()`, `youPlayAnotherLand()`, `opponentPlaysLand()`, `youActivateAbility()`,
+  `opponentActivatesAbility()`, `youActivateNonManaAbility()`, `opponentActivatesNonManaAbility()`,
+  `youActivateExhaustAbility()`, `youActivateEternalizeOrEmbalm()`, `thisManaAbilityResolves()`. Another zone is the
+  condition's, as in run 1.
+- The spell filter and the "first / Nth spell", kicked, mana-spent and triggering-permanent conditions stay in the
+  effects (`SpellCastTriggerEffect`, `NthSpellCastTriggerEffect`, `FirstSpellCastTriggerEffect`, the `Triggering…`
+  wrappers, …) for step 14.
+- Grants that took a slot take the ability or the trigger: `RemovePerpetualTriggeredAbilityEffect` holds a `Trigger`
+  (a `LegacySlotTrigger` for a slot, Pass the Torch); the four perpetual hand grants have a `(Trigger, effects, filter)`
+  constructor, and their handlers and `PendingInteraction`s grant the abilities (`PerpetualTargetCardChoice` carries
+  `List<Ability>`, and the random grant joins several effects into one ability); `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect`
+  keeps a `retainedTrigger` (Hulkling); Artisan of Forms uses `BecomeCopyOfTargetCreatureEffect.retainingItsAbility()`,
+  which now also finds the copy effect inside a `SpellCastTriggerEffect`. `GameData.removePerpetualAbilitiesIf` and
+  `Permanent.removePersistentTriggeredEffectsIf` take a `Trigger`; `RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffectHandler`
+  keeps the granted ability, as the end-of-turn one has since step 11.
+
+**No rules event, no index.** As in run 1, the old collectors still run at their choke points
+(`checkSpellCastTriggers`, `checkSpellCopyTriggers`, the counter, land-play, activation and mana-resolution checks).
+`service/trigger/SpellAbilityWatch` has one constant per old slot, naming its trigger and the zone the collector reads
+(`effectsOf`, `registrationsOf`); `TriggerCollectionService.dispatchWatch` is `dispatchSlot` for a watch (printed
+abilities by trigger and zone, granted ones through the new static-bonus form of
+`GrantedTriggeredAbilitySupport.grantedTriggerEffects`). The 134 handler registrations moved from `@CollectsTrigger(slot = …)` to the
+new `@CollectsSpellAbilityTrigger(watch = …)` (`scripts/step13-spell-rekey.py`); `TriggerCollectorRegistry` and
+`GameEngineConfig` scan it. Temporary global abilities are matched with `ability().hasTrigger(…)`. Grouping, target
+routing, wrapper checks and ability-loss checks are unchanged, so the step makes no rules change. Shadow mode was not run,
+for run 1's reason: the same collector bodies put the same abilities on the stack, and the card tests check the
+choice of abilities.
+
+**Cards.** `scripts/step13-spell-triggers.py` (run 1's script with this family's `SLOTS`, the registration and grant
+heads and the perpetual readers) converted 1,526 card classes and 2 card tests, one ability per registration in the
+old order (4 `ON_SELF_CAST` registrations keep `INDEPENDENT`). `MANUAL`: Artisan of Forms. The engine's other readers
+and writers (the cascade predicate, `EffectResolution`'s mana-spent scan, the trigger-order label, Gale's
+specialization, the perpetual "when you cast this spell" grants, the subtype-choice activation copy) read or add the
+trigger. `LegacySlotTrigger` no longer knows a `HAND_` prefix (no slot has one). `scripts/step13-spell-docs.py` rewrote
+agent-docs (583 lines; "slot" after a converted trigger reads "ability"); the implement-card and review-card skills and
+`ARCHITECTURE.md` were written by hand.
+
+**For later runs.**
+
+- Step 14: the cast collectors still read `SpellCastTriggerEffect`'s filter and the `First…` / `Nth…` /
+  `Kicked…SpellCastTriggerEffect` conditions, and the activation collectors the `Triggering…AbilityConditionalEffect`
+  wrappers; those become trigger filters and options there.
+- Schemes and planes still author these abilities with the battlefield default and are read as before (run 1's note).
+- `grantedTriggerEffects` returns every effect of a granted ability, where the slot form returned the first; no grant
+  of this family has more than one.
+
+**Tests changed.**
+
+- New `SpellAbilityTriggerTest` (`model/trigger/`): default zones (stack for "this spell"), the factories' events and
+  players, land-play relations, null rejection, a card's cast abilities read by zone, and removing a perpetual
+  "when you cast this spell" ability by its trigger.
+- `SpellCastTriggerCollectorServiceTest` and `TriggerCollectorRegistryTest` dispatch to the watches instead of the slots.
+- `GrantedAbilitiesTest`: the perpetual grants and the hand grant use `Triggers.youCastThisSpell()`.
+- `TriggeredAbilityTest`, `LegacySlotTriggerTest` and `GameDataDeepCopyTest` used deleted slots as arbitrary legacy
+  slots: they use `GRAVEYARD_ON_CONTROLLER_SURVEILS`, `EXILE_ON_ALLY_CREATURES_ATTACK` and `ON_SELF_BECOMES_UNTAPPED`;
+  `LegacySlotTriggerTest`'s `HAND_` row is gone.
+- By script: `MappingTheMazeTest` and `LurkingSpinecrawlerTest` read `perpetualTriggerEffects`.
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that constructs one (2,346 classes, 20,508 tests):
+  all passing.
+- Application: the trigger-model, registry, collector, pipeline, planar, freeze, architecture, simulation-copy and setup
+  classes (531 tests): 9 failures, the same tests that fail at HEAD (`4fae14813d`, run in a worktree):
+  `SpellCastTriggerCollectorServiceTest` (4, mock wiring), `PlanechaseServiceTest` (2), and the known ones in
+  `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 13 run 1.
+- The full suite was not run here.
 
 ## Prompt
 

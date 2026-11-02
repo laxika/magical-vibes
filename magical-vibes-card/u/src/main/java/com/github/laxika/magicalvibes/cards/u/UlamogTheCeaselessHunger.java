@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfDefendingPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BFZ", collectorNumber = "15")
 @CardRegistration(set = "SLD", collectorNumber = "1122")
@@ -17,7 +18,7 @@ public class UlamogTheCeaselessHunger extends Card {
 
     public UlamogTheCeaselessHunger() {
         target(TargetFilters.permanent(), 2, 2)
-                .addEffect(EffectSlot.ON_SELF_CAST, new ExileTargetPermanentEffect());
+                .addTrigger(Triggers.youCastThisSpell(), new ExileTargetPermanentEffect());
         addEffect(EffectSlot.ON_ATTACK, new ExileTopCardsOfDefendingPlayerLibraryEffect(20));
     }
 }

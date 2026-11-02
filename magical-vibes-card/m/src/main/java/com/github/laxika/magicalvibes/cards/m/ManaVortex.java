@@ -19,7 +19,7 @@ import java.util.List;
 public class ManaVortex extends Card {
 
     public ManaVortex() {
-        addEffect(EffectSlot.ON_SELF_CAST,
+        addTrigger(Triggers.youCastThisSpell(),
                 new CounterUnlessSacrificesEffect(new PermanentIsLandPredicate(), "land"));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new SacrificePermanentsEffect(
                 1, new PermanentIsLandPredicate(), SacrificeRecipient.ACTIVE_PLAYER));

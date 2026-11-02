@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,11 +37,11 @@ public class AppleOfEdenIsuRelic extends Card {
                         new ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect(),
                         new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null),
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                                EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                                new PlayFromOutsideHandTriggerEffect(ownerDrawTrigger)),
+                                new TriggeredAbility(Triggers.youCastSpell(),
+                                new PlayFromOutsideHandTriggerEffect(ownerDrawTrigger))),
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                                EffectSlot.ON_CONTROLLER_PLAYS_LAND,
-                                new PlayFromOutsideHandTriggerEffect(ownerDrawTrigger))
+                                new TriggeredAbility(Triggers.youPlayLand(),
+                                new PlayFromOutsideHandTriggerEffect(ownerDrawTrigger)))
                 ),
                 "{T}, Pay 4 life, Sacrifice Apple of Eden: Look at target opponent's hand and exile "
                         + "those cards face down. You may play those cards this turn, and mana of any "

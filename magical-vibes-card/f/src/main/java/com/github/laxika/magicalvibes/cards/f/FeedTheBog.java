@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardsInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,6 +28,6 @@ public class FeedTheBog extends Card {
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{1}{B}"));
+        addTrigger(Triggers.youCastThisSpell(), new ReplicateEffect("{1}{B}"));
     }
 }
