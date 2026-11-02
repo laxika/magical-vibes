@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -36,9 +36,9 @@ public class SimicBasilisk extends Card {
                 false,
                 "{1}{G}",
                 List.of(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+                        new TriggeredAbility(Triggers.creatureYouControlDealsDamageToCreature(),
                         new DestroyDamagedCreatureAtEndOfCombatEffect(
-                                new PermanentIsSourcePermanentPredicate()))),
+                                new PermanentIsSourcePermanentPredicate())))),
                 "{1}{G}: Until end of turn, target creature with a +1/+1 counter on it gains "
                         + "\"Whenever this creature deals combat damage to a creature, destroy that "
                         + "creature at end of combat.\"",

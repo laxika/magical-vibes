@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -21,7 +20,7 @@ public class AzorsElocutors extends Card {
                 new PutCountersOnSelfEffect(CounterType.FILIBUSTER),
                 new ConditionalEffect(new SourceCounterThreshold(5, CounterType.FILIBUSTER), new WinGameEffect())));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE,
+        addTrigger(Triggers.youAreDealtDamage(),
                 new RemoveCounterFromSourceEffect(CounterType.FILIBUSTER, 1));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class NightDealings extends Card {
     public NightDealings() {
         // Whenever a source you control deals damage to another player, put that many theft
         // counters on this enchantment.
-        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.sourceYouControlDealsDamageToOpponent(),
                 new PutCountersOnSelfEffect(CounterType.THEFT, new EventValue()));
 
         // {2}{B}{B}, Remove X theft counters from this enchantment: Search your library for a

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.x;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ import java.util.List;
 public class XyruSpecter extends Card {
 
     public XyruSpecter() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.dealsDamageToOpponent(),
                 TargetPlayerChoosesOneEffect.forTargetedPlayer(List.of(
                         new ChooseOneEffect.ChooseOneOption("Discard a card",
                                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),

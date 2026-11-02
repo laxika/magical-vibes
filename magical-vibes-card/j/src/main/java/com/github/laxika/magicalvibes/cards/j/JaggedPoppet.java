@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class JaggedPoppet extends Card {
 
     public JaggedPoppet() {
-        addEffect(EffectSlot.ON_DEALT_DAMAGE,
+        addTrigger(Triggers.dealtDamage(),
                 new DiscardEffect(new EventValue(), DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ConditionalEffect(new ControllerHandEmpty(),

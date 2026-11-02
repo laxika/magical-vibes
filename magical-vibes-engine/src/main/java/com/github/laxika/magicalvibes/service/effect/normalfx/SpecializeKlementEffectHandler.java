@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.BoonTrigger;
@@ -95,7 +94,7 @@ public class SpecializeKlementEffectHandler implements NormalEffectHandlerBean {
                 specialized.setCardText("Double strike\nWhenever Klement, Tempest Acolyte is dealt damage, it deals that much damage to any target.");
                 specialized.setPower(2);
                 specialized.setToughness(3);
-                specialized.addEffect(EffectSlot.ON_DEALT_DAMAGE,
+                specialized.addTrigger(Triggers.dealtDamage(),
                         new DealDamageToAnyTargetEffect(new EventValue()));
             }
             case GREEN -> {

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
@@ -34,7 +33,7 @@ public class MangarasEquity extends Card {
 
         // Whenever a creature of the chosen color deals damage to you or a white creature you
         // control, this enchantment deals that much damage to that creature.
-        addEffect(EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+        addTrigger(Triggers.creatureDealsDamageToYouOrYourPermanent(),
                 new ReflectDamageToChosenColorCreatureEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

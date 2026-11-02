@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "115")
 @CardRegistration(set = "DPA", collectorNumber = "16")
@@ -16,6 +16,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ThievingMagpie extends Card {
 
     public ThievingMagpie() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new DrawCardEffect());
+        addTrigger(Triggers.dealsDamageToOpponent(), new DrawCardEffect());
     }
 }

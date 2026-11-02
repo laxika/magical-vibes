@@ -1,0 +1,41 @@
+# slot	factory	zone (- for the trigger's default)	event	relation	filter	javadoc
+ON_DAMAGE_TO_PLAYER	dealsDamageToPlayer	-	DEALS_DAMAGE_TO_PLAYER	THIS	-	"Whenever this deals damage to a player"; on an Aura or Equipment, the attached creature.
+ON_DAMAGE_TO_OPPONENT	dealsDamageToOpponent	-	DEALS_DAMAGE_TO_OPPONENT	THIS	-	"Whenever this deals damage to an opponent"; on an Aura or Equipment, the attached creature.
+ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU	permanentDealsDamageToYou	-	DEALS_DAMAGE_TO_YOU	ANY	-	"Whenever a permanent deals damage to you".
+ON_ENCHANTED_CREATURE_DEALT_DAMAGE	enchantedCreatureDealtDamage	-	DEALT_DAMAGE	ENCHANTED	-	"Whenever enchanted creature is dealt damage".
+ON_ENCHANTED_PLAYER_DEALT_DAMAGE	enchantedPlayerDealtDamage	-	ENCHANTED_PLAYER_DEALT_DAMAGE	ANY	-	"Whenever enchanted player is dealt damage".
+ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU	enchantedCreatureDealsDamageToYou	-	DEALS_DAMAGE_TO_YOU	ENCHANTED	-	"Whenever enchanted creature deals damage to you".
+ON_ENCHANTED_CREATURE_DEALS_DAMAGE	enchantedCreatureDealsDamage	-	DEALS_DAMAGE	ENCHANTED	-	"Whenever enchanted creature deals damage".
+ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE	enchantedCreatureDealsDamageToCreature	-	DEALS_DAMAGE_TO_CREATURE	ENCHANTED	-	"Whenever enchanted creature deals damage to a creature".
+ON_DEALT_DAMAGE	dealtDamage	-	DEALT_DAMAGE	THIS	-	"Whenever this permanent is dealt damage".
+ON_NONCOMBAT_DAMAGE_TO_SELF	dealtNoncombatDamage	-	DEALT_NONCOMBAT_DAMAGE	THIS	-	"Whenever this permanent is dealt noncombat damage".
+ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE	opponentDealtNoncombatDamage	-	OPPONENT_DEALT_NONCOMBAT_DAMAGE	ANY	-	"Whenever an opponent is dealt noncombat damage".
+ON_OPPONENT_CREATURE_DEALT_DAMAGE	creatureOpponentControlsDealtDamage	-	CREATURE_DEALT_DAMAGE	OPPONENT_CONTROLS	-	"Whenever a creature an opponent controls is dealt damage".
+ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE	creatureOrPlaneswalkerOpponentControlsDealtExcessDamage	-	CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE	OPPONENT_CONTROLS	-	"Whenever a creature or planeswalker an opponent controls is dealt excess damage".
+ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_NONCOMBAT_DAMAGE	creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage	-	CREATURE_OR_PLANESWALKER_DEALT_EXCESS_NONCOMBAT_DAMAGE	OPPONENT_CONTROLS	-	"Whenever a creature or planeswalker an opponent controls is dealt excess noncombat damage".
+ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE	creaturesOpponentsControlDealtExcessNoncombatDamage	-	ONE_OR_MORE_CREATURES_DEALT_EXCESS_NONCOMBAT_DAMAGE	OPPONENT_CONTROLS	-	"Whenever one or more creatures your opponents control are dealt excess noncombat damage".
+ON_ANY_CREATURE_DEALT_DAMAGE	creatureDealtDamage	-	CREATURE_DEALT_DAMAGE	ANY	-	"Whenever a creature is dealt damage".
+ON_ANY_PERMANENT_DEALT_DAMAGE	permanentYouControlDealtDamage	-	DEALT_DAMAGE	YOU_CONTROL	-	"Whenever a permanent you control is dealt damage"; the effect can narrow it ("a Dragon you control", "this or a creature it's paired with").
+ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE	creatureYouControlDealsDamageToCreature	-	DEALS_DAMAGE_TO_CREATURE	YOU_CONTROL	-	"Whenever a creature you control deals damage to a creature"; the effect says whether it is this creature, equipped creature or any creature, as the slot's did.
+GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER	opponentDealtDamageByRedInstantSorceryOrPlaneswalkerYouControl	GRAVEYARD	OPPONENT_DEALT_NONCOMBAT_DAMAGE_BY_RED_INSTANT_SORCERY_OR_PLANESWALKER	YOU_CONTROL	-	"Whenever an opponent is dealt noncombat damage by a red instant or sorcery spell you control or by a red planeswalker you control", from the graveyard.
+GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE	instantOrSorceryYouControlDealsDamageToOpponentOrBattle	GRAVEYARD	INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE	YOU_CONTROL	-	"Whenever an instant or sorcery spell you control deals damage to an opponent or a battle", from the graveyard.
+GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT	sourceYouControlDealsNoncombatDamageToOpponent	GRAVEYARD				
+ON_ANY_SOURCE_DEALS_DAMAGE	sourceDealsDamage	-	DEALS_DAMAGE	ANY	-	"Whenever a source deals damage"; the effect filters the source ("a red creature or spell").
+ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE	instantOrSorceryYouControlDealsDamage	-	INSTANT_OR_SORCERY_DEALS_DAMAGE	YOU_CONTROL	-	"Whenever an instant or sorcery spell you control deals damage".
+ON_SELF_DEALS_DAMAGE	dealsDamage	-	DEALS_DAMAGE	THIS	-	"Whenever this deals damage".
+ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER	creatureYouControlDealsDamageToPlaneswalker	-	DEALS_DAMAGE_TO_PLANESWALKER	YOU_CONTROL	-	"Whenever a creature you control deals damage to a planeswalker".
+ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER	creatureDealsDamageToEnchantedPlaneswalker	-	DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER	ANY	-	"Whenever a creature deals damage to enchanted planeswalker".
+ON_CONTROLLER_DEALT_DAMAGE	youAreDealtDamage	-	YOU_DEALT_DAMAGE	ANY	-	"Whenever you're dealt damage".
+ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE	youAreDealtDamageBySourceYouControl	-	YOU_DEALT_DAMAGE	YOU_CONTROL	-	"Whenever a source you control deals damage to you".
+ON_CONTROLLER_DAMAGE_PREVENTED	damageToYouPrevented	-	DAMAGE_TO_YOU_PREVENTED	ANY	-	"Whenever damage that would be dealt to you is prevented".
+ON_OPPONENT_DEALT_DAMAGE	opponentDealtDamage	-	OPPONENT_DEALT_DAMAGE	ANY	-	"Whenever an opponent is dealt damage".
+ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT	sourceYouControlDealsDamageToOpponent	-	DEALS_DAMAGE_TO_OPPONENT	YOU_CONTROL	-	"Whenever a source you control deals damage to an opponent".
+ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER	sourceYouControlDealsDamageToPlayer	-	DEALS_DAMAGE_TO_PLAYER	YOU_CONTROL	-	"Whenever a source you control deals damage to a player".
+ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR	creatureDealsDamageToItsController	-	DEALS_DAMAGE_TO_ITS_CONTROLLER	ANY	-	"Whenever a creature deals damage to its controller", on a plane: a creature whose controller isn't the planar controller.
+ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER	creaturesYouControlDealDamageToPlayer	-	ONE_OR_MORE_DEAL_DAMAGE_TO_PLAYER	YOU_CONTROL	-	"Whenever one or more creatures you control deal damage to a player".
+ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT	creaturesYouControlDealDamageToOpponent	-	ONE_OR_MORE_DEAL_DAMAGE_TO_OPPONENT	YOU_CONTROL	-	"Whenever one or more creatures you control deal damage to an opponent".
+ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT	sourceYouControlDealsNoncombatDamageToOpponent	-	DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT	YOU_CONTROL	-	"Whenever a source you control deals noncombat damage to an opponent".
+ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT	youAreDealtDamageBySourceOpponentControls	-	YOU_DEALT_DAMAGE	OPPONENT_CONTROLS	-	"Whenever a source an opponent controls deals damage to you".
+ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT	sourceOpponentControlsDealsDamageToYouOrYourPermanent	-	DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT	OPPONENT_CONTROLS	-	"Whenever a source an opponent controls deals damage to you or a permanent you control".
+ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT	creatureDealsDamageToYouOrYourPermanent	-	CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT	ANY	-	"Whenever a creature deals damage to you or a permanent you control"; the effect filters the creature ("of the chosen color").
+ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE	sourceYouControlDealsNoncombatDamageToCreature	-	DEALS_NONCOMBAT_DAMAGE_TO_CREATURE	YOU_CONTROL	-	"Whenever a source you control deals noncombat damage to a creature".

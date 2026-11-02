@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
@@ -25,7 +24,7 @@ public class Lich extends Card {
         addStaticEffect(new LoseLifeEqualToLifeTotalAsEntersEffect());
         addStaticEffect(new CantLoseGameFromLifeEffect());
         addStaticEffect(new NefariousLichLifeGainReplacementEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, new SacrificePermanentsOrLoseGameEffect(
+        addTrigger(Triggers.youAreDealtDamage(), new SacrificePermanentsOrLoseGameEffect(
                 new EventValue(), new PermanentNotPredicate(new PermanentIsTokenPredicate())));
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS), new ControllerLosesGameEffect());
     }

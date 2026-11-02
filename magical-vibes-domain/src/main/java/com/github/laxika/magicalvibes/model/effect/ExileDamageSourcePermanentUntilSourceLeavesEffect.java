@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Used with {@code ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}. Exiles the permanent that dealt the damage
+ * Used with {@code Triggers.permanentDealsDamageToYou()}. Exiles the permanent that dealt the damage
  * until the watching permanent leaves the battlefield (O-ring linkage), then returns it under its
  * owner's control. Used by Hixus, Prison Warden.
  *

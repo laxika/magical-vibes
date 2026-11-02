@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
@@ -27,7 +26,7 @@ public class Justice extends Card {
 
         // Whenever a red creature or spell deals damage, this enchantment deals that much
         // damage to that creature's or spell's controller.
-        addEffect(EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE,
+        addTrigger(Triggers.sourceDealsDamage(),
                 new ReflectSourceDamageToItsControllerEffect(CardColor.RED));
     }
 }

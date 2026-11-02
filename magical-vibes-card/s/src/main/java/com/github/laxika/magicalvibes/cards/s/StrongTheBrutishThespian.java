@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveControllerRadCountersEffe
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RadiationLifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "84")
 @CardRegistration(set = "PIP", collectorNumber = "403")
@@ -16,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class StrongTheBrutishThespian extends Card {
 
     public StrongTheBrutishThespian() {
-        addEffect(EffectSlot.ON_DEALT_DAMAGE, SequenceEffect.of(
+        addTrigger(Triggers.dealtDamage(), SequenceEffect.of(
                 new GiveControllerRadCountersEffect(3),
                 new PutCountersOnSourceEffect(1, 1, 3)));
         addStaticEffect(new RadiationLifeGainReplacementEffect());

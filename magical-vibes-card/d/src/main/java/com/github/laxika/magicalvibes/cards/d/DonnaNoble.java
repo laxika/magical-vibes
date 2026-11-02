@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -35,7 +34,7 @@ public class DonnaNoble extends Card {
                 .withTriggeredTargetFilter(new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent"));
-        addEffect(EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE,
+        addTrigger(Triggers.permanentYouControlDealtDamage(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceOrPairedPredicate(), reflectedDamage));
     }

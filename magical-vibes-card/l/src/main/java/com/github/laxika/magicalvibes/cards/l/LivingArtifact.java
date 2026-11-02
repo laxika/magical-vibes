@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -26,7 +25,7 @@ public class LivingArtifact extends Card {
         // Enchant artifact.
         target(TargetFilters.artifact())
                 // Whenever you're dealt damage, put that many vitality counters on this Aura.
-                .addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE,
+                .addTrigger(Triggers.youAreDealtDamage(),
                         new PutCountersOnSelfEffect(CounterType.VITALITY, new EventValue()))
                 // At the beginning of your upkeep, you may remove a vitality counter from this Aura.
                 // If you do, you gain 1 life.

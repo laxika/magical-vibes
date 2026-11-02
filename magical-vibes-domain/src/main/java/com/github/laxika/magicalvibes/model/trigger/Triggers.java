@@ -723,4 +723,227 @@ public final class Triggers {
         return new CombatTrigger(CombatTrigger.CombatEvent.YOU_OR_YOUR_PLANESWALKER_DEALT_COMBAT_DAMAGE,
                 ObjectRelation.ANY);
     }
+
+    /** "Whenever this deals damage to a player"; on an Aura or Equipment, the attached creature. */
+    public static DamageTrigger dealsDamageToPlayer() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_PLAYER, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this deals damage to an opponent"; on an Aura or Equipment, the attached creature. */
+    public static DamageTrigger dealsDamageToOpponent() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_OPPONENT, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a permanent deals damage to you". */
+    public static DamageTrigger permanentDealsDamageToYou() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_YOU, ObjectRelation.ANY);
+    }
+
+    /** "Whenever enchanted creature is dealt damage". */
+    public static DamageTrigger enchantedCreatureDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALT_DAMAGE, ObjectRelation.ENCHANTED);
+    }
+
+    /** "Whenever enchanted player is dealt damage". */
+    public static DamageTrigger enchantedPlayerDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.ENCHANTED_PLAYER_DEALT_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /** "Whenever enchanted creature deals damage to you". */
+    public static DamageTrigger enchantedCreatureDealsDamageToYou() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_YOU, ObjectRelation.ENCHANTED);
+    }
+
+    /** "Whenever enchanted creature deals damage". */
+    public static DamageTrigger enchantedCreatureDealsDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE, ObjectRelation.ENCHANTED);
+    }
+
+    /** "Whenever enchanted creature deals damage to a creature". */
+    public static DamageTrigger enchantedCreatureDealsDamageToCreature() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_CREATURE, ObjectRelation.ENCHANTED);
+    }
+
+    /** "Whenever this permanent is dealt damage". */
+    public static DamageTrigger dealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALT_DAMAGE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this permanent is dealt noncombat damage". */
+    public static DamageTrigger dealtNoncombatDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALT_NONCOMBAT_DAMAGE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever an opponent is dealt noncombat damage". */
+    public static DamageTrigger opponentDealtNoncombatDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.OPPONENT_DEALT_NONCOMBAT_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /** "Whenever a creature an opponent controls is dealt damage". */
+    public static DamageTrigger creatureOpponentControlsDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.CREATURE_DEALT_DAMAGE, ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever a creature or planeswalker an opponent controls is dealt excess damage". */
+    public static DamageTrigger creatureOrPlaneswalkerOpponentControlsDealtExcessDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE,
+                ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever a creature or planeswalker an opponent controls is dealt excess noncombat damage". */
+    public static DamageTrigger creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.CREATURE_OR_PLANESWALKER_DEALT_EXCESS_NONCOMBAT_DAMAGE,
+                ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever one or more creatures your opponents control are dealt excess noncombat damage". */
+    public static DamageTrigger creaturesOpponentsControlDealtExcessNoncombatDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.ONE_OR_MORE_CREATURES_DEALT_EXCESS_NONCOMBAT_DAMAGE,
+                ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever a creature is dealt damage". */
+    public static DamageTrigger creatureDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.CREATURE_DEALT_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever a permanent you control is dealt damage"; the effect can narrow it ("a Dragon you control", "this or a
+     * creature it's paired with").
+     */
+    public static DamageTrigger permanentYouControlDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALT_DAMAGE, ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever a creature you control deals damage to a creature"; the effect says whether it is this creature,
+     * equipped creature or any creature, as the slot's did.
+     */
+    public static DamageTrigger creatureYouControlDealsDamageToCreature() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_CREATURE, ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever an opponent is dealt noncombat damage by a red instant or sorcery spell you control or by a red
+     * planeswalker you control".
+     */
+    public static DamageTrigger opponentDealtDamageByRedInstantSorceryOrPlaneswalkerYouControl() {
+        return new DamageTrigger(
+                DamageTrigger.DamageEvent.OPPONENT_DEALT_NONCOMBAT_DAMAGE_BY_RED_INSTANT_SORCERY_OR_PLANESWALKER,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever an instant or sorcery spell you control deals damage to an opponent or a battle".
+     */
+    public static DamageTrigger instantOrSorceryYouControlDealsDamageToOpponentOrBattle() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a source you control deals noncombat damage to an opponent". */
+    public static DamageTrigger sourceYouControlDealsNoncombatDamageToOpponent() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a source deals damage"; the effect filters the source ("a red creature or spell"). */
+    public static DamageTrigger sourceDealsDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /** "Whenever an instant or sorcery spell you control deals damage". */
+    public static DamageTrigger instantOrSorceryYouControlDealsDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.INSTANT_OR_SORCERY_DEALS_DAMAGE, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever this deals damage". */
+    public static DamageTrigger dealsDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control deals damage to a planeswalker". */
+    public static DamageTrigger creatureYouControlDealsDamageToPlaneswalker() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_PLANESWALKER, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature deals damage to enchanted planeswalker". */
+    public static DamageTrigger creatureDealsDamageToEnchantedPlaneswalker() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER, ObjectRelation.ANY);
+    }
+
+    /** "Whenever you're dealt damage". */
+    public static DamageTrigger youAreDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.YOU_DEALT_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /** "Whenever a source you control deals damage to you". */
+    public static DamageTrigger youAreDealtDamageBySourceYouControl() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.YOU_DEALT_DAMAGE, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever damage that would be dealt to you is prevented". */
+    public static DamageTrigger damageToYouPrevented() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DAMAGE_TO_YOU_PREVENTED, ObjectRelation.ANY);
+    }
+
+    /** "Whenever an opponent is dealt damage". */
+    public static DamageTrigger opponentDealtDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.OPPONENT_DEALT_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /** "Whenever a source you control deals damage to an opponent". */
+    public static DamageTrigger sourceYouControlDealsDamageToOpponent() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_OPPONENT, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a source you control deals damage to a player". */
+    public static DamageTrigger sourceYouControlDealsDamageToPlayer() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_PLAYER, ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever a creature deals damage to its controller", on a plane: a creature whose controller isn't the planar
+     * controller.
+     */
+    public static DamageTrigger creatureDealsDamageToItsController() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_ITS_CONTROLLER, ObjectRelation.ANY);
+    }
+
+    /** "Whenever one or more creatures you control deal damage to a player". */
+    public static DamageTrigger creaturesYouControlDealDamageToPlayer() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.ONE_OR_MORE_DEAL_DAMAGE_TO_PLAYER,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever one or more creatures you control deal damage to an opponent". */
+    public static DamageTrigger creaturesYouControlDealDamageToOpponent() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.ONE_OR_MORE_DEAL_DAMAGE_TO_OPPONENT,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a source an opponent controls deals damage to you". */
+    public static DamageTrigger youAreDealtDamageBySourceOpponentControls() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.YOU_DEALT_DAMAGE, ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever a source an opponent controls deals damage to you or a permanent you control". */
+    public static DamageTrigger sourceOpponentControlsDealsDamageToYouOrYourPermanent() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+                ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /**
+     * "Whenever a creature deals damage to you or a permanent you control"; the effect filters the creature ("of the
+     * chosen color").
+     */
+    public static DamageTrigger creatureDealsDamageToYouOrYourPermanent() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+                ObjectRelation.ANY);
+    }
+
+    /** "Whenever a source you control deals noncombat damage to a creature". */
+    public static DamageTrigger sourceYouControlDealsNoncombatDamageToCreature() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
+                ObjectRelation.YOU_CONTROL);
+    }
 }

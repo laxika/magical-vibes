@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Whenever a permanent deals damage to this effect's controller, the damage source's controller
  * gains control of this permanent (the permanent that has this effect).
- * Used with {@code ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}, or with
+ * Used with {@code Triggers.permanentDealsDamageToYou()}, or with
  * {@code Triggers.creatureDealsCombatDamageToYou()} inside a
  * {@link BatchedCombatDamageToYouTriggerEffect} for an ability triggered by one or more creatures.
  *

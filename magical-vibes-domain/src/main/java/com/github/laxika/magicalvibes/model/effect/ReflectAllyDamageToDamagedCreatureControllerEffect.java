@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Marker effect for the {@code ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE} slot (Greatbow Doyen).
+ * Marker effect for the {@code Triggers.creatureYouControlDealsDamageToCreature()} ability (Greatbow Doyen).
  *
  * <p>The normal form means "Whenever a [creature matching {@code sourceFilter}] you control deals
  * damage to a creature, that creature deals that much damage to that creature's controller." The

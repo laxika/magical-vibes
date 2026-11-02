@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * reduced by a fixed amount.
  * All discards are automatic (no player choice). Fires discard triggers for each card.
  * Used by Collective Defiance (modal mode) as a targeted spell mode, and by Shocker on an
- * {@code ON_DAMAGE_TO_PLAYER} trigger, where the damaged player is baked onto the stack entry.
+ * {@code Triggers.dealsDamageToPlayer()} trigger, where the damaged player is baked onto the stack entry.
  */
 public record TargetPlayerDiscardsHandThenDrawsThatManyEffect(int drawReduction)
         implements CombatDamageTriggerContextEffect {

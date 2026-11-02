@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -22,7 +21,7 @@ public class WitherscaleWurm extends Card {
                 new GrantKeywordEffect(Keyword.WITHER, GrantScope.TARGET));
 
         // Whenever this creature deals damage to an opponent, remove all -1/-1 counters from it.
-        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.dealsDamageToOpponent(),
                 new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

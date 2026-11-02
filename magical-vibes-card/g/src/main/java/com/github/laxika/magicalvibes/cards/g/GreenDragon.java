@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -14,7 +14,7 @@ public class GreenDragon extends Card {
     public GreenDragon() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                        EffectSlot.ON_OPPONENT_CREATURE_DEALT_DAMAGE,
-                        new DestroyTargetPermanentEffect()));
+                        new TriggeredAbility(Triggers.creatureOpponentControlsDealtDamage(),
+                        new DestroyTargetPermanentEffect())));
     }
 }

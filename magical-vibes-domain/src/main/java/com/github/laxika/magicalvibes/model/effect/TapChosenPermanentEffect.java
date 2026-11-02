@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * "Tap target [permanent]" resolved as a controller choice at resolution rather than a cast-time
  * target. The tapping counterpart of {@link UntapChosenPermanentEffect}, for triggered abilities on
- * slots with no targeting pipeline (e.g. {@code ON_DAMAGE_TO_PLAYER}): the effect is pushed as a
+ * slots with no targeting pipeline (e.g. {@code Triggers.dealsDamageToPlayer()}): the effect is pushed as a
  * non-targeting stack entry and, at resolution, the controller chooses one permanent matching
  * {@code predicate} across every battlefield to tap.
  *

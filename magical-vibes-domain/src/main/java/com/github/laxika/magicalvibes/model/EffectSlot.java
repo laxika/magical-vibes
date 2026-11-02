@@ -24,9 +24,6 @@ public enum EffectSlot {
     /** Triggers whenever a Case is solved by the controller. */
     ON_ALLY_CASE_SOLVES,
     ON_CONTROLLER_FORETELLS,
-    ON_DAMAGE_TO_PLAYER,
-    /** Combat or noncombat damage dealt by the source to an opponent of its controller. */
-    ON_DAMAGE_TO_OPPONENT,
     ON_CONTROLLER_DRAWS,
     /** Triggers when the controller draws their second card of the turn. */
     ON_CONTROLLER_DRAWS_SECOND_CARD,
@@ -110,7 +107,6 @@ public enum EffectSlot {
     ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
     /** "Whenever you tap an artifact token for mana"; checked on the tapping player's battlefield. */
     ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA,
-    ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     /** Triggers whenever an opponent gains control of a permanent from this permanent's controller. */
     ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT,
     /** Triggered when a player chooses one or more targets for a spell or ability. */
@@ -212,33 +208,10 @@ public enum EffectSlot {
      *  with the player who was instructed to tap the permanent, so an opponent tapping their own
      *  permanent does not trigger this slot. */
     ON_CONTROLLER_TAPS_OPPONENT_PERMANENT,
-    /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
-     *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
-    ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
-    /** Triggers whenever the player this Aura is attached to is dealt damage (combat or non-combat).
-     *  Fires once for each damage event on the attached player. */
-    ON_ENCHANTED_PLAYER_DEALT_DAMAGE,
-    /** Triggers whenever the creature this aura is attached to deals damage (combat or non-combat) to the
-     *  aura's controller — i.e. "whenever enchanted creature deals damage to you" (Backfire). Because the
-     *  aura sits on its controller's battlefield, the trigger is scanned on the damaged player's battlefield
-     *  in {@code TriggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers}, so it
-     *  fires only when the damaged player is the aura's controller. Reuses
-     *  {@code EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect} for resolution. */
-    ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
-    /** Triggers whenever the creature this Aura is attached to deals damage to anything. */
-    ON_ENCHANTED_CREATURE_DEALS_DAMAGE,
-    /** Triggers whenever the creature this Aura is attached to deals damage to another creature.
-     *  The damaged creature is captured as the non-targeting {@code targetId} of the queued
-     *  ability. Checked from both combat and noncombat creature-damage paths. */
-    ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE,
     /** Triggers whenever the game changes between day and night. */
     ON_DAY_NIGHT_CHANGE,
     /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
     GRAVEYARD_ON_DAY_NIGHT_CHANGE,
-    ON_DEALT_DAMAGE,
-    /** Triggers whenever this permanent is dealt noncombat damage. The amount is snapshotted onto
-     *  the triggered ability's event value. */
-    ON_NONCOMBAT_DAMAGE_TO_SELF,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     ON_ANY_PLAYER_SHUFFLES_LIBRARY,
@@ -281,7 +254,6 @@ public enum EffectSlot {
     ON_ANY_PLAYER_WINS_COIN_FLIP,
     /** Triggers whenever this permanent's controller loses a coin flip. */
     ON_CONTROLLER_LOSES_COIN_FLIP,
-    ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
@@ -303,27 +275,6 @@ public enum EffectSlot {
     /** Triggers when the final chapter ability of a Saga triggers, i.e. is put on the stack (Historian's Boon). */
     ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS,
 
-    /** Triggers whenever a creature an opponent controls is dealt damage (combat or non-combat).
-     *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
-     *  for permanents with this slot whose controller is different from the damaged creature's controller. */
-    ON_OPPONENT_CREATURE_DEALT_DAMAGE,
-    /** Triggers whenever a creature or planeswalker an opponent controls is dealt excess damage (combat or non-combat). */
-    ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE,
-    /** Triggers whenever a creature or planeswalker an opponent controls is dealt excess noncombat damage. */
-    ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_NONCOMBAT_DAMAGE,
-    /** Triggers whenever an opponent's creature is dealt excess noncombat damage. */
-    ON_OPPONENT_CREATURE_DEALT_EXCESS_NONCOMBAT_DAMAGE,
-    /** Triggers whenever any creature (yours or an opponent's) is dealt damage (combat or non-combat).
-     *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields;
-     *  the queued stack entry targets the damaged creature (e.g. Death Pits of Rath). */
-    ON_ANY_CREATURE_DEALT_DAMAGE,
-    /** Triggers whenever any permanent is dealt damage, regardless of its controller. */
-    ON_ANY_PERMANENT_DEALT_DAMAGE,
-    /** Triggers whenever a creature this permanent's controller controls (matching the effect's
-     *  source filter) deals damage — combat or non-combat — to a creature. Fires on the permanent
-     *  with this slot, not on the damaged creature. Scans all battlefields; the reflected damage is
-     *  dealt by the damage-source creature to the damaged creature's controller (e.g. Greatbow Doyen). */
-    ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
     /** Triggers whenever a creature controlled by this permanent's controller fights. */
     ON_ALLY_CREATURE_FIGHTS,
     /** Triggers whenever the controller completes a dungeon, while this card is in their graveyard. */
@@ -348,20 +299,6 @@ public enum EffectSlot {
     ON_CONTROLLER_PAYS_LIFE,
     /** Triggers whenever an opponent pays a mana tax imposed by a spell or permanent controlled by this permanent. */
     ON_OPPONENT_PAYS_TAX,
-    /** "Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red
-     *  planeswalker you control" — fired from the controller's graveyard (Chandra's Phoenix). Checked in
-     *  {@code TriggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers}, called from
-     *  the noncombat player-damage path in {@code DamageSupport}: the resolving stack entry must be an
-     *  instant/sorcery spell that is red, or an activated/triggered ability whose source card is a red
-     *  planeswalker, and the damaged player must be an opponent of that entry's controller. */
-    GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER,
-    /** Triggers whenever an instant or sorcery spell the controller controls deals damage to an
-     *  opponent or a battle, while this card is in the controller's graveyard. Checked from the
-     *  batched non-combat damage flush in {@code DamageSupport}. Used by Bloodfeather Phoenix. */
-    GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
-    /** Triggers whenever a source the controller controls deals noncombat damage to an opponent,
-     *  while this card is in the controller's graveyard. */
-    GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
     /** Triggers whenever one or more +1/+1 counters are put on this permanent.
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
@@ -585,117 +522,7 @@ public enum EffectSlot {
     ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE,
     /** Triggers whenever a creature stations this Spacecraft. */
     ON_SELF_BECOMES_STATIONED,
-    /** Global watcher: triggers whenever any source (creature or spell) deals damage, regardless of
-     *  who controls it or what it damages. Holds a {@code ReflectSourceDamageToItsControllerEffect}
-     *  carrying the color the watcher reacts to. Fires on every permanent with this slot across all
-     *  battlefields. All damage a single source deals simultaneously is summed into one trigger
-     *  (CR ruling), so it is driven from the batched damage-event boundaries: combat damage steps
-     *  ({@code CombatDamageService}, per source via {@code state.combatDamageDealt}) and the end of a
-     *  non-combat stack-entry resolution ({@code DamageSupport} accumulates,
-     *  {@code EffectResolutionService} flushes). Queued via
-     *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by Justice. */
-    ON_ANY_SOURCE_DEALS_DAMAGE,
-    /** Triggers whenever an instant or sorcery spell its controller controls deals damage — "Whenever
-     *  an instant or sorcery spell you control deals damage, ...". Fires once per damage event no
-     *  matter how many objects the spell damaged simultaneously (all of it is one batched event), and
-     *  the summed total is snapshotted onto the queued ability's {@code eventValue}. Shares the
-     *  batched non-combat choke point that drives {@link #ON_ANY_SOURCE_DEALS_DAMAGE}
-     *  ({@code DamageSupport} accumulates, {@code EffectResolutionService} flushes) via
-     *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by Blaze Commando. */
-    ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE,
-    /** Triggers whenever <em>this permanent itself</em> deals damage (combat or non-combat) to
-     *  anything — a creature, a player, or a planeswalker. Unlike {@link #ON_ANY_SOURCE_DEALS_DAMAGE}
-     *  (a global watcher that reacts to every source), this fires only for the damage the source keyed
-     *  by the trigger dealt, so it stays with the source even when it dies dealing that damage. All
-     *  damage the source deals simultaneously is summed into one trigger (CR ruling), and that summed
-     *  total is snapshotted onto the queued ability's {@code eventValue} so a "that much" amount
-     *  ({@code EventValue}) can read it. Shares the batched choke point that drives
-     *  {@link #ON_ANY_SOURCE_DEALS_DAMAGE} ({@code CombatDamageService} per source,
-     *  {@code DamageSupport} for non-combat), via
-     *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by El-Hajjâj
-     *  ({@code GainLifeEffect(new EventValue())} — "you gain that much life"). */
-    ON_SELF_DEALS_DAMAGE,
-    /** Triggers whenever a creature the controller controls deals damage to a planeswalker. */
-    ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,
-    /** Triggers whenever any creature deals damage to this permanent when it is an enchanted planeswalker. */
-    ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
-    /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat, from any
-     *  source — creatures, spells, abilities). Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}
-     *  (which reacts to the damage <em>source</em> and only fires for permanent sources), this fires
-     *  once per damage event carrying only the amount, which is snapshotted onto the queued triggered
-     *  ability's {@code eventValue} (read by an {@code EventValue} amount, e.g. "put that many
-     *  counters"). Per the CR ruling, damage from multiple simultaneous sources triggers separately
-     *  once for each source. Fired from the two player-damage choke points
-     *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
-     *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
-    ON_CONTROLLER_DEALT_DAMAGE,
-    /** Triggers whenever a source controlled by this permanent's controller deals damage to that
-     *  controller. The damage amount is snapshotted onto the triggered ability's event value. */
-    ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE,
-    /** Triggers whenever damage that would be dealt to this permanent's controller is prevented. */
-    ON_CONTROLLER_DAMAGE_PREVENTED,
-    /** Triggers whenever an opponent of this permanent's controller is dealt damage. The damage
-     *  amount is snapshotted onto the triggered ability's event value. */
-    ON_OPPONENT_DEALT_DAMAGE,
-    /** Triggers whenever a source this permanent's controller controls deals damage to a player
-     *  other than them — "Whenever a source you control deals damage to another player, ...".
-     *  The outbound mirror of {@link #ON_CONTROLLER_DEALT_DAMAGE}: it scans the <em>damaging</em>
-     *  source's controller's battlefield, and only fires when the damaged player is someone else.
-     *  Fires once per damage source, carrying the amount, which is snapshotted onto the queued
-     *  triggered ability's {@code eventValue} so an {@code EventValue} amount ("put that many
-     *  counters") can read it. Fired from the same two player-damage choke points as
-     *  {@link #ON_CONTROLLER_DEALT_DAMAGE} ({@code CombatDamageService} per attacker,
-     *  {@code DamageSupport} for non-combat) via
-     *  {@code TriggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers}.
-     *  Used by Night Dealings. */
-    ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
 
-    /** A controlled source deals damage to any player, including its controller. */
-    ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER,
-    /**
-     * A source deals damage to its own controller, who is not the controller of the watching plane
-     * ("whenever a creature deals damage to one or more players" on Stensia, for a player other than
-     * the planar controller damaging themselves). Fired from the same choke points as
-     * {@link #ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT} and only for planar objects: the other damage
-     * slots already cover the planar controller as the damaged player or as the source's controller.
-     */
-    ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR,
-    /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
-    ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
-    /**
-     * Triggers whenever one or more creatures the controller controls deal damage to an opponent. A
-     * predicate-filtered trigger ("one or more Pirates you control") also sees noncreature permanents and
-     * spells of that type.
-     */
-    ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT,
-    /** Triggers whenever a source the controller controls deals noncombat damage to another player. */
-    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
-    /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat) by a
-     *  source an <em>opponent</em> controls — "Whenever a source an opponent controls deals damage to
-     *  you, ...". Like {@link #ON_CONTROLLER_DEALT_DAMAGE} (fires once per damage source, snapshots the
-     *  amount onto the queued ability's {@code eventValue}) but gated so damage from the controller's
-     *  own sources (e.g. their pain lands or self-damage spells) is ignored. The opponent gate is
-     *  applied in {@code TriggerCollectionService.checkControllerDealtDamageTriggers} from the source's
-     *  controller supplied by the two player-damage choke points ({@code CombatDamageService} — combat
-     *  damage to the defender always comes from the active player's attackers; {@code DamageSupport} —
-     *  the damaging spell/ability's controller). Used by Retaliator Griffin
-     *  ({@code MayEffect(PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE, new EventValue()))}). */
-    ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT,
-    /** Triggers whenever a source controlled by an opponent deals damage to this permanent's
-     *  controller or to a permanent that controller controls. */
-    ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
-    /** Triggers whenever a creature deals damage (combat or non-combat) to this permanent's
-     *  controller, or to a permanent they control matching the effect's filter — "Whenever a
-     *  creature of the chosen color deals damage to you or a white creature you control, ...".
-     *  Fires on the watcher permanent, once per damaging creature per damage event; the watcher's
-     *  {@code chosenColor} gates which creatures qualify. The trigger context carries the damaging
-     *  creature, the damaged permanent (null when the controller was damaged) and the amount.
-     *  Fired from the four damage choke points ({@code CombatDamageService} for combat damage to
-     *  the defending player and to creatures, {@code DamageSupport} for the non-combat player and
-     *  creature paths) via
-     *  {@code TriggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers}.
-     *  Used by Mangara's Equity. */
-    ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
     /** Triggers whenever an opponent of this card's owner gains life while this card is in
      *  that owner's graveyard. */
     GRAVEYARD_ON_OPPONENT_GAINS_LIFE,
@@ -712,7 +539,6 @@ public enum EffectSlot {
     ON_SELF_BECOMES_SADDLED,
     ON_ALLY_CREATURE_MUTATES,
     ON_SELF_MUTATES,
-    ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
     /** Global temporary trigger for any creature becoming tapped. */
     ON_ANY_CREATURE_BECOMES_TAPPED
 }

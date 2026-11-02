@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureEffect;
@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibrary
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,8 +34,8 @@ public class CruelDeceiver extends Card {
                         new ConditionalEffect(
                                 new TopCardOfLibraryType(CardType.LAND),
                                 new GrantEffectToSourceUntilEndOfTurnEffect(
-                                        EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
-                                        new DestroyDamagedCreatureEffect()))),
+                                        new TriggeredAbility(Triggers.creatureYouControlDealsDamageToCreature(),
+                                        new DestroyDamagedCreatureEffect())))),
                 "{2}: Reveal the top card of your library. If it's a land card, this creature gains "
                         + "\"Whenever this creature deals damage to a creature, destroy that creature\" "
                         + "until end of turn. Activate only once each turn.",

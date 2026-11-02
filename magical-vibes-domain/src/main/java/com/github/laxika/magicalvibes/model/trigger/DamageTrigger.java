@@ -1,0 +1,92 @@
+package com.github.laxika.magicalvibes.model.trigger;
+
+import java.util.Objects;
+
+/**
+ * Damage is dealt, combat or noncombat (CR 120.1, 120.2), or damage that would be dealt is prevented (CR 615.1).
+ * Build it through {@link Triggers}. The combat-only forms are {@link CombatTrigger}s.
+ *
+ * @param event    what happens: who deals the damage, to what, and whether it must be noncombat or excess damage
+ * @param relation how the object the event names relates to the ability's source. For a "deals damage" event it is
+ *                 the source of the damage ({@link ObjectRelation#THIS} for "this", {@link ObjectRelation#YOU_CONTROL}
+ *                 for "a source (creature) you control", {@link ObjectRelation#ENCHANTED} for "enchanted creature",
+ *                 {@link ObjectRelation#OPPONENT_CONTROLS} for "a source an opponent controls",
+ *                 {@link ObjectRelation#ANY} for any); for an "is dealt damage" event about a permanent it is the
+ *                 damaged permanent; for an event about a player being dealt damage it is the source of the damage
+ */
+public record DamageTrigger(DamageEvent event, ObjectRelation relation) implements Trigger {
+
+    public DamageTrigger {
+        Objects.requireNonNull(event, "event");
+        Objects.requireNonNull(relation, "relation");
+    }
+
+    /**
+     * What a {@link DamageTrigger} triggers on. Unless a value says "noncombat", combat and noncombat damage both
+     * count. The values with "one or more" trigger once for each damage event, however many sources it involves.
+     */
+    public enum DamageEvent {
+        /** A source deals damage to anything. */
+        DEALS_DAMAGE,
+        /**
+         * A source deals damage to a player. On an Aura or Equipment, the {@link ObjectRelation#THIS} form is the
+         * creature it is attached to.
+         */
+        DEALS_DAMAGE_TO_PLAYER,
+        /**
+         * A source deals damage to an opponent of its controller. On an Aura or Equipment, the
+         * {@link ObjectRelation#THIS} form is the creature it is attached to.
+         */
+        DEALS_DAMAGE_TO_OPPONENT,
+        /** A permanent deals damage to you. */
+        DEALS_DAMAGE_TO_YOU,
+        /** A source deals damage to a creature. */
+        DEALS_DAMAGE_TO_CREATURE,
+        /** A creature deals damage to a planeswalker. */
+        DEALS_DAMAGE_TO_PLANESWALKER,
+        /** A creature deals damage to the planeswalker the source enchants. */
+        DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
+        /** A creature deals damage to its controller. */
+        DEALS_DAMAGE_TO_ITS_CONTROLLER,
+        /** A source deals damage to you or a permanent you control. */
+        DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+        /** A creature deals damage to you or a permanent you control. */
+        CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+        /** A source deals noncombat damage to an opponent of its controller. */
+        DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
+        /** A source deals noncombat damage to a creature. */
+        DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
+        /** An instant or sorcery spell deals damage. */
+        INSTANT_OR_SORCERY_DEALS_DAMAGE,
+        /** An instant or sorcery spell deals damage to an opponent or a battle. */
+        INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
+        /** One or more creatures deal damage to a player. */
+        ONE_OR_MORE_DEAL_DAMAGE_TO_PLAYER,
+        /** One or more creatures deal damage to an opponent. */
+        ONE_OR_MORE_DEAL_DAMAGE_TO_OPPONENT,
+        /** A permanent is dealt damage. */
+        DEALT_DAMAGE,
+        /** A permanent is dealt noncombat damage. */
+        DEALT_NONCOMBAT_DAMAGE,
+        /** A creature is dealt damage. */
+        CREATURE_DEALT_DAMAGE,
+        /** A creature or planeswalker is dealt excess damage (CR 120.10). */
+        CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE,
+        /** A creature or planeswalker is dealt excess noncombat damage (CR 120.10). */
+        CREATURE_OR_PLANESWALKER_DEALT_EXCESS_NONCOMBAT_DAMAGE,
+        /** One or more creatures are dealt excess noncombat damage (CR 120.10). */
+        ONE_OR_MORE_CREATURES_DEALT_EXCESS_NONCOMBAT_DAMAGE,
+        /** You're dealt damage. */
+        YOU_DEALT_DAMAGE,
+        /** An opponent is dealt damage. */
+        OPPONENT_DEALT_DAMAGE,
+        /** An opponent is dealt noncombat damage. */
+        OPPONENT_DEALT_NONCOMBAT_DAMAGE,
+        /** An opponent is dealt noncombat damage by a red instant or sorcery spell or a red planeswalker. */
+        OPPONENT_DEALT_NONCOMBAT_DAMAGE_BY_RED_INSTANT_SORCERY_OR_PLANESWALKER,
+        /** The player the source enchants is dealt damage. */
+        ENCHANTED_PLAYER_DEALT_DAMAGE,
+        /** Damage that would be dealt to you is prevented. */
+        DAMAGE_TO_YOU_PREVENTED
+    }
+}

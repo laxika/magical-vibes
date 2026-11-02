@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.trigger.DamageWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.model.ResolutionDamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.PendingSimultaneousDamage;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
@@ -2057,12 +2057,12 @@ public class DamageSupport {
 
         List<CardEffect> effects = new ArrayList<>();
         if (!sourcePermanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
-            effects.addAll(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            effects.addAll(DamageWatch.ON_SELF_DEALS_DAMAGE.effectsOf(sourceCard));
         }
-        effects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
-        effects.addAll(sourcePermanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
-        effects.addAll(triggerCollectionService.grantedTriggeredEffects(
-                gameData, sourcePermanent, EffectSlot.ON_SELF_DEALS_DAMAGE));
+        effects.addAll(sourcePermanent.getTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+        effects.addAll(sourcePermanent.getPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+        effects.addAll(triggerCollectionService.grantedTriggerEffects(
+                gameData, sourcePermanent, DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
         return effects;
     }
 

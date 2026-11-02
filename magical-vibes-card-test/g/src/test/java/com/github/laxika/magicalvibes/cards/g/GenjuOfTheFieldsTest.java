@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.cards.w.WearAway;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -111,7 +111,7 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, plains)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, plains)).isEmpty();
         assertThat(gqs.effectiveCreatureSubtypes(gd, plains)).isEmpty();
-        assertThat(plains.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE)).isEmpty();
+        assertThat(plains.getTemporaryTriggerEffects(Triggers.dealsDamage())).isEmpty();
     }
 
     @Test

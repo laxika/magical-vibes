@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,7 +69,7 @@ class StirThePrideTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(3);
         assertThat(creature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE)).isNotEmpty();
+        assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsDamage())).isNotEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -100,13 +100,13 @@ class StirThePrideTest extends BaseCardTest {
 
         castSingleMode(1);
 
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE)).isNotEmpty();
+        assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsDamage())).isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE)).isEmpty();
+        assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsDamage())).isEmpty();
     }
 
     @Test

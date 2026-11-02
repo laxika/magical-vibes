@@ -1203,7 +1203,7 @@ Nothing blocks anything, but three known items outlive the plan:
   planeswalker today and now does the same for a battle. Gating it on `gameQueryService.isCreature` is
   rules-correct for both and is a change on its own merits. *(Done — see "Follow-up: the
   creature-trigger gate", which also caught a third slot in the same block:
-  `ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE`.)*
+  `Triggers.creatureYouControlDealsDamageToCreature()`.)*
 
 ---
 
@@ -1219,7 +1219,7 @@ Death Pits of Rath TMP 127 — *"Whenever a creature is dealt damage, destroy it
 regenerated."*), so a non-creature permanent does not match the trigger event (CR 603.2, verified).
 
 **A third slot in the same block had the identical defect and is fixed here too.**
-`checkAllyDealtDamageToCreatureTriggers` (`ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE`) guards only
+`checkAllyDealtDamageToCreatureTriggers` (`Triggers.creatureYouControlDealsDamageToCreature()`) guards only
 `damageSource != null` and never checks the damaged permanent's type, while all three cards on the slot
 — one per effect type — are worded "deals damage **to a creature**": Greatbow Doyen (MOR 125,
 verified: *"Whenever an Archer you control deals damage to a creature, that Archer deals that much
@@ -1295,7 +1295,7 @@ whole block and was also left alone: its only callers are
 Checked and **not** a defect: `checkCreatureDamageToYouOrYourPermanentTriggers` (Mangara's Equity)
 applies `trigger.damagedPermanentFilter()` through `PredicateEvaluationService` in
 `DamageTriggerCollectorService:480`, so the damaged permanent is already filtered; and
-`checkDealtDamageToCreatureTriggers` (`ON_DEALT_DAMAGE`, Nested Ghoul) is self-referential — the
+`checkDealtDamageToCreatureTriggers` (`Triggers.dealtDamage()`, Nested Ghoul) is self-referential — the
 watcher *is* the damaged permanent, so "whenever this is dealt damage" is correct for any type.
 
 ---

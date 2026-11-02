@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "435")
@@ -30,7 +30,7 @@ public class MaarikaBrutalGladiator extends Card {
         PermanentPredicate noncreatureNonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
                 new SacrificePermanentsEffect(1, noncreatureNonland, SacrificeRecipient.TARGET_PLAYER));
     }
 }

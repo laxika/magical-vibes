@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ import java.util.List;
 public class GoblinLackey extends Card {
 
     public GoblinLackey() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new MayEffect(
+        addTrigger(Triggers.dealsDamageToPlayer(), new MayEffect(
                 new PutCardToBattlefieldEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardIsPermanentPredicate(),

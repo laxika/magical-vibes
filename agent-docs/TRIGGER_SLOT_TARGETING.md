@@ -128,7 +128,7 @@ combat damage step is processed.
 | `Triggers.dies(HAUNTED)` | The trigger pipeline matches the cards in exile that haunted the departed permanent (`ZoneChangeEvent.hauntedBy`); `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.HAUNTED`) then uses the death-trigger target queue for targeted effects | Death |
 | `Triggers.creatureDies(EQUIPPED)` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
 | `Triggers.equippedCreatureDealsCombatDamage()` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
-| `ON_ENCHANTED_PLAYER_DEALT_DAMAGE` | `TriggerCollectionService.checkEnchantedPlayerDealtDamageTriggers` + `DamageTriggerCollectorService.handleEnchantedPlayerDealtDamage` | Damage (non-targeting) |
+| `Triggers.enchantedPlayerDealtDamage()` | `TriggerCollectionService.checkEnchantedPlayerDealtDamageTriggers` + `DamageTriggerCollectorService.handleEnchantedPlayerDealtDamage` | Damage (non-targeting) |
 | `Triggers.transforms(null, ObjectRelation.EQUIPPED)` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_EQUIPMENT_ATTACHED_TO_CREATURE` | `TriggerCollectionService.checkEquipmentAttachedTriggers` (non-targeting; called by `EquipSupport.attachEquipment` and for permanents entering already attached) | Attachment |
 | `Triggers.transforms(null, ObjectRelation.YOU_CONTROL)` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
@@ -153,8 +153,8 @@ combat damage step is processed.
 | `Triggers.becomesBlocked()` (granted combat-opponent effects) | Temporary or persistent granted effects implementing `CombatOpponentReferencingEffect` are collected once for each declared blocker and auto-reference that blocker. They are omitted when an effect makes a creature blocked without a blocker. | Declare blockers |
 | `Triggers.attacks()` (graveyard-targeting) | `CombatAttackService.declareAttackers` routes effects whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` (e.g. Graven Abomination's `ExileGraveyardCardsEffect(TARGET_CARDS_OPPONENT_GRAVEYARD)`) to `GraveyardTargetingService.handleAttackGraveyardTargeting` — chooses from the defending player's graveyard (from the attacker's `attackTarget`) as the trigger goes on the stack. Dynamic mana-value caps on return effects are evaluated here for target selection and re-evaluated by the return handler at resolution. No legal target ⇒ trigger skipped (CR 603.3c). Exception: a `CastTargetInstantOrSorceryFromGraveyardEffect` (The Dawning Archaic) routes to `handleAttackGraveyardCastTargeting` instead, which picks the graveyards from the effect's own `GraveyardSearchScope` | Attack |
 | `Triggers.attacks()` (two-target counter move) | `CombatAttackService.declareAttackers` routes any trigger whose effect implements the marker `AttackCounterMoveEffect` (Decimator Beetle's `RemoveAndPutCounterOnAttackEffect`) to the bespoke two-step `AttackCounterMoveFirstTarget` → `AttackCounterMoveSecondTarget` flow, because the normal Attack pipeline collects only ONE target. Stage 1 = a creature you control; stage 2 = up to one creature the defending player controls (choose yourself to decline). Drained in `AutoPassService`; both stages filter targetability via `TargetLegalityService.checkSpellPermanentTargetableReason`; the two chosen ids land on the entry's flat `targetIds` (0, 1) | bespoke |
-| `ON_DEALT_DAMAGE` (targeting effects) | `DamageTriggerCollectorService` routes targeted effects through `SpellTargetTriggerAnyTarget` with the card's own `TargetFilter`; mandatory targets are chosen as the trigger goes on the stack, while targeted `MayEffect`s preserve the separate resolution-time may choice. The damage amount is carried as the triggered entry's X payload. Non-targeting effects keep the plain entry from `handleDealtDamageDefault` (damaged permanent as `targetId`, damage amount on `eventValue`) | Spell target |
-| `ON_NONCOMBAT_DAMAGE_TO_SELF` | `DamageSupport` calls `TriggerCollectionService.checkNoncombatDamageToSelfTriggers` after noncombat damage to a permanent; the shared damage collector queues the effect with the damage amount on `eventValue`. Combat damage is collected separately and never checks this slot | Damage (non-targeting by default) |
+| `Triggers.dealtDamage()` (targeting effects) | `DamageTriggerCollectorService` routes targeted effects through `SpellTargetTriggerAnyTarget` with the card's own `TargetFilter`; mandatory targets are chosen as the trigger goes on the stack, while targeted `MayEffect`s preserve the separate resolution-time may choice. The damage amount is carried as the triggered entry's X payload. Non-targeting effects keep the plain entry from `handleDealtDamageDefault` (damaged permanent as `targetId`, damage amount on `eventValue`) | Spell target |
+| `Triggers.dealtNoncombatDamage()` | `DamageSupport` calls `TriggerCollectionService.checkNoncombatDamageToSelfTriggers` after noncombat damage to a permanent; the shared damage collector queues the effect with the damage amount on `eventValue`. Combat damage is collected separately and never checks this slot | Damage (non-targeting by default) |
 | `Triggers.blocks()` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect's `targetSpec()` includes permanents (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. `TriggeringPermanentConditionalEffect` wrappers are checked against the blocked attacker at trigger creation and unwrapped when they match (Arrogant Bloodlord). Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental - "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
 | `Triggers.blocks()` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect's `targetSpec()` includes permanents (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental — "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
 | `Triggers.creatureYouControlBecomesBlocked()` (targeting variants) | `CombatBlockService.checkAllyBecomesBlockedTriggers` queues effects whose `targetSpec()` includes permanents or players through the shared `AttackTriggerTarget` pipeline; the watching permanent is the source for damage and other source-dependent effects. Non-targeting effects retain the blocked creature as `sourcePermanentId`. | Declare blockers |
@@ -227,8 +227,8 @@ combat damage step is processed.
 | `Triggers.youCastSpell()` / `Triggers.playerCastsSpell()` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `Triggers.youCopySpell()` / `Triggers.opponentCopiesSpell()` (targeting variants) | `TriggerCollectionService.checkSpellCopyTriggers` + `SpellCastTriggerCollectorService` | Spell-target when `SpellCopyTriggerEffect` carries a `TargetFilter`; otherwise non-targeting |
 | `Triggers.youCastThisSpell()` (targeting variants) | `TriggerCollectionService.checkSpellCastTriggers` | Spell-target (single); multi-target (`maxTargets > 1`) reuses `ETBTokenMultiTargetTrigger` |
-| `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
-| `ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT` | `TriggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers` + `DamageTriggerCollectorService` | Non-targeting; source permanent and controller are bound in the queued may ability |
+| `Triggers.permanentDealsDamageToYou()` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
+| `Triggers.sourceOpponentControlsDealsDamageToYouOrYourPermanent()` | `TriggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers` + `DamageTriggerCollectorService` | Non-targeting; source permanent and controller are bound in the queued may ability |
 | `Triggers.creatureDealsCombatDamageToYou()` | `TriggerCollectionService.queueCreatureCombatDamageToYouTriggers` — never targets; the damaging creature is baked in as the stack entry's `targetId` with `nonTargeting = true`, so no pending-choice is queued. Teysa, Envoy of Ghosts. | None (baked-in subject) |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain; the legacy creature/player path is used when no card-level permanent target filter is declared, while declared permanent filters are evaluated for target selection |
 | `ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` + `MiscTriggerCollectorService` | Life-gain |
@@ -266,9 +266,9 @@ The controller-draw slots are an exception when an effect declares a target: any
 `Triggers.upkeep(ActivePlayer.YOU) from the graveyard`, `Triggers.upkeep(ActivePlayer.ANY)`, `Triggers.upkeep(ActivePlayer.ANY) from exile`, `Triggers.upkeep(ActivePlayer.YOU) from exile`, `Triggers.upkeep(ActivePlayer.YOU) from exile`, `Triggers.upkeep(ActivePlayer.OPPONENT)`,
 `Triggers.creatureDies(ANY)`,
 `Triggers.nontokenCreatureDies(YOU_CONTROL)`, `Triggers.nontokenCreatureDies(ANY)`, `Triggers.creatureDies(OPPONENT_CONTROLS)`,
-`Triggers.dealsCombatDamageToPlayer()` (when no target is declared), `Triggers.dealsCombatDamageToCreature()`, `ON_DAMAGE_TO_PLAYER`,
+`Triggers.dealsCombatDamageToPlayer()` (when no target is declared), `Triggers.dealsCombatDamageToCreature()`, `Triggers.dealsDamageToPlayer()`,
 `Triggers.equippedCreatureDealsCombatDamage()`, `ON_EQUIPMENT_ATTACHED_TO_CREATURE`,
-`ON_SELF_DEALS_DAMAGE`, `ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE`, `Triggers.becomesBlocked()` (only the non-targeting flavour; a
+`Triggers.dealsDamage()`, `Triggers.instantOrSorceryYouControlDealsDamage()`, `Triggers.becomesBlocked()` (only the non-targeting flavour; a
 permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the mapping table above),
 `Triggers.drawStep(ActivePlayer.YOU)`, `Triggers.drawStep(ActivePlayer.ANY)`,
 `ON_CONTROLLER_DRAWS` (only the non–any-target flavour; the any-target variant is routed through the
@@ -368,7 +368,7 @@ reuses `TriggerTargetCollector.Options.END_STEP`)),
 `Triggers.phasesOut(null, ObjectRelation.ANOTHER)` (The War Doctor; global non-targeting watcher dispatched before
 the phased-out permanent is removed), and `Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANY)` (The War Doctor; global non-targeting
 watcher dispatched after a non-token card enters exile),
-`ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
+`Triggers.enchantedCreatureDealtDamage()`,
 `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)`, `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)`,
 `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
 `ON_ANY_PLAYER_SHUFFLES_LIBRARY`,
@@ -385,9 +385,9 @@ your control" — checked in `TriggerCollectionService.checkAllyEnchantmentEnter
 `BattlefieldEntryService.processCreatureETBEffects`, skips the entering permanent itself; gate by subtype
 with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Whenever a Cartouche you control enters"),
 `Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS)`,
-`ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE`, `GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER`,
-`ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER`,
-`ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT`,
+`Triggers.opponentDealtNoncombatDamage()`, `Triggers.opponentDealtDamageByRedInstantSorceryOrPlaneswalkerYouControl() from the graveyard`,
+`Triggers.creaturesYouControlDealDamageToPlayer()`,
+`Triggers.creaturesYouControlDealDamageToOpponent()`,
 `Triggers.creatureYouControlDealsCombatDamageToPlayer()`,
 `Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY)` (The Wise Mothman; fires once when a mill event contains one or more
 nonland cards, regardless of which player milled them),
@@ -412,7 +412,7 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, `STATE_TRIGGERED`, `Triggers.beginningOfCombat(ActivePlayer.YOU)`,
 `Triggers.beginningOfCombat(ActivePlayer.ANY)`, `Triggers.beginningOfCombat(ActivePlayer.OPPONENT)`,
-`ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `Triggers.youCastSpell() from the graveyard`,
+`Triggers.creatureOpponentControlsDealtDamage()`, `Triggers.youCastSpell() from the graveyard`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
 `ON_SELF_TRAINS` (Savior of Ollenbock; fires only when training successfully puts its +1/+1 counter on the source),
@@ -755,15 +755,15 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "At the beginning of each player's upkeep, if this card is suspended, ..." | `Triggers.upkeep(ActivePlayer.ANY) from exile` | Every player's upkeep while the card is exiled with a positive time-counter entry | Curse of the Cabal (`TSP`) |
 | "At the beginning of your upkeep, if this card is exiled with a scream counter on it, remove a scream counter from it. If there are no more scream counters on it, put it into your graveyard and each player returns all creature cards from their graveyard to the battlefield." | `Triggers.upkeep(ActivePlayer.YOU) from exile` | The card owner's upkeep while it is exiled with a positive scream-counter entry; the last-counter handler moves it to its owner's graveyard and inserts the existing mass-reanimation effect | All Hallow's Eve (`LEG`) |
 | "When enchanted creature dies, ..." | `Triggers.dies(ObjectRelation.ENCHANTED)` | Enchanted creature goes to graveyard | Necrotic Plague (return effect), Banewasp Affliction (life loss = toughness), Creature Bond (damage = toughness), Death Watch (lose life = power + gain life = toughness) |
-| "Whenever enchanted creature is dealt damage, ..." | `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | Enchanted creature is dealt damage (combat or non-combat) | Spiteful Shadows |
-| "Whenever enchanted creature deals damage to a creature, ..." | `ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE` | Enchanted creature deals damage to another creature (combat or non-combat); the damaged creature is captured as a non-targeting `targetId` | Venomous Fangs |
+| "Whenever enchanted creature is dealt damage, ..." | `Triggers.enchantedCreatureDealtDamage()` | Enchanted creature is dealt damage (combat or non-combat) | Spiteful Shadows |
+| "Whenever enchanted creature deals damage to a creature, ..." | `Triggers.enchantedCreatureDealsDamageToCreature()` | Enchanted creature deals damage to another creature (combat or non-combat); the damaged creature is captured as a non-targeting `targetId` | Venomous Fangs |
 | "Whenever enchanted creature attacks and isn't blocked, ..." | `Triggers.enchantedCreatureAttacksUnblocked()` | Enchanted attacker ends up unblocked (declare-blockers step). Non-targeting effects use `sourcePermanentId`=enchanted attacker and `targetId`=defending player. Permanent-targeting `MayEffect`s defer target selection and use the enchanted creature's controller for the may choice | Cloak of Confusion, Farrel's Mantle |
-| "Whenever a creature is dealt damage, ..." (any creature) | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature is dealt damage (combat or non-combat). Queued entry targets the damaged creature | Death Pits of Rath |
-| "Whenever a permanent you control is dealt damage, ..." | `ON_ANY_PERMANENT_DEALT_DAMAGE` | Any permanent is dealt damage (combat or non-combat); the watching permanent's controller chooses any target as the trigger is put on the stack | Howlpack Avenger |
+| "Whenever a creature is dealt damage, ..." (any creature) | `Triggers.creatureDealtDamage()` | Any creature is dealt damage (combat or non-combat). Queued entry targets the damaged creature | Death Pits of Rath |
+| "Whenever a permanent you control is dealt damage, ..." | `Triggers.permanentYouControlDealtDamage()` | Any permanent is dealt damage (combat or non-combat); the watching permanent's controller chooses any target as the trigger is put on the stack | Howlpack Avenger |
 | "Whenever a creature you control fights, ..." | `ON_ALLY_CREATURE_FIGHTS` | A creature controlled by the watcher’s controller fights; the fighting creature is captured for the triggered effect | Foe-Razer Regent |
 
-**`ON_ANY_CREATURE_DEALT_DAMAGE`, `ON_OPPONENT_CREATURE_DEALT_DAMAGE`,
-`ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE` and `ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE` fire only when the damaged permanent is a creature.** All
+**`Triggers.creatureDealtDamage()`, `Triggers.creatureOpponentControlsDealtDamage()`,
+`Triggers.creatureYouControlDealsDamageToCreature()` and `Triggers.enchantedCreatureDealsDamageToCreature()` fire only when the damaged permanent is a creature.** All
 three are worded around damage dealt *to a creature*, so `DamageSupport.dealCreatureDamage` queues all
 three behind one `gameQueryService.isCreature` gate (CR 603.2 — a trigger fires only when the event
 matches its trigger event). The gate is layer-aware (CR 613.1d), unlike the printed type lines the
@@ -802,7 +802,7 @@ effect is put on the stack.
 the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target
 handling as `ON_CONTROLLER_DRAWS`, but does not fire on later draws in the same turn.
 
-`ON_ANY_CREATURE_DEALT_DAMAGE` also captures the damaged creature's controller as
+`Triggers.creatureDealtDamage()` also captures the damaged creature's controller as
 `triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`
 and `ExileTopCardsMayPlayUntilNextTurnEffect.forTriggeringPermanentController(...)` when a trigger says
 that creature's controller may use their library.
@@ -844,7 +844,7 @@ the planar trigger path uses that group's filter directly rather than walking un
 belonging to the plane's other abilities.
 
 `Triggers.equippedCreatureDealsCombatDamageToPlayer()` fires only when the equipped creature deals combat damage to a player. It uses the Equipment controller and the same targeting pipeline as `Triggers.equippedCreatureDealsCombatDamage()`, which also fires for damage to permanents.
-| `ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE` | `TriggerCollectionService.checkControllerDealtDamageTriggers` when the damage source controller matches the damaged player + `DamageTriggerCollectorService` | The source-control gate is checked at the damage event; the damage amount is carried in `eventValue`, and player-targeting effects use `SpellTargetTriggerAnyTarget` |
+| `Triggers.youAreDealtDamageBySourceYouControl()` | `TriggerCollectionService.checkControllerDealtDamageTriggers` when the damage source controller matches the damaged player + `DamageTriggerCollectorService` | The source-control gate is checked at the damage event; the damage amount is carried in `eventValue`, and player-targeting effects use `SpellTargetTriggerAnyTarget` |
 
 Triggered modal choices check required graveyard and exile targets when offering a mode and again when accepting the choice. TriggerTargetCollector.hasLegalModeTargets reuses the normal exile target collector, including face-up visibility and the effect's card predicate, so an exile mode without an eligible card is omitted (Blade of the Swarm). Chosen-player upkeep watchers recognize static ChooseOpponentOnEnterEffect and retain the chosen player's identity through control changes (Black Vise).
 

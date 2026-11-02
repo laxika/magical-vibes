@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -19,7 +18,7 @@ public class SleepMagic extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addStaticEffect(DoesntUntapEffect.enchanted())
-                .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
+                .addTrigger(Triggers.enchantedCreatureDealtDamage(),
                         new SacrificeSelfEffect());
     }
 }

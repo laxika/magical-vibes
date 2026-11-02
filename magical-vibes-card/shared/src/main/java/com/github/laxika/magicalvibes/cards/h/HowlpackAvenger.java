@@ -2,17 +2,17 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
 public class HowlpackAvenger extends Card {
 
     public HowlpackAvenger() {
-        addEffect(EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE,
+        addTrigger(Triggers.permanentYouControlDealtDamage(),
                 new DealDamageToAnyTargetEffect(new XValue()));
         addActivatedAbility(new ActivatedAbility(
                 false,

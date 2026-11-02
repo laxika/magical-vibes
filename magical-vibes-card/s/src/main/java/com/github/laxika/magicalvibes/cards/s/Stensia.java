@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnPerCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,9 +25,9 @@ public class Stensia extends Card {
         var putCounterOnDamagingCreature = new OncePerTurnPerCreatureTriggerEffect(
                 new PutCounterOnReferencedPermanentEffect(
                         PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, putCounterOnDamagingCreature);
-        addEffect(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, putCounterOnDamagingCreature);
-        addEffect(EffectSlot.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR, putCounterOnDamagingCreature);
+        addTrigger(Triggers.sourceYouControlDealsDamageToOpponent(), putCounterOnDamagingCreature);
+        addTrigger(Triggers.permanentDealsDamageToYou(), putCounterOnDamagingCreature);
+        addTrigger(Triggers.creatureDealsDamageToItsController(), putCounterOnDamagingCreature);
 
         addEffect(EffectSlot.CHAOS_TRIGGERED, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(

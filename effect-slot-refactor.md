@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 3: families 1 to 3 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 4: families 1 to 4 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3146,7 +3146,8 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 
 ### Step 13
 
-Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3.
+Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
+run 4 family 4.
 
 #### Run 1: steps and phases
 
@@ -3502,6 +3503,106 @@ agent-docs (1,220 lines); the skills and `ARCHITECTURE.md` were written by hand.
   injected in `CombatDamageServiceTest`, …) and the known ones in `CardImmutabilityArchTest`,
   `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 13 run 2.
+- The full suite was not run here.
+
+#### Run 4: damage
+
+The 40 damage constants are gone: `ON_DAMAGE_TO_PLAYER`, `ON_DAMAGE_TO_OPPONENT`, `ON_SELF_DEALS_DAMAGE`, `ON_DEALT_DAMAGE`,
+`ON_NONCOMBAT_DAMAGE_TO_SELF`, the four enchanted-creature and the enchanted-player slots, the "a creature / permanent /
+creature an opponent controls is dealt damage" slots and the three excess-damage slots, the ally-creature-to-creature
+and to-planeswalker slots, the "you're dealt damage" slots (any source, by a source you control, by an opponent's
+source, prevented), the opponent-dealt-damage slots, the ally-source-to-opponent / player / creature slots and their
+noncombat forms, the "one or more creatures you control deal damage" slots, the any-source and instant-or-sorcery
+slots, the "you or a permanent you control" slots, the planar "deals damage to its controller" slot and the three
+`GRAVEYARD_` forms. Family 5 (counters) is next; families 5 to 11 are left.
+
+**Authoring.**
+
+- `model.trigger.DamageTrigger(DamageEvent event, ObjectRelation relation)`: damage is dealt, combat or noncombat
+  (**CR 120.1**, **CR 120.2**, checked), excess damage (**CR 120.10**, checked) or damage to you is prevented
+  (**CR 615.1**, checked). `DamageEvent` has one value per event and recipient (`DEALS_DAMAGE`, `DEALS_DAMAGE_TO_PLAYER`,
+  `DEALT_DAMAGE`, `DEALT_NONCOMBAT_DAMAGE`, `CREATURE_DEALT_DAMAGE`, `YOU_DEALT_DAMAGE`, `ENCHANTED_PLAYER_DEALT_DAMAGE`,
+  `DAMAGE_TO_YOU_PREVENTED`, …); the relation names the damage source for a "deals" event and for a player being dealt
+  damage, and the damaged permanent for a permanent's "is dealt" event. The combat-only forms stay `CombatTrigger`s.
+- One named `Triggers` factory per slot reading (39; the graveyard form of "a source you control deals noncombat damage
+  to an opponent" reuses the battlefield one with a `TriggerCondition` zone): `dealsDamage()`, `dealsDamageToPlayer()`,
+  `dealsDamageToOpponent()`, `dealtDamage()`, `dealtNoncombatDamage()`, `enchantedCreatureDealtDamage()`,
+  `creatureDealtDamage()`, `permanentYouControlDealtDamage()`, `creatureYouControlDealsDamageToCreature()`,
+  `youAreDealtDamage()`, `youAreDealtDamageBySourceOpponentControls()`, `permanentDealsDamageToYou()`,
+  `sourceYouControlDealsDamageToOpponent()`, `sourceYouControlDealsNoncombatDamageToOpponent()`,
+  `instantOrSorceryYouControlDealsDamage()`, … (`scripts/step13-damage-slots.tsv` maps each slot to its factory and
+  zone).
+- **Kept as the slots were:** on an Aura or Equipment the `THIS` forms of `dealsDamageToPlayer()` /
+  `dealsDamageToOpponent()` are the attached creature's. `creatureYouControlDealsDamageToCreature()` stays the old
+  slot's mixed bag: its effect says whether it is "this creature" (most of its 29 cards), "a creature you control",
+  "equipped creature" (Giant's Skewer, Sword of Kaldra) or "a creature" under any player's control (Toxin Sliver), as
+  the collector's effect-class checks did. `permanentYouControlDealtDamage()` is narrowed by its effect ("a Dragon you
+  control", "this or a creature it's paired with"), `sourceDealsDamage()` and `creatureDealsDamageToYouOrYourPermanent()`
+  filter their source in the effect, and the planar `creatureDealsDamageToItsController()` keeps the battlefield default
+  (planes are read zone-agnostically, run 1's note). Step 14 or the step that moves damage onto rules events splits them.
+- `GrantEffectToTargetEffect.toEnchantedPermanent` takes an `Ability` (its only user, Genju of the Fields, grants
+  `dealsDamage()`); the slot form is gone. `LegacySlotGrouping.ALL` lost its three enchanted-creature slots.
+- `GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffectHandler` binds the caster into the granted ability with
+  `LegacySlots.withEffect` instead of rebuilding the grant from its slot, which a real trigger doesn't have (Hellish
+  Rebuke's granted `dealsDamageToPlayer()` ability was lost; its card test caught it).
+
+**No rules event, no index.** As in runs 1 to 3, the damage collectors in `TriggerCollectionService`, `DamageSupport`
+and `CombatDamageService` still run where the slots were collected. `service/trigger/DamageWatch` (a `TriggerWatch`)
+has one constant per old slot, naming its trigger and the zone the collector reads. The 95 handler registrations moved
+from `@CollectsTrigger(slot = …)` to `@CollectsDamageTrigger(watch = …)` (`scripts/step13-damage-rekey.py`), scanned by
+`TriggerCollectorRegistry` and `GameEngineConfig`. The readers were converted by `scripts/step13-damage-readers.py`
+(run 3's reader script on this family's TSV); by hand: the methods that took a damage slot take a `DamageWatch`
+(`checkDamageToCreatureTriggers`, the excess-damage watch list, the ally-source-to-opponent-or-player loop,
+`dispatchPlanarDamageTrigger`), `checkAnyPermanentDealtDamageTriggers` uses `dispatchWatch`, and Klement's
+specialization adds `dealtDamage()`. Grouping, target routing, wrapper checks, face-down and ability-loss checks are
+unchanged, so the run makes no rules change. Shadow mode was not run, for run 1's reason.
+
+**Cards.** `scripts/step13-damage-triggers.py` (run 3's script reading the damage TSV, with
+`GrantEffectToTargetEffect.toEnchantedPermanent` as one more grant head) converted 295 card classes (the step 1
+inventory's count) and 2 card tests, one ability per registration in the old order, any `TriggerMode` kept. Nothing
+needed `MANUAL`. Card comments naming a slot name its factory. The domain effects' Javadoc that named a slot names its
+factory (a one-off rewrite of `{@code SLOT}` / `{@link EffectSlot#SLOT}`); engine Javadoc links point at the
+`DamageWatch` constant, and engine comments keep the slot name, which is the watch constant's.
+`scripts/step13-damage-docs.py` rewrote agent-docs (274 lines); the skills and `ARCHITECTURE.md` were written by hand.
+`effect-slot-inventory.md` was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the damage collectors still read their wrappers (`TriggeringPermanentConditionalEffect` for "one or more
+  Heroes", "a Dragon you control" and the like, `OncePerTurnTriggerEffect`, `OncePerTurnPerCreatureTriggerEffect`
+  (Stensia), `PerDamageSourceTriggerEffect`, intervening-if `ConditionalEffect`s) and several handler-enforced filters
+  (the source must be one you control for some `opponentDealtNoncombatDamage()` and `sourceDealsDamage()` handlers, the
+  damaged permanent must be yours for `permanentYouControlDealtDamage()`).
+- Step 15: the `DamageSourceControllerAwareEffect`, `DamageSourceAwareEffect`, `CombatDamageDealerAwareEffect` and
+  `CombatDamageAmountAwareEffect` bindings and the `Damaged…` / `DamageSource…` effects read the event there.
+- The mixed readings listed under "Kept as the slots were".
+
+**Tests changed.**
+
+- New `DamageTriggerTest` (`model/trigger/`): default zone, the factories' events and relations, the damage triggers
+  differ from the combat ones, null rejection, a card's damage abilities read by zone.
+- New `DamageWatchTest`: every damage, combat and spell-and-ability watch has its own (trigger, zone) pair, and a watch
+  reads only the abilities of its zone.
+- `DamageTriggerCollectorServiceTest`, `MiscTriggerCollectorServiceTest` and `TriggerCollectorRegistryTest` dispatch to
+  the watches (by the reader script); `DamageTriggerCollectorServiceTest`'s three hand-built cards add the trigger.
+- `TurnCleanupServiceTest` registers its temporary global ability with `creatureDealtDamage()`.
+- By script: `GenjuOfTheFieldsTest` and `StirThePrideTest` read `getTemporaryTriggerEffects(Triggers.dealsDamage())`.
+- `LegacySlotTriggerTest`'s per-slot case runs 40 fewer times (it is parameterised over `EffectSlot.values()`).
+
+**Test runs.**
+
+- Card: every test class of a converted card, the back-face cards' front-face tests and every card test that
+  constructs one (446 classes, 3,883 tests): all passing after the two fixes above. The first run had failed
+  `HellishRebukeTest` (5, the lost grant) and `BloodfeatherPhoenixTest` (2: a generator mistake had given
+  `sourceYouControlDealsNoncombatDamageToOpponent()` the instant-or-sorcery event, so the Phoenix's graveyard ability
+  answered the other graveyard reader; `DamageWatchTest` now rejects such a collision).
+- Application: the trigger-model, watch, registry, damage and misc collector, combat damage, turn-cleanup, planar,
+  targeting, pipeline, grant-view, freeze, architecture and simulation-copy classes (24 classes, 797 tests): 75
+  failures, exactly the tests that fail at HEAD (`2138409bdd`, same classes run in a worktree): mock wiring in
+  `CombatDamageServiceTest`, `TargetLegalityServiceTest`, `TurnCleanupServiceTest`, `DamageTriggerCollectorServiceTest`
+  and `PlanechaseServiceTest`, and the known ones in `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and
+  `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 13 run 3.
 - The full suite was not run here.
 
 ## Prompt

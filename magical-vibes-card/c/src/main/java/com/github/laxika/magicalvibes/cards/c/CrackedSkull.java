@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -32,7 +31,7 @@ public class CrackedSkull extends Card {
                         new Fixed(1), List.of(CardType.LAND), List.of(), HandChoiceDestination.DISCARD,
                         false, null, 0, true, false, false, false, false, false));
 
-        addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
+        addTrigger(Triggers.enchantedCreatureDealtDamage(),
                 new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

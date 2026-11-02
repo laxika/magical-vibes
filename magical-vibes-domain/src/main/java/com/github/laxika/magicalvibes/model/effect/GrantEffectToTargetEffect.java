@@ -82,9 +82,8 @@ public record GrantEffectToTargetEffect(
     }
 
     /** Grant to the permanent the source Aura enchants, for the given duration (Genju cycle). */
-    public static GrantEffectToTargetEffect toEnchantedPermanent(EffectSlot slot, CardEffect grantedEffect,
-                                                                 EffectDuration duration) {
-        return new GrantEffectToTargetEffect(slot, grantedEffect, duration, false, GrantScope.ENCHANTED_PERMANENT);
+    public static GrantEffectToTargetEffect toEnchantedPermanent(Ability grantedAbility, EffectDuration duration) {
+        return new GrantEffectToTargetEffect(grantedAbility, duration, false, GrantScope.ENCHANTED_PERMANENT);
     }
 
     /** Grants a triggered ability to the resolving source permanent without targeting it. */

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -31,7 +31,7 @@ public class TandemLookout extends Card {
         // opponent, draw a card."
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
-                new GrantTriggeredAbilityEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
-                        new DrawCardEffect(1), GrantScope.SELF_AND_PAIRED)));
+                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dealsDamageToOpponent(),
+                        new DrawCardEffect(1)), GrantScope.SELF_AND_PAIRED)));
     }
 }

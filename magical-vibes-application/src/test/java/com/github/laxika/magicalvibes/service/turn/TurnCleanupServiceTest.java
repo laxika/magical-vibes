@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -506,8 +507,8 @@ class TurnCleanupServiceTest {
         @DisplayName("Clears temporary global triggered abilities")
         void clearsTemporaryGlobalTriggeredAbilities() {
             gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                    player1Id, createCardWithName("Shriveling Rot"), EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE,
-                    new LoseLifeEffect(1)));
+                    player1Id, createCardWithName("Shriveling Rot"),
+                    new TriggeredAbility(Triggers.creatureDealtDamage(), new LoseLifeEffect(1))));
 
             sut.resetEndOfTurnModifiers(gd);
 

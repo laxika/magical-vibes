@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * Marker for "Whenever this creature deals damage to a creature, destroy that creature"
  * (Cruel Deceiver's granted ability). Registered in
- * {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE}
+ * {@code Triggers.creatureYouControlDealsDamageToCreature()}
  * and self-scoped: it only fires when the permanent holding it is the damage source.
  *
  * <p>Expanded at trigger-collection time into a {@link DestroyTargetPermanentEffect} stack entry

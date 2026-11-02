@@ -143,8 +143,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)
     private boolean handleAllySourceDealtDamageToPlayerTriggeringConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -177,8 +177,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)
     private boolean handleAllyCreatureDealsDamageToPlaneswalker(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToPlaneswalker damageContext =
@@ -216,8 +216,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER)
+    @CollectsDamageTrigger(value = CardEffect.class,
+            watch = DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER)
     private boolean handleCreatureDealsDamageToEnchantedPlaneswalker(TriggerMatchContext match,
             CardEffect trigger, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToPlaneswalker damageContext =
@@ -250,7 +250,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = MayEffect.class, watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleAllyCreatureDealsCombatDamageToCreatureMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
@@ -266,8 +266,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleAllyCreatureDealsDamageToCreatureConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
@@ -306,8 +306,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = DrawCardEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
     private boolean handleAllySourceDealsNoncombatDamageToCreatureDraw(TriggerMatchContext match,
             DrawCardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsNoncombatDamageToCreature damageContext =
@@ -337,8 +337,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = ConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
     private boolean handleAllySourceDealsNoncombatDamageToCreatureConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (match.permanent() == null || (conditional.interveningIf()
@@ -349,8 +349,8 @@ public class DamageTriggerCollectorService {
         return enqueueAllySourceDealsNoncombatDamageToCreature(match, conditional, ctx);
     }
 
-    @CollectsTrigger(value = PerpetuallyBoostCreatureCardInHandEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = PerpetuallyBoostCreatureCardInHandEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE)
     private boolean handleAllySourceDealsNoncombatDamageToCreatureBoost(TriggerMatchContext match,
             PerpetuallyBoostCreatureCardInHandEffect effect, TriggerContext ctx) {
         return enqueueAllySourceDealsNoncombatDamageToCreature(match, effect, ctx);
@@ -386,8 +386,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = PutCountersOnSourceEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleAllyDealtDamageToCreaturePutCounters(TriggerMatchContext match,
             PutCountersOnSourceEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
@@ -412,8 +412,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = CreateTokenEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleSelfDealsDamageToCreatureCreateToken(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
@@ -441,8 +441,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SacrificePermanentsEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = SacrificePermanentsEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleSelfDealsDamageToCreatureAfterExcessDamage(TriggerMatchContext match,
             SacrificePermanentsEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
@@ -508,8 +508,8 @@ public class DamageTriggerCollectorService {
 
     // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ───────────────────────────
 
-    @CollectsTrigger(value = ExileDamagedCreatureEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = ExileDamagedCreatureEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleExileDamagedCreature(TriggerMatchContext match,
             ExileDamagedCreatureEffect exileEffect, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
@@ -542,7 +542,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnDamageSourcePermanentToHandEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    @CollectsDamageTrigger(value = ReturnDamageSourcePermanentToHandEffect.class, watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
     private boolean handleBounceOnDamage(TriggerMatchContext match,
             ReturnDamageSourcePermanentToHandEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
@@ -568,7 +568,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DamageSourceControllerGainsControlOfThisPermanentEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    @CollectsDamageTrigger(value = DamageSourceControllerGainsControlOfThisPermanentEffect.class, watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
     private boolean handleControlTheftOnDamage(TriggerMatchContext match,
             DamageSourceControllerGainsControlOfThisPermanentEffect controlEffect, TriggerContext ctx) {
         TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
@@ -602,7 +602,7 @@ public class DamageTriggerCollectorService {
 
     // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ──────────────────────────
 
-    @CollectsTrigger(value = DestroyDamageSourcePermanentEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    @CollectsDamageTrigger(value = DestroyDamageSourcePermanentEffect.class, watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
     private boolean handleDestroyDamageSourceOnDamage(TriggerMatchContext match,
             DestroyDamageSourcePermanentEffect destroyEffect, TriggerContext ctx) {
         TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
@@ -633,8 +633,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    @CollectsDamageTrigger(value = PutCounterOnReferencedPermanentEffect.class,
+            watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
     private boolean handleCreatureDealsDamageToYouPutCounter(TriggerMatchContext match,
             PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
         if (effect.reference() != PermanentReference.TRIGGERING) return false;
@@ -668,10 +668,10 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
-    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class,
-            slot = EffectSlot.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR)
+    @CollectsDamageTrigger(value = PutCounterOnReferencedPermanentEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = PutCounterOnReferencedPermanentEffect.class,
+            watch = DamageWatch.ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR)
     private boolean handleAllySourceDealsDamageToOpponentPutCounter(TriggerMatchContext match,
             PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
         if (effect.reference() != PermanentReference.TRIGGERING) return false;
@@ -706,8 +706,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileDamageSourcePermanentUntilSourceLeavesEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    @CollectsDamageTrigger(value = ExileDamageSourcePermanentUntilSourceLeavesEffect.class,
+            watch = DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
     private boolean handleExileDamageSourceOnDamage(TriggerMatchContext match,
             ExileDamageSourcePermanentUntilSourceLeavesEffect exileEffect, TriggerContext ctx) {
         TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
@@ -754,8 +754,8 @@ public class DamageTriggerCollectorService {
 
     // ── ON_DEALT_DAMAGE ────────────────────────────────────────────────
 
-    @CollectsTrigger(value = DealDamageToDamageSourceCreatureOrSpellControllerEffect.class,
-            slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = DealDamageToDamageSourceCreatureOrSpellControllerEffect.class,
+            watch = DamageWatch.ON_DEALT_DAMAGE)
     private boolean handleDamageSourceCreatureOrSpellController(
             TriggerMatchContext match, DealDamageToDamageSourceCreatureOrSpellControllerEffect trigger,
             TriggerContext ctx) {
@@ -766,13 +766,13 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-        @CollectsTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
-        @CollectsTrigger(value = DamageSourceControllerGetsPoisonCounterEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
-        @CollectsTrigger(value = DamageSourceControllerMillsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
-        @CollectsTrigger(value = DamageSourceControllerExilesRandomHandCardEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),
-        @CollectsTrigger(value = DamageSourceControllerGainsControlOfDamagedPermanentEffect.class,
-                slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTriggers({
+        @CollectsDamageTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
+        @CollectsDamageTrigger(value = DamageSourceControllerGetsPoisonCounterEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
+        @CollectsDamageTrigger(value = DamageSourceControllerMillsEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
+        @CollectsDamageTrigger(value = DamageSourceControllerExilesRandomHandCardEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE),
+        @CollectsDamageTrigger(value = DamageSourceControllerGainsControlOfDamagedPermanentEffect.class,
+                watch = DamageWatch.ON_DEALT_DAMAGE)
     })
     private boolean handleDamageSourceControllerAware(TriggerMatchContext match,
             DamageSourceControllerAwareEffect trigger, TriggerContext ctx) {
@@ -783,8 +783,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect.class,
-            slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect.class,
+            watch = DamageWatch.ON_DEALT_DAMAGE)
     private boolean handleOpponentDamageSourceControllerAware(TriggerMatchContext match,
             DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -798,7 +798,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToTargetPlayerOrPlaneswalkerEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = DealDamageToTargetPlayerOrPlaneswalkerEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
     private boolean handleDealtDamageTargetPlayerOrPlaneswalker(TriggerMatchContext match,
             DealDamageToTargetPlayerOrPlaneswalkerEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -874,7 +874,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = DealDamageToAnyTargetEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
     private boolean handleDealtDamageToAnyTarget(TriggerMatchContext match,
             DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -901,16 +901,16 @@ public class DamageTriggerCollectorService {
 
     // ── ON_ENCHANTED_CREATURE_DEALT_DAMAGE ─────────────────────────────
 
-    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = DealDamageToAnyTargetEffect.class,
+            watch = DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE)
     private boolean handleAnyPermanentDealtDamageToAnyTarget(TriggerMatchContext match,
             DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.AnyPermanentDealtDamage dc = (TriggerContext.AnyPermanentDealtDamage) ctx;
         return queueAnyPermanentDealtDamageTrigger(match, trigger, dc);
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_PERMANENT_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE)
     private boolean handleAnyPermanentDealtDamageConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AnyPermanentDealtDamage dc = (TriggerContext.AnyPermanentDealtDamage) ctx;
@@ -1007,8 +1007,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
+            watch = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE)
     private boolean handleAnyCreatureDealtDamageToController(TriggerMatchContext match,
             EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect trigger,
             TriggerContext ctx) {
@@ -1040,7 +1040,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = MayEffect.class, watch = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE)
     private boolean handleAnyCreatureDealtDamageMay(TriggerMatchContext match, MayEffect effect,
                                                      TriggerContext ctx) {
         TriggerContext.AnyCreatureDealtDamage dc = (TriggerContext.AnyCreatureDealtDamage) ctx;
@@ -1049,8 +1049,8 @@ public class DamageTriggerCollectorService {
         return enqueueAnyCreatureDealtDamage(match, effect, dc);
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE)
     private boolean handleAnyCreatureDealtDamagePermanentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AnyCreatureDealtDamage dc = (TriggerContext.AnyCreatureDealtDamage) ctx;
@@ -1073,7 +1073,7 @@ public class DamageTriggerCollectorService {
         return enqueueAnyCreatureDealtDamage(match, effect, dc);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE)
     private boolean handleAnyCreatureDealtDamageDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.AnyCreatureDealtDamage dc = (TriggerContext.AnyCreatureDealtDamage) ctx;
@@ -1126,8 +1126,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
+            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageToController(TriggerMatchContext match,
             EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -1164,8 +1164,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureDealsPowerDamageToAnyTargetEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = EnchantedCreatureDealsPowerDamageToAnyTargetEffect.class,
+            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamagePowerTarget(TriggerMatchContext match,
             EnchantedCreatureDealsPowerDamageToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -1186,8 +1186,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureDealsDamageToEachOpponentEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = EnchantedCreatureDealsDamageToEachOpponentEffect.class,
+            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageToEachOpponent(TriggerMatchContext match,
             EnchantedCreatureDealsDamageToEachOpponentEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -1218,13 +1218,13 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = GainLifeEffect.class, watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageGainLife(TriggerMatchContext match, GainLifeEffect effect,
                                                                 TriggerContext ctx) {
         return enqueueEnchantedCreatureDealtDamageTrigger(match, effect, ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageDefault(TriggerMatchContext match, CardEffect effect,
                                                                TriggerContext ctx) {
         return enqueueEnchantedCreatureDealtDamageTrigger(match, effect, ctx);
@@ -1258,8 +1258,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class,
+            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageControllerLosesLife(TriggerMatchContext match,
             EnchantedCreatureControllerLosesLifeEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -1289,8 +1289,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = CreateTokenEffect.class,
+            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageCreateTokens(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -1320,8 +1320,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = DestroyReferencedPermanentEffect.class,
+            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageDestroy(TriggerMatchContext match,
             DestroyReferencedPermanentEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -1354,8 +1354,8 @@ public class DamageTriggerCollectorService {
 
     // ── ON_CONTROLLER_DEALT_DAMAGE (Living Artifact) ───────────────────
 
-    @CollectsTrigger(value = SacrificeSelfEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = SacrificeSelfEffect.class,
+            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageSacrificeSelf(TriggerMatchContext match,
             SacrificeSelfEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
@@ -1377,7 +1377,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1403,8 +1403,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE)
+    @CollectsDamageTrigger(value = CardEffect.class,
+            watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_ALLY_SOURCE)
     private boolean handleControllerDealtDamageByAllySource(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1438,7 +1438,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DAMAGE_PREVENTED)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_CONTROLLER_DAMAGE_PREVENTED)
     private boolean handleControllerDamagePreventedDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1457,8 +1457,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SacrificePermanentsOrLoseGameEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = SacrificePermanentsOrLoseGameEffect.class,
+            watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageSacrificeOrLose(TriggerMatchContext match,
             SacrificePermanentsOrLoseGameEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1486,7 +1486,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = MayEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageMay(TriggerMatchContext match,
             MayEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1510,7 +1510,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RemoveCounterFromSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = RemoveCounterFromSourceEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageRemoveCounter(TriggerMatchContext match,
             RemoveCounterFromSourceEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -1532,29 +1532,29 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = PutCountersOnSelfEffect.class, watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtDamageToOpponentPutCounters(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = MayEffect.class, watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtDamageToOpponentMay(TriggerMatchContext match,
             MayEffect effect, TriggerContext ctx) {
         return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);
     }
 
-    @CollectsTrigger(value = DrawCardIfEventValueAtLeastEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
-    @CollectsTrigger(value = DrawCardIfEventValueAtLeastEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)
+    @CollectsDamageTrigger(value = DrawCardIfEventValueAtLeastEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = DrawCardIfEventValueAtLeastEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)
     private boolean handleAllySourceDealtDamageToOpponentThresholdDraw(
             TriggerMatchContext match, DrawCardIfEventValueAtLeastEffect effect, TriggerContext ctx) {
         return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtDamageToOpponentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount damageContext = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1593,8 +1593,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER)
     private boolean handleAllyCreaturesDealDamageToPlayer(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
         TriggerContext.AllyCreaturesDealDamageToPlayer damageContext =
@@ -1635,8 +1635,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = TriggeringPermanentConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_OPPONENT)
     private boolean handleAllyCreaturesDealDamageToOpponent(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect trigger, TriggerContext ctx) {
         TriggerContext.AllyCreaturesDealDamageToPlayer damageContext =
@@ -1708,8 +1708,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = DealDamageToPlayersEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
     private boolean handleSelfDealsDamageToOpponent(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1735,8 +1735,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
+    @CollectsDamageTrigger(value = DealDamageToPlayersEffect.class,
+            watch = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)
     private boolean handleSelfDealsDamageToCreature(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDealsDamageToCreature dc = (TriggerContext.CreatureDealsDamageToCreature) ctx;
@@ -1761,7 +1761,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = PutCountersOnSelfEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_DAMAGE)
     private boolean handleOpponentDealtDamagePutCounters(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1785,7 +1785,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_DAMAGE)
     private boolean handleOpponentDealtDamageConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1797,7 +1797,7 @@ public class DamageTriggerCollectorService {
         return handleOpponentDealtDamageDefault(match, conditional, ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_DAMAGE)
     private boolean handleOpponentDealtDamageDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1824,7 +1824,7 @@ public class DamageTriggerCollectorService {
 
     // ── ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT (Retaliator Griffin) ────
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ENCHANTED_PLAYER_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_ENCHANTED_PLAYER_DEALT_DAMAGE)
     private boolean handleEnchantedPlayerDealtDamage(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1849,8 +1849,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SacrificePermanentsEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    @CollectsDamageTrigger(value = SacrificePermanentsEffect.class,
+            watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
     private boolean handleControllerDealtDamageByOpponentSacrifice(TriggerMatchContext match,
             SacrificePermanentsEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
@@ -1880,7 +1880,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
     private boolean handleControllerDealtDamageByOpponentConditional(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (conditional.interveningIf()
@@ -1891,13 +1891,13 @@ public class DamageTriggerCollectorService {
         return queueControllerDealtDamageByOpponentTrigger(match, conditional, ctx);
     }
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    @CollectsDamageTrigger(value = MayEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
     private boolean handleControllerDealtDamageByOpponentMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         return queueControllerDealtDamageByOpponentTrigger(match, may, ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
     private boolean handleControllerDealtDamageByOpponentDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         return queueControllerDealtDamageByOpponentTrigger(match, effect, ctx);
@@ -1927,8 +1927,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayEffect.class,
-            slot = EffectSlot.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
+    @CollectsDamageTrigger(value = MayEffect.class,
+            watch = DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
     private boolean handleOpponentSourceDamageToYouOrYourPermanent(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         TriggerContext.SourceDamageToYouOrYourPermanent damage =
@@ -1950,8 +1950,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeUnlessPaysEffect.class,
-            slot = EffectSlot.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
+    @CollectsDamageTrigger(value = LoseLifeUnlessPaysEffect.class,
+            watch = DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
     private boolean handleOpponentSourceDamageLifeUnlessPays(TriggerMatchContext match,
             LoseLifeUnlessPaysEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDamageToYouOrYourPermanent damage =
@@ -1977,7 +1977,7 @@ public class DamageTriggerCollectorService {
 
     // ── ON_ANY_SOURCE_DEALS_DAMAGE (Justice) ───────────────────────────
 
-    @CollectsTrigger(value = ReflectSourceDamageToItsControllerEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = ReflectSourceDamageToItsControllerEffect.class, watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleReflectSourceDamage(TriggerMatchContext match,
             ReflectSourceDamageToItsControllerEffect trigger, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
@@ -2018,8 +2018,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SourceDamageGainLifeForSourceControllerEffect.class,
-            slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = SourceDamageGainLifeForSourceControllerEffect.class,
+            watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleSourceDamageGainLifeForSourceController(TriggerMatchContext match,
             SourceDamageGainLifeForSourceControllerEffect trigger, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
@@ -2052,7 +2052,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = MayPayManaEffect.class, watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleChosenColorSourceDamage(TriggerMatchContext match,
             MayPayManaEffect trigger, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
@@ -2072,8 +2072,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OtherChosenPlayerLosesLifeEffect.class,
-            slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = OtherChosenPlayerLosesLifeEffect.class,
+            watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleOtherChosenPlayerLosesLife(TriggerMatchContext match,
             OtherChosenPlayerLosesLifeEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
@@ -2113,7 +2113,7 @@ public class DamageTriggerCollectorService {
         return triggered;
     }
 
-    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = GainLifeEffect.class, watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleGainLifeOnNoncreatureSourceDamage(TriggerMatchContext match,
             GainLifeEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
@@ -2145,8 +2145,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceCardForColorSourceDamageEffect.class,
-            slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = PutCountersOnSourceCardForColorSourceDamageEffect.class,
+            watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleColorSourceDamagePutCountersOnSourceCard(TriggerMatchContext match,
             PutCountersOnSourceCardForColorSourceDamageEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
@@ -2174,8 +2174,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GhyrsonStarnKelermorphEffect.class,
-            slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = GhyrsonStarnKelermorphEffect.class,
+            watch = DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)
     private boolean handleGhyrsonStarnKelermorph(TriggerMatchContext match,
             GhyrsonStarnKelermorphEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage damage = (TriggerContext.SourceDealsDamage) ctx;
@@ -2217,8 +2217,8 @@ public class DamageTriggerCollectorService {
 
     // ── ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT (Mangara's Equity) ──
 
-    @CollectsTrigger(value = ReflectDamageToChosenColorCreatureEffect.class,
-            slot = EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
+    @CollectsDamageTrigger(value = ReflectDamageToChosenColorCreatureEffect.class,
+            watch = DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT)
     private boolean handleChosenColorCreatureDamageReflection(TriggerMatchContext match,
             ReflectDamageToChosenColorCreatureEffect trigger, TriggerContext ctx) {
         TriggerContext.CreatureDamageToYouOrYourPermanent dc =
@@ -2261,7 +2261,7 @@ public class DamageTriggerCollectorService {
 
     // ── ON_SELF_DEALS_DAMAGE (El-Hajjâj) ───────────────────────────────
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_SELF_DEALS_DAMAGE)
     private boolean handleSelfDealsDamage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
         if (sd.totalDamage() <= 0) return false;
@@ -2328,8 +2328,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToTargetCreatureDamagedPlayerControlsEffect.class,
-            slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = DealDamageToTargetCreatureDamagedPlayerControlsEffect.class,
+            watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
     private boolean handleAllyInstantOrSorceryDealsDamageToOpponent(TriggerMatchContext match,
             DealDamageToTargetCreatureDamagedPlayerControlsEffect effect, TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
@@ -2360,8 +2360,8 @@ public class DamageTriggerCollectorService {
         return triggered;
     }
 
-    @CollectsTrigger(value = DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect.class,
-            slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect.class,
+            watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
     private boolean handleSingleTargetCreatureSpellDealsDamage(TriggerMatchContext match,
             DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect effect,
             TriggerContext ctx) {
@@ -2387,8 +2387,8 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect.class,
-            slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect.class,
+            watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
     private boolean handleAllyInstantOrSorceryDealsDamageToPlayer(TriggerMatchContext match,
             ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect effect,
             TriggerContext ctx) {
@@ -2422,7 +2422,7 @@ public class DamageTriggerCollectorService {
      * source/controller gating is done by the dispatcher; here the watcher permanent simply queues
      * its ability once for the batched damage event.
      */
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
     private boolean handleAllyInstantOrSorceryDealsDamage(TriggerMatchContext match, CardEffect effect,
             TriggerContext ctx) {
         TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
@@ -2664,7 +2664,7 @@ public class DamageTriggerCollectorService {
      * choice is queued here, honouring the card's own target filter. Non-targeting mays keep the
      * plain trigger entry, whose targetId is the damaged permanent itself.
      */
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = MayEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
     private boolean handleDealtDamageMayEffect(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         if (!may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
@@ -2686,7 +2686,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
     private boolean handleDealtDamageConditional(TriggerMatchContext match,
                                                   ConditionalEffect conditional,
                                                   TriggerContext ctx) {
@@ -2703,7 +2703,7 @@ public class DamageTriggerCollectorService {
         return handleDealtDamageDefault(match, conditional, ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
     private boolean handleDealtDamageDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -2728,7 +2728,7 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_NONCOMBAT_DAMAGE_TO_SELF)
+    @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_NONCOMBAT_DAMAGE_TO_SELF)
     private boolean handleNoncombatDamageToSelfDefault(TriggerMatchContext match, CardEffect effect,
                                                        TriggerContext ctx) {
         return handleDealtDamageDefault(match, effect, ctx);
@@ -2810,16 +2810,16 @@ public class DamageTriggerCollectorService {
     }
 
 
-    @CollectsTrigger(value = DealDamageToTargetCreatureDamagedPlayerControlsEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = DealDamageToTargetCreatureDamagedPlayerControlsEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,
             DealDamageToTargetCreatureDamagedPlayerControlsEffect effect, TriggerContext ctx) {
         TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
         return queueAllySourceDealtNoncombatDamageToOpponentTrigger(match, effect, damage);
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = ConditionalEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleConditionalAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;

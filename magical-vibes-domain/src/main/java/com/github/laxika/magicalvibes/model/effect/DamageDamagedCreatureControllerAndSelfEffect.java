@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Marker effect for the {@code ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE} slot, self-scoped
+ * Marker effect for the {@code Triggers.creatureYouControlDealsDamageToCreature()} ability, self-scoped
  * (Bellowing Fiend).
  *
  * <p>"Whenever this creature deals damage to a creature, this creature deals

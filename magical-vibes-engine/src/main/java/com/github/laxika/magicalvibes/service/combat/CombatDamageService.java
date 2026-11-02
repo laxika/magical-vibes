@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.CombatDamagePhase1State;
 import com.github.laxika.magicalvibes.model.CombatDamageState;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -128,6 +127,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
+import com.github.laxika.magicalvibes.service.trigger.DamageWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import java.util.*;
@@ -1964,12 +1964,12 @@ public class CombatDamageService {
         for (Permanent source : state.combatDamageDealt.keySet()) {
             List<CardEffect> effects = new ArrayList<>();
             if (!source.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, source)) {
-                effects.addAll(source.getCard().getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+                effects.addAll(DamageWatch.ON_SELF_DEALS_DAMAGE.effectsOf(source.getCard()));
             }
-            effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
-            effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_SELF_DEALS_DAMAGE));
+            effects.addAll(source.getTemporaryTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+            effects.addAll(source.getPersistentTriggerEffects(DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, DamageWatch.ON_SELF_DEALS_DAMAGE.trigger()));
             state.selfDealsDamageEffects.put(source, effects);
         }
     }
@@ -2093,32 +2093,32 @@ public class CombatDamageService {
             boolean hasPrintedAbilities = !creature.isFaceDown() && !lostAllAbilities && !unattachedEquipment;
             if (hasPrintedAbilities) {
                 allDamageEffects.addAll(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.effectsOf(creature.getCard()));
-                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                allDamageEffects.addAll(DamageWatch.ON_DAMAGE_TO_PLAYER.effectsOf(creature.getCard()));
             }
             if (!attackerId.equals(defenderId)) {
                 if (hasPrintedAbilities) {
-                    allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                    allDamageEffects.addAll(DamageWatch.ON_DAMAGE_TO_OPPONENT.effectsOf(creature.getCard()));
                 }
-                allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                allDamageEffects.addAll(creature.getTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
                 if (!lostAllAbilities) {
-                    allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                    allDamageEffects.addAll(creature.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
                 }
-                allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, creature, attackerId, EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, creature, attackerId, DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
             }
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
             allDamageEffects.addAll(creature.getTemporaryTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
             if (!lostAllAbilities) {
                 allDamageEffects.addAll(creature.getPersistentTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
-                allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                allDamageEffects.addAll(creature.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
             }
             // Combat-damage-to-player triggers granted continuously by a static ability
             // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
             allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                     gameData, creature, attackerId, CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
-            allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, creature, attackerId, EffectSlot.ON_DAMAGE_TO_PLAYER));
+            allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, creature, attackerId, DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
             TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
             int creatureTriggerCopies = 1
@@ -2641,15 +2641,15 @@ public class CombatDamageService {
                 if (CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER.effectsOf(perm.getCard()).isEmpty()) {
                     rawEffects.addAll(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.effectsOf(perm.getCard()));
                 }
-                rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(DamageWatch.ON_DAMAGE_TO_PLAYER.effectsOf(perm.getCard()));
                 rawEffects.addAll(perm.getTemporaryTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
-                rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
                 rawEffects.addAll(perm.getPersistentTriggerEffects(CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER.trigger()));
-                rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_PLAYER.trigger()));
                 if (!ownerId.equals(defenderId)) {
-                    rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
-                    rawEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
-                    rawEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                    rawEffects.addAll(DamageWatch.ON_DAMAGE_TO_OPPONENT.effectsOf(perm.getCard()));
+                    rawEffects.addAll(perm.getTemporaryTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
+                    rawEffects.addAll(perm.getPersistentTriggerEffects(DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger()));
                 }
 
                 // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
@@ -4001,12 +4001,12 @@ public class CombatDamageService {
                         && !gameQueryService.hasLostPrintedAbilities(gameData, target);
                 List<CardEffect> effects = new ArrayList<>();
                 if (hasPrintedAbilities) {
-                    effects.addAll(target.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE));
+                    effects.addAll(DamageWatch.ON_DEALT_DAMAGE.effectsOf(target.getCard()));
                 }
-                effects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
-                effects.addAll(target.getPersistentTriggeredEffects(EffectSlot.ON_DEALT_DAMAGE));
-                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, target, EffectSlot.ON_DEALT_DAMAGE));
+                effects.addAll(target.getTemporaryTriggerEffects(DamageWatch.ON_DEALT_DAMAGE.trigger()));
+                effects.addAll(target.getPersistentTriggerEffects(DamageWatch.ON_DEALT_DAMAGE.trigger()));
+                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, target, DamageWatch.ON_DEALT_DAMAGE.trigger()));
                 List<CardEffect> combatDamageReceivedEffects = new ArrayList<>();
                 if (hasPrintedAbilities) {
                     combatDamageReceivedEffects.addAll(CombatWatch.ON_COMBAT_DAMAGE_TO_SELF.effectsOf(target.getCard()));

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Belltower Sphinx — 4U 2/5 Sphinx with flying and
@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerMillsEf
 public class BelltowerSphinx extends Card {
 
     public BelltowerSphinx() {
-        addEffect(EffectSlot.ON_DEALT_DAMAGE, new DamageSourceControllerMillsEffect());
+        addTrigger(Triggers.dealtDamage(), new DamageSourceControllerMillsEffect());
     }
 }

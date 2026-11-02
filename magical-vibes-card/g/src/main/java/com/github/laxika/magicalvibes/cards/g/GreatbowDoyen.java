@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOR", collectorNumber = "125")
 public class GreatbowDoyen extends Card {
@@ -19,7 +19,7 @@ public class GreatbowDoyen extends Card {
 
         // Whenever an Archer you control deals damage to a creature, that Archer deals that much
         // damage to that creature's controller.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
                 new ReflectAllyDamageToDamagedCreatureControllerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.ARCHER)));
     }

@@ -100,14 +100,14 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Falls back to CardEffect.class default handler")
         void fallsBackToDefaultHandler() {
             boolean[] defaultCalled = {false};
-            registry.register(EffectSlot.ON_DEALT_DAMAGE, CardEffect.class,
+            registry.register(DamageWatch.ON_DEALT_DAMAGE, CardEffect.class,
                     (match, inner, context) -> { defaultCalled[0] = true; return true; });
 
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), null);
             var effect = new DealDamageOnLandTapEffect(1);
             var ctx = new TriggerContext.DamageToCreature(null, 2, UUID.randomUUID());
 
-            boolean result = registry.dispatch(match, EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+            boolean result = registry.dispatch(match, DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(defaultCalled[0]).isTrue();

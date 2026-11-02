@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.t.TheArgentEtchings;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class EleshNorn extends Card {
     public EleshNorn() {
         setBackFaceCard(new TheArgentEtchings());
 
-        addEffect(EffectSlot.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+        addTrigger(Triggers.sourceOpponentControlsDealsDamageToYouOrYourPermanent(),
                 new LoseLifeUnlessPaysEffect(2, 1));
 
         var anotherCreature = new PermanentAllOfPredicate(List.of(

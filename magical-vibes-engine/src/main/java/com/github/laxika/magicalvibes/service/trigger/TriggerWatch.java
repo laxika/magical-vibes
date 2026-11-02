@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import java.util.List;
 
 /**
- * An old slot collector that reads triggered abilities with a real trigger: a {@link SpellAbilityWatch} or a
- * {@link CombatWatch}. It names the trigger the slot's cards were converted to and the zone the collector reads them
- * in, and keys the collector's handlers.
+ * An old slot collector that reads triggered abilities with a real trigger: a {@link SpellAbilityWatch}, a
+ * {@link CombatWatch} or a {@link DamageWatch}. It names the trigger the slot's cards were converted to and the zone
+ * the collector reads them in, and keys the collector's handlers.
  */
 public interface TriggerWatch {
 

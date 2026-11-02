@@ -318,7 +318,7 @@
 | end step draws and creates Treasures for opponents meeting independent turn thresholds | `s/SmugglersShare.java` |
 | upkeep reveals a fresh top card for each opponent, who may pay its mana value in life to exile it | `p/ProtectionRacket.java` + `ProtectionRacketEffect` |
 
-- Lich (2ED 114): static `LoseLifeEqualToLifeTotalAsEntersEffect`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `ON_CONTROLLER_DEALT_DAMAGE`; `ControllerLosesGameEffect` on `Triggers.dies(THIS)`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
+- Lich (2ED 114): static `LoseLifeEqualToLifeTotalAsEntersEffect`; static `CantLoseGameFromLifeEffect` and `NefariousLichLifeGainReplacementEffect`; `SacrificePermanentsOrLoseGameEffect(EventValue, not-token)` on `Triggers.youAreDealtDamage()`; `ControllerLosesGameEffect` on `Triggers.dies(THIS)`. Entry life loss is a replacement, damage sacrifice is triggered, and only a battlefield-to-graveyard departure triggers the explicit loss.
 
 Purpose: quickly find a reference card for the pattern you're implementing. One or two examples per archetype. All paths relative to `cards/`.
 

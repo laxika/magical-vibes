@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,7 @@ public class SporewebWeaver extends Card {
 
         // Whenever this creature is dealt damage, you gain 1 life and create a 1/1 green Saproling
         // creature token.
-        addEffect(EffectSlot.ON_DEALT_DAMAGE, SequenceEffect.of(
+        addTrigger(Triggers.dealtDamage(), SequenceEffect.of(
                 new GainLifeEffect(1),
                 new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.SAPROLING), Set.of(), Set.of())));

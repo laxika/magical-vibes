@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -25,8 +24,8 @@ public class ShrivelingRot extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, whenever a creature is dealt damage, destroy it",
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                                EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE,
-                                new DestroyTargetPermanentEffect())),
+                                new TriggeredAbility(Triggers.creatureDealtDamage(),
+                                new DestroyTargetPermanentEffect()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, whenever a creature dies, that creature's controller loses life equal to its toughness",
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * When it fires as an {@code ON_DAMAGE_TO_PLAYER} triggered ability, registers a delayed trigger
+ * When it fires as an {@code Triggers.dealsDamageToPlayer()} triggered ability, registers a delayed trigger
  * against the damaged player: at the beginning of that player's next draw step they lose
  * {@code lifeLoss} life unless they pay {@code {payAmount}} before that draw step. Used by Nafs Asp
  * (1 life / {1}).

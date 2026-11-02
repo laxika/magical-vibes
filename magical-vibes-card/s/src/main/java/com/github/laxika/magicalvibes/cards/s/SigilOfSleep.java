@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentDamagedPlayerControlsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "UDS", collectorNumber = "46")
 @CardRegistration(set = "DDI", collectorNumber = "25")
@@ -15,7 +15,7 @@ public class SigilOfSleep extends Card {
         target(TargetFilters.creature())
                 // Whenever enchanted creature deals damage to a player, return target creature that
                 // player controls to its owner's hand.
-                .addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+                .addTrigger(Triggers.dealsDamageToPlayer(),
                         new ReturnPermanentDamagedPlayerControlsToHandEffect(new PermanentIsCreaturePredicate()));
     }
 }

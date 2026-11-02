@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class OliviasAttendants extends Card {
 
     public OliviasAttendants() {
-        addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, CreateTokenEffect.ofBloodToken(new EventValue()));
+        addTrigger(Triggers.dealsDamage(), CreateTokenEffect.ofBloodToken(new EventValue()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",

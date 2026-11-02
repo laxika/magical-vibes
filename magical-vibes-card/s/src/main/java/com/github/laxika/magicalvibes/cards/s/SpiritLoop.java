@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -19,7 +18,7 @@ public class SpiritLoop extends Card {
 
     public SpiritLoop() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE,
+                .addTrigger(Triggers.enchantedCreatureDealsDamage(),
                         new GainLifeEffect(new EventValue(), GainLifeRecipient.TRIGGERING_PLAYER));
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
                 ReturnCardFromGraveyardEffect.builder()

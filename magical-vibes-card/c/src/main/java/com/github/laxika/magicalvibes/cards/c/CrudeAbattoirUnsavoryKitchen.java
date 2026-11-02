@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class CrudeAbattoirUnsavoryKitchen extends Card {
                 new TriggeringRoomDoorConditionalEffect(0,
                         new DealDamageToTargetCreatureEffect(2)));
 
-        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE,
+        addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToCreature(),
                 new ConditionalEffect(
                         new SourceRoomDoorUnlocked(1),
                         new PerpetuallyBoostCreatureCardInHandEffect(2, Set.of(Keyword.HASTE))));

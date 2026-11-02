@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BloodHound extends Card {
 
     public BloodHound() {
-        addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE,
+        addTrigger(Triggers.youAreDealtDamage(),
                 new MayEffect(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()),
                         "Put that many +1/+1 counters on Blood Hound?"));

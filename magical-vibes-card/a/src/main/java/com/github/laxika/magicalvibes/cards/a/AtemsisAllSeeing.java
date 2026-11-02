@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOwnHandThenDamagedPlayerLosesGameIfSixDifferentManaValuesEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class AtemsisAllSeeing extends Card {
                 ),
                 "{2}{U}, {T}: Draw two cards, then discard a card."
         ));
-        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.dealsDamageToOpponent(),
                 new MayEffect(
                         new RevealOwnHandThenDamagedPlayerLosesGameIfSixDifferentManaValuesEffect(),
                         "Reveal your hand?"

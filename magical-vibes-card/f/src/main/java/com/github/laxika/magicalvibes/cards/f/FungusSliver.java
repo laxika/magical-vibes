@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TSP", collectorNumber = "195")
 @CardRegistration(set = "H09", collectorNumber = "21")
@@ -18,8 +19,8 @@ public class FungusSliver extends Card {
     public FungusSliver() {
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
         GrantTriggeredAbilityEffect damagedSliverGetsCounter = new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_DEALT_DAMAGE,
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new TriggeredAbility(Triggers.dealtDamage(),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 sliver);
 

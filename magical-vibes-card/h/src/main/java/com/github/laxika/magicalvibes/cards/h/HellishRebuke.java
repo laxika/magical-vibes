@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFC", collectorNumber = "26")
 public class HellishRebuke extends Card {
@@ -17,9 +18,9 @@ public class HellishRebuke extends Card {
     public HellishRebuke() {
         addSpellEffect(new GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect(
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_DAMAGE_TO_PLAYER,
+                        new TriggeredAbility(Triggers.dealsDamageToPlayer(),
                         new DamagedPlayerOnlyEffect(null,
-                                SequenceEffect.of(new SacrificeSelfEffect(), new LoseLifeEffect(2))),
+                                SequenceEffect.of(new SacrificeSelfEffect(), new LoseLifeEffect(2)))),
                         GrantScope.SELF)));
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "116")
 @CardRegistration(set = "HML", collectorNumber = "36a")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ReefPirates extends Card {
 
     public ReefPirates() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dealsDamageToOpponent(), new MillEffect(1, MillRecipient.TARGET_PLAYER));
     }
 }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -14,7 +14,7 @@ import java.util.Set;
 public class OvergrownArmasaur extends Card {
 
     public OvergrownArmasaur() {
-        addEffect(EffectSlot.ON_DEALT_DAMAGE, new CreateTokenEffect(
+        addTrigger(Triggers.dealtDamage(), new CreateTokenEffect(
                 "Saproling", 1, 1,
                 CardColor.GREEN,
                 List.of(CardSubtype.SAPROLING),

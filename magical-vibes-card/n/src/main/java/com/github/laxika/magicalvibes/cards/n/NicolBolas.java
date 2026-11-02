@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -31,7 +30,7 @@ public class NicolBolas extends Card {
                         true));
 
         // Whenever Nicol Bolas deals damage to an opponent, that player discards their hand.
-        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.dealsDamageToOpponent(),
                 new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER));
     }
 }

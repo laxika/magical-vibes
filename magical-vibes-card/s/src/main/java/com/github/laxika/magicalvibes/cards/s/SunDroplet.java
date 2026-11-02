@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -19,7 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SunDroplet extends Card {
 
     public SunDroplet() {
-        addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE,
+        addTrigger(Triggers.youAreDealtDamage(),
                 new PutCountersOnSelfEffect(CounterType.CHARGE, new EventValue()));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new MayEffect(

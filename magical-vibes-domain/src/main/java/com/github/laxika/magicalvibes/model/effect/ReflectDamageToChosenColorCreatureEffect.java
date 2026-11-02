@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Watcher marker for {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT}:
+ * Watcher marker for {@code Triggers.creatureDealsDamageToYouOrYourPermanent()}:
  * whenever a creature whose colors include the source permanent's chosen color deals damage to the
  * source's controller, or to a permanent they control matching {@code damagedPermanentFilter}, the
  * source permanent deals that much damage back to that creature.

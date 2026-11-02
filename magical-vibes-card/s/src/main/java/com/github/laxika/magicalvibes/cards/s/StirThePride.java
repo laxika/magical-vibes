@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,8 +26,8 @@ public class StirThePride extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, creatures you control gain \"Whenever this creature deals damage, you gain that much life.\"",
                         new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                                EffectSlot.ON_SELF_DEALS_DAMAGE,
-                                new GainLifeEffect(new EventValue())))
+                                new TriggeredAbility(Triggers.dealsDamage(),
+                                new GainLifeEffect(new EventValue()))))
         )));
     }
 }

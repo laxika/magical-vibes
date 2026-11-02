@@ -2824,13 +2824,13 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
+    @CollectsDamageTrigger(value = BoostSelfEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
         return enqueueNoncombatDamageTrigger(match, effect);
     }
 
-    @CollectsTrigger(value = BoostAllOwnCreaturesEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
+    @CollectsDamageTrigger(value = BoostAllOwnCreaturesEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageBoostAllOwnCreatures(TriggerMatchContext match,
             BoostAllOwnCreaturesEffect effect, TriggerContext ctx) {
         return enqueueNoncombatDamageTrigger(match, effect);
@@ -2855,7 +2855,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
+    @CollectsDamageTrigger(value = DrawCardEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageDraw(TriggerMatchContext match,
             DrawCardEffect effect, TriggerContext ctx) {
         TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
@@ -3137,15 +3137,15 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SequenceEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = SequenceEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,
             SequenceEffect effect, TriggerContext ctx) {
         return enqueueNoncombatDamageTrigger(match, effect);
     }
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = OncePerTurnTriggerEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponentOncePerTurn(
             TriggerMatchContext match, OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.NoncombatDamageToOpponent damage)
@@ -3172,8 +3172,8 @@ public class MiscTriggerCollectorService {
         return triggered;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = CreateTokenEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponentToken(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.NoncombatDamageToOpponent damage)
@@ -3184,8 +3184,8 @@ public class MiscTriggerCollectorService {
         return enqueueNoncombatDamageTrigger(match, effect);
     }
 
-    @CollectsTrigger(value = MayEffect.class,
-            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    @CollectsDamageTrigger(value = MayEffect.class,
+            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponentMay(TriggerMatchContext match,
             MayEffect effect, TriggerContext ctx) {
         TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
@@ -3201,8 +3201,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToTargetCreatureOrPlaneswalkerEffect.class,
-            slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
+    @CollectsDamageTrigger(value = DealDamageToTargetCreatureOrPlaneswalkerEffect.class,
+            watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageToDamagedPlayerPermanent(TriggerMatchContext match,
             DealDamageToTargetCreatureOrPlaneswalkerEffect effect, TriggerContext ctx) {
         TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;

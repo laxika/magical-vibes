@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -38,8 +38,8 @@ public class GenjuOfTheFields extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
                 new AnimatePermanentsEffect(2, 5, List.of(CardSubtype.SPIRIT), Set.of(), CardColor.WHITE,
                         Set.of(), GrantScope.ENCHANTED_PERMANENT, EffectDuration.UNTIL_END_OF_TURN),
-                GrantEffectToTargetEffect.toEnchantedPermanent(EffectSlot.ON_SELF_DEALS_DAMAGE,
-                        new GainLifeEffect(new EventValue()), EffectDuration.UNTIL_END_OF_TURN)
+                GrantEffectToTargetEffect.toEnchantedPermanent(new TriggeredAbility(Triggers.dealsDamage(),
+                        new GainLifeEffect(new EventValue())), EffectDuration.UNTIL_END_OF_TURN)
         ), "{2}: Until end of turn, enchanted Plains becomes a 2/5 white Spirit creature with "
                 + "\"Whenever this creature deals damage, its controller gains that much life.\" It's still a land."));
 

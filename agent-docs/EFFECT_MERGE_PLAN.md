@@ -618,7 +618,7 @@ dead code.
 collector annotations key on the exact `(EffectSlot, effect.getClass())` pair, so three had to be
 re-keyed to the merged class: `MiscTriggerCollectorService:199` (`ON_ENCHANTED_PERMANENT_TAPPED`),
 `DeathTriggerCollectorService:1133` (`Triggers.creatureDies(ANY)`) and `DamageTriggerCollectorService:295`
-(`ON_ENCHANTED_CREATURE_DEALT_DAMAGE`). Two of those slots now hold **two** merged-class collectors
+(`Triggers.enchantedCreatureDealtDamage()`). Two of those slots now hold **two** merged-class collectors
 each — Step 8's `PutCounterOnReferencedPermanentEffect` and this one — which is fine because the
 registry key includes the class. Each re-key widens the key from "the enchanted-destroy record" to
 "any referenced-destroy record" in that slot; no card puts a `SOURCE` or `TRIGGERING` reference in
@@ -1411,7 +1411,7 @@ The chosen-type-count handlers really do share the whole two-phase choice protoc
   player to auto-target. The collector's non-`OPPONENT` arm calls `addDealtDamageEntry` directly —
   that is what the slot's `CardEffect.class` default collector (`DamageTriggerCollectorService:618`)
   used to do for the `ANY` form, and returning `false` instead would have skipped it. Inert today:
-  Sun-Crowned Hunters is the only card with either form in `ON_DEALT_DAMAGE`.
+  Sun-Crowned Hunters is the only card with either form in `Triggers.dealtDamage()`.
 - `TargetPolarityClassifier` loses two of its four name-keyed entries — both merges collapse a pair
   that already mapped to the same `HARMFUL_DAMAGE`, so no `instanceof` branch was needed.
 - `ChoiceHandlerService:696` (Relic Bind's damage mode) and

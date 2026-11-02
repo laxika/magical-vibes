@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -18,7 +17,7 @@ public class FearOfBurningAlive extends Card {
     public FearOfBurningAlive() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
+        addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(),
                 new ConditionalEffect(new Delirium(),
                         new DealDamageToTargetCreatureDamagedPlayerControlsEffect(new EventValue())));
     }

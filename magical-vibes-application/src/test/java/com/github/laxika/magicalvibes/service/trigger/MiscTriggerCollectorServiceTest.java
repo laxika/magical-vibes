@@ -397,9 +397,9 @@ class MiscTriggerCollectorServiceTest {
                 .thenReturn(true);
 
         assertThat(registry.dispatch(match(perm, player1Id, effect),
-                EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isTrue();
+                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isTrue();
         assertThat(registry.dispatch(match(perm, player1Id, effect),
-                EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
+                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(token);
     }
@@ -420,7 +420,7 @@ class MiscTriggerCollectorServiceTest {
                 .thenReturn(false);
 
         assertThat(registry.dispatch(match(perm, player1Id, effect),
-                EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
+                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -1512,7 +1512,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1532,7 +1532,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         }
@@ -1546,7 +1546,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -1565,7 +1565,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1589,7 +1589,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1606,7 +1606,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
