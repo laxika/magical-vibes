@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
@@ -39,6 +38,6 @@ public class GhostlyDancers extends Card {
                 "Spirit", 3, 1, CardColor.WHITE,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of());
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), spiritToken);
-        addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, spiritToken);
+        addTrigger(Triggers.youFullyUnlockRoom(), spiritToken);
     }
 }

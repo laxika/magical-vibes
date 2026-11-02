@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +84,7 @@ class StateTriggerServiceTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.ENCHANTMENT);
-        card.addEffect(EffectSlot.STATE_TRIGGERED, trigger);
+        card.addTrigger(Triggers.state(), trigger);
         return card;
     }
 
@@ -281,7 +281,7 @@ class StateTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Skips permanents without STATE_TRIGGERED effects")
+        @DisplayName("Skips permanents without state-triggered abilities")
         void skipsPermanentsWithoutStateTriggers() {
             Card card = new Card();
             card.setName("Vanilla Creature");
@@ -297,15 +297,15 @@ class StateTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Rejects non-StateTriggerEffect registered in STATE_TRIGGERED slot")
-        void rejectsNonStateTriggerEffectInSlot() {
+        @DisplayName("Rejects a state trigger whose effect isn't a StateTriggerEffect")
+        void rejectsNonStateTriggerEffect() {
             Card card = new Card();
             card.setName("Odd Card");
             card.setType(CardType.ENCHANTMENT);
 
-            assertThatThrownBy(() -> card.addEffect(EffectSlot.STATE_TRIGGERED, new GainLifeEffect(1)))
+            assertThatThrownBy(() -> card.addTrigger(Triggers.state(), new GainLifeEffect(1)))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("STATE_TRIGGERED slot requires StateTriggerEffect");
+                    .hasMessageContaining("A state trigger requires a StateTriggerEffect");
         }
 
         @Test
@@ -324,8 +324,8 @@ class StateTriggerServiceTest {
             Card card = new Card();
             card.setName("Multi Trigger Card");
             card.setType(CardType.ENCHANTMENT);
-            card.addEffect(EffectSlot.STATE_TRIGGERED, trigger1);
-            card.addEffect(EffectSlot.STATE_TRIGGERED, trigger2);
+            card.addTrigger(Triggers.state(), trigger1);
+            card.addTrigger(Triggers.state(), trigger2);
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -357,8 +357,8 @@ class StateTriggerServiceTest {
             Card card = new Card();
             card.setName("Multi Trigger Card");
             card.setType(CardType.ENCHANTMENT);
-            card.addEffect(EffectSlot.STATE_TRIGGERED, trigger1);
-            card.addEffect(EffectSlot.STATE_TRIGGERED, trigger2);
+            card.addTrigger(Triggers.state(), trigger1);
+            card.addTrigger(Triggers.state(), trigger2);
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 

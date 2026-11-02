@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndAllWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -30,7 +29,7 @@ public class IsleOfVesuva extends Card {
                                 List.of(), Set.of(), null, null, Map.of(),
                                 false, false, false, false,
                                 false, true, null, Set.of())));
-        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 new DestroyTargetPermanentAndAllWithSameNameEffect(new PermanentIsCreaturePredicate()));
     }
 }

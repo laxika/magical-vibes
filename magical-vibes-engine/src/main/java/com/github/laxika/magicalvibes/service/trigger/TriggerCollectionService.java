@@ -557,8 +557,8 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.PermanentControlChanged(
                 changedPermanent, previousControllerId, newControllerId);
         for (Permanent permanent : new ArrayList<>(battlefield)) {
-            dispatchSlot(gameData, permanent, previousControllerId,
-                    EffectSlot.ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT, context);
+            dispatchWatch(gameData, permanent, previousControllerId,
+                    MiscWatch.ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT, context);
         }
     }
 
@@ -784,8 +784,8 @@ public class TriggerCollectionService {
     }
 
     private void queueGraveyardEerieTriggers(GameData gameData, UUID controllerId, Card card,
-                                              EffectSlot slot, Card triggeringCard) {
-        List<CardEffect> effects = card.getEffects(slot);
+                                              TriggerWatch watch, Card triggeringCard) {
+        List<CardEffect> effects = watch.effectsOf(card);
         if (effects == null || effects.isEmpty()) return;
 
         for (CardEffect effect : effects) {
@@ -10133,7 +10133,7 @@ public class TriggerCollectionService {
         if (controllerId == null) {
             return;
         }
-        for (CardEffect effect : crewingCreature.getCard().getEffects(EffectSlot.ON_CREWS_VEHICLE)) {
+        for (CardEffect effect : MiscWatch.ON_CREWS_VEHICLE.effectsOf(crewingCreature.getCard())) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect registration) {
                 if (!gameData.hasDelayedAction(com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack.class,
                         action -> action.sourcePermanentId().equals(crewingCreature.getId())
@@ -10181,8 +10181,8 @@ public class TriggerCollectionService {
             return;
         }
         for (Permanent watcher : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, watcher, controllerId,
-                    EffectSlot.ON_ALLY_CREATURE_CREWS_VEHICLE, context);
+            dispatchWatch(gameData, watcher, controllerId,
+                    MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE, context);
         }
     }
 
@@ -10888,10 +10888,10 @@ public class TriggerCollectionService {
                 .orElse(null);
         if (watcher == null || watcher.isLosesAllAbilitiesUntilEndOfTurn()) return;
 
-        List<CardEffect> effects = new ArrayList<>(watcher.getCard().getEffects(
-                EffectSlot.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, watcher, EffectSlot.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE));
+        List<CardEffect> effects = new ArrayList<>(
+                MiscWatch.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE.effectsOf(watcher.getCard()));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, watcher, MiscWatch.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE.trigger()));
         if (effects.isEmpty()) return;
 
         int triggerCopies = 1 +
@@ -13567,7 +13567,7 @@ public class TriggerCollectionService {
 
     /**
      * Whether a permanent's printed and granted abilities are still active, so its triggered
-     * abilities can trigger. Mirrors the checks {@link #dispatchSlot} applies before dispatching.
+     * abilities can trigger. Mirrors the checks {@link #dispatchWatch} applies before dispatching.
      */
     private boolean hasActiveTriggeredAbilities(GameData gameData, Permanent perm) {
         if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return false;
@@ -14524,8 +14524,8 @@ public class TriggerCollectionService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield != null) {
                 for (Permanent permanent : new ArrayList<>(battlefield)) {
-                    dispatchSlot(gameData, permanent, controllerId,
-                            EffectSlot.ON_DAY_NIGHT_CHANGE, context);
+                    dispatchWatch(gameData, permanent, controllerId,
+                            MiscWatch.ON_DAY_NIGHT_CHANGE, context);
                 }
             }
             checkGraveyardDayNightChangeTriggers(gameData, controllerId);
@@ -14538,8 +14538,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card, MiscWatch.GRAVEYARD_ON_DAY_NIGHT_CHANGE.trigger())) {
                 StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -15330,7 +15330,7 @@ public class TriggerCollectionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, enchantedPermanentId);
         if (controllerId == null) return;
 
-        for (CardEffect effect : enchanted.getCard().getEffects(EffectSlot.ON_AURA_ATTACHED_TO_SELF)) {
+        for (CardEffect effect : MiscWatch.ON_AURA_ATTACHED_TO_SELF.effectsOf(enchanted.getCard())) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     enchanted.getCard(),
@@ -15360,8 +15360,8 @@ public class TriggerCollectionService {
             if (alliedBattlefield != null) {
                 for (Permanent watcher : List.copyOf(alliedBattlefield)) {
                     if (gameQueryService.hasLostAllAbilities(gameData, watcher)) continue;
-                    for (CardEffect effect : watcher.getCard().getEffects(
-                            EffectSlot.ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE)) {
+                    for (CardEffect effect :
+                            MiscWatch.ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE.effectsOf(watcher.getCard())) {
                         StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                                 watcher.getCard(), auraControllerId,
                                 watcher.getCard().getName() + "'s ability",
@@ -15382,8 +15382,8 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
         for (Permanent watcher : List.copyOf(battlefield)) {
             if (gameQueryService.hasLostAllAbilities(gameData, watcher)) continue;
-            for (CardEffect effect : watcher.getCard().getEffects(
-                    EffectSlot.ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT)) {
+            for (CardEffect effect :
+                    MiscWatch.ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT.effectsOf(watcher.getCard())) {
                 StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                         watcher.getCard(), auraControllerId, watcher.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(effect)), enchanted.getId(), aura.getId());
@@ -15408,7 +15408,7 @@ public class TriggerCollectionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, equipment.getId());
         if (controllerId == null) return;
 
-        List<CardEffect> effects = equipment.getCard().getEffects(EffectSlot.ON_EQUIPMENT_ATTACHED);
+        List<CardEffect> effects = MiscWatch.ON_EQUIPMENT_ATTACHED.effectsOf(equipment.getCard());
         if (effects == null || effects.isEmpty()) return;
 
         for (CardEffect authoredEffect : effects) {
@@ -15532,15 +15532,15 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.RoomFullyUnlocked(room.getId());
         for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, controllerId,
-                    EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, context);
+            dispatchWatch(gameData, permanent, controllerId,
+                    MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED, context);
         }
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
                 queueGraveyardEerieTriggers(gameData, controllerId, card,
-                        EffectSlot.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED, null);
+                        MiscWatch.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED, null);
             }
         }
     }
@@ -15563,7 +15563,7 @@ public class TriggerCollectionService {
             return;
         }
 
-        dispatchSlot(gameData, room, controllerId, EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        dispatchWatch(gameData, room, controllerId, MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggerContext.RoomDoorUnlocked(room.getId(), doorIndex));
     }
 
@@ -16410,22 +16410,9 @@ public class TriggerCollectionService {
         }
     }
 
-    private boolean dispatchSlot(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot, TriggerContext ctx) {
-        return dispatchSlot(gameData, perm, controllerId, slot, ctx, null);
-    }
-
-    private boolean dispatchSlot(GameData gameData, Permanent perm, UUID controllerId,
-                                 EffectSlot slot, TriggerContext ctx, Boolean oncePerBatchOnly) {
-        return dispatchRegistrations(gameData, perm, controllerId, slot, ctx, oncePerBatchOnly,
-                perm.getCard().getEffectRegistrations(slot),
-                staticBonus -> staticBonus == null
-                        ? grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot)
-                        : grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, staticBonus, slot));
-    }
-
     /**
-     * {@link #dispatchSlot} for the abilities {@code watch} reads: the permanent's own abilities with its trigger, and
-     * those other permanents grant it, each dispatched to {@code watch}'s handlers.
+     * Dispatches the abilities {@code watch} reads: the permanent's own abilities with its trigger, and those other
+     * permanents grant it, each dispatched to {@code watch}'s handlers.
      */
     private boolean dispatchWatch(GameData gameData, Permanent perm, UUID controllerId, TriggerWatch watch,
                                   TriggerContext ctx) {
@@ -17055,9 +17042,9 @@ public class TriggerCollectionService {
     public void checkBecomesCrewedTriggers(GameData gameData, Permanent crewedPermanent,
                                            UUID controllerId) {
         TriggerContext context = new TriggerContext.SelfBecomesCrewed(controllerId);
-        for (CardEffect effect : crewedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CREWED)) {
+        for (CardEffect effect : MiscWatch.ON_SELF_BECOMES_CREWED.effectsOf(crewedPermanent.getCard())) {
             registry.dispatch(new TriggerMatchContext(gameData, crewedPermanent, controllerId, effect),
-                    EffectSlot.ON_SELF_BECOMES_CREWED, effect, context);
+                    MiscWatch.ON_SELF_BECOMES_CREWED, effect, context);
         }
     }
 
@@ -17068,18 +17055,18 @@ public class TriggerCollectionService {
             return;
         }
         TriggerContext context = new TriggerContext.CreatureStationed(stationingCreature.getCard());
-        for (CardEffect effect : spacecraft.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_STATIONED)) {
+        for (CardEffect effect : MiscWatch.ON_SELF_BECOMES_STATIONED.effectsOf(spacecraft.getCard())) {
             registry.dispatch(new TriggerMatchContext(gameData, spacecraft, controllerId, effect),
-                    EffectSlot.ON_SELF_BECOMES_STATIONED, effect, context);
+                    MiscWatch.ON_SELF_BECOMES_STATIONED, effect, context);
         }
     }
 
     public void checkBecomesSaddledTriggers(GameData gameData, Permanent saddledPermanent,
                                              UUID controllerId) {
         TriggerContext context = new TriggerContext.SelfBecomesSaddled(controllerId);
-        for (CardEffect effect : saddledPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_SADDLED)) {
+        for (CardEffect effect : MiscWatch.ON_SELF_BECOMES_SADDLED.effectsOf(saddledPermanent.getCard())) {
             registry.dispatch(new TriggerMatchContext(gameData, saddledPermanent, controllerId, effect),
-                    EffectSlot.ON_SELF_BECOMES_SADDLED, effect, context);
+                    MiscWatch.ON_SELF_BECOMES_SADDLED, effect, context);
         }
     }
 

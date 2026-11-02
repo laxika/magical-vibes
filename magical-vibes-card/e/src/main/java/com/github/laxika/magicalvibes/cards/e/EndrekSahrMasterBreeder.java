@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
@@ -36,7 +35,7 @@ public class EndrekSahrMasterBreeder extends Card {
                                 CardColor.BLACK, List.of(CardSubtype.THRULL), Set.of(), Set.of())))
         ));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentNotPredicate(new PermanentControllerControlsPermanentCountAtMostPredicate(
                         6, new PermanentHasSubtypePredicate(CardSubtype.THRULL))),
                 List.of(new SacrificeSelfEffect()),

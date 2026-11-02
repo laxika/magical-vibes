@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControllerAndTargetPlayerLifeTotalsEffect;
@@ -20,13 +19,12 @@ public class CliffsideMarket extends Card {
         MayEffect exchangeLifeTotals = new MayEffect(
                 new ExchangeControllerAndTargetPlayerLifeTotalsEffect(),
                 "Exchange life totals with target player?");
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, exchangeLifeTotals);
+        addTrigger(Triggers.planeswalkToThis(), exchangeLifeTotals);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), exchangeLifeTotals);
 
         setMultiTargetConstraint(MultiTargetConstraint.SHARE_CARD_TYPE);
         target(TargetFilters.permanent());
-        target(TargetFilters.permanent()).addEffect(
-                EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.permanent()).addTrigger(Triggers.chaosEnsues(),
                 ExchangeControlOfTargetPermanentsEffect.withSharedCardType(new PermanentTruePredicate()));
     }
 }

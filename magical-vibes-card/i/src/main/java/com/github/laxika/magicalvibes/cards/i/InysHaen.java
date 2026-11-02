@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -22,10 +21,10 @@ public class InysHaen extends Card {
 
     public InysHaen() {
         MillEffect millThree = new MillEffect(3, MillRecipient.CONTROLLER);
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, millThree);
+        addTrigger(Triggers.planeswalkToThis(), millThree);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), millThree);
 
-        addEffect(EffectSlot.PLANESWALK_FROM_TRIGGERED,
+        addTrigger(Triggers.planeswalkAwayFromThis(),
                 new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
                         Integer.MAX_VALUE,
                         new CardTypePredicate(CardType.LAND),
@@ -33,7 +32,7 @@ public class InysHaen extends Card {
                         false,
                         true));
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.chaosEnsues(), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))))

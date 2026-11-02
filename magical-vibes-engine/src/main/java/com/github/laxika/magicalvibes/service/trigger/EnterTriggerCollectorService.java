@@ -310,7 +310,7 @@ public class EnterTriggerCollectorService {
         return enqueueAnyPermanentEnter(match, effect, (TriggerContext.PermanentEnters) ctx);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED)
+    @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED)
     private boolean handleRoomFullyUnlockedDefault(TriggerMatchContext match, CardEffect effect,
                                                     TriggerContext ctx) {
         TriggerContext.RoomFullyUnlocked room = (TriggerContext.RoomFullyUnlocked) ctx;

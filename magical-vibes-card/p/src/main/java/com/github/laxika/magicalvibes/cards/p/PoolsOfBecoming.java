@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopPlanarCardsAndTriggerChaosEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -14,6 +13,6 @@ public class PoolsOfBecoming extends Card {
 
     public PoolsOfBecoming() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new PutHandOnBottomOfLibraryAndDrawEffect());
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new RevealTopPlanarCardsAndTriggerChaosEffect(3));
+        addTrigger(Triggers.chaosEnsues(), new RevealTopPlanarCardsAndTriggerChaosEffect(3));
     }
 }

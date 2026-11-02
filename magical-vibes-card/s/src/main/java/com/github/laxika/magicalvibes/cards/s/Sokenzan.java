@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "36")
 @CardRegistration(set = "OPCA", collectorNumber = "72")
@@ -22,7 +22,7 @@ public class Sokenzan extends Card {
     public Sokenzan() {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES));
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES),
                 ConditionalEffect.unless(new ControllerMainPhase(), new AdditionalCombatMainPhaseEffect(1))));
     }

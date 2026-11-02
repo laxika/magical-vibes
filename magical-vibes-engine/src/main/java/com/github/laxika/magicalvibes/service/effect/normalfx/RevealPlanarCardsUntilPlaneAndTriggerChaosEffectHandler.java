@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealPlanarCardsUntilPlaneAndTriggerChaosEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
@@ -58,9 +58,9 @@ public class RevealPlanarCardsUntilPlaneAndTriggerChaosEffectHandler implements 
                 + revealed.stream().map(Card::getName).collect(Collectors.joining(", ")) + "."));
 
         UUID controllerId = entry.getControllerId();
-        if (plane != null && !plane.getEffects(EffectSlot.CHAOS_TRIGGERED).isEmpty()) {
+        if (plane != null && !plane.getTriggerEffects(Triggers.chaosEnsues()).isEmpty()) {
             planechaseService.trigger(gameData, new PlanarObject(plane, gameData.nextTimestamp()),
-                    EffectSlot.CHAOS_TRIGGERED, controllerId);
+                    Triggers.chaosEnsues(), controllerId);
         }
 
         if (revealed.size() == 1) {

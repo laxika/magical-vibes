@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -15,7 +14,7 @@ public class VeteranMotorist extends Card {
 
     public VeteranMotorist() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
-        addEffect(EffectSlot.ON_CREWS_VEHICLE,
+        addTrigger(Triggers.crewsVehicle(),
                 new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING, 1, 1));
     }
 }

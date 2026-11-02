@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.Fling;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -49,7 +49,7 @@ class QuicksilverSeaTest extends BaseCardTest {
         harness.setLibrary(player1, library);
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
@@ -107,7 +107,7 @@ class QuicksilverSeaTest extends BaseCardTest {
                 new GrizzlyBears(), new LightningBolt(), new GrizzlyBears());
         harness.setLibrary(player1, library);
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(2, 0), List.of(3, 1)));
@@ -122,7 +122,7 @@ class QuicksilverSeaTest extends BaseCardTest {
         Card second = new LightningBolt();
         harness.setLibrary(player1, List.of(top, second));
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(top, second);

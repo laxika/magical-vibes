@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
@@ -33,7 +32,7 @@ public class TicketBoothTunnelOfHate extends Card {
                         .withManaCost("{4}{R}{R}")
         )));
 
-        addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0, ManifestDreadEffect.forController()));
 
         PermanentAllOfPredicate attackingCreature = new PermanentAllOfPredicate(List.of(

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
@@ -40,7 +39,7 @@ public class Murasa extends Card {
                                 "Search your library for a basic land card?",
                                 null,
                                 MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)));
-        target(TargetFilters.land()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.land()).addTrigger(Triggers.chaosEnsues(),
                 new AnimatePermanentsEffect(4, 4, List.of(), Set.of(), null, Set.of(),
                         GrantScope.TARGET, EffectDuration.PERMANENT));
     }

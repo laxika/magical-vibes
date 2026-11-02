@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -21,10 +20,10 @@ public class SpectroxMines extends Card {
         SequenceEffect arrivalAndUpkeep = SequenceEffect.of(
                 new LoseLifeEffect(3),
                 CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, arrivalAndUpkeep);
+        addTrigger(Triggers.planeswalkToThis(), arrivalAndUpkeep);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), arrivalAndUpkeep);
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 CreateTokenEffect.ofFoodToken(1),
                 new CreateTokenEffect(
                         "Human Rogue", 2, 2, CardColor.BLACK,

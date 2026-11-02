@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,8 +11,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 @CardRegistration(set = "OPCA", collectorNumber = "62")
 public class Panopticon extends Card {
     public Panopticon() {
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, new DrawCardEffect(1));
+        addTrigger(Triggers.planeswalkToThis(), new DrawCardEffect(1));
         addTrigger(Triggers.drawStep(ActivePlayer.YOU), new DrawCardEffect(1));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new DrawCardEffect(1));
+        addTrigger(Triggers.chaosEnsues(), new DrawCardEffect(1));
     }
 }

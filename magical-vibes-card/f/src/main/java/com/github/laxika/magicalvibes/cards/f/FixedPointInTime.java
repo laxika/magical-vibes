@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlanarDiePlaneswalkToChaosEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "582")
 public class FixedPointInTime extends Card {
 
     public FixedPointInTime() {
-        addEffect(EffectSlot.ENCOUNTER_TRIGGERED, new PlanarDiePlaneswalkToChaosEffect());
+        addTrigger(Triggers.encounterThis(), new PlanarDiePlaneswalkToChaosEffect());
     }
 }

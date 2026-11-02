@@ -23,7 +23,7 @@ public class DayNightTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_DAY_NIGHT_CHANGE)
+    @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_DAY_NIGHT_CHANGE)
     private boolean handleDayNightChange(TriggerMatchContext match, CardEffect effect,
                                          TriggerContext context) {
         Card sourceCard = match.permanent().getCard();

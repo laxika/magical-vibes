@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -34,7 +33,7 @@ public class ExperimentalLabStaffRoom extends Card {
                         .withManaCost("{2}{G}")
         )));
 
-        addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0, SequenceEffect.of(
                         ManifestDreadEffect.forController(),
                         new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),

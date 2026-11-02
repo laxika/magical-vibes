@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class RestrictedOfficeLectureHall extends Card {
                         .withManaCost("{5}{U}{U}")
         )));
 
-        addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0,
                         new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

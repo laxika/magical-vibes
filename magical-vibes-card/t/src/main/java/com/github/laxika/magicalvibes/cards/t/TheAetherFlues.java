@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefieldRestToLibraryEffect;
@@ -26,9 +25,9 @@ public class TheAetherFlues extends Card {
                         new RevealUntilCreatureToBattlefieldRestToLibraryEffect(),
                         "a creature"),
                 "Sacrifice a creature?");
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, sacrificeThenReveal);
+        addTrigger(Triggers.planeswalkToThis(), sacrificeThenReveal);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), sacrificeThenReveal);
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.chaosEnsues(), new MayEffect(
                 new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"),
                 "Put a creature card from your hand onto the battlefield?"));
     }

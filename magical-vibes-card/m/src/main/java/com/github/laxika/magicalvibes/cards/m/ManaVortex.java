@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -23,7 +22,7 @@ public class ManaVortex extends Card {
                 new CounterUnlessSacrificesEffect(new PermanentIsLandPredicate(), "land"));
         addTrigger(Triggers.upkeep(ActivePlayer.ANY), new SacrificePermanentsEffect(
                 1, new PermanentIsLandPredicate(), SacrificeRecipient.ACTIVE_PLAYER));
-        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(
+        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(
                 0, new PermanentIsLandPredicate(),
                 List.of(new SacrificeSelfEffect()),
                 "Mana Vortex's state-triggered ability"));

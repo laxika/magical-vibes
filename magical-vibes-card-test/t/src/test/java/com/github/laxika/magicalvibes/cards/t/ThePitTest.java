@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AssaultSuit;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -83,8 +83,7 @@ class ThePitTest extends BaseCardTest {
         Permanent artifactCreature = addCreatureReady(player1, new Ornithopter());
         Permanent creature2 = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.CHAOS_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.chaosEnsues(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature1);
@@ -216,8 +215,7 @@ class ThePitTest extends BaseCardTest {
         Permanent artifactCreature = addCreatureReady(player1, new Ornithopter());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.CHAOS_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.chaosEnsues(), player1.getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifactCreature);
@@ -235,8 +233,7 @@ class ThePitTest extends BaseCardTest {
         Permanent secondBears = addCreatureReady(player2, new GrizzlyBears());
         Permanent secondOtherBears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.CHAOS_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.chaosEnsues(), player1.getId()));
         resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of(firstBears.getId()));
 
@@ -254,8 +251,7 @@ class ThePitTest extends BaseCardTest {
     }
 
     private void triggerPlaneswalkTo() {
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
     }
 }

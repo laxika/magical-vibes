@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +33,7 @@ public class MantaRay extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)), "blue creatures"));
 
         // When you control no Islands, sacrifice this creature.
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentNotPredicate(new PermanentControllerControlsPermanentPredicate(
                         new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                 List.of(new SacrificeSelfEffect()),

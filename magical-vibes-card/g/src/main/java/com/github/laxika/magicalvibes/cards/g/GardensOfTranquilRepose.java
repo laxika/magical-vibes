@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -29,7 +28,7 @@ public class GardensOfTranquilRepose extends Card {
                 new ExileTriggeringCreatureAndTrackWithSourceEffect(),
                 new ScryEffect(1, LibraryOwner.DYING_CREATURE_CONTROLLER)));
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.chaosEnsues(), new CreateTokenEffect(
                 new Sum(new Fixed(1), new CardsExiledWithSource()),
                 "Dalek", 3, 3, CardColor.BLACK,
                 List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT)));

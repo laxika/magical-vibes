@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -33,8 +32,7 @@ public class GlassworksShatteredYard extends Card {
                         .withManaCost("{4}{R}")
         )));
 
-        target(TargetFilters.creatureAnOpponentControls()).addEffect(
-                EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0, new DealDamageToTargetCreatureEffect(4,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

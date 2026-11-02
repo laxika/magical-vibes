@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -432,12 +431,12 @@ class MiscTriggerCollectorServiceTest {
                 null, null, List.of(), java.util.Set.of(), null, java.util.Set.of(),
                 com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
                 com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, null);
-        sourceCard.addEffect(EffectSlot.ON_SELF_BECOMES_CREWED, effect);
+        sourceCard.addTrigger(Triggers.becomesCrewed(), effect);
         Permanent perm = new Permanent(sourceCard);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_SELF_BECOMES_CREWED,
+                MiscWatch.ON_SELF_BECOMES_CREWED,
                 effect,
                 new TriggerContext.SelfBecomesCrewed(player1Id));
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -45,7 +44,7 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.setLife(player1, 11);
         harness.setLife(player2, 23);
 
-        resolveLifeExchange(EffectSlot.PLANESWALK_TO_TRIGGERED);
+        resolveLifeExchange(Triggers.planeswalkToThis());
         harness.assertLife(player1, 23);
         harness.assertLife(player2, 11);
 
@@ -79,12 +78,6 @@ class CliffsideMarketTest extends BaseCardTest {
 
         assertThat(gqs.findPermanentController(gd, first.getId())).isEqualTo(player2.getId());
         assertThat(gqs.findPermanentController(gd, second.getId())).isEqualTo(player1.getId());
-    }
-
-    private void resolveLifeExchange(EffectSlot slot) {
-        PlanarObject plane = gd.planechase.faceUp.getFirst();
-        harness.inMutationScope(() -> planar.trigger(gd, plane, slot, player1.getId()));
-        resolveTriggeredLifeExchange();
     }
 
     private void resolveLifeExchange(Trigger trigger) {

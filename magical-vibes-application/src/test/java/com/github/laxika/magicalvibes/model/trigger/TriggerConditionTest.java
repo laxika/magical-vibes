@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +18,7 @@ class TriggerConditionTest {
 
     @Test
     void needsATriggerAndZones() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.ON_SELF_LOSES_CONTROL);
+        Trigger trigger = Triggers.youLoseControlOfThis();
 
         assertThatThrownBy(() -> new TriggerCondition(null)).isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> new TriggerCondition(null, AbilityZones.BATTLEFIELD))

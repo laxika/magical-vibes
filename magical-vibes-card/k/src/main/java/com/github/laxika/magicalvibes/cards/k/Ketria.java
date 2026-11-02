@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandPermanentToBattlefieldOrHandEffect;
@@ -23,10 +22,10 @@ public class Ketria extends Card {
                 counterMode("Put a menace counter on it", CounterType.MENACE),
                 counterMode("Put a trample counter on it", CounterType.TRAMPLE)));
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, counterChoice)
+                .addTrigger(Triggers.planeswalkToThis(), counterChoice)
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), counterChoice);
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new ExileTopUntilNonlandPermanentToBattlefieldOrHandEffect());
     }
 

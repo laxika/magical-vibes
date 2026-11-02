@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
@@ -31,7 +30,7 @@ public class AfiyaGrove extends Card {
                         new MoveCounterFromSourceToTargetCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // "When this enchantment has no +1/+1 counters on it, sacrifice it." — state-triggered ability.
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)),
                 List.of(new SacrificeSelfEffect()),
                 "Afiya Grove's state-triggered ability"

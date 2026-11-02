@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.DevotionToChosenColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
@@ -43,7 +42,7 @@ public class HotelOfFears extends Card {
                 false,
                 null);
 
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.chaosEnsues(),
                 SequenceEffect.of(
                         new ChooseColorAtResolutionEffect(),
                         counterEffect,

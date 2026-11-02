@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -27,7 +26,7 @@ public class OrochiColony extends Card {
                                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
                                 "Search your library for a basic land card?")));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 new MakeCreatureUnblockableEffect());
     }
 }

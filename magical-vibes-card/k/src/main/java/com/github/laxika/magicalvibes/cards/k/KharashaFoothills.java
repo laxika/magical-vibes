@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,7 +24,7 @@ public class KharashaFoothills extends Card {
         addTrigger(Triggers.creatureYouControlAttacks(), new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
                 new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect()));
-        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
+        target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsCreaturePredicate()),
                 new ConditionalEffect(
                         new EventValueAtLeast(1),

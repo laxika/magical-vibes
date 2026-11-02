@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
@@ -40,7 +39,7 @@ public class BombSquad extends Card {
                         new PermanentHasCountersPredicate(CounterType.FUSE))),
                 EachPermanentScope.ALL_PLAYERS));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 (gameData, sourcePermanent, controllerId) -> true,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

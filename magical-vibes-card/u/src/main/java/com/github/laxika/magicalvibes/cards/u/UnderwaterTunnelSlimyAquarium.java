@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,9 +26,9 @@ public class UnderwaterTunnelSlimyAquarium extends Card {
                         .withManaCost("{3}{U}")
         )));
 
-        addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0, new SurveilEffect(2)));
-        addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(1, SequenceEffect.of(
                         ManifestDreadEffect.forController(),
                         new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -22,16 +21,16 @@ import java.util.List;
 public class Aretopolis extends Card {
 
     public Aretopolis() {
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.planeswalkToThis(), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SCROLL),
                 new GainLifeEffect(new CountersOnSource(CounterType.SCROLL))));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SCROLL),
                 new GainLifeEffect(new CountersOnSource(CounterType.SCROLL))));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SCROLL),
                 new DrawCardEffect(new CountersOnSource(CounterType.SCROLL))));
-        addEffect(EffectSlot.STATE_TRIGGERED,
+        addTrigger(Triggers.state(),
                 new StateTriggerEffect(new PermanentCounterCountAtLeastPredicate(CounterType.SCROLL, 10),
                         List.of(new PlaneswalkEffect()), "Aretopolis's scroll counter ability"));
     }

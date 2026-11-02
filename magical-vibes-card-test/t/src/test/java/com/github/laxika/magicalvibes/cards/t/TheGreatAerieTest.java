@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -44,7 +44,7 @@ class TheGreatAerieTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player1, new HillGiant());
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -87,7 +87,7 @@ class TheGreatAerieTest extends BaseCardTest {
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, java.util.List.of(second.getId()));
 
@@ -101,7 +101,7 @@ class TheGreatAerieTest extends BaseCardTest {
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

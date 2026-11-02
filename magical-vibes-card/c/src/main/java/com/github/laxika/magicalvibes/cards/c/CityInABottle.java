@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndLandsWithSpecifiedNamesCantBePlayedEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNameInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -107,7 +107,7 @@ public class CityInABottle extends Card {
 
     public CityInABottle() {
         addStaticEffect(new SpellsAndLandsWithSpecifiedNamesCantBePlayedEffect(ARABIAN_NIGHTS_CARD_NAMES));
-        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtLeast(
+        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtLeast(
                 1,
                 OTHER_ARABIAN_NIGHTS_PERMANENT,
                 List.of(new SacrificeEachMatchingPermanentEffect(OTHER_ARABIAN_NIGHTS_PERMANENT)),

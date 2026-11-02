@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -43,7 +43,7 @@ class PompeiiTest extends BaseCardTest {
     @Test
     void arrivalAndUpkeepAddEruptionCounters() {
         harness.inMutationScope(() -> planar.trigger(gd, pompeii,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(pompeii.getCounters().get(CounterType.ERUPTION)).isEqualTo(1);

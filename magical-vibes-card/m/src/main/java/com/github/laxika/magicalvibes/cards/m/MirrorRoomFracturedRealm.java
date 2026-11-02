@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -29,8 +29,7 @@ public class MirrorRoomFracturedRealm extends Card {
                         .withManaCost("{5}{U}{U}")
         )));
 
-        target(TargetFilters.creatureYouControl()).addEffect(
-                EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0,
                         new CreateTokenCopyOfTargetPermanentEffect(
                                 List.of(CardSubtype.REFLECTION), Set.of(), null, null, Map.of())));

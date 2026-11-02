@@ -1764,4 +1764,113 @@ public final class Triggers {
     public static ObjectActionTrigger creatureYouControlMutates() {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.MUTATES, ObjectRelation.YOU_CONTROL);
     }
+
+    /** "Whenever this creature crews a Vehicle" */
+    public static ObjectActionTrigger crewsVehicle() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.CREWS_VEHICLE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control crews a Vehicle", this creature included */
+    public static ObjectActionTrigger creatureYouControlCrewsVehicle() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.CREWS_VEHICLE, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever this creature saddles a Mount or crews a Vehicle during your main phase" */
+    public static ObjectActionTrigger saddlesOrCrewsDuringMainPhase() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.SADDLES_OR_CREWS_DURING_MAIN_PHASE,
+                ObjectRelation.THIS);
+    }
+
+    /** "Whenever this Vehicle becomes crewed" (CR 702.122e) */
+    public static ObjectActionTrigger becomesCrewed() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_CREWED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature becomes saddled" */
+    public static ObjectActionTrigger becomesSaddled() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_SADDLED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature stations this Spacecraft" */
+    public static ObjectActionTrigger becomesStationed() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_STATIONED, ObjectRelation.THIS);
+    }
+
+    /** "When you unlock this door" (CR 709.5h); the door is the {@code TriggeringRoomDoorConditionalEffect}'s */
+    public static ObjectActionTrigger doorUnlocked() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.DOOR_UNLOCKED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever you fully unlock a Room" (CR 709.5i) */
+    public static PlayerActionTrigger youFullyUnlockRoom() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.FULLY_UNLOCKS_ROOM, PlayerRelation.YOU);
+    }
+
+    /** "When you gain control of this from another player" */
+    public static ControlChangeTrigger youGainControlOfThis() {
+        return new ControlChangeTrigger(ControlChangeTrigger.ControlEvent.YOU_GAIN, ObjectRelation.THIS);
+    }
+
+    /** "When you lose control of this" */
+    public static ControlChangeTrigger youLoseControlOfThis() {
+        return new ControlChangeTrigger(ControlChangeTrigger.ControlEvent.YOU_LOSE, ObjectRelation.THIS);
+    }
+
+    /** "Whenever an opponent gains control of a permanent you control" */
+    public static ControlChangeTrigger opponentGainsControlOfPermanentYouControl() {
+        return new ControlChangeTrigger(ControlChangeTrigger.ControlEvent.OPPONENT_GAINS, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever an Aura becomes attached to this permanent" */
+    public static AttachTrigger auraBecomesAttachedToThis() {
+        return new AttachTrigger(AttachTrigger.AttachEvent.AURA_TO_THIS);
+    }
+
+    /** "Whenever an Aura you control becomes attached to a creature you control" */
+    public static AttachTrigger auraYouControlBecomesAttachedToCreatureYouControl() {
+        return new AttachTrigger(AttachTrigger.AttachEvent.AURA_YOU_CONTROL_TO_CREATURE_YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever an Aura you control becomes attached to a nonland permanent an opponent controls with mana value less
+     * than or equal to that Aura's mana value"
+     */
+    public static AttachTrigger auraYouControlBecomesAttachedToNonlandPermanentOpponentControls() {
+        return new AttachTrigger(AttachTrigger.AttachEvent.AURA_YOU_CONTROL_TO_OPPONENT_NONLAND_PERMANENT);
+    }
+
+    /** "Whenever this Equipment becomes attached to a creature" */
+    public static AttachTrigger becomesAttachedToCreature() {
+        return new AttachTrigger(AttachTrigger.AttachEvent.THIS_EQUIPMENT_TO_CREATURE);
+    }
+
+    /** "Whenever day becomes night or night becomes day" (CR 731.1a) */
+    public static DayNightTrigger dayBecomesNightOrNightBecomesDay() {
+        return new DayNightTrigger();
+    }
+
+    /** "When you planeswalk to this plane"; it functions from the command zone (CR 901.7) */
+    public static PlanarTrigger planeswalkToThis() {
+        return new PlanarTrigger(PlanarTrigger.PlanarEvent.PLANESWALKED_TO);
+    }
+
+    /** "When you planeswalk away from this plane" */
+    public static PlanarTrigger planeswalkAwayFromThis() {
+        return new PlanarTrigger(PlanarTrigger.PlanarEvent.PLANESWALKED_FROM);
+    }
+
+    /** "Whenever chaos ensues", a plane's chaos ability (CR 311.7) */
+    public static PlanarTrigger chaosEnsues() {
+        return new PlanarTrigger(PlanarTrigger.PlanarEvent.CHAOS_ENSUES);
+    }
+
+    /** "When you encounter this phenomenon" (CR 312.5) */
+    public static PlanarTrigger encounterThis() {
+        return new PlanarTrigger(PlanarTrigger.PlanarEvent.ENCOUNTERED);
+    }
+
+    /** A state trigger (CR 603.8): its {@code StateTriggerEffect} names the game state it watches */
+    public static StateTrigger state() {
+        return new StateTrigger();
+    }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.OtherControlledCreaturesSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnTargetCreatureFaceDownEffect;
@@ -18,6 +17,6 @@ public class MondassianColonyShip extends Card {
                         new OtherControlledCreaturesSharingCreatureTypeWithTarget(),
                         new OtherControlledCreaturesSharingCreatureTypeWithTarget()));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.CHAOS_TRIGGERED, TurnTargetCreatureFaceDownEffect.asCyberman());
+                .addTrigger(Triggers.chaosEnsues(), TurnTargetCreatureFaceDownEffect.asCyberman());
     }
 }

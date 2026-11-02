@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -24,7 +23,7 @@ public class DarksteelReactor extends Card {
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.CHARGE),
                         "Put a charge counter on Darksteel Reactor?"));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentHasAtLeastCountersPredicate(CounterType.CHARGE, 20),
                 List.of(new WinGameEffect()),
                 "Darksteel Reactor's state-triggered ability"));

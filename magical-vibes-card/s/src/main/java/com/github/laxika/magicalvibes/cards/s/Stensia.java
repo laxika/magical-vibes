@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -29,7 +28,7 @@ public class Stensia extends Card {
         addTrigger(Triggers.permanentDealsDamageToYou(), putCounterOnDamagingCreature);
         addTrigger(Triggers.creatureDealsDamageToItsController(), putCounterOnDamagingCreature);
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chaosEnsues(), new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

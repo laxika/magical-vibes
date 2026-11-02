@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -47,7 +46,7 @@ public class TidalInfluence extends Card {
                 new StaticBoostEffect(2, 0, GrantScope.ALL_CREATURES,
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)))));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentHasAtLeastCountersPredicate(CounterType.TIDE, 4),
                 List.of(new RemoveAllCountersEffect(CounterType.TIDE)),
                 "Tidal Influence's state-triggered ability"));

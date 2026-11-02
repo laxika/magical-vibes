@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToAllCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
@@ -39,14 +38,14 @@ public class TheCheetahPlanet extends Card {
 
         target(new ControlledPermanentPredicateTargetFilter(
                 nonCatCreature, "Target must be a non-Cat creature you control"))
-                .addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, SequenceEffect.of(
+                .addTrigger(Triggers.planeswalkToThis(), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT)))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT)));
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new GrantStaticEffectToAllCreaturesUntilEndOfTurnEffect(
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.attacks(),

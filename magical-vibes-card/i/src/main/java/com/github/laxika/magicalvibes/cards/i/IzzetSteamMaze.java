@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -23,7 +22,7 @@ public class IzzetSteamMaze extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
         addTrigger(Triggers.playerCastsSpell(),
                 SpellCastTriggerEffect.anyPlayer(instantOrSorcery, List.of(new CopyTriggeringSpellEffect())));
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect(instantOrSorcery, 3));
     }
 }

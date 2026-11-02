@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.PlaneswalkedToPlaneThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,7 +27,7 @@ public class Unyaro extends Card {
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES),
                                 new PhaseOutCreaturesUntilPlaneswalkEffect())));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.chaosEnsues(), new CreateTokenEffect(
                 2, "Knight", 2, 2, null,
                 Set.of(CardColor.WHITE, CardColor.BLUE), List.of(CardSubtype.KNIGHT),
                 Set.of(Keyword.VIGILANCE), Set.of()));

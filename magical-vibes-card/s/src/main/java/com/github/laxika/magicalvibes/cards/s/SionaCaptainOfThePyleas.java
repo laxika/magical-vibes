@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -21,7 +20,7 @@ public class SionaCaptainOfThePyleas extends Card {
     public SionaCaptainOfThePyleas() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(7, new CardIsAuraPredicate()));
-        addEffect(EffectSlot.ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE,
+        addTrigger(Triggers.auraYouControlBecomesAttachedToCreatureYouControl(),
                 new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
     }

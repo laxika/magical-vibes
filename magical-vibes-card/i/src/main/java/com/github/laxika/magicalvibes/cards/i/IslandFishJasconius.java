@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
@@ -44,7 +43,7 @@ public class IslandFishJasconius extends Card {
 
         // "When you control no Islands, sacrifice this creature." —
         // State-triggered ability (MTG rule 603.8).
-        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
+        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),

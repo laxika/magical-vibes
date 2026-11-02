@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditional
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -1739,7 +1740,6 @@ public class Card {
 
     public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
         assertMutable();
-        validateEffectSlotType(slot, effect);
         addRegistrations(slot, List.of(new EffectRegistration(effect, triggerMode)));
     }
 
@@ -1766,9 +1766,6 @@ public class Card {
         }
         List<EffectRegistration> group = new ArrayList<>(effects.length);
         for (int i = 0; i < effects.length; i++) {
-            if (slot != null) {
-                validateEffectSlotType(slot, effects[i]);
-            }
             group.add(new EffectRegistration(effects[i], triggerMode, i > 0));
         }
         return group;
@@ -1808,7 +1805,6 @@ public class Card {
                 addRegistrations(slot, group);
                 group = new ArrayList<>();
             }
-            validateEffectSlotType(slot, registration.effect());
             group.add(registration);
         }
         addRegistrations(slot, group);
@@ -1870,6 +1866,7 @@ public class Card {
      */
     public void addTriggeredAbility(TriggeredAbility ability) {
         assertMutable();
+        validateStateTriggerEffects(ability);
         if (slotOf(ability) != null) {
             addAbility(ability);
             return;
@@ -1989,10 +1986,19 @@ public class Card {
         return false;
     }
 
-    private void validateEffectSlotType(EffectSlot slot, CardEffect effect) {
-        if (slot == EffectSlot.STATE_TRIGGERED && !(effect instanceof StateTriggerEffect)) {
-            throw new IllegalArgumentException(
-                    "STATE_TRIGGERED slot requires StateTriggerEffect, got " + effect.getClass().getSimpleName());
+    /**
+     * A state trigger's game state is its {@link StateTriggerEffect}'s condition (CR 603.8), so it has no other
+     * effect.
+     */
+    private static void validateStateTriggerEffects(TriggeredAbility ability) {
+        if (ability.conditions().stream().noneMatch(condition -> condition.trigger() instanceof StateTrigger)) {
+            return;
+        }
+        for (EffectRegistration registration : ability.effects()) {
+            if (!(registration.effect() instanceof StateTriggerEffect)) {
+                throw new IllegalArgumentException("A state trigger requires a StateTriggerEffect, got "
+                        + registration.effect().getClass().getSimpleName());
+            }
         }
     }
 

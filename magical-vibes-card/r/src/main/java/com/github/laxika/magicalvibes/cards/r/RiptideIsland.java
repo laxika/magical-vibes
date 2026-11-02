@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -26,12 +25,12 @@ public class RiptideIsland extends Card {
         CreateTokenEffect slivers = new CreateTokenEffect(
                 2, "Sliver", 1, 1, null,
                 List.of(CardSubtype.SLIVER), Set.of(), Set.of());
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, slivers);
+        addTrigger(Triggers.planeswalkToThis(), slivers);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), slivers);
 
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
         PermanentCount sliverCount = new PermanentCount(sliver, CountScope.CONTROLLER);
-        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, sliver),
                 new BoostAllOwnCreaturesEffect(sliverCount, sliverCount, sliver)));
     }

@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -16,6 +16,6 @@ public class Otaria extends Card {
     public Otaria() {
         addStaticEffect(new GrantFlashbackToGraveyardCardsEffect(
                 Set.of(CardType.INSTANT, CardType.SORCERY), true));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new ControllerExtraTurnEffect(1));
+        addTrigger(Triggers.chaosEnsues(), new ControllerExtraTurnEffect(1));
     }
 }

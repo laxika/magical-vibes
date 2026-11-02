@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -49,8 +49,7 @@ class InterplanarTunnelTest extends BaseCardTest {
         gd.planechase.deck.add(revealedPhenomenon2);
         gd.planechase.deck.addAll(planes);
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         PendingInteraction.PlanarCardChoice choice =
@@ -79,8 +78,7 @@ class InterplanarTunnelTest extends BaseCardTest {
         gd.planechase.deck.addAll(planes);
         gd.planechase.deck.add(unrevealedPlane);
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         PendingInteraction.PlanarCardChoice choice =
@@ -106,8 +104,7 @@ class InterplanarTunnelTest extends BaseCardTest {
         gd.planechase.deck.add(phenomenon);
         gd.planechase.deck.addAll(planes);
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(phenomenon.getId())))
@@ -127,8 +124,7 @@ class InterplanarTunnelTest extends BaseCardTest {
         gd.planechase.deck.add(phenomenon);
         gd.planechase.deck.add(plane);
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

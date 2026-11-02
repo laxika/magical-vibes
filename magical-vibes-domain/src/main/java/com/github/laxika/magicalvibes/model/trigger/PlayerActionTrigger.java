@@ -78,6 +78,8 @@ public record PlayerActionTrigger(PlayerAction action, PlayerRelation player) im
         /** The player loses the game. */
         LOSES_GAME,
         /** The player commits a crime (CR 700.13). */
-        COMMITS_CRIME
+        COMMITS_CRIME,
+        /** The player fully unlocks a Room: it gets its second unlocked designation, or both at once (CR 709.5i). */
+        FULLY_UNLOCKS_ROOM
     }
 }

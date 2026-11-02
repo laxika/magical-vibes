@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
-import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -22,11 +21,11 @@ class TriggeredAbilityTest {
 
     @Test
     void aSingleTriggerFunctionsFromItsDefaultZones() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE);
+        Trigger trigger = Triggers.chaosEnsues();
 
         TriggeredAbility ability = new TriggeredAbility(trigger, TriggerOptions.DEFAULT, ZOMBIE);
 
-        assertThat(ability.conditions()).containsExactly(new TriggerCondition(trigger, AbilityZones.GRAVEYARD));
+        assertThat(ability.conditions()).containsExactly(new TriggerCondition(trigger, AbilityZones.COMMAND));
         assertThat(ability.effects()).isEqualTo(ZOMBIE);
     }
 
@@ -35,7 +34,7 @@ class TriggeredAbilityTest {
         EffectRegistration first = new EffectRegistration(new DrawCardEffect(1));
         EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(2), TriggerMode.NORMAL, true);
 
-        TriggeredAbility ability = new TriggeredAbility(new LegacySlotTrigger(EffectSlot.ON_SELF_LOSES_CONTROL),
+        TriggeredAbility ability = new TriggeredAbility(Triggers.youLoseControlOfThis(),
                 TriggerOptions.DEFAULT, List.of(first, simultaneous));
 
         assertThat(ability.effects()).containsExactly(first, simultaneous);
@@ -44,7 +43,7 @@ class TriggeredAbilityTest {
     @Test
     void holdsUnmodifiableCopiesOfItsConditionsAndEffects() {
         List<TriggerCondition> conditions =
-                new ArrayList<>(List.of(new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_LOSES_CONTROL))));
+                new ArrayList<>(List.of(new TriggerCondition(Triggers.youLoseControlOfThis())));
         List<EffectRegistration> effects = new ArrayList<>(ZOMBIE);
         TriggeredAbility ability = new TriggeredAbility(conditions, TriggerOptions.DEFAULT, effects);
 
@@ -58,7 +57,7 @@ class TriggeredAbilityTest {
 
     @Test
     void needsATriggerConditionAndAnEffect() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.ON_SELF_LOSES_CONTROL);
+        Trigger trigger = Triggers.youLoseControlOfThis();
 
         assertThatThrownBy(() -> new TriggeredAbility(List.of(), TriggerOptions.DEFAULT, ZOMBIE))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -72,30 +71,8 @@ class TriggeredAbilityTest {
     void firstEffectCannotBeSimultaneousWithAPreviousOne() {
         EffectRegistration simultaneous = new EffectRegistration(new DrawCardEffect(1), TriggerMode.NORMAL, true);
 
-        assertThatThrownBy(() -> new TriggeredAbility(new LegacySlotTrigger(EffectSlot.ON_SELF_LOSES_CONTROL),
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.youLoseControlOfThis(),
                 TriggerOptions.DEFAULT, List.of(simultaneous)))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void aLegacySlotTriggerIsTheOnlyConditionOfItsAbility() {
-        List<TriggerCondition> twoSlots = List.of(
-                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_LOSES_CONTROL)),
-                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_CONTROLLED)));
-
-        assertThatThrownBy(() -> new TriggeredAbility(twoSlots, TriggerOptions.DEFAULT, ZOMBIE))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void aLegacySlotTriggerTakesNoTriggerOptions() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE);
-
-        assertThatThrownBy(() -> new TriggeredAbility(trigger,
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()), ZOMBIE))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new TriggeredAbility(trigger,
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), ZOMBIE))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

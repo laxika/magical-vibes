@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -31,7 +30,7 @@ public class BottomlessPoolLockerRoom extends Card {
                         .withManaCost("{4}{U}")
         )));
 
-        target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0, ReturnToHandEffect.target()));
 
         addStaticEffect(new ConditionalEffect(

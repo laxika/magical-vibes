@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureBecomesCopyOfExiledCreatureEffect;
@@ -15,7 +14,7 @@ public class DinosaurHeaddress extends Card {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AttachSourceEquipmentToTargetCreatureEffect());
-        addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
+        addTrigger(Triggers.becomesAttachedToCreature(),
                 new AttachedCreatureBecomesCopyOfExiledCreatureEffect(true));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

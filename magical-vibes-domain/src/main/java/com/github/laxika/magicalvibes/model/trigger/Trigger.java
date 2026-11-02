@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
  * state for a state trigger (CR 603.8). Triggers are pure data, like predicates: the engine, not
  * the trigger, decides whether something that happens in the game matches it.
  */
-public sealed interface Trigger permits AbilityTrigger, ChapterTrigger, CombatTrigger, CounterTrigger, DamageTrigger,
-        FinalChapterTrigger, LandPlayTrigger, LegacySlotTrigger, LibraryTrigger, LifeTrigger, ObjectActionTrigger,
-        PermanentChangeTrigger, PlayerActionTrigger, SpellTrigger, StepTrigger, TapTrigger, TargetTrigger,
-        ZoneChangeTrigger {
+public sealed interface Trigger permits AbilityTrigger, AttachTrigger, ChapterTrigger, CombatTrigger,
+        ControlChangeTrigger, CounterTrigger, DamageTrigger, DayNightTrigger, FinalChapterTrigger, LandPlayTrigger,
+        LegacySlotTrigger, LibraryTrigger, LifeTrigger, ObjectActionTrigger, PermanentChangeTrigger, PlanarTrigger,
+        PlayerActionTrigger, SpellTrigger, StateTrigger, StepTrigger, TapTrigger, TargetTrigger, ZoneChangeTrigger {
 
     /**
      * The zones a trigger condition on this trigger functions from when the card doesn't say

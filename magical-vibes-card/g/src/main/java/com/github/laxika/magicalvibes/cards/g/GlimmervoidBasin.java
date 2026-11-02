@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetCreatureForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +15,7 @@ public class GlimmervoidBasin extends Card {
     public GlimmervoidBasin() {
         addTrigger(Triggers.playerCastsSpell(),
                 new CopySpellForEachOtherPermanentOrPlayerEffect());
-        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 new CreateTokenCopyOfTargetCreatureForEachOtherPlayerEffect());
     }
 }

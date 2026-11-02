@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
@@ -35,8 +34,7 @@ public class RoaringFurnaceSteamingSauna extends Card {
                         .withManaCost("{3}{U}{U}")
         )));
 
-        target(TargetFilters.creatureAnOpponentControls()).addEffect(
-                EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0,
                         new DealDamageToTargetCreatureEffect(new CardsInHand(CountScope.CONTROLLER), false,
                                 new PermanentAllOfPredicate(List.of(

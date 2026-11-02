@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.cards.s.SpiderPunk;
 import com.github.laxika.magicalvibes.cards.v.VolcanicFallout;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -252,7 +252,7 @@ class GlenElendrasAnswerTest extends BaseCardTest {
         PlanarObject plane = new PlanarObject(new Panopticon(), gd.nextTimestamp());
         gd.planechase.faceUp.add(plane);
         PlanechaseService planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
-        harness.inMutationScope(() -> planar.trigger(gd, plane, EffectSlot.CHAOS_TRIGGERED, player2.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, plane, Triggers.chaosEnsues(), player2.getId()));
         assertThat(gd.stack).hasSize(1);
         int handSize = gd.playerHands.get(player2.getId()).size();
 

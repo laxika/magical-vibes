@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -27,7 +26,7 @@ public class MerchantShip extends Card {
 
         addTrigger(Triggers.attacksUnblocked(), new GainLifeEffect(2));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
+        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),

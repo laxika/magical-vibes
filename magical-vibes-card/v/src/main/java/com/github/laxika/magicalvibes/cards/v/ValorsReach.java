@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
@@ -25,9 +24,9 @@ public class ValorsReach extends Card {
                         new GrantKeywordToTriggeringAttackersEffect(
                                 new PermanentIsAttackingPredicate(), Keyword.DOUBLE_STRIKE)));
         target(TargetFilters.creatureYouControl(), 0, 2)
-                .addEffect(EffectSlot.CHAOS_TRIGGERED,
+                .addTrigger(Triggers.chaosEnsues(),
                         new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new ConditionalEffect(
                         new ControllerMainPhase(),
                         new AdditionalCombatMainPhaseEffect(1)));

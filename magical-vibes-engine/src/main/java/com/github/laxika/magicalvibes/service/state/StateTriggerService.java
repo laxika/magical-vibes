@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.state;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ import java.util.UUID;
  * Implements MTG rule 603.8 — state-triggered abilities.
  *
  * <p>After state-based actions run, this service checks every permanent for
- * {@link EffectSlot#STATE_TRIGGERED} effects whose condition is met. If the
+ * state-triggered abilities ({@code Triggers.state()}) whose condition is met. If the
  * ability is not already on the stack (tracked via
  * {@link GameData#stateTriggerOnStack}), a triggered ability is pushed onto
  * the stack. The trigger won't fire again until it resolves, is countered,
@@ -192,7 +192,7 @@ public class StateTriggerService {
             return;
         }
         for (var source : gameData.planechase.faceUp) {
-            List<CardEffect> effects = source.getCard().getEffects(EffectSlot.STATE_TRIGGERED);
+            List<CardEffect> effects = MiscWatch.STATE_TRIGGERED.effectsOf(source.getCard());
             if (effects.isEmpty()) {
                 continue;
             }
@@ -228,7 +228,7 @@ public class StateTriggerService {
     }
 
     private List<CardEffect> stateTriggeredEffects(GameData gameData, Permanent permanent) {
-        List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.STATE_TRIGGERED));
+        List<CardEffect> effects = new ArrayList<>(MiscWatch.STATE_TRIGGERED.effectsOf(permanent.getCard()));
         if (gameQueryService != null) {
             gameQueryService.getGrantedEffects(gameData, permanent).stream()
                     .filter(StateTriggerEffect.class::isInstance)

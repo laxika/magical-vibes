@@ -6,7 +6,8 @@ import java.util.Objects;
 
 /**
  * A permanent or card takes a keyword action, or one is taken with it: "whenever a creature you control explores",
- * "when this creature exploits a creature" (CR 702.110b), "when this card becomes plotted". Build it through
+ * "when this creature exploits a creature" (CR 702.110b), "when this card becomes plotted", "whenever this creature
+ * crews a Vehicle", "when you unlock this door". Build it through
  * {@link Triggers}.
  *
  * @param action what the object does or what happens to it
@@ -42,6 +43,24 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object) im
         /** The card becomes plotted (CR 702.170a). */
         BECOMES_PLOTTED,
         /** The creature mutates. */
-        MUTATES
+        MUTATES,
+        /** The creature is tapped to pay a Vehicle's crew cost (CR 702.122a). */
+        CREWS_VEHICLE,
+        /**
+         * The creature is tapped to pay a Mount's saddle cost (CR 702.171a) or a Vehicle's crew cost during its
+         * controller's main phase.
+         */
+        SADDLES_OR_CREWS_DURING_MAIN_PHASE,
+        /** A crew ability of the Vehicle resolves (CR 702.122e). */
+        BECOMES_CREWED,
+        /** A saddle ability of the Mount resolves: it becomes saddled (CR 702.171a). */
+        BECOMES_SADDLED,
+        /** A creature stations the Spacecraft (CR 702.184a). */
+        BECOMES_STATIONED,
+        /**
+         * One of the Room's doors becomes unlocked: it gets that half's unlocked designation, as it enters or later
+         * (CR 709.5h). Which door is the ability's {@code TriggeringRoomDoorConditionalEffect}'s.
+         */
+        DOOR_UNLOCKED
     }
 }

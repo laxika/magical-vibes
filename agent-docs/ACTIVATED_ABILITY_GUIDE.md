@@ -1053,22 +1053,22 @@ addSpellEffect(effect);     // effect resolved when spell resolves
 
 ---
 
-## EffectSlot quick reference
+## Trigger quick reference
 
-**Ongoing schemes use the ordinary slots.** A face-up scheme in the command zone (CR 314.4) triggers
-from the same slots as a permanent: trigger collectors read `GameData.permanentsAndFaceUpSchemes(playerId)`
+**Ongoing schemes use the ordinary triggers.** A face-up scheme in the command zone (CR 314.4) triggers
+from the same triggers as a permanent: trigger collectors read `GameData.permanentsAndFaceUpSchemes(playerId)`
 or `GameData.forEachFaceUpSchemeSource` (a stable `Permanent` view of each face-up scheme, not on any
 battlefield) next to the battlefield scan. Wired today: spell cast (any/controller/opponent), scheme set
 in motion, another/ally permanent leaves the battlefield, creature/permanent deals damage to you, upkeep
 (own/each/opponent), end step (each/controller/opponent), beginning of combat (own/each/opponent). A
-new slot an ongoing scheme needs must add the same scan. `SacrificeSelfEffect` and
+new trigger an ongoing scheme needs must add the same scan. `SacrificeSelfEffect` and
 `SacrificePermanentThenEffect(PermanentIsSourcePermanentPredicate, ...)` abandon the scheme instead.
 
-A spell's own effects are not in a slot: `addSpellEffect(e)` (or `target(f).addSpellEffect(e)`) adds them
+A spell's own effects are not a triggered ability: `addSpellEffect(e)` (or `target(f).addSpellEffect(e)`) adds them
 to its spell ability, which resolves with the instant or sorcery. Additional costs to cast it go in with
 `addCastingCost(c)`.
 
-Abilities that aren't triggered aren't in a slot either; each is `addStaticEffect(e)`, functioning from the
+Abilities that aren't triggered aren't added with `addTrigger` either; each is `addStaticEffect(e)`, functioning from the
 zones its effect names (CR 113.6b): "enters with" and "as this enters" abilities (CR 614.1c), dredge
 (`DredgeEffect`, the graveyard), mulligan-time actions (`SerumPowderEffect`, `NoRegretsEgretEffect`: the hand),
 opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and "spells you cast have cascade"
@@ -1260,7 +1260,7 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 | `Triggers.mills(null, ObjectRelation.OPPONENT_OWNS)` | An opponent mills one or more cards in a single mill event |
 | `Triggers.milled(THIS)` | This card is milled into graveyard |
 | `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)` | This card moves from its library to its graveyard, including effects that do not mill |
-| `STATE_TRIGGERED` | State-triggered ability (rule 603.8). Fires when predicate is true, won't retrigger while on stack |
+| `Triggers.state()` | State-triggered ability (rule 603.8). Fires when predicate is true, won't retrigger while on stack |
 | `Triggers.chapter(1)` | Saga chapter I (first lore counter placed, on ETB and precombat main) |
 | `Triggers.chapter(2)` | Saga chapter II (second lore counter) |
 | `Triggers.chapter(3)` | Saga chapter III (third lore counter, saga sacrificed after) |

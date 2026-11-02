@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -14,7 +13,7 @@ public class ScrabblingSkullcrab extends Card {
     public ScrabblingSkullcrab() {
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MillEffect(2, MillRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED,
+        addTrigger(Triggers.youFullyUnlockRoom(),
                 new MillEffect(2, MillRecipient.TARGET_PLAYER));
     }
 }

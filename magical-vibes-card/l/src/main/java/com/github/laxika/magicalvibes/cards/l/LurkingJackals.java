@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 
@@ -13,12 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "UDS", collectorNumber = "62")
 public class LurkingJackals extends Card {
 
     public LurkingJackals() {
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 (gameData, sourcePermanent, controllerId) -> gameData.orderedPlayerIds.stream()
                         .filter(playerId -> !playerId.equals(controllerId))
                         .anyMatch(playerId -> gameData.getLife(playerId) <= 10),

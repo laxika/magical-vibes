@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
@@ -48,7 +47,7 @@ public class NorthPoleResearchBase extends Card {
 
         CreateTokenEffect alien = new CreateTokenEffect(
                 1, "Alien", 2, 2, CardColor.WHITE, List.of(CardSubtype.ALIEN), Set.of(), Set.of());
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new CreateTokenThenEffect(
+        addTrigger(Triggers.chaosEnsues(), new CreateTokenThenEffect(
                 alien,
                 SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET, nontokenCreatureOpponent),

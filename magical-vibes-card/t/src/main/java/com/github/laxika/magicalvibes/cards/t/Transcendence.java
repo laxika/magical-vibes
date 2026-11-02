@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
@@ -22,7 +21,7 @@ public class Transcendence extends Card {
         addTrigger(Triggers.youLoseLife(),
                 new GainLifeEffect(new Scaled(new EventValue(), 2)));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 (gameData, sourcePermanent, controllerId) -> gameData.getLife(controllerId) >= 20,
                 List.of(new ControllerLosesGameEffect()),
                 "Transcendence's state-triggered ability"));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -35,7 +34,7 @@ public class GlenElendra extends Card {
                         creature, false, false, true, false, false, false, false, false,
                         damagedCreature, false), "Exchange control of the two target creatures?"));
         target(new OwnedPermanentPredicateTargetFilter(creature, "Target must be a creature you own"))
-                .addEffect(EffectSlot.CHAOS_TRIGGERED,
+                .addTrigger(Triggers.chaosEnsues(),
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT));
     }
 }

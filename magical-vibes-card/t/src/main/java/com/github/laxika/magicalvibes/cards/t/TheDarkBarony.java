@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -17,7 +16,7 @@ public class TheDarkBarony extends Card {
     public TheDarkBarony() {
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONBLACK_CARD, ObjectRelation.ANOTHER),
                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
     }
 }

@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
 import com.github.laxika.magicalvibes.cards.s.StrionicResonator;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -40,7 +40,7 @@ class AretopolisTest extends BaseCardTest {
     void planeswalkingToAretopolisAddsScrollCounterAndGainsThatMuchLife() {
         int beforeLife = gd.getLife(player1.getId());
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(source.getCounters()).containsEntry(CounterType.SCROLL, 1);

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
@@ -29,7 +28,7 @@ public class TheGoldenCityOfOrazca extends Card {
                                 new ConditionalEffect(new ControllerHasCityBlessing(), new DrawCardEffect(1))),
                         false,
                         true));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.chaosEnsues(), new MayEffect(
                 new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent", true),
                 "Put a permanent card from your hand onto the battlefield tapped?"));
     }

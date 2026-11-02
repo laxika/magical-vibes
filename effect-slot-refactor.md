@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 11a: families 1 to 10 and the player and keyword actions of 11 done) |
+| 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3147,7 +3147,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 ### Step 13
 
 Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
-run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7, run 8 family 8, run 9 family 9, run 10 family 10, run 11a the player and keyword actions of family 11.
+run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7, run 8 family 8, run 9 family 9, run 10 family 10, run 11a the player and keyword actions of family 11, and run 11b the rest of family 11. No trigger constant is left, so the step is done.
 
 #### Run 1: steps and phases
 
@@ -4372,6 +4372,132 @@ the graveyard) and `FearOfChangeTest`, which read `ON_CONTROLLER_CONJURES`. Noth
   the main tree's `card-data-cache`), and the known ones in `CardImmutabilityArchTest`,
   `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 10.
+- The full suite was not run here.
+
+#### Run 11b: the rest of family 11
+
+The last 24 constants are gone: Planechase (`PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`, `CHAOS_TRIGGERED`,
+`ENCOUNTER_TRIGGERED`), control change (`ON_SELF_BECOMES_CONTROLLED`, `ON_SELF_LOSES_CONTROL`,
+`ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT`), attaching (`ON_AURA_ATTACHED_TO_SELF`,
+`ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE`, `ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT`, `ON_EQUIPMENT_ATTACHED`,
+and `ON_EQUIPMENT_ATTACHED_TO_CREATURE`, which nothing used and which was deleted without a replacement), crew, saddle
+and station (`ON_CREWS_VEHICLE`, `ON_ALLY_CREATURE_CREWS_VEHICLE`, `ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE`,
+`ON_SELF_BECOMES_STATIONED`, `ON_SELF_BECOMES_CREWED`, `ON_SELF_BECOMES_SADDLED`), day and night (`ON_DAY_NIGHT_CHANGE`,
+`GRAVEYARD_ON_DAY_NIGHT_CHANGE`), Rooms (`ON_ALLY_ROOM_FULLY_UNLOCKED`, `GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED`,
+`ON_SELF_ROOM_DOOR_UNLOCKED`) and `STATE_TRIGGERED`. `EffectSlot` is an empty enum now, so step 13 is done. It stays,
+with `LegacySlotTrigger`, `LegacySlots`, the `addEffect(slot, …)` adapter, the slot-keyed grant, copy, perpetual and
+registry paths and the `EffectSlot.values()` loops, all of them dead code that step 16 deletes.
+
+**Authoring.**
+
+- `model.trigger.PlanarTrigger(PlanarEvent event)`: "when you planeswalk to / away from this plane" (**CR 701.31b**,
+  checked), "whenever chaos ensues" (**CR 311.7**, checked), "when you encounter this phenomenon" (**CR 312.5**,
+  checked). It functions from the command zone by default (**CR 901.7**, checked); the planar readers read the card
+  without a zone, as before (a chaos ability of a revealed card in the planar deck, CR 311.7, still triggers).
+  `Triggers.planeswalkToThis()`, `planeswalkAwayFromThis()`, `chaosEnsues()`, `encounterThis()`.
+- `model.trigger.ControlChangeTrigger(ControlEvent event, ObjectRelation object)`: `youGainControlOfThis()`,
+  `youLoseControlOfThis()`, `opponentGainsControlOfPermanentYouControl()`.
+- `model.trigger.AttachTrigger(AttachEvent event)`: `auraBecomesAttachedToThis()`,
+  `auraYouControlBecomesAttachedToCreatureYouControl()`,
+  `auraYouControlBecomesAttachedToNonlandPermanentOpponentControls()` (the collector still checks the mana values),
+  `becomesAttachedToCreature()` (this Equipment).
+- `model.trigger.DayNightTrigger()`: "whenever day becomes night or night becomes day" (**CR 731.1a**, checked),
+  `Triggers.dayBecomesNightOrNightBecomesDay()`; the graveyard form is its `TriggerCondition` from the graveyard.
+- `model.trigger.StateTrigger()`: a state trigger (**CR 603.8**, checked), `Triggers.state()`. Its game state is still
+  its `StateTriggerEffect`'s condition. `Card.addTriggeredAbility` (so every `addTrigger`) rejects any other effect in
+  an ability with a `StateTrigger` ("A state trigger requires a StateTriggerEffect"), where `addEffect` checked the
+  `STATE_TRIGGERED` slot.
+- New `ObjectActionTrigger` actions, reused rather than a new type: `CREWS_VEHICLE` (**CR 702.122a**, checked;
+  `crewsVehicle()`, `creatureYouControlCrewsVehicle()`), `SADDLES_OR_CREWS_DURING_MAIN_PHASE` (**CR 702.171a**,
+  checked), `BECOMES_CREWED` (**CR 702.122e**, checked), `BECOMES_SADDLED`, `BECOMES_STATIONED` (**CR 702.184a**,
+  checked) and `DOOR_UNLOCKED` (**CR 709.5h**, checked; `doorUnlocked()`, the door is still the
+  `TriggeringRoomDoorConditionalEffect`'s). New `PlayerActionTrigger` action `FULLY_UNLOCKS_ROOM` (**CR 709.5i**,
+  checked; `youFullyUnlockRoom()`). `scripts/step13-misc-slots.tsv` maps each slot to its factory and zone.
+- **Kept as the slots were:** "for the first time each turn" crewing and saddling is still an
+  `OncePerTurnTriggerEffect`; Planechase cards author their step abilities with the battlefield default (run 1's note)
+  while their planar abilities function from the command zone; state triggers on planes are read without a zone.
+- `LegacySlots.slotOf` knows the five new trigger types. The private `TriggerCollectionService.dispatchSlot` overloads
+  had no caller left and were deleted; `queueGraveyardEerieTriggers` takes a `TriggerWatch`;
+  `PlanechaseService.trigger(…, EffectSlot, …)` is gone (the `Trigger` overload stays).
+
+**No rules event, no index.** As in runs 1 to 11a, the collectors still run where the slots were collected:
+`TriggerCollectionService` (control, attach, crew, saddle, station, day and night, Rooms), `CreatureControlService`
+(gaining or losing control of this), `StateTriggerService`, `StackResolutionService` (a Room's door targets),
+`CombatAttackService` (the delayed Vehicle attack) and `PlanechaseService` with the two chaos effect handlers.
+`service/trigger/MiscWatch` (a `TriggerWatch`) has one constant per old slot except the four planar ones, which
+`PlanechaseService` and the chaos handlers read through the `Triggers` factory directly (they had no handlers). The 9
+handler registrations in `MiscTriggerCollectorService`, `EnterTriggerCollectorService` and
+`DayNightTriggerCollectorService` moved from `@CollectsTrigger(slot = …)` to `@CollectsMiscTrigger(watch = …)`
+(`scripts/step13-misc-rekey.py`), scanned by `TriggerCollectorRegistry` and `GameEngineConfig`; no
+`@CollectsTrigger(slot = …)` registration is left. The readers were converted by `scripts/step13-misc-readers.py`; by
+hand: the planar calls, the eerie helper, four long lines. Grouping, target routing, wrapper checks and ability-loss
+checks are unchanged, so the run makes no rules change. Shadow mode was not run, for run 1's reason.
+
+Also fixed: three Javadoc links to slots deleted by earlier runs (`GraveyardService.notifyCardLeftGraveyard`,
+`EnchantedControllerSacrificesCreatureOnLeaveEffect`, `DrawCardForEachAuraAttachedToDyingCreatureEffect`).
+
+**Cards.** `scripts/step13-misc-triggers.py` (run 11a's card script on this run's TSV, with no grouped slot; a slot
+handed to `PlanechaseService.trigger` or to a test helper names the trigger) converted 293 card classes (339
+registrations, 2 of them from the graveyard), 21 card tests and the application tests below. Nothing needed `MANUAL`.
+By hand: the `EffectSlot` parameters of four card-test helpers (`TheCheetahPlanetTest`, `KetriaTest`,
+`FurnaceLayerTest` take a `Trigger`; `CliffsideMarketTest` lost its slot overload), rejoining the short wrapped
+`planar.trigger` calls of six card tests. 18 card classes and `BowieBaseOneTest` still import `EffectSlot` without
+using it (as at HEAD); step 16 drops those imports. `scripts/step13-misc-docs.py` rewrote agent-docs (117 lines); by
+hand: the day-and-night "trigger slot" rows, `PLANECHASE.md`'s "planar event slots", `ACTIVATED_ABILITY_GUIDE.md`'s
+"EffectSlot quick reference" heading and scheme paragraph, the skills and `ARCHITECTURE.md`. `effect-slot-inventory.md`
+was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the collectors of this run still read their wrappers: `OncePerTurnTriggerEffect` (crewed, saddled, the
+  Equipment attach of Inchblade Companion), `TriggeringRoomDoorConditionalEffect` (which door), the intervening-if
+  `ConditionalEffect`s of the planar reader, and `StateTriggerEffect`'s condition, which becomes the `StateTrigger`'s
+  game state.
+- Step 15: the crewed Vehicle, the stationing creature, the attached Aura, the new controller, the Room and the
+  day/night change are still bound by the collectors (`triggeringPermanentId`, `TriggerContext` records).
+- Step 16: with `EffectSlot` empty, `LegacySlotTrigger` can't be built, so the legacy slot paths (the adapter, the
+  slot-keyed `Permanent` / `StackEntry` / `GameData` grant methods, `GrantEffectToTargetEffect`'s and
+  `TemporaryGlobalTriggeredAbility`'s slot constructors and `slot()`, `LegacySlots.registrationAbilities`, the
+  `EffectSlot.values()` loops in the copy and layer code, `GameData.CollectingTrigger.slot`, the shadow recorder) have no
+  live caller and can go with the enum.
+
+**Tests changed.**
+
+- New `MiscTriggerTest` (`model/trigger/`): planar triggers function from the command zone and the rest from the
+  battlefield, every factory names its own trigger, the events and relations, null rejection, a card's abilities read
+  by trigger and zone, and a state trigger rejecting a non-`StateTriggerEffect`.
+- New `MiscWatchTest`: every misc, action, Saga, life, tap, library, target, counter, damage, combat and
+  spell-and-ability watch has its own (trigger, zone) pair, no misc watch reads a planar trigger, each reads its
+  trigger in a zone it functions from, and a watch reads only its trigger's abilities.
+- `StateTriggerServiceTest` (by the card script, then by hand): registers with `addTrigger(Triggers.state(), …)`; the
+  rejection case expects the new message, and its name and display names no longer say "slot".
+- `PlanechaseServiceTest` (by script; its `EffectSlot` fixture overload deleted), `SpellCastingServiceTest`,
+  `StackResolutionServiceTest` (by script), `MiscTriggerCollectorServiceTest` (by the reader script; its one
+  `addEffect` by hand) use the triggers and watches.
+- The tests that used these slots as arbitrary legacy slots can't name a slot any more: `CardAbilitiesTest` adds and
+  reads `Triggers.youLoseControlOfThis()` abilities instead (same cases, renamed from "slot" to ability or trigger;
+  the two `EffectSlot.values()` loops became "no triggered abilities"). `GrantedAbilitiesTest` grants
+  `TriggeredAbility` values through the ability forms of the same `Permanent`, `GameData`, `StackEntry`, grant and
+  global-trigger APIs; `aSlotAndAnEffectStandForATriggeredAbility` became `aTriggeredAbilityWithARealTriggerIsInNoSlot`,
+  and `simultaneousRegistrationsBecomeOneAbility` (`LegacySlots.registrationAbilities`) and the slot half of the
+  `LegacySlots.effectsIn` / `grant` cases are deleted. `TriggeredAbilityTest` uses real triggers (default zones from
+  `chaosEnsues()`, the command zone); its two `LegacySlotTrigger`-only cases (only condition, no options) are deleted.
+  `LegacySlotTriggerTest` keeps only `needsASlot` (its `@EnumSource(EffectSlot.class)` and CSV cases had no slot left).
+  `TriggerConditionTest` and the AI's `GameDataDeepCopyTest` use real triggers and the ability-based grant APIs.
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that references one, plus the changed card tests
+  (1,071 classes, 9,109 tests): all passing.
+- Application: the trigger-model (`model.trigger.*`), watch, registry, misc and enter collector, state-trigger,
+  planechase, stack-resolution, spell-casting, creature-control, card-ability, granted-ability, triggered-ability,
+  freeze, architecture, simulation-copy, targeting-consistency, legacy-binding, pipeline, step-trigger and state-based
+  action classes (774 tests): 45 failures, exactly the tests that fail at HEAD (`8982236074`, the same 8 classes rerun
+  in a worktree with the main tree's `card-data-cache`): mock wiring in `StepTriggerServiceTest` (16),
+  `StateBasedActionServiceTest` (13), `SpellCastingServiceTest` (10) and `CreatureControlServiceTest` (1),
+  `PlanechaseServiceTest`'s two source-less planeswalking cases, and the known ones in `CardImmutabilityArchTest`,
+  `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 11a.
 - The full suite was not run here.
 
 ## Prompt

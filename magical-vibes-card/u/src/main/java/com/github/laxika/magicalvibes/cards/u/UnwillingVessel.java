@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCounterPTEffect;
@@ -22,7 +21,7 @@ public class UnwillingVessel extends Card {
     public UnwillingVessel() {
         PutCountersOnSelfEffect possessionCounter = new PutCountersOnSelfEffect(CounterType.POSSESSION);
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), possessionCounter);
-        addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, possessionCounter);
+        addTrigger(Triggers.youFullyUnlockRoom(), possessionCounter);
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenWithDyingSourceCounterPTEffect(
                 new CreateTokenEffect("Spirit", 0, 0, CardColor.BLUE, List.of(CardSubtype.SPIRIT),

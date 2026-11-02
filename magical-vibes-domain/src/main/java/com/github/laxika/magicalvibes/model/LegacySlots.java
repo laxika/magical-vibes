@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.trigger.AttachTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ControlChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
+import com.github.laxika.magicalvibes.model.trigger.DayNightTrigger;
 import com.github.laxika.magicalvibes.model.trigger.FinalChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LandPlayTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
@@ -13,13 +16,15 @@ import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.PlanarTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
-import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -137,6 +142,11 @@ public final class LegacySlots {
                 case FinalChapterTrigger ignored -> null;
                 case PlayerActionTrigger ignored -> null;
                 case ObjectActionTrigger ignored -> null;
+                case ControlChangeTrigger ignored -> null;
+                case AttachTrigger ignored -> null;
+                case DayNightTrigger ignored -> null;
+                case PlanarTrigger ignored -> null;
+                case StateTrigger ignored -> null;
             };
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities aren't kept in a slot");

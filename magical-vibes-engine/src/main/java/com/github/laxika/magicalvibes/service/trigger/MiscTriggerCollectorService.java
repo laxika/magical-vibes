@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -133,8 +132,8 @@ public class MiscTriggerCollectorService {
     private final ETBTokenTargetService etbTokenTargetService;
     private PermanentRemovalService permanentRemovalService;
 
-    @CollectsTrigger(value = PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_CREWS_VEHICLE)
+    @CollectsMiscTrigger(value = PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect.class,
+            watch = MiscWatch.ON_ALLY_CREATURE_CREWS_VEHICLE)
     private boolean handlePerpetualVehicleBoostOnCrew(
             TriggerMatchContext match, PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect effect,
             TriggerContext ctx) {
@@ -268,8 +267,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TriggeringRoomDoorConditionalEffect.class,
-            slot = EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED)
+    @CollectsMiscTrigger(value = TriggeringRoomDoorConditionalEffect.class,
+            watch = MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED)
     private boolean handleSelfRoomDoorUnlocked(TriggerMatchContext match,
                                                 TriggeringRoomDoorConditionalEffect effect,
                                                 TriggerContext ctx) {
@@ -279,8 +278,8 @@ public class MiscTriggerCollectorService {
         }
 
         Card card = match.permanent().getCard();
-        List<TriggeringRoomDoorConditionalEffect> matchingEffects = card
-                .getEffects(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED).stream()
+        List<TriggeringRoomDoorConditionalEffect> matchingEffects = MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED.effectsOf(card)
+                .stream()
                 .filter(TriggeringRoomDoorConditionalEffect.class::isInstance)
                 .map(TriggeringRoomDoorConditionalEffect.class::cast)
                 .filter(candidate -> candidate.doorIndex() == unlocked.doorIndex())
@@ -1606,8 +1605,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class,
-            slot = EffectSlot.ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT)
+    @CollectsMiscTrigger(value = CreateTokenEffect.class,
+            watch = MiscWatch.ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT)
     private boolean handleOpponentGainsControlCreateToken(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2903,8 +2902,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class,
-            slot = EffectSlot.ON_SELF_BECOMES_SADDLED)
+    @CollectsMiscTrigger(value = OncePerTurnTriggerEffect.class,
+            watch = MiscWatch.ON_SELF_BECOMES_SADDLED)
     private boolean handleBecomesSaddledOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -2928,7 +2927,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_SADDLED)
+    @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_SELF_BECOMES_SADDLED)
     private boolean handleBecomesSaddledDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -2949,8 +2948,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class,
-            slot = EffectSlot.ON_SELF_BECOMES_CREWED)
+    @CollectsMiscTrigger(value = OncePerTurnTriggerEffect.class,
+            watch = MiscWatch.ON_SELF_BECOMES_CREWED)
     private boolean handleBecomesCrewedOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -2985,7 +2984,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_CREWED)
+    @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_SELF_BECOMES_CREWED)
     private boolean handleBecomesCrewedDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -3015,7 +3014,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_STATIONED)
+    @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_SELF_BECOMES_STATIONED)
     private boolean handleBecomesStationed(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.CreatureStationed stationed)

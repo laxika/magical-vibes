@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -35,7 +34,7 @@ public class Towashi extends Card {
                 new DrawCardEffect(1)), GrantScope.ALL_OWN_CREATURES, modifiedCreature));
 
         target(TargetFilters.creatureYouControl(), 1, 3)
-                .addEffect(EffectSlot.CHAOS_TRIGGERED,
+                .addTrigger(Triggers.chaosEnsues(),
                         DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
     }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -130,8 +131,7 @@ class RiptideIslandTest extends BaseCardTest {
 
     private void triggerPlaneswalkTo() {
         harness.inMutationScope(() -> planar.trigger(gd, source,
-                com.github.laxika.magicalvibes.model.EffectSlot.PLANESWALK_TO_TRIGGERED,
-                player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
     }
 }

@@ -20,8 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SerumPowderEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -35,9 +35,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * How {@link Card} turns slot registrations into abilities, and how the slot views read them back.
+ * How {@link Card} turns registrations into abilities, and how its views read them back.
  */
 class CardAbilitiesTest {
+
+    private static final Trigger LOSES_CONTROL = Triggers.youLoseControlOfThis();
 
     private static final CardEffect DRAW_ONE = new DrawCardEffect(1);
     private static final CardEffect DRAW_TWO = new DrawCardEffect(2);
@@ -107,9 +109,7 @@ class CardAbilitiesTest {
         assertThat(card.getStaticEffects(Zone.GRAVEYARD)).containsExactly(dredge);
         assertThat(card.getStaticEffects(Zone.HAND)).containsExactly(powder, leyline);
         assertThat(card.getStaticEffects(Zone.BATTLEFIELD)).isEmpty();
-        for (EffectSlot slot : EffectSlot.values()) {
-            assertThat(card.getEffects(slot)).isEmpty();
-        }
+        assertThat(card.getTriggeredAbilities()).isEmpty();
     }
 
     @Test
@@ -123,7 +123,7 @@ class CardAbilitiesTest {
     }
 
     @Test
-    void anAddedStaticAbilityKeepsItsZonesAndStaysOutOfTheSlotViews() {
+    void anAddedStaticAbilityKeepsItsZonesAndIsNoTriggeredAbility() {
         card.addStaticEffect(DRAW_ONE);
         card.addAbility(new StaticAbility(List.of(GAIN_ONE, GAIN_TWO), AbilityZones.COMMAND));
 
@@ -131,9 +131,7 @@ class CardAbilitiesTest {
                 new StaticAbility(List.of(DRAW_ONE)),
                 new StaticAbility(List.of(GAIN_ONE), AbilityZones.COMMAND),
                 new StaticAbility(List.of(GAIN_TWO), AbilityZones.COMMAND));
-        for (EffectSlot slot : EffectSlot.values()) {
-            assertThat(card.getEffects(slot)).isEmpty();
-        }
+        assertThat(card.getTriggeredAbilities()).isEmpty();
     }
 
     @Test
@@ -151,61 +149,61 @@ class CardAbilitiesTest {
     }
 
     @Test
-    void aSlotGroupedEachGetsOneAbilityPerRegistration() {
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_TWO);
+    void eachTriggerRegistrationIsAnAbilityOfItsOwn() {
+        card.addTrigger(LOSES_CONTROL, DRAW_ONE);
+        card.addTrigger(LOSES_CONTROL, DRAW_TWO);
 
         assertThat(card.getAbilities()).containsExactly(
-                legacy(EffectSlot.ON_SELF_LOSES_CONTROL, new EffectRegistration(DRAW_ONE)),
-                legacy(EffectSlot.ON_SELF_LOSES_CONTROL, new EffectRegistration(DRAW_TWO)));
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(DRAW_ONE, DRAW_TWO);
+                triggered(new EffectRegistration(DRAW_ONE)),
+                triggered(new EffectRegistration(DRAW_TWO)));
+        assertThat(card.getTriggerEffects(LOSES_CONTROL)).containsExactly(DRAW_ONE, DRAW_TWO);
     }
 
     @Test
-    void simultaneousEffectsStayInOneAbilityInASlotGroupedEach() {
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
-        card.addSimultaneousEffects(EffectSlot.ON_SELF_LOSES_CONTROL, GAIN_ONE, GAIN_TWO);
+    void simultaneousEffectsStayInOneAbility() {
+        card.addTrigger(LOSES_CONTROL, DRAW_ONE);
+        card.addSimultaneousTrigger(LOSES_CONTROL, GAIN_ONE, GAIN_TWO);
 
         assertThat(card.getAbilities()).containsExactly(
-                legacy(EffectSlot.ON_SELF_LOSES_CONTROL, new EffectRegistration(DRAW_ONE)),
-                legacy(EffectSlot.ON_SELF_LOSES_CONTROL, new EffectRegistration(GAIN_ONE),
+                triggered(new EffectRegistration(DRAW_ONE)),
+                triggered(new EffectRegistration(GAIN_ONE),
                         new EffectRegistration(GAIN_TWO, TriggerMode.NORMAL, true)));
         assertThat(card.isSimultaneousWithPrevious(GAIN_TWO)).isTrue();
         assertThat(card.isSimultaneousWithPrevious(GAIN_ONE)).isFalse();
     }
 
     @Test
-    void slotViewsCantBeChangedFromOutside() {
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
+    void triggerViewsCantBeChangedFromOutside() {
+        card.addTrigger(LOSES_CONTROL, DRAW_ONE);
 
-        assertThatThrownBy(() -> card.getEffectRegistrations(EffectSlot.ON_SELF_LOSES_CONTROL).clear())
+        assertThatThrownBy(() -> card.getTriggerEffectRegistrations(LOSES_CONTROL).clear())
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> card.getAbilities().clear()).isInstanceOf(UnsupportedOperationException.class);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED)).isEmpty();
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_SELF_BECOMES_CONTROLLED)).isEmpty();
+        assertThat(card.getTriggerEffects(Triggers.youGainControlOfThis())).isEmpty();
+        assertThat(card.getTriggerEffectRegistrations(Triggers.youGainControlOfThis())).isEmpty();
     }
 
     @Test
     void viewsFollowEffectsAddedAfterTheyWereRead() {
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(DRAW_ONE);
+        card.addTrigger(LOSES_CONTROL, DRAW_ONE);
+        assertThat(card.getTriggerEffects(LOSES_CONTROL)).containsExactly(DRAW_ONE);
 
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_TWO);
+        card.addTrigger(LOSES_CONTROL, DRAW_TWO);
 
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(DRAW_ONE, DRAW_TWO);
+        assertThat(card.getTriggerEffects(LOSES_CONTROL)).containsExactly(DRAW_ONE, DRAW_TWO);
     }
 
     @Test
     void removingEffectsDropsAbilitiesLeftEmptyAndKeepsTheOthersAsTheyAre() {
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, GAIN_ONE);
+        card.addTrigger(LOSES_CONTROL, DRAW_ONE);
+        card.addTrigger(LOSES_CONTROL, GAIN_ONE);
         Ability untouched = card.getAbilities().get(1);
 
         card.removeEffectsIf(DRAW_ONE::equals);
 
         assertThat(card.getAbilities()).hasSize(1);
         assertThat(card.getAbilities().getFirst()).isSameAs(untouched);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(GAIN_ONE);
+        assertThat(card.getTriggerEffects(LOSES_CONTROL)).containsExactly(GAIN_ONE);
     }
 
     @Test
@@ -219,14 +217,14 @@ class CardAbilitiesTest {
     }
 
     @Test
-    void effectsCanBeRemovedFromSomeSlotsOnly() {
+    void effectsCanBeRemovedFromSomeAbilitiesOnly() {
         card.addStaticEffect(DRAW_ONE);
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
+        card.addTrigger(LOSES_CONTROL, DRAW_ONE);
 
         card.removeAbilityEffectsIf((ability, effect) -> !(ability instanceof StaticAbility));
 
         assertThat(card.getStaticEffects()).containsExactly(DRAW_ONE);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).isEmpty();
+        assertThat(card.getTriggerEffects(LOSES_CONTROL)).isEmpty();
     }
 
     @Test
@@ -272,20 +270,20 @@ class CardAbilitiesTest {
         card.freeze();
 
         Card copy = card.createRuntimeCopy();
-        copy.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, GAIN_ONE);
+        copy.addTrigger(LOSES_CONTROL, GAIN_ONE);
 
         assertThat(copy.getAbilities()).startsWith(card.getAbilities().getFirst());
         assertThat(copy.isSagaChapterTargetRequired(1)).isTrue();
-        assertThat(copy.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(GAIN_ONE);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).isEmpty();
+        assertThat(copy.getTriggerEffects(LOSES_CONTROL)).containsExactly(GAIN_ONE);
+        assertThat(card.getTriggerEffects(LOSES_CONTROL)).isEmpty();
         assertThat(card.getAbilities()).hasSize(1);
     }
 
     @Test
-    void clearingAbilitiesEmptiesEverySlot() {
+    void clearingAbilitiesEmptiesEveryView() {
         card.addSpellEffect(DRAW_ONE);
         card.addStaticEffect(DRAW_TWO);
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, GAIN_ONE);
+        card.addTrigger(LOSES_CONTROL, GAIN_ONE);
 
         card.clearRulesTextAndAbilities();
 
@@ -411,8 +409,8 @@ class CardAbilitiesTest {
         assertThat(card.getSpellEffectRegistrations()).containsExactly(new EffectRegistration(DRAW_ONE));
     }
 
-    private static TriggeredAbility legacy(EffectSlot slot, EffectRegistration... effects) {
-        return new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, List.of(effects));
+    private static TriggeredAbility triggered(EffectRegistration... effects) {
+        return new TriggeredAbility(LOSES_CONTROL, TriggerOptions.DEFAULT, List.of(effects));
     }
 
     @Test
@@ -484,8 +482,8 @@ class CardAbilitiesTest {
     }
 
     @Test
-    void aTriggerIsATriggeredAbilityOfItsOwnThatNoSlotViewShows() {
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
+    void aTriggerIsATriggeredAbilityOfItsOwnReadOnlyByItsTrigger() {
+        card.addTrigger(LOSES_CONTROL, DRAW_ONE);
         card.addTrigger(Triggers.dies(ObjectRelation.THIS), DRAW_TWO, GAIN_ONE);
 
         TriggeredAbility added = card.getTriggeredAbilities().get(1);
@@ -493,7 +491,7 @@ class CardAbilitiesTest {
         assertThat(added.options()).isEqualTo(TriggerOptions.DEFAULT);
         assertThat(added.effects()).extracting(EffectRegistration::effect).containsExactly(DRAW_TWO, GAIN_ONE);
         assertThat(card.getTriggeredAbilities()).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(DRAW_ONE);
+        assertThat(card.getTriggerEffects(LOSES_CONTROL)).containsExactly(DRAW_ONE);
     }
 
     @Test

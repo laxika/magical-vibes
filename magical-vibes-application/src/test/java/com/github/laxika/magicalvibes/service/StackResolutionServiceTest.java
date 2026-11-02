@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
@@ -111,7 +110,7 @@ class StackResolutionServiceTest {
         var effect = new com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect(1,
                 new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
         physical.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 2)
-                .addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED, effect);
+                .addTrigger(Triggers.doorUnlocked(), effect);
         Card spell = physical.createRuntimeCopy();
         spell.setSelectedRoomDoor(0);
         spell.clearRuntimeSpellTargets();

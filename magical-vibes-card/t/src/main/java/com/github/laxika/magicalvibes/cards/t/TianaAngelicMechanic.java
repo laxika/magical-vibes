@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class TianaAngelicMechanic extends Card {
 
     public TianaAngelicMechanic() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_CREWS_VEHICLE,
+        addTrigger(Triggers.creatureYouControlCrewsVehicle(),
                 new PerpetuallyBoostVehicleWhenMatchingCreatureCrewsEffect(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourceCardPredicate(),

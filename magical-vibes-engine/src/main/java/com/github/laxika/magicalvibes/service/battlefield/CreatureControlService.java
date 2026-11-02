@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ControlLossTapTrigger;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,6 +36,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -471,9 +471,9 @@ public class CreatureControlService {
 
     private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
         List<CardEffect> effects = new ArrayList<>(
-                permanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
-        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
-        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+                MiscWatch.ON_SELF_BECOMES_CONTROLLED.effectsOf(permanent.getCard()));
+        effects.addAll(permanent.getTemporaryTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
+        effects.addAll(permanent.getPersistentTriggerEffects(MiscWatch.ON_SELF_BECOMES_CONTROLLED.trigger()));
 
         for (CardEffect effect : effects) {
             StackEntry entry = new StackEntry(
@@ -494,9 +494,9 @@ public class CreatureControlService {
     private void queueSelfControlLossTriggers(GameData gameData, Permanent permanent,
                                               UUID controllerId) {
         List<CardEffect> effects = new ArrayList<>(
-                permanent.getCard().getEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
-        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
-        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_LOSES_CONTROL));
+                MiscWatch.ON_SELF_LOSES_CONTROL.effectsOf(permanent.getCard()));
+        effects.addAll(permanent.getTemporaryTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
+        effects.addAll(permanent.getPersistentTriggerEffects(MiscWatch.ON_SELF_LOSES_CONTROL.trigger()));
 
         for (CardEffect effect : effects) {
             StackEntry entry = new StackEntry(

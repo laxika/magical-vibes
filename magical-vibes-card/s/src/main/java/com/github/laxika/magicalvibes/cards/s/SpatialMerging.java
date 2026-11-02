@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealPlanarCardsUntilTwoPlanesAndPlaneswalkEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "7")
 @CardRegistration(set = "OPCA", collectorNumber = "7")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealPlanarCardsUntilTwoPlan
 public class SpatialMerging extends Card {
 
     public SpatialMerging() {
-        addEffect(EffectSlot.ENCOUNTER_TRIGGERED, new RevealPlanarCardsUntilTwoPlanesAndPlaneswalkEffect());
+        addTrigger(Triggers.encounterThis(), new RevealPlanarCardsUntilTwoPlanesAndPlaneswalkEffect());
     }
 }

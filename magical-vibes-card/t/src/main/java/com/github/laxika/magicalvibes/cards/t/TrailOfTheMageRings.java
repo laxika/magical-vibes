@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class TrailOfTheMageRings extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.allPlayers(Keyword.REBOUND, instantOrSorcery));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(new SearchLibraryEffect(instantOrSorcery),
+        addTrigger(Triggers.chaosEnsues(), new MayEffect(new SearchLibraryEffect(instantOrSorcery),
                 "Search your library for an instant or sorcery card?"));
     }
 }

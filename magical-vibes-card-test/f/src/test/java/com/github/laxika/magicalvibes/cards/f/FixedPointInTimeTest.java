@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -39,7 +39,7 @@ class FixedPointInTimeTest extends BaseCardTest {
         gd.planechase.faceUp.add(source);
         gd.planechase.deck.add(chaosPlane);
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
@@ -61,7 +61,7 @@ class FixedPointInTimeTest extends BaseCardTest {
         gd.planechase.faceUp.add(source);
         gd.planechase.deck.add(chaosPlane());
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
         gd.turnNumber++;
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
@@ -82,7 +82,7 @@ class FixedPointInTimeTest extends BaseCardTest {
         Card plane = new Card();
         plane.setName("Chaos plane");
         plane.setType(CardType.PLANE);
-        plane.addEffect(EffectSlot.CHAOS_TRIGGERED, new DrawCardEffect(1));
+        plane.addTrigger(Triggers.chaosEnsues(), new DrawCardEffect(1));
         return plane;
     }
 }

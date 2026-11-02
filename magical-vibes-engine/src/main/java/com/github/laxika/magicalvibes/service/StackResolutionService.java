@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteS
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -71,6 +70,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
+import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -1158,7 +1158,7 @@ public class StackResolutionService {
             if (card.getSelectedRoomDoor() != null && characteristics.getTargetGroups().isEmpty()) {
                 enteringCharacteristics = characteristics.createRuntimeCopy();
                 enteringCharacteristics.appendSpellTargetingForEffectsFrom(entry.getPhysicalCard(),
-                        entry.getPhysicalCard().getEffects(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED));
+                        MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED.effectsOf(entry.getPhysicalCard()));
             }
             Permanent enchPerm = createEnteringPermanent(entry, card, enteringCharacteristics);
             if (card.getSelectedRoomDoor() != null) {

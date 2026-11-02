@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -20,7 +19,7 @@ public class LetheLake extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addEffect(EffectSlot.CHAOS_TRIGGERED,
+                .addTrigger(Triggers.chaosEnsues(),
                         new MillEffect(10, MillRecipient.TARGET_PLAYER));
     }
 }

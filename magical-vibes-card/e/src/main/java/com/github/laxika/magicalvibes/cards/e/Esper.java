@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToOwnPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +31,7 @@ public class Esper extends Card {
         PermanentAllOfPredicate coloredCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK))));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new AddCardTypeToOwnPermanentsUntilEndOfTurnEffect(CardType.ARTIFACT, coloredCreature),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.MENACE, Keyword.LIFELINK),
                         GrantScope.ALL_OWN_CREATURES, new PermanentIsArtifactPredicate())));

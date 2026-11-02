@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -29,7 +28,7 @@ public class CrudeAbattoirUnsavoryKitchen extends Card {
                         .withManaCost("{2}{R}")
         )));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        target(TargetFilters.creature()).addTrigger(Triggers.doorUnlocked(),
                 new TriggeringRoomDoorConditionalEffect(0,
                         new DealDamageToTargetCreatureEffect(2)));
 

@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -43,7 +44,7 @@ class FurnaceLayerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest()));
         harness.setHand(player2, List.of(new Forest()));
 
-        resolveRandomDiscard(EffectSlot.PLANESWALK_TO_TRIGGERED);
+        resolveRandomDiscard(Triggers.planeswalkToThis());
 
         assertThat(gd.getLife(player1.getId()) + gd.getLife(player2.getId())).isEqualTo(37);
     }
@@ -83,7 +84,7 @@ class FurnaceLayerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest()));
 
         harness.inMutationScope(() -> planar.trigger(gd, source,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isIn(player1.getId(), player2.getId());
@@ -95,7 +96,7 @@ class FurnaceLayerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest()));
 
         harness.inMutationScope(() -> planar.trigger(gd, source,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
         PendingInteraction.DiscardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
@@ -115,7 +116,7 @@ class FurnaceLayerTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         harness.inMutationScope(() -> planar.trigger(gd, source,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -130,7 +131,7 @@ class FurnaceLayerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
 
         harness.inMutationScope(() -> planar.trigger(gd, source,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
         PendingInteraction.DiscardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
@@ -163,8 +164,8 @@ class FurnaceLayerTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
-    private void resolveRandomDiscard(EffectSlot slot) {
-        harness.inMutationScope(() -> planar.trigger(gd, source, slot, player1.getId()));
+    private void resolveRandomDiscard(Trigger trigger) {
+        harness.inMutationScope(() -> planar.trigger(gd, source, trigger, player1.getId()));
         harness.passBothPriorities();
         resolveRandomDiscardChoice();
     }

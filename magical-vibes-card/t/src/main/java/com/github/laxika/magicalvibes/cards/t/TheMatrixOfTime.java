@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithPlanarSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -18,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheMatrixOfTime extends Card {
 
     public TheMatrixOfTime() {
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED,
+        addTrigger(Triggers.planeswalkToThis(),
                 new ExileTopCardOfEachPlayersLibraryWithPlanarSourceEffect());
         addStaticEffect(new AllowPlayCardsExiledWithPlanarSourceEffect());
 
@@ -29,6 +28,6 @@ public class TheMatrixOfTime extends Card {
                 new PlayedCardExiledWithPlanarSourceTriggerEffect(playedCardFollowUp));
         addTrigger(Triggers.youPlayLand(),
                 new PlayedCardExiledWithPlanarSourceTriggerEffect(playedCardFollowUp));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, CreateTokenEffect.ofTreasureToken(2));
+        addTrigger(Triggers.chaosEnsues(), CreateTokenEffect.ofTreasureToken(2));
     }
 }

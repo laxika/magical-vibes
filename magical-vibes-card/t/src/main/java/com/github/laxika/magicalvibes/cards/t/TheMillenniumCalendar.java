@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -29,7 +28,7 @@ public class TheMillenniumCalendar extends Card {
                 "{2}",
                 List.of(new DoubleCountersOnSourceEffect(CounterType.TIME)),
                 "{2}, {T}: Double the number of time counters on The Millennium Calendar."));
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentCounterCountAtLeastPredicate(CounterType.TIME, 1000),
                 List.of(
                         new SacrificeSelfEffect(),

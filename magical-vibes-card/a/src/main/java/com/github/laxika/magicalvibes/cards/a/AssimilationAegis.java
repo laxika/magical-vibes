@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureBecomesCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -17,7 +16,7 @@ public class AssimilationAegis extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect());
-        addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
+        addTrigger(Triggers.becomesAttachedToCreature(),
                 new AttachedCreatureBecomesCopyOfExiledCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

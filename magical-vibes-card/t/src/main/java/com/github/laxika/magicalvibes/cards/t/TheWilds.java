@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,12 +15,12 @@ public class TheWilds extends Card {
 
     public TheWilds() {
         CreateTokenEffect food = CreateTokenEffect.ofFoodToken(1);
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, food);
+        addTrigger(Triggers.planeswalkToThis(), food);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), food);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
-                .addEffect(EffectSlot.CHAOS_TRIGGERED,
+                .addTrigger(Triggers.chaosEnsues(),
                         new TargetPlayerSacrificesCreatureThenCreateTokensIfToughnessAtLeastEffect(
                                 food, 4, 1, 2));
     }

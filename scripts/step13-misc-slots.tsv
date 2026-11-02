@@ -1,0 +1,24 @@
+# slot	factory	zone (- for the trigger's default)	watch zone (- for no MiscWatch constant: Planechase reads the trigger)	javadoc
+PLANESWALK_TO_TRIGGERED	planeswalkToThis	-	-	"When you planeswalk to this plane".
+PLANESWALK_FROM_TRIGGERED	planeswalkAwayFromThis	-	-	"When you planeswalk away from this plane".
+CHAOS_TRIGGERED	chaosEnsues	-	-	"Whenever chaos ensues", a plane's chaos ability.
+ENCOUNTER_TRIGGERED	encounterThis	-	-	"When you encounter this phenomenon".
+ON_SELF_BECOMES_CONTROLLED	youGainControlOfThis	-	BATTLEFIELD	"When you gain control of this from another player".
+ON_SELF_LOSES_CONTROL	youLoseControlOfThis	-	BATTLEFIELD	"When you lose control of this".
+ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT	opponentGainsControlOfPermanentYouControl	-	BATTLEFIELD	"Whenever an opponent gains control of a permanent you control".
+ON_AURA_ATTACHED_TO_SELF	auraBecomesAttachedToThis	-	BATTLEFIELD	"Whenever an Aura becomes attached to this permanent", whoever controls the Aura.
+ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE	auraYouControlBecomesAttachedToCreatureYouControl	-	BATTLEFIELD	"Whenever an Aura you control becomes attached to a creature you control".
+ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT	auraYouControlBecomesAttachedToNonlandPermanentOpponentControls	-	BATTLEFIELD	"Whenever an Aura you control becomes attached to a nonland permanent an opponent controls with mana value less than or equal to that Aura's mana value".
+ON_EQUIPMENT_ATTACHED	becomesAttachedToCreature	-	BATTLEFIELD	"Whenever this Equipment becomes attached to a creature".
+ON_CREWS_VEHICLE	crewsVehicle	-	BATTLEFIELD	"Whenever this creature crews a Vehicle".
+ON_ALLY_CREATURE_CREWS_VEHICLE	creatureYouControlCrewsVehicle	-	BATTLEFIELD	"Whenever a creature you control crews a Vehicle", this creature included.
+ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE	saddlesOrCrewsDuringMainPhase	-	BATTLEFIELD	"Whenever this creature saddles a Mount or crews a Vehicle during your main phase".
+ON_SELF_BECOMES_STATIONED	becomesStationed	-	BATTLEFIELD	"Whenever a creature stations this Spacecraft".
+ON_SELF_BECOMES_CREWED	becomesCrewed	-	BATTLEFIELD	"Whenever this Vehicle becomes crewed".
+ON_SELF_BECOMES_SADDLED	becomesSaddled	-	BATTLEFIELD	"Whenever this creature becomes saddled".
+ON_DAY_NIGHT_CHANGE	dayBecomesNightOrNightBecomesDay	-	BATTLEFIELD	"Whenever day becomes night or night becomes day".
+GRAVEYARD_ON_DAY_NIGHT_CHANGE	dayBecomesNightOrNightBecomesDay	GRAVEYARD	GRAVEYARD	"Whenever day becomes night or night becomes day", while this card is in your graveyard.
+ON_ALLY_ROOM_FULLY_UNLOCKED	youFullyUnlockRoom	-	BATTLEFIELD	"Whenever you fully unlock a Room".
+GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED	youFullyUnlockRoom	GRAVEYARD	GRAVEYARD	"Whenever you fully unlock a Room", while this card is in your graveyard.
+ON_SELF_ROOM_DOOR_UNLOCKED	doorUnlocked	-	BATTLEFIELD	"When you unlock this door".
+STATE_TRIGGERED	state	-	BATTLEFIELD	A state trigger (CR 603.8).

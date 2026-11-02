@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureBecomesCopyOfTargetCreatureEffect;
@@ -33,7 +32,7 @@ public class BladeOfSharedSouls extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate()))),
                 "Target must be another creature you control."));
-        addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
+        addTrigger(Triggers.becomesAttachedToCreature(),
                 new MayEffect(new EquippedCreatureBecomesCopyOfTargetCreatureEffect(),
                         "Have the equipped creature become a copy of another creature you control?"));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

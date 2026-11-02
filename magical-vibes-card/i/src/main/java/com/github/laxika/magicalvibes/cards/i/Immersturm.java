@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -22,7 +21,7 @@ public class Immersturm extends Card {
                 new MayEffect(DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()),
                         "Have it deal damage to any target?", null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
-        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 FlickerEffect.flickerTarget(new PermanentIsCreaturePredicate()));
     }
 }

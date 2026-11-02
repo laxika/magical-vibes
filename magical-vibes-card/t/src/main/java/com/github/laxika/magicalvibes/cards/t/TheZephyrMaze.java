@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "40")
 @CardRegistration(set = "OPCA", collectorNumber = "86")
@@ -20,7 +20,7 @@ public class TheZephyrMaze extends Card {
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
         addStaticEffect(new StaticBoostEffect(-2, 0, GrantScope.ALL_CREATURES,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
-        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
     }
 }

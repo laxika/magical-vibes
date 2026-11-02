@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +19,7 @@ public class ProteanWarEngine extends Card {
 
     public ProteanWarEngine() {
         addStaticEffect(new DraftProteanWarEngineSpellbookEffect());
-        addEffect(EffectSlot.ON_SELF_BECOMES_CREWED,
+        addTrigger(Triggers.becomesCrewed(),
                 new BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect(
                         Set.of(CardType.ARTIFACT), Set.of(CardSubtype.VEHICLE)));
         addActivatedAbility(new ActivatedAbility(

@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorElixir;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -76,7 +76,7 @@ class AntarcticResearchBaseTest extends BaseCardTest {
 
     private void triggerPlaneswalkTo() {
         harness.inMutationScope(() -> planar.trigger(gd, source,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
     }
 }

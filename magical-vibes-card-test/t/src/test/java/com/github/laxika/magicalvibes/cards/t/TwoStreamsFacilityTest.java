@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -26,8 +25,7 @@ class TwoStreamsFacilityTest extends BaseCardTest {
         var opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         PlanarObject source = gd.planechase.faceUp.getFirst();
 
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED,
-                player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Green anchor");
         harness.handleListChoice(player2, "Red waterfall");

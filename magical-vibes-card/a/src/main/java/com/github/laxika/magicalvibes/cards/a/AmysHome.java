@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileNonlandCardFromHandWithManaValueTimeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
@@ -13,12 +12,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AmysHome extends Card {
 
     public AmysHome() {
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.planeswalkToThis(), new MayEffect(
                 new ExileNonlandCardFromHandWithManaValueTimeCountersEffect(),
                 "Exile a nonland card from your hand?"));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new ExileNonlandCardFromHandWithManaValueTimeCountersEffect(),
                 "Exile a nonland card from your hand?"));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new TimeTravelEffect(1));
+        addTrigger(Triggers.chaosEnsues(), new TimeTravelEffect(1));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
@@ -34,6 +33,6 @@ public class VictorValgavothsSeneschal extends Card {
                                 .build())
         );
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie);
-        addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
+        addTrigger(Triggers.youFullyUnlockRoom(), eerie);
     }
 }

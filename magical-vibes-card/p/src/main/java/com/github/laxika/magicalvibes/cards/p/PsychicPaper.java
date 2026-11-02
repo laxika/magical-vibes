@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -23,7 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PsychicPaper extends Card {
 
     public PsychicPaper() {
-        addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
+        addTrigger(Triggers.becomesAttachedToCreature(),
                 SequenceEffect.of(
                         new ChooseCardNameAtResolutionEffect(CardType.CREATURE),
                         new ChooseSubtypeForSourceEffect()));

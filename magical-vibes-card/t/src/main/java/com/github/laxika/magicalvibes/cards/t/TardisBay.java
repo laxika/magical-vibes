@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -22,7 +21,7 @@ public class TardisBay extends Card {
         addTrigger(Triggers.youCastSpell(),
                 SpellCastTriggerEffect.nth(1, new CardMinManaValuePredicate(2, true),
                         List.of(new CascadeEffect())));
-        target(TargetFilters.artifact()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.artifact()).addTrigger(Triggers.chaosEnsues(),
                 SequenceEffect.of(
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                         new PlaneswalkEffect()));

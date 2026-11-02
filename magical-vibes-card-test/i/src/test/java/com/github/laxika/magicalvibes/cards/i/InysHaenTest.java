@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -49,8 +50,7 @@ class InysHaenTest extends BaseCardTest {
                 new Shock(), new Shock(), new Shock(), new Shock(), new Shock(), new Shock()));
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, com.github.laxika.magicalvibes.model.EffectSlot.PLANESWALK_TO_TRIGGERED,
-                player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
 
@@ -112,8 +112,7 @@ class InysHaenTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, com.github.laxika.magicalvibes.model.EffectSlot.PLANESWALK_TO_TRIGGERED,
-                player1.getId()));
+                gd, source, Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);

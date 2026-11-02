@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -37,10 +36,10 @@ public class ThePit extends Card {
                 1, "Demon", 6, 6, CardColor.BLACK, List.of(CardSubtype.DEMON),
                 Set.of(Keyword.FLYING, Keyword.TRAMPLE), Set.of(), demonEffects);
 
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, new EachPlayerChoosesTokenEffect(List.of(
+        addTrigger(Triggers.planeswalkToThis(), new EachPlayerChoosesTokenEffect(List.of(
                 new EachPlayerChoosesTokenEffect.TokenOption("Create a 3/3 white Angel token", angel),
                 new EachPlayerChoosesTokenEffect.TokenOption("Create a 6/6 black Demon token", demon))));
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()))),

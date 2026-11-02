@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlThenCreateTokenEffect;
@@ -37,7 +36,7 @@ public class DalekIntensiveCare extends Card {
         var intensiveCare = new ExilePermanentYouControlThenCreateTokenEffect(
                 nonDalekCreature, dalekToken);
 
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, intensiveCare);
+        addTrigger(Triggers.planeswalkToThis(), intensiveCare);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), intensiveCare);
 
         target(new ControlledPermanentPredicateTargetFilter(
@@ -46,7 +45,7 @@ public class DalekIntensiveCare extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.DALEK))),
                 "Target must be a Dalek you control"));
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.CHAOS_TRIGGERED,
+                .addTrigger(Triggers.chaosEnsues(),
                         new TargetCreatureDealsPowerDamageToAnyTargetEffect(0, 1, false));
     }
 }

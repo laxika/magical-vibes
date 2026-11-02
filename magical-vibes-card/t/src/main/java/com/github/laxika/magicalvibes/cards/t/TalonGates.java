@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnEachSuspendedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class TalonGates extends Card {
                 "Exile a nonland card from your hand with X time counters on it, where X is its mana value. "
                         + "If the exiled card doesn't have suspend, it gains suspend.",
                 ActivationTimingRestriction.SORCERY_SPEED).withSpecialAction());
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new AdjustTimeCountersOnEachSuspendedCardEffect(false, true));
     }
 }

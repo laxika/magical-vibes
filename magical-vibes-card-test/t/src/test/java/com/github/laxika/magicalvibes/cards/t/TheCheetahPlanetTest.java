@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -49,7 +50,7 @@ class TheCheetahPlanetTest extends BaseCardTest {
         Permanent cat = addCreatureReady(player1, new Cat());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
-        triggerAndChooseTarget(EffectSlot.PLANESWALK_TO_TRIGGERED, planeswalkTarget);
+        triggerAndChooseTarget(Triggers.planeswalkToThis(), planeswalkTarget);
 
         assertThat(planeswalkTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.hasEffectiveSubtype(gd, planeswalkTarget, CardSubtype.CAT)).isTrue();
@@ -90,9 +91,9 @@ class TheCheetahPlanetTest extends BaseCardTest {
         assertThat(blocker.getMustBlockIds()).containsExactly(cat.getId());
     }
 
-    private void triggerAndChooseTarget(EffectSlot slot, Permanent target) {
+    private void triggerAndChooseTarget(Trigger trigger, Permanent target) {
         PlanarObject plane = gd.planechase.faceUp.getFirst();
-        harness.inMutationScope(() -> planar.trigger(gd, plane, slot, player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, plane, trigger, player1.getId()));
         harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

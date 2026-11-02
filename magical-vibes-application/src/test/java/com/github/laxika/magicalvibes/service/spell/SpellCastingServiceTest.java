@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -215,7 +214,7 @@ class SpellCastingServiceTest {
         Card room = new Card();
         room.setRoomDoorManaCosts(List.of("{1}{W}", "{2}{W}"));
         var counter = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
-        room.target(TargetFilters.creature(), 0, 2).addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        room.target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.doorUnlocked(),
                 new com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect(1, counter));
         List<CardEffect> spellEffects = new ArrayList<>(List.of(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("First door", List.of()).withManaCost("{1}{W}"),

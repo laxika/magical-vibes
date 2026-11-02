@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -60,7 +61,7 @@ class KetriaTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
-        triggerAndChooseTarget(EffectSlot.PLANESWALK_TO_TRIGGERED, target);
+        triggerAndChooseTarget(Triggers.planeswalkToThis(), target);
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
@@ -138,7 +139,7 @@ class KetriaTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         PlanarObject plane = gd.planechase.faceUp.getFirst();
         harness.inMutationScope(() -> planar.trigger(gd, plane,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(target);
@@ -227,9 +228,9 @@ class KetriaTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Pacifism");
     }
 
-    private void triggerAndChooseTarget(EffectSlot slot, Permanent target) {
+    private void triggerAndChooseTarget(Trigger trigger, Permanent target) {
         PlanarObject plane = gd.planechase.faceUp.getFirst();
-        harness.inMutationScope(() -> planar.trigger(gd, plane, slot, player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, plane, trigger, player1.getId()));
         harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

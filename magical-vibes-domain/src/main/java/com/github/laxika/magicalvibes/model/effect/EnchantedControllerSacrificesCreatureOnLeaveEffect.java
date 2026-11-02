@@ -6,7 +6,7 @@ import java.util.UUID;
  * Leaves-the-battlefield trigger for Funeral March: "When enchanted creature leaves the battlefield,
  * its controller sacrifices a creature of their choice."
  *
- * <p>Placed in {@code EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD}. The enchanted creature's
+ * <p>Placed on {@code Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED)}. The enchanted creature's
  * controller (who lost the creature) is baked in at trigger time by {@code DeathTriggerCollectorService}
  * — this is <em>not</em> the Aura's controller, which matters when the Aura enchants an opponent's
  * creature. The baked player then sacrifices a creature of their choice at resolution.

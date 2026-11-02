@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -33,7 +32,7 @@ public class BowieBaseOne extends Card {
                 .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new GoadTargetCreatureUntilNextTurnEffect(creatureControlledByPlayerToLeft));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.CHAOS_TRIGGERED,
+                .addTrigger(Triggers.chaosEnsues(),
                         new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.TARGET));
     }
 }

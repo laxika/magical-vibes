@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -34,7 +33,7 @@ public class OrcishMine extends Card {
         addTrigger(Triggers.enchantedPermanentBecomesTapped(), new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
         // When the last ore counter is removed, destroy enchanted land and this Aura deals 2 damage to
         // that land's controller. A state trigger, so it fires however the last counter was removed.
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ORE)),
                 List.of(new DealDamageToEnchantedPermanentControllerEffect(2),
                         new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED)),

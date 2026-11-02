@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerCreatesTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -22,7 +21,7 @@ public class LairOfTheAshenIdol extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "a creature"),
                 List.of(new PlaneswalkEffect())));
-        target(0, 99).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(0, 99).addTrigger(Triggers.chaosEnsues(),
                 new EachTargetPlayerCreatesTokensEffect(CreateTokenEffect.blackZombie(1)));
     }
 }

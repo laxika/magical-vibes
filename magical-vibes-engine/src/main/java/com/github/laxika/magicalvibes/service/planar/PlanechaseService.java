@@ -203,7 +203,7 @@ public class PlanechaseService {
     public void chaos(GameData game) {
         if (game.planechase == null) return;
         for (PlanarObject object : List.copyOf(game.planechase.faceUp)) {
-            trigger(game, object, EffectSlot.CHAOS_TRIGGERED, game.planechase.controllerId);
+            trigger(game, object, Triggers.chaosEnsues(), game.planechase.controllerId);
         }
     }
 
@@ -271,7 +271,7 @@ public class PlanechaseService {
         state.planeswalkedToNamesThisTurn.clear();
         for (PlanarObject object : departing) {
             state.deck.add(object.getCard());
-            trigger(game, object, EffectSlot.PLANESWALK_FROM_TRIGGERED, state.controllerId);
+            trigger(game, object, Triggers.planeswalkAwayFromThis(), state.controllerId);
         }
         game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
         reveal(game, true);
@@ -294,7 +294,7 @@ public class PlanechaseService {
 
         for (PlanarObject object : departing) {
             state.deck.add(object.getCard());
-            trigger(game, object, EffectSlot.PLANESWALK_FROM_TRIGGERED, controllerId);
+            trigger(game, object, Triggers.planeswalkAwayFromThis(), controllerId);
         }
         state.deck.addAll(cardsToBottom);
         game.floatingEffects.removeIf(effect -> effect.duration() == EffectDuration.UNTIL_PLANESWALK);
@@ -309,7 +309,7 @@ public class PlanechaseService {
         }
         for (PlanarObject object : List.copyOf(state.faceUp)) {
             logs.append(game, GameLogEntry.text("The planar card is " + object.getCard().getName() + "."));
-            trigger(game, object, EffectSlot.PLANESWALK_TO_TRIGGERED, controllerId);
+            trigger(game, object, Triggers.planeswalkToThis(), controllerId);
         }
     }
 
@@ -331,7 +331,7 @@ public class PlanechaseService {
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPlanarAscend(game);
         }
-        trigger(game, object, EffectSlot.PLANESWALK_TO_TRIGGERED, controllerId);
+        trigger(game, object, Triggers.planeswalkToThis(), controllerId);
     }
 
     public void reveal(GameData game, boolean triggerAbilities) {
@@ -349,12 +349,8 @@ public class PlanechaseService {
         }
         if (triggerAbilities) {
             trigger(game, object, object.getCard().hasType(CardType.PHENOMENON)
-                    ? EffectSlot.ENCOUNTER_TRIGGERED : EffectSlot.PLANESWALK_TO_TRIGGERED, state.controllerId);
+                    ? Triggers.encounterThis() : Triggers.planeswalkToThis(), state.controllerId);
         }
-    }
-
-    public void trigger(GameData game, PlanarObject object, EffectSlot slot, UUID controller) {
-        trigger(game, object, object.getCard().getEffects(slot), controller);
     }
 
     /** Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. */

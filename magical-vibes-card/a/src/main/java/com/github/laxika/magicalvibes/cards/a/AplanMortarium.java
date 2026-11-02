@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -47,6 +46,6 @@ public class AplanMortarium extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 List.of(new SetCardTypesUntilEndOfTurnEffect(
                                         Set.of(CardType.ARTIFACT), GrantScope.SELF))))));
-        addEffect(EffectSlot.CHAOS_TRIGGERED, alienAngel);
+        addTrigger(Triggers.chaosEnsues(), alienAngel);
     }
 }

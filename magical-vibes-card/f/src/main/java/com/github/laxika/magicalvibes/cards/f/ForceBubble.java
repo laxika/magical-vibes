@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageToControllerCounterReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -19,7 +18,7 @@ public class ForceBubble extends Card {
 
     public ForceBubble() {
         addStaticEffect(new DamageToControllerCounterReplacementEffect(CounterType.DEPLETION));
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 new PermanentHasAtLeastCountersPredicate(CounterType.DEPLETION, 4),
                 List.of(new SacrificeSelfEffect()),
                 "Force Bubble's state-triggered ability"));

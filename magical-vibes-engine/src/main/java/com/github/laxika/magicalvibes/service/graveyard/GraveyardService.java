@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -2374,8 +2373,8 @@ public class GraveyardService {
     /**
      * Notifies that a single, known card left the given player's graveyard: the batched
      * "one or more cards left your graveyard" event plus the per-card
-     * {@link EffectSlot#GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD} trigger, which fires
-     * once per creature card and is never batched.
+     * "whenever a creature card leaves an opponent's graveyard" trigger, which fires once per creature
+     * card and is never batched.
      */
     public void notifyCardLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCard);

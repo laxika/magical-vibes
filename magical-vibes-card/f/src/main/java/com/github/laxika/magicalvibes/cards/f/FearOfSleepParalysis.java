@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StunCountersCantBeRemovedFromOpponentsPermanentsEffect;
@@ -24,7 +23,7 @@ public class FearOfSleepParalysis extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), eerie)
                 .addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie)
-                .addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
+                .addTrigger(Triggers.youFullyUnlockRoom(), eerie);
         addStaticEffect(new StunCountersCantBeRemovedFromOpponentsPermanentsEffect());
     }
 }

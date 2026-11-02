@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -21,8 +20,8 @@ public class KilnspireDistrict extends Card {
         SequenceEffect addChargeAndMana = SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.CHARGE),
                 new AwardManaEffect(ManaColor.RED, new CountersOnSource(CounterType.CHARGE)));
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, addChargeAndMana);
+        addTrigger(Triggers.planeswalkToThis(), addChargeAndMana);
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), addChargeAndMana);
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new PayXManaDealXDamageToAnyTargetEffect("{X}"));
+        addTrigger(Triggers.chaosEnsues(), new PayXManaDealXDamageToAnyTargetEffect("{X}"));
     }
 }

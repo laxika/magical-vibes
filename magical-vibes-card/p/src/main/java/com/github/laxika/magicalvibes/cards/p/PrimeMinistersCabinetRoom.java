@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.WillOfTheCouncilEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,6 +21,6 @@ public class PrimeMinistersCabinetRoom extends Card {
 
         // Will of the council — Whenever chaos ensues, starting with you, each player votes for a
         // creature you don't control. Exile each creature with the most votes or tied for most votes.
-        addEffect(EffectSlot.CHAOS_TRIGGERED, new WillOfTheCouncilEffect(false, true));
+        addTrigger(Triggers.chaosEnsues(), new WillOfTheCouncilEffect(false, true));
     }
 }

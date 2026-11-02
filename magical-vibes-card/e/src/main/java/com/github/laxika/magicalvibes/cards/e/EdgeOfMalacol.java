@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersInsteadOfUntappingEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "13")
 @CardRegistration(set = "OPCA", collectorNumber = "20")
@@ -17,7 +17,7 @@ public class EdgeOfMalacol extends Card {
         PermanentIsCreaturePredicate creatures = new PermanentIsCreaturePredicate();
         addStaticEffect(new PutCountersInsteadOfUntappingEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 2, creatures));
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, creatures));
     }
 }

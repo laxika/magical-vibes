@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopPlanarCardsAndTriggerChaosEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
@@ -54,9 +54,9 @@ public class RevealTopPlanarCardsAndTriggerChaosEffectHandler implements NormalE
 
         UUID controllerId = entry.getControllerId();
         for (Card card : revealed) {
-            if (!card.getEffects(EffectSlot.CHAOS_TRIGGERED).isEmpty()) {
+            if (!card.getTriggerEffects(Triggers.chaosEnsues()).isEmpty()) {
                 planechaseService.trigger(gameData, new PlanarObject(card, gameData.nextTimestamp()),
-                        EffectSlot.CHAOS_TRIGGERED, controllerId);
+                        Triggers.chaosEnsues(), controllerId);
             }
         }
 

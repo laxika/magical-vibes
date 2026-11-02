@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "31")
 @CardRegistration(set = "OPCA", collectorNumber = "64")
@@ -16,7 +16,7 @@ public class Prahv extends Card {
     public Prahv() {
         addStaticEffect(new ControllerCantAttackIfCastSpellThisTurnEffect());
         addStaticEffect(new ControllerCantCastSpellsIfAttackedThisTurnEffect());
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
     }
 }

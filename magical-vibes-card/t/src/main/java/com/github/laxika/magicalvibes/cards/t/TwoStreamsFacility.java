@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenPlayerModeEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesPlanarModeEffect;
@@ -21,13 +20,13 @@ public class TwoStreamsFacility extends Card {
     private static final List<String> MODES = List.of(GREEN_ANCHOR, RED_WATERFALL);
 
     public TwoStreamsFacility() {
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED,
+        addTrigger(Triggers.planeswalkToThis(),
                 new EachPlayerChoosesPlanarModeEffect(MODES, false, false));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new EachPlayerChoosesPlanarModeEffect(MODES, true, false));
         addStaticEffect(new PlayersWithChosenPlanarModePlayAdditionalLandEffect(GREEN_ANCHOR));
         addStaticEffect(new BoostCreaturesOfChosenPlayerModeEffect(RED_WATERFALL, 2, 0, Set.of(Keyword.HASTE)));
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        addTrigger(Triggers.chaosEnsues(),
                 new EachPlayerChoosesPlanarModeEffect(MODES, false, true));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -49,7 +48,7 @@ public class NewNewYork extends Card {
                         null, Set.of(CardType.CREATURE), GrantScope.OWN_PERMANENTS,
                         EffectDuration.UNTIL_END_OF_TURN, noncreatureArtifact)));
 
-        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(CreateTokenEffect.ofTreasureToken(1),
+        addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(CreateTokenEffect.ofTreasureToken(1),
                 new CreateTokenEffect(
                         1, "Alien", 2, 2, CardColor.WHITE, List.of(CardSubtype.ALIEN), Set.of(), Set.of())));
     }

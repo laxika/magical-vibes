@@ -43,12 +43,6 @@ class PlanechaseServiceTest extends BaseCardTest {
         return card;
     }
 
-    private Card fixture(String name, CardType type, EffectSlot slot, CardEffect effect) {
-        Card card = fixture(name, type);
-        card.addEffect(slot, effect);
-        return card;
-    }
-
     private Card fixture(String name, CardType type, Trigger trigger, CardEffect effect) {
         Card card = fixture(name, type);
         card.addTrigger(trigger, effect);
@@ -100,7 +94,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void encounterWaitsForResolutionThenAutomaticallyPlaneswalks() {
         gd.planechase.deck.addFirst(fixture("Test phenomenon", CardType.PHENOMENON,
-                EffectSlot.ENCOUNTER_TRIGGERED, new DrawCardEffect(1)));
+                Triggers.encounterThis(), new DrawCardEffect(1)));
         int before = gd.playerHands.get(player1.getId()).size();
         harness.inMutationScope(() -> planar.reveal(gd, true));
         harness.runStateBasedActions();
@@ -115,8 +109,8 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void phenomenonWaitsForAllOfItsTriggeredAbilities() {
         Card phenomenon = fixture("Test phenomenon", CardType.PHENOMENON,
-                EffectSlot.ENCOUNTER_TRIGGERED, new DrawCardEffect(1));
-        phenomenon.addEffect(EffectSlot.ENCOUNTER_TRIGGERED, new DrawCardEffect(1));
+                Triggers.encounterThis(), new DrawCardEffect(1));
+        phenomenon.addTrigger(Triggers.encounterThis(), new DrawCardEffect(1));
         gd.planechase.deck.addFirst(phenomenon);
         harness.inMutationScope(() -> planar.reveal(gd, true));
         harness.passBothPriorities();
@@ -128,7 +122,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void startingRevealSkipsPhenomenaWithoutTriggering() {
         gd.planechase.deck.addFirst(fixture("Test phenomenon", CardType.PHENOMENON,
-                EffectSlot.ENCOUNTER_TRIGGERED, new DrawCardEffect(1)));
+                Triggers.encounterThis(), new DrawCardEffect(1)));
         harness.inMutationScope(() -> planar.start(gd));
         assertThat(gd.stack).isEmpty();
         assertThat(gd.planechase.faceUp.getFirst().getCard()).isInstanceOf(Panopticon.class);
@@ -137,7 +131,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void targetedChaosUsesExistingChoiceAndDamageResolution() {
-        faceUp(fixture("Test plane", CardType.PLANE, EffectSlot.CHAOS_TRIGGERED,
+        faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
                 new DealDamageToAnyTargetEffect(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class).processNextSpellTargetTrigger(gd));
@@ -150,7 +144,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void targetedEncounterIsNotSkippedWhileWaitingForItsTarget() {
         gd.planechase.deck.addFirst(fixture("Test phenomenon", CardType.PHENOMENON,
-                EffectSlot.ENCOUNTER_TRIGGERED, new DealDamageToAnyTargetEffect(2)));
+                Triggers.encounterThis(), new DealDamageToAnyTargetEffect(2)));
         harness.inMutationScope(() -> planar.reveal(gd, true));
         assertThat(planar.checkPhenomena(gd)).isFalse();
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class).processNextSpellTargetTrigger(gd));
@@ -220,7 +214,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void counteredEncounterStillPlaneswalksOnward() {
         gd.planechase.deck.addFirst(fixture("Test phenomenon", CardType.PHENOMENON,
-                EffectSlot.ENCOUNTER_TRIGGERED, new DrawCardEffect(1)));
+                Triggers.encounterThis(), new DrawCardEffect(1)));
         harness.inMutationScope(() -> planar.reveal(gd, true));
         var target = gd.stack.getLast().getTargetableId();
         int before = gd.playerHands.get(player1.getId()).size();
@@ -291,7 +285,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void simulationCopiesPendingPlanarTargetSnapshots() {
-        faceUp(fixture("Test plane", CardType.PLANE, EffectSlot.CHAOS_TRIGGERED,
+        faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
                 new DealDamageToAnyTargetEffect(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
         var original = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
@@ -392,7 +386,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void queuedTargetsPreventRollingBeforeTheTriggerIsPutOnTheStack() {
-        faceUp(fixture("Test plane", CardType.PLANE, EffectSlot.CHAOS_TRIGGERED,
+        faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
                 new DealDamageToAnyTargetEffect(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
         assertThat(planar.canRollAtThisTime(gd, player1.getId())).isFalse();

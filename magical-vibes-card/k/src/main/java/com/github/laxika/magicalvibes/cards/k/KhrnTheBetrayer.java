@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
@@ -19,7 +18,7 @@ public class KhrnTheBetrayer extends Card {
         addStaticEffect(new MustBlockEachCombatEffect());
 
         // Sigil of Corruption — draw two cards when you lose control of Khârn.
-        addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, new DrawCardEffect(2));
+        addTrigger(Triggers.youLoseControlOfThis(), new DrawCardEffect(2));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DrawCardEffect(2));
 
         // The Betrayer — prevent damage to Khârn and immediately give it to an opponent.

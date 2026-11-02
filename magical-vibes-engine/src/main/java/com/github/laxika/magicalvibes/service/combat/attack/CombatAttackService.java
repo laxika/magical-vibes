@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -216,6 +215,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
+import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.*;
 import java.util.List;
@@ -3811,7 +3811,7 @@ public class CombatAttackService {
                     || source.isLosesAllAbilitiesUntilEndOfTurn()
                     || sourceStaticBonus.losesAllAbilities()
                     || sourceStaticBonus.losesAllNonManaAbilities()
-                    || source.getCard().getEffects(EffectSlot.ON_CREWS_VEHICLE).stream()
+                    || MiscWatch.ON_CREWS_VEHICLE.effectsOf(source.getCard()).stream()
                     .noneMatch(RegisterDelayedVehicleAttackEffect.class::isInstance)
                     || !gameQueryService.hasEffectiveSubtype(gameData, vehicle, CardSubtype.VEHICLE)) {
                 continue;

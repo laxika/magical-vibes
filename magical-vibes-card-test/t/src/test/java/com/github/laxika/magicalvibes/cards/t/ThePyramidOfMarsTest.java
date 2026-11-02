@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -90,7 +90,7 @@ class ThePyramidOfMarsTest extends BaseCardTest {
 
     private void triggerPlaneswalkTo() {
         harness.inMutationScope(() -> planar.trigger(gd, source,
-                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+                Triggers.planeswalkToThis(), player1.getId()));
         harness.passBothPriorities();
     }
 

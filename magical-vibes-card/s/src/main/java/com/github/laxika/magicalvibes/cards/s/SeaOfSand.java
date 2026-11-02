@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
@@ -25,7 +24,6 @@ public class SeaOfSand extends Card {
 
         addTrigger(Triggers.youDrawCard(), drawEffect);
         addTrigger(Triggers.opponentDrawsCard(), drawEffect);
-        target(TargetFilters.permanent()).addEffect(
-                EffectSlot.CHAOS_TRIGGERED, new PutTargetOnTopOfLibraryEffect());
+        target(TargetFilters.permanent()).addTrigger(Triggers.chaosEnsues(), new PutTargetOnTopOfLibraryEffect());
     }
 }

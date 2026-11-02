@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureWithLeastPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -24,7 +23,7 @@ public class DropOfHoney extends Card {
     public DropOfHoney() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyCreatureWithLeastPowerEffect(true));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
+        addTrigger(Triggers.state(), StateTriggerEffect.whenBattlefieldHasAtMost(0,
                 new PermanentIsCreaturePredicate(),
                 List.of(new SacrificeSelfEffect()),
                 "Drop of Honey's state-triggered ability"

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ISD", collectorNumber = "181")
 @CardRegistration(set = "INR", collectorNumber = "197")
@@ -28,7 +28,7 @@ public class GarrukRelentless extends Card {
 
         // When Garruk Relentless has two or fewer loyalty counters on him, transform him.
         // This is a state-triggered ability (MTG rule 603.8).
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
+        addTrigger(Triggers.state(), new StateTriggerEffect(
                 (gameData, sourcePermanent, controllerId) ->
                         sourcePermanent.getCounterCount(CounterType.LOYALTY) <= 2 && !sourcePermanent.isTransformed(),
                 List.of(new TransformSelfEffect()),

@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
 import com.github.laxika.magicalvibes.cards.t.TheGoldenCityOfOrazca;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,7 +45,7 @@ class SpatialMergingTest extends BaseCardTest {
         gd.planechase.deck.addAll(List.of(firstPlane, firstOther, secondOther, secondPlane));
 
         harness.inMutationScope(() -> planar.trigger(gd, gd.planechase.faceUp.getFirst(),
-                EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+                Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         PendingInteraction.SpatialMergingCardOrder choice =
@@ -71,7 +71,7 @@ class SpatialMergingTest extends BaseCardTest {
         gd.planechase.deck.addAll(List.of(firstPlane, secondPlane));
 
         harness.inMutationScope(() -> planar.trigger(gd, gd.planechase.faceUp.getFirst(),
-                EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+                Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -93,7 +93,7 @@ class SpatialMergingTest extends BaseCardTest {
         gd.planechase.deck.addAll(List.of(other, firstPlane, secondPlane, unrevealed));
 
         harness.inMutationScope(() -> planar.trigger(gd, gd.planechase.faceUp.getFirst(),
-                EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+                Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -124,7 +124,7 @@ class SpatialMergingTest extends BaseCardTest {
         assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
 
         harness.inMutationScope(() -> planar.trigger(gd, gd.planechase.faceUp.getFirst(),
-                EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+                Triggers.encounterThis(), player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.planechase.faceUp).extracting(PlanarObject::getCard)

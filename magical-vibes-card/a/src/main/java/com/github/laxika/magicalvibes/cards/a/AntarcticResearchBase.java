@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -22,12 +21,12 @@ public class AntarcticResearchBase extends Card {
 
     public AntarcticResearchBase() {
         CreateTokenEffect clue = CreateTokenEffect.ofClueToken(1);
-        addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, clue);
+        addTrigger(Triggers.planeswalkToThis(), clue);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), clue);
 
         PermanentCount artifactsYouControl = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.chaosEnsues(),
                 SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
