@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class ElendasHierophant extends Card {
 
     public ElendasHierophant() {
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.youGainLife(), new PutCountersOnSourceEffect(1, 1, 1));
 
         // When Elenda's Hierophant dies, create Vampire tokens equal to its last-known power.
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(

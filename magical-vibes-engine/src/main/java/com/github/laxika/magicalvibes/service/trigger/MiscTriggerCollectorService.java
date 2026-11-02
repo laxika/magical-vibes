@@ -1106,7 +1106,7 @@ public class MiscTriggerCollectorService {
 
     // ── ON_OPPONENT_LOSES_LIFE ─────────────────────────────────────────
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = OncePerTurnTriggerEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     private boolean handleOpponentLifeLossOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
@@ -1123,8 +1123,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = FirstOpponentLifeLossEachTurnTriggerEffect.class,
-            slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = FirstOpponentLifeLossEachTurnTriggerEffect.class,
+            watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     private boolean handleFirstOpponentLifeLossEachTurn(TriggerMatchContext match,
                                                          FirstOpponentLifeLossEachTurnTriggerEffect trigger,
                                                          TriggerContext ctx) {
@@ -1160,8 +1160,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MillOpponentOnLifeLossEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
-    @CollectsTrigger(value = MillOpponentOnLifeLossEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = MillOpponentOnLifeLossEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = MillOpponentOnLifeLossEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleMillOnLifeLoss(TriggerMatchContext match,
             MillOpponentOnLifeLossEffect trigger, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
@@ -1193,7 +1193,7 @@ public class MiscTriggerCollectorService {
      * on the stack; the life lost is snapshotted onto the entry's event value so an
      * {@code EventValue()} amount reads it back at resolution.
      */
-    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = GainLifeEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     private boolean handleGainLifeOnOpponentLifeLoss(TriggerMatchContext match,
             GainLifeEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
@@ -1219,7 +1219,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = SequenceEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     private boolean handleSequenceOnOpponentLifeLoss(TriggerMatchContext match,
             SequenceEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
@@ -1243,7 +1243,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     private boolean handleConditionalOnOpponentLifeLoss(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
@@ -1269,7 +1269,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_GAINS_LIFE)
+    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_OPPONENT_GAINS_LIFE)
     private boolean handleConditionalOnOpponentLifeGain(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
@@ -1298,7 +1298,7 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_GAINS_LIFE ────────────────────────────────────────
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = SequenceEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleSequenceOnControllerLifeLoss(TriggerMatchContext match,
             SequenceEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
@@ -1320,7 +1320,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_PAYS_LIFE)
+    @CollectsLifeTrigger(value = PutCountersOnSelfEffect.class, watch = LifeWatch.ON_CONTROLLER_PAYS_LIFE)
     private boolean handleLifePaymentPutCountersOnSelf(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1397,7 +1397,7 @@ public class MiscTriggerCollectorService {
      * lost is snapshotted onto the entry's event value so an {@code EventValue()} amount reads it
      * back at resolution.
      */
-    @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = GainLifeEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleGainLifeOnControllerLifeLoss(TriggerMatchContext match,
             GainLifeEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
@@ -1423,7 +1423,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = PutCountersOnSourceEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCounters(TriggerMatchContext match,
             PutCountersOnSourceEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1444,7 +1444,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GrantKeywordEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = GrantKeywordEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainGrantKeyword(TriggerMatchContext match,
             GrantKeywordEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1473,7 +1473,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = SequenceEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainSequence(TriggerMatchContext match,
             SequenceEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
@@ -1492,7 +1492,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleConditionalOnControllerLifeGain(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
@@ -1519,7 +1519,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = PutCounterOnTargetPermanentEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCounterOnTarget(TriggerMatchContext match,
             PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1564,7 +1564,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SurveilEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = SurveilEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainSurveil(TriggerMatchContext match,
             SurveilEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1585,7 +1585,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = CreateTokenEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainCreateToken(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1628,10 +1628,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
-    @CollectsTriggers({
-            @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE),
-            @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_OPPONENT_GAINS_LIFE)
+    @CollectsLifeTrigger(value = PutCountersOnSelfEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTriggers({
+            @CollectsLifeTrigger(value = PutCountersOnSelfEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE),
+            @CollectsLifeTrigger(value = PutCountersOnSelfEffect.class, watch = LifeWatch.ON_OPPONENT_GAINS_LIFE)
     })
     private boolean handleLifeGainPutCountersOnSelf(TriggerMatchContext match,
             PutCountersOnSelfEffect effect, TriggerContext ctx) {
@@ -1677,9 +1677,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE),
-            @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTriggers({
+            @CollectsLifeTrigger(value = BoostSelfEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE),
+            @CollectsLifeTrigger(value = BoostSelfEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     })
     private boolean handleLifeChangeBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
@@ -1734,7 +1734,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = UntapPermanentsEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = UntapPermanentsEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainUntapSelf(TriggerMatchContext match,
             UntapPermanentsEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2218,7 +2218,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnergyCountersEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = EnergyCountersEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainEnergyCounters(TriggerMatchContext match,
             EnergyCountersEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
@@ -2499,7 +2499,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = DrawCardEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainDrawCard(TriggerMatchContext match,
             DrawCardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2520,8 +2520,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
+            watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCountersOnMatching(TriggerMatchContext match,
             PutCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2542,7 +2542,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageOnSpellLifeGainEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = DealDamageOnSpellLifeGainEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainDealDamageOnSpell(TriggerMatchContext match,
             DealDamageOnSpellLifeGainEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
@@ -2569,7 +2569,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CradleOfVitalityLifeGainEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = CradleOfVitalityLifeGainEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPayForCounters(TriggerMatchContext match,
             CradleOfVitalityLifeGainEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
@@ -2607,7 +2607,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = NykthosParagonLifeGainEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = NykthosParagonLifeGainEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleNykthosParagonLifeGain(TriggerMatchContext match,
             NykthosParagonLifeGainEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
@@ -2636,7 +2636,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = LoseLifeEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainTargetPlayerLosesLife(TriggerMatchContext match,
             LoseLifeEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
@@ -3240,7 +3240,7 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_GAINS_LIFE (draw cards equal to life gained) ────
 
-    @CollectsTrigger(value = PayXManaDrawXCardsEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = PayXManaDrawXCardsEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPayForDraw(TriggerMatchContext match,
             PayXManaDrawXCardsEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
@@ -3425,7 +3425,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = MayPayManaEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainMayPayMana(TriggerMatchContext match,
             MayPayManaEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -3467,7 +3467,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardsEqualToLifeGainedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = DrawCardsEqualToLifeGainedEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleDrawCardsEqualToLifeGained(TriggerMatchContext match,
             DrawCardsEqualToLifeGainedEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
@@ -3493,8 +3493,8 @@ public class MiscTriggerCollectorService {
 
     // ── ON_CONTROLLER_LOSES_LIFE (sacrifice/discard for each life lost) ─
 
-    @CollectsTrigger(value = SacrificePermanentsEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = SacrificePermanentsEffect.class,
+            watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleSacrificePermanentsOnLifeLoss(TriggerMatchContext match,
             SacrificePermanentsEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
@@ -3520,8 +3520,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect.class,
+            watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleSacrificeOtherUnlessDiscardForEachLifeLost(TriggerMatchContext match,
             SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
@@ -3552,7 +3552,7 @@ public class MiscTriggerCollectorService {
      * Handles a draw amount that is snapshotted from the life-loss event, such as Vilis, Broker of
      * Blood's "whenever you lose life, draw that many cards" ability.
      */
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = DrawCardEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleLifeLossDrawCards(TriggerMatchContext match,
             DrawCardEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
@@ -3578,7 +3578,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ExileForEachLifeLostEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = ExileForEachLifeLostEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleExileForEachLifeLost(TriggerMatchContext match,
             ExileForEachLifeLostEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
@@ -3602,7 +3602,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = EnergyCountersEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = EnergyCountersEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleLifeLossEnergyCounters(TriggerMatchContext match,
             EnergyCountersEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -3623,7 +3623,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = PutCountersOnSourceEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleLifeLossPutCounters(TriggerMatchContext match,
             PutCountersOnSourceEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -3644,7 +3644,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = PutCounterOnTargetPermanentEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleLifeLossPutCounterOnTarget(TriggerMatchContext match,
             PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -3659,10 +3659,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE),
-            @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE),
-            @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTriggers({
+            @CollectsLifeTrigger(value = CreateTokenEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE),
+            @CollectsLifeTrigger(value = DealDamageToPlayersEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE),
+            @CollectsLifeTrigger(value = PutCountersOnSelfEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     })
     private boolean handleGenericControllerLifeLoss(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -3692,7 +3692,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleConditionalOnControllerLifeLoss(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
@@ -3719,7 +3719,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = OncePerTurnTriggerEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     private boolean handleLifeLossOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -4259,7 +4259,7 @@ public class MiscTriggerCollectorService {
     }
 
 
-    @CollectsTrigger(value = BecomePreparedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = BecomePreparedEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainBecomePrepared(TriggerMatchContext match,
             BecomePreparedEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();

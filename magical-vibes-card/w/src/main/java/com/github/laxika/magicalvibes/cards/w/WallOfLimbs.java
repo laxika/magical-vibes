@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class WallOfLimbs extends Card {
 
     public WallOfLimbs() {
         // Whenever you gain life, put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+        addTrigger(Triggers.youGainLife(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // {5}{B}{B}, Sacrifice this creature: Target player loses X life, where X is this

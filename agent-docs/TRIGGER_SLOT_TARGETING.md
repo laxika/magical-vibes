@@ -230,11 +230,11 @@ combat damage step is processed.
 | `Triggers.permanentDealsDamageToYou()` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `Triggers.sourceOpponentControlsDealsDamageToYouOrYourPermanent()` | `TriggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers` + `DamageTriggerCollectorService` | Non-targeting; source permanent and controller are bound in the queued may ability |
 | `Triggers.creatureDealsCombatDamageToYou()` | `TriggerCollectionService.queueCreatureCombatDamageToYouTriggers` — never targets; the damaging creature is baked in as the stack entry's `targetId` with `nonTargeting = true`, so no pending-choice is queued. Teysa, Envoy of Ghosts. | None (baked-in subject) |
-| `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain; the legacy creature/player path is used when no card-level permanent target filter is declared, while declared permanent filters are evaluated for target selection |
-| `ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` + `MiscTriggerCollectorService` | Life-gain |
+| `Triggers.youGainLife()` | `MiscTriggerCollectorService` | Life-gain; the legacy creature/player path is used when no card-level permanent target filter is declared, while declared permanent filters are evaluated for target selection |
+| `Triggers.opponentGainsLife()` | `TriggerCollectionService.checkLifeGainTriggers` + `MiscTriggerCollectorService` | Life-gain |
 | `Triggers.youDrawCard()` / `Triggers.youDrawSecondCardEachTurn()` (targeted effects) | `DrawService.checkControllerDrawTriggers` queues `DrawTriggerPermanentTarget` for a permanent-target effect bound to the card's `target(...)` filter (e.g. Mantle of Tides). `TriggeredAbilityQueueService.processNextDrawTriggerPermanentTarget` uses the shared `TriggerTargetCollector`; the controller chooses the permanent before the ability goes on the stack. | Draw (permanent target) |
-| `GRAVEYARD_ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
-| `GRAVEYARD_ON_CONTROLLER_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
+| `Triggers.opponentGainsLife() from the graveyard` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
+| `Triggers.youGainLife() from the graveyard` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
 | `Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS)` | `TriggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers` | None (graveyard-resident, non-targeting; one trigger per nonland card milled) |
 | `Triggers.opponentDrawsSecondCardEachTurn() from the graveyard` | `DrawService.checkOpponentDrawTriggers` scans each non-drawing player's graveyard on that player's second draw of the turn | None (graveyard-resident, non-targeting) |
 | `Triggers.youDrawCard()` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().declares(TargetPredicates.anyTarget())`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
@@ -370,7 +370,7 @@ the phased-out permanent is removed), and `Triggers.exiledFrom(Set.of(), Trigger
 watcher dispatched after a non-token card enters exile),
 `Triggers.enchantedCreatureDealtDamage()`,
 `Triggers.enters(Triggers.LAND, ObjectRelation.OPPONENT_CONTROLS)`, `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL)`,
-`ON_OPPONENT_LOSES_LIFE`, `Triggers.opponentShufflesLibrary()`,
+`Triggers.opponentLosesLife()`, `Triggers.opponentShufflesLibrary()`,
 `Triggers.playerShufflesLibrary()`,
 `Triggers.opponentSearchesTheirLibrary()` (Ob Nixilis, Unshackled; fired by `LibrarySearchTriggerHelper` from
 `LibrarySearchSupport.sendLibrarySearchToPlayer` — the choke point every card-presenting search passes
@@ -413,7 +413,7 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, `STATE_TRIGGERED`, `Triggers.beginningOfCombat(ActivePlayer.YOU)`,
 `Triggers.beginningOfCombat(ActivePlayer.ANY)`, `Triggers.beginningOfCombat(ActivePlayer.OPPONENT)`,
 `Triggers.creatureOpponentControlsDealtDamage()`, `Triggers.youCastSpell() from the graveyard`,
-`ON_CONTROLLER_LOSES_LIFE`,
+`Triggers.youLoseLife()`,
 `Triggers.plusOneCountersPutOnThis()`,
 `Triggers.trains()` (Savior of Ollenbock; fires only when training successfully puts its +1/+1 counter on the source),
 `Triggers.plusOneCountersPutOnHumanYouControl()` (Cloaked Cadet; fires when one or more +1/+1

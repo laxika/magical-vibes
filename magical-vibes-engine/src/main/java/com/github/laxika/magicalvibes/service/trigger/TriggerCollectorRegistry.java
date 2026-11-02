@@ -14,8 +14,8 @@ import java.util.Map;
 
 /**
  * Registry that maps (EffectSlot, {@link ZoneChangeWatch}, {@link SpellAbilityWatch}, {@link CombatWatch},
- * {@link DamageWatch}, {@link CounterWatch}, {@link LibraryWatch} or {@link TapWatch}, CardEffect class) pairs to
- * trigger collector handlers.
+ * {@link DamageWatch}, {@link CounterWatch}, {@link LibraryWatch}, {@link TapWatch} or {@link LifeWatch}, CardEffect
+ * class) pairs to trigger collector handlers.
  * <p>
  * Discovered automatically at startup by {@link com.github.laxika.magicalvibes.service.GameEngineConfig}.
  */
@@ -193,6 +193,17 @@ public class TriggerCollectorRegistry {
             CollectsTapTriggers tapContainer = method.getAnnotation(CollectsTapTriggers.class);
             if (tapContainer != null) {
                 for (CollectsTapTrigger clt : tapContainer.value()) {
+                    registerMethod(bean, method, clt.watch(), clt.value(), registry);
+                }
+            }
+
+            CollectsLifeTrigger singleLife = method.getAnnotation(CollectsLifeTrigger.class);
+            if (singleLife != null) {
+                registerMethod(bean, method, singleLife.watch(), singleLife.value(), registry);
+            }
+            CollectsLifeTriggers lifeContainer = method.getAnnotation(CollectsLifeTriggers.class);
+            if (lifeContainer != null) {
+                for (CollectsLifeTrigger clt : lifeContainer.value()) {
                     registerMethod(bean, method, clt.watch(), clt.value(), registry);
                 }
             }

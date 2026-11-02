@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import java.util.List;
 public class GontisMachinations extends Card {
 
     public GontisMachinations() {
-        addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE,
+        addTrigger(Triggers.youLoseLife(),
                 OncePerTurnTriggerEffect.firstLifeLoss(new EnergyCountersEffect(1)));
 
         addActivatedAbility(new ActivatedAbility(

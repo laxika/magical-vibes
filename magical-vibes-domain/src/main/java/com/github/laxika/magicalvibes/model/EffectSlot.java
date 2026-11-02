@@ -70,7 +70,6 @@ public enum EffectSlot {
     ON_DAY_NIGHT_CHANGE,
     /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
     GRAVEYARD_ON_DAY_NIGHT_CHANGE,
-    ON_OPPONENT_LOSES_LIFE,
     /** Triggers whenever the controller fully unlocks a Room. */
     ON_ALLY_ROOM_FULLY_UNLOCKED,
     /** Triggers whenever the controller fully unlocks a Room while this card is in the controller's
@@ -78,17 +77,12 @@ public enum EffectSlot {
     GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED,
     /** Triggers whenever this Room's specified door becomes unlocked. */
     ON_SELF_ROOM_DOOR_UNLOCKED,
-    /** Triggers whenever any player gains one or more life. */
-    ON_ANY_PLAYER_GAINS_LIFE,
-    ON_CONTROLLER_GAINS_LIFE,
     /** Triggers whenever this permanent's controller becomes the monarch. */
     ON_CONTROLLER_BECOMES_MONARCH,
     /** Triggers whenever an opponent of this permanent's controller becomes the monarch. */
     ON_OPPONENT_BECOMES_MONARCH,
     /** Triggers whenever this permanent's controller is tempted by the Ring. */
     ON_RING_TEMPTS_YOU,
-    /** Triggers whenever an opponent of this permanent's controller gains life. */
-    ON_OPPONENT_GAINS_LIFE,
     /** Triggers whenever this permanent's controller wins a coin flip. */
     ON_CONTROLLER_WINS_COIN_FLIP,
     /** Triggers whenever any player wins a coin flip. */
@@ -124,12 +118,6 @@ public enum EffectSlot {
     GRAVEYARD_ON_CONTROLLER_CONJURES,
     /** Triggers whenever the controller rolls a natural 20, while this card is in their graveyard. */
     GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20,
-    /** Triggers whenever the controller of this permanent loses life (damage or direct life loss).
-     *  Fires on the controller's own permanents. The amount is passed via TriggerContext.LifeLoss.
-     *  Hooked into TriggerCollectionService.checkLifeLossTriggers(). Used by Lich's Mastery. */
-    ON_CONTROLLER_LOSES_LIFE,
-    /** Triggers whenever this permanent's controller pays life. */
-    ON_CONTROLLER_PAYS_LIFE,
     /** Triggers whenever an opponent pays a mana tax imposed by a spell or permanent controlled by this permanent. */
     ON_OPPONENT_PAYS_TAX,
     /** Triggers whenever a creature controlled by the same player explores.
@@ -178,11 +166,6 @@ public enum EffectSlot {
     /** Triggers whenever a creature stations this Spacecraft. */
     ON_SELF_BECOMES_STATIONED,
 
-    /** Triggers whenever an opponent of this card's owner gains life while this card is in
-     *  that owner's graveyard. */
-    GRAVEYARD_ON_OPPONENT_GAINS_LIFE,
-    /** Triggers whenever this card's owner gains life while this card is in that owner's graveyard. */
-    GRAVEYARD_ON_CONTROLLER_GAINS_LIFE,
     ON_CONTROLLER_COMMITS_CRIME,
     ON_OPPONENT_COMMITS_CRIME,
     GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME,

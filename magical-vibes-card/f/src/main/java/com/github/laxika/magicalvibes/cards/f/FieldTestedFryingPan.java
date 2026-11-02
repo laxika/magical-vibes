@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -36,8 +36,8 @@ public class FieldTestedFryingPan extends Card {
         // Equipped creature has "Whenever you gain life, this creature gets +X/+X until end of
         // turn, where X is the amount of life you gained."
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_CONTROLLER_GAINS_LIFE,
-                new BoostSelfEffect(new EventValue(), new EventValue()),
+                new TriggeredAbility(Triggers.youGainLife(),
+                        new BoostSelfEffect(new EventValue(), new EventValue())),
                 GrantScope.EQUIPPED_CREATURE));
 
         // Equip {2}

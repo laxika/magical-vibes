@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
@@ -25,7 +24,7 @@ import java.util.List;
 public class AerithGainsborough extends Card {
 
     public AerithGainsborough() {
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new PutCountersOnSourceEffect(1, 1, 1));
+        addTrigger(Triggers.youGainLife(), new PutCountersOnSourceEffect(1, 1, 1));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),

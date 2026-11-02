@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZEN", collectorNumber = "142")
 @CardRegistration(set = "DDG", collectorNumber = "66")
@@ -17,7 +20,7 @@ public class PunishingFire extends Card {
     public PunishingFire() {
         addSpellEffect(new DealDamageToAnyTargetEffect(2));
 
-        addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_GAINS_LIFE,
+        addTrigger(new TriggerCondition(Triggers.opponentGainsLife(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new MayPayManaEffect("{R}",
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)

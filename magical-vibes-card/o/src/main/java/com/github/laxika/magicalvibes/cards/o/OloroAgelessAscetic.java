@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -26,7 +25,7 @@ public class OloroAgelessAscetic extends Card {
         addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.COMMAND),
                 TriggerOptions.DEFAULT,
                 new ConditionalEffect(new SourceCardInCommandZone(), new GainLifeEffect(2)));
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new MayPayManaEffect(
+        addTrigger(Triggers.youGainLife(), new MayPayManaEffect(
                 "{1}",
                 SequenceEffect.of(
                         new DrawCardEffect(1),

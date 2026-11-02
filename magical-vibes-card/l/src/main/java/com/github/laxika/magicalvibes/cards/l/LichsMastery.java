@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
@@ -24,11 +23,11 @@ public class LichsMastery extends Card {
         addStaticEffect(new CantLoseGameEffect(false));
 
         // "Whenever you gain life, draw that many cards."
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new DrawCardsEqualToLifeGainedEffect());
+        addTrigger(Triggers.youGainLife(), new DrawCardsEqualToLifeGainedEffect());
 
         // "Whenever you lose life, for each 1 life you lost, exile a permanent you control
         //  or a card from your hand or graveyard."
-        addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, new ExileForEachLifeLostEffect());
+        addTrigger(Triggers.youLoseLife(), new ExileForEachLifeLostEffect());
 
         // "When Lich's Mastery leaves the battlefield, you lose the game."
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerLosesGameOnLeavesEffect());

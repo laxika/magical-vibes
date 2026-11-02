@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "58")
 @CardRegistration(set = "FDN", collectorNumber = "318")
@@ -15,6 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class BloodthirstyConqueror extends Card {
 
     public BloodthirstyConqueror() {
-        addEffect(EffectSlot.ON_OPPONENT_LOSES_LIFE, new GainLifeEffect(new EventValue()));
+        addTrigger(Triggers.opponentLosesLife(), new GainLifeEffect(new EventValue()));
     }
 }

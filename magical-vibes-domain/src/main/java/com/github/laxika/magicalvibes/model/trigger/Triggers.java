@@ -1503,4 +1503,34 @@ public final class Triggers {
     public static TapTrigger youUntapPermanentsDuringUntapStep() {
         return new TapTrigger(TapTrigger.TapEvent.YOU_UNTAP_DURING_UNTAP_STEP, ObjectRelation.YOU_CONTROL);
     }
+
+    /** "Whenever you gain life" */
+    public static LifeTrigger youGainLife() {
+        return new LifeTrigger(LifeTrigger.LifeEvent.GAINS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent gains life" */
+    public static LifeTrigger opponentGainsLife() {
+        return new LifeTrigger(LifeTrigger.LifeEvent.GAINS, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever a player gains life" */
+    public static LifeTrigger playerGainsLife() {
+        return new LifeTrigger(LifeTrigger.LifeEvent.GAINS, PlayerRelation.ANY);
+    }
+
+    /** "Whenever you lose life", damage included */
+    public static LifeTrigger youLoseLife() {
+        return new LifeTrigger(LifeTrigger.LifeEvent.LOSES, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent loses life", damage included */
+    public static LifeTrigger opponentLosesLife() {
+        return new LifeTrigger(LifeTrigger.LifeEvent.LOSES, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you pay life" */
+    public static LifeTrigger youPayLife() {
+        return new LifeTrigger(LifeTrigger.LifeEvent.PAYS, PlayerRelation.YOU);
+    }
 }

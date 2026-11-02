@@ -1,0 +1,9 @@
+# slot	factory	zone (- for the trigger's default)	event	player	javadoc
+ON_OPPONENT_LOSES_LIFE	opponentLosesLife	-	LOSES	OPPONENT	"Whenever an opponent loses life", damage included, once for each life-loss event.
+ON_ANY_PLAYER_GAINS_LIFE	playerGainsLife	-	GAINS	ANY	"Whenever a player gains life"; only read on temporary global abilities (False Cure).
+ON_CONTROLLER_GAINS_LIFE	youGainLife	-	GAINS	YOU	"Whenever you gain life".
+ON_OPPONENT_GAINS_LIFE	opponentGainsLife	-	GAINS	OPPONENT	"Whenever an opponent gains life".
+ON_CONTROLLER_LOSES_LIFE	youLoseLife	-	LOSES	YOU	"Whenever you lose life", damage included, once for each life-loss event.
+ON_CONTROLLER_PAYS_LIFE	youPayLife	-	PAYS	YOU	"Whenever you pay life".
+GRAVEYARD_ON_OPPONENT_GAINS_LIFE	opponentGainsLife	GRAVEYARD	GAINS	OPPONENT	"Whenever an opponent gains life", while this card is in your graveyard.
+GRAVEYARD_ON_CONTROLLER_GAINS_LIFE	youGainLife	GRAVEYARD	GAINS	YOU	"Whenever you gain life", while this card is in your graveyard.

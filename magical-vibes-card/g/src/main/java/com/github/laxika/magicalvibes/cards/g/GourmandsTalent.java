@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -59,7 +59,7 @@ public class GourmandsTalent extends Card {
                 new NotCondition(new SourceClassLevelAtLeast(2)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new OncePerTurnTriggerEffect(new ConditionalEffect(
+        addTrigger(Triggers.youGainLife(), new OncePerTurnTriggerEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(2),
                 new CreateTokenEffect(
                         1,
@@ -83,7 +83,7 @@ public class GourmandsTalent extends Card {
                         new NotCondition(new SourceClassLevelAtLeast(3)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new OncePerTurnTriggerEffect(new ConditionalEffect(
+        addTrigger(Triggers.youGainLife(), new OncePerTurnTriggerEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(3),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,

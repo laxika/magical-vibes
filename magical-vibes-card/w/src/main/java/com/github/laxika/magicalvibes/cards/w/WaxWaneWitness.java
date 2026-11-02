@@ -2,18 +2,18 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLB", collectorNumber = "39")
 public class WaxWaneWitness extends Card {
 
     public WaxWaneWitness() {
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new ConditionalEffect(
+        addTrigger(Triggers.youGainLife(), new ConditionalEffect(
                 new ControllerTurn(), new BoostSelfEffect(1, 0)));
-        addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, new ConditionalEffect(
+        addTrigger(Triggers.youLoseLife(), new ConditionalEffect(
                 new ControllerTurn(), new BoostSelfEffect(1, 0)));
     }
 }

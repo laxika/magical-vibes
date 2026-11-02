@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -27,7 +26,7 @@ public class LifeGainTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = MayEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
         match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
@@ -38,8 +37,8 @@ public class LifeGainTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PerpetuallyBoostRandomCreatureCardInHandEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = PerpetuallyBoostRandomCreatureCardInHandEffect.class,
+            watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainRandomCreatureBoost(TriggerMatchContext match,
                                                        PerpetuallyBoostRandomCreatureCardInHandEffect effect,
                                                        TriggerContext ctx) {
@@ -61,7 +60,7 @@ public class LifeGainTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = MayPayManaEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainMayPay(TriggerMatchContext match,
                                          MayPayManaEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
@@ -101,9 +100,9 @@ public class LifeGainTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-            @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE),
-            @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTriggers({
+            @CollectsLifeTrigger(value = SequenceEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE),
+            @CollectsLifeTrigger(value = SequenceEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     })
     private boolean handleLifeGainSequence(TriggerMatchContext match,
                                             SequenceEffect effect, TriggerContext ctx) {

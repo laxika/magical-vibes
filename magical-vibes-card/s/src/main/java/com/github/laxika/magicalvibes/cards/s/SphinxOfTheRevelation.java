@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class SphinxOfTheRevelation extends Card {
 
     public SphinxOfTheRevelation() {
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new EnergyCountersEffect(new EventValue()));
+        addTrigger(Triggers.youGainLife(), new EnergyCountersEffect(new EventValue()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}{U}{U}",

@@ -11429,9 +11429,9 @@ public class TriggerCollectionService {
 
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_LOSES_LIFE)) {
+                for (CardEffect effect : LifeWatch.ON_OPPONENT_LOSES_LIFE.effectsOf(perm.getCard())) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                    if (dispatch(match, EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx)) {
+                    if (dispatch(match, LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx)) {
                         anyTriggered[0] = true;
                     }
                 }
@@ -11445,7 +11445,7 @@ public class TriggerCollectionService {
 
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_LOSES_LIFE)) {
+                for (CardEffect effect : LifeWatch.ON_CONTROLLER_LOSES_LIFE.effectsOf(perm.getCard())) {
                     CardEffect toDispatch = effect;
                     if (effect instanceof OncePerTurnTriggerEffect once) {
                         if (once.firstLifeLoss()) {
@@ -11462,7 +11462,7 @@ public class TriggerCollectionService {
                         continue;
                     }
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                    if (registry.dispatch(match, EffectSlot.ON_CONTROLLER_LOSES_LIFE, toDispatch, ctx)) {
+                    if (registry.dispatch(match, LifeWatch.ON_CONTROLLER_LOSES_LIFE, toDispatch, ctx)) {
                         anyTriggered[0] = true;
                         if (effect instanceof OncePerTurnTriggerEffect once && !once.firstLifeLoss()) {
                             gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
@@ -11492,9 +11492,9 @@ public class TriggerCollectionService {
 
         for (Permanent perm : List.copyOf(battlefield)) {
             List<CardEffect> effects = new ArrayList<>(
-                    perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_PAYS_LIFE));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, perm, EffectSlot.ON_CONTROLLER_PAYS_LIFE));
+                    LifeWatch.ON_CONTROLLER_PAYS_LIFE.effectsOf(perm.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, perm, LifeWatch.ON_CONTROLLER_PAYS_LIFE.trigger()));
             for (CardEffect effect : effects) {
                 CardEffect toDispatch = effect;
                 if (effect instanceof OncePerTurnTriggerEffect once) {
@@ -11504,7 +11504,7 @@ public class TriggerCollectionService {
                     toDispatch = once.wrapped();
                 }
                 var match = new TriggerMatchContext(gameData, perm, payingPlayerId, effect);
-                if (dispatch(match, EffectSlot.ON_CONTROLLER_PAYS_LIFE, toDispatch, ctx)
+                if (dispatch(match, LifeWatch.ON_CONTROLLER_PAYS_LIFE, toDispatch, ctx)
                         && effect instanceof OncePerTurnTriggerEffect) {
                     gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
                 }
@@ -11574,10 +11574,10 @@ public class TriggerCollectionService {
             for (Permanent perm : battlefield) {
                 List<CardEffect> effects = new ArrayList<>();
                 if (!gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
-                    effects.addAll(perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE));
+                    effects.addAll(LifeWatch.ON_CONTROLLER_GAINS_LIFE.effectsOf(perm.getCard()));
                 }
-                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, EffectSlot.ON_CONTROLLER_GAINS_LIFE));
+                effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, perm, LifeWatch.ON_CONTROLLER_GAINS_LIFE.trigger()));
                 for (CardEffect effect : effects) {
                     CardEffect toDispatch = effect;
                     if (effect instanceof OncePerTurnTriggerEffect once) {
@@ -11599,7 +11599,7 @@ public class TriggerCollectionService {
                             && once.markOnAcceptance();
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect,
                             perm.getCard(), markOnAcceptance);
-                    if (dispatch(match, EffectSlot.ON_CONTROLLER_GAINS_LIFE, toDispatch, ctx)) {
+                    if (dispatch(match, LifeWatch.ON_CONTROLLER_GAINS_LIFE, toDispatch, ctx)) {
                         OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, effect);
                     }
                 }
@@ -11610,14 +11610,14 @@ public class TriggerCollectionService {
             if (playerId.equals(gainingPlayerId)) return;
 
             for (Permanent perm : List.copyOf(battlefield)) {
-                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_GAINS_LIFE, ctx);
+                dispatchWatch(gameData, perm, playerId, LifeWatch.ON_OPPONENT_GAINS_LIFE, ctx);
             }
         });
 
         collectGraveyardControllerLifeGainTriggers(gameData, gainingPlayerId, lifeGainedAmount);
         collectGraveyardOpponentLifeGainTriggers(gameData, gainingPlayerId);
         collectLifeGainOpponentLifeLossTriggers(gameData, gainingPlayerId, lifeGainedAmount);
-        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_PLAYER_GAINS_LIFE, gainingPlayerId, lifeGainedAmount);
+        collectTemporaryGlobalTriggers(gameData, LifeWatch.ON_ANY_PLAYER_GAINS_LIFE, gainingPlayerId, lifeGainedAmount);
         collectEmblemLifeGainTriggers(gameData, gainingPlayerId, lifeGainedAmount);
     }
 
@@ -11720,8 +11720,8 @@ public class TriggerCollectionService {
             if (graveyard == null) continue;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                        gameData, card, EffectSlot.GRAVEYARD_ON_OPPONENT_GAINS_LIFE)) {
+                for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                        gameData, card, LifeWatch.GRAVEYARD_ON_OPPONENT_GAINS_LIFE.trigger())) {
                     gameData.enqueueTrigger(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -12036,8 +12036,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card, LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE.trigger())) {
                 CardEffect resolved = effect;
                 boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
                 if (oncePerTurn) {

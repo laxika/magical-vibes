@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 8: families 1 to 8 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 9: families 1 to 9 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3147,7 +3147,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 ### Step 13
 
 Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
-run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7, run 8 family 8.
+run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7, run 8 family 8, run 9 family 9.
 
 #### Run 1: steps and phases
 
@@ -4038,6 +4038,99 @@ signature, the skills and `ARCHITECTURE.md`. `effect-slot-inventory.md` was re-r
   `UntapStepServiceTest`, and the known ones in `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and
   `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 7 (the modal-mode, kicker and Reign of
+  Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
+- The full suite was not run here.
+
+#### Run 9: life
+
+The 8 life constants are gone: `ON_CONTROLLER_GAINS_LIFE`, `ON_OPPONENT_GAINS_LIFE`, `ON_ANY_PLAYER_GAINS_LIFE`,
+`ON_CONTROLLER_LOSES_LIFE`, `ON_OPPONENT_LOSES_LIFE`, `ON_CONTROLLER_PAYS_LIFE` and the two graveyard life-gain slots
+(`GRAVEYARD_ON_CONTROLLER_GAINS_LIFE`, `GRAVEYARD_ON_OPPONENT_GAINS_LIFE`). Family 10 (sagas) is next; families 10 and
+11 are left. `ON_OPPONENT_PAYS_TAX` is a mana payment, not a life one, and stays in family 11.
+
+**Authoring.**
+
+- `model.trigger.LifeTrigger(LifeEvent event, PlayerRelation player)`: a player gains, loses or pays life
+  (**CR 119.3**, **119.4**, checked); damage to a player is a loss of life (**CR 120.3a**, checked), and gaining 0 life
+  is no event (**CR 119.9**, checked). `LifeEvent` is `GAINS`, `LOSES` and `PAYS`; the player is whose life total it
+  is. Every event functions from the battlefield by default.
+- One named `Triggers` factory per player and event (6; the two graveyard forms reuse the battlefield factory with a
+  `TriggerCondition` zone): `youGainLife()`, `opponentGainsLife()`, `playerGainsLife()`, `youLoseLife()`,
+  `opponentLosesLife()`, `youPayLife()` (`scripts/step13-life-slots.tsv` maps each slot to its factory, zone, event and
+  player).
+- **Kept as the slots were:** "the first time each turn" is still `OncePerTurnTriggerEffect` (with `firstLifeGain` /
+  `firstLifeLoss`) and an intervening "if" a `ConditionalEffect`, unwrapped by the collectors. `youPayLife()` and
+  `youLoseLife()` stay separate events, as the slots were: paying life is also a loss of life (CR 119.4), and the
+  engine calls the life-loss collector for payments as before. The step 1 inventory's surprises are unchanged: the
+  life collectors have no `CardEffect` default handler (an effect class without a handler never triggers); the
+  opponent-loses-life and controller-loses-life collectors read no granted abilities, and the latter dispatches
+  through the registry directly (no additional-trigger copies); the pay-life collector has no ability-loss check on
+  printed abilities; the duplicate `MayPayManaEffect` and `SequenceEffect` handlers in `MiscTriggerCollectorService`
+  and `LifeGainTriggerCollectorService` still overwrite each other in bean scan order (the rekey kept each on its bean,
+  so the same one wins).
+- `LegacySlots.slotOf` knows `LifeTrigger`; no life slot was in `LegacySlotGrouping.ALL`.
+- False Cure's temporary global ability holds `new TriggeredAbility(Triggers.playerGainsLife(), …)` and is matched with
+  `ability().hasTrigger(…)`; `SpecializeShadowheartEffectHandler` adds the specialized card's ability with
+  `addTrigger(Triggers.youLoseLife(), …)`.
+
+**No rules event, no index.** As in runs 1 to 8, `checkLifeGainTriggers`, `checkLifeLossTriggers`,
+`checkLifePaymentTriggers` and the two graveyard life-gain collectors in `TriggerCollectionService` still run where the
+slots were collected. `service/trigger/LifeWatch` (a `TriggerWatch`) has one constant per old slot, naming its trigger
+and the zone the collector reads (the graveyard forms read `getEffectiveGraveyardTriggerEffects`, which only returns
+abilities that function from the graveyard). The 52 handler registrations of `MiscTriggerCollectorService` and
+`LifeGainTriggerCollectorService` moved from `@CollectsTrigger(slot = …)` to `@CollectsLifeTrigger(watch = …)`
+(`scripts/step13-life-rekey.py`), scanned by `TriggerCollectorRegistry` and `GameEngineConfig`. The readers in
+`TriggerCollectionService` and the collector tests were converted by `scripts/step13-life-readers.py` (run 8's reader
+script on this family's TSV). Grouping, target routing, wrapper checks and ability-loss checks are unchanged, so the
+run makes no rules change. Shadow mode was not run, for run 1's reason.
+
+**Cards.** `scripts/step13-life-triggers.py` (run 8's script reading the life TSV) converted 105 card classes (the step
+1 inventory's count) and `SpecializeShadowheartEffectHandler`, one ability per registration in the old order. No card
+test named a life slot. Nothing needed `MANUAL`; the continuation line of four multi-line grants (False Cure,
+Field-Tested Frying Pan, Light of Promise, Sunbond) was re-indented by hand. The domain Javadoc that named a slot names
+its factory; engine comments and the collector tests' display names keep the slot name, which is the `LifeWatch`
+constant's. `scripts/step13-life-docs.py` rewrote agent-docs (59 lines); by hand: False Cure's three rows show
+`new TriggeredAbility(Triggers.playerGainsLife(), …)` (the docs script wrote the old `(slot, effect)` signature), the
+"Slot:" labels in `EFFECTS_INDEX.md` read "Trigger:", the skills and `ARCHITECTURE.md`. `effect-slot-inventory.md` was
+re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the life collectors still read their wrappers: `OncePerTurnTriggerEffect` (`firstLifeGain`,
+  `firstLifeLoss`, `markOnAcceptance`, the unkeyed once flag, keyed by card id from the graveyard),
+  `FirstOpponentLifeLossEachTurnTriggerEffect`, and the intervening-if `ConditionalEffect`s
+  (`unwrapLifeChangeConditional`). The single-life-lost `SequenceEffect` check (Ob Nixilis) is a trigger condition too.
+- Step 15: the gaining, losing or paying player (`targetId`), the amount (`eventValue`) and the life-gain source card
+  and its stack entry type (`DealDamageOnSpellLifeGainEffect`) are still bound by the collectors.
+- The duplicate handlers above should be merged when the collectors go; Marina Vendrell's Grimoire depends on the
+  `MiscTriggerCollectorService` `SequenceEffect` handler that sets the event value.
+
+**Tests changed.**
+
+- New `LifeTriggerTest` (`model/trigger/`): every factory functions from the battlefield and names its own trigger,
+  the events and players, null rejection, and a card's life-gain abilities read by trigger and zone (battlefield and
+  graveyard).
+- New `LifeWatchTest`: every life, tap, library, target, counter, damage, combat and spell-and-ability watch has its
+  own (trigger, zone) pair, every life watch reads a `LifeTrigger` in the battlefield or (for the `GRAVEYARD_` forms)
+  the graveyard, and a watch reads only its trigger's abilities from its zone.
+- `MiscTriggerCollectorServiceTest` and `EnterTriggerCollectorServiceTest` dispatch to the watches (by the reader
+  script) and add the abilities with `addTrigger(Triggers.youGainLife(), …)` (three calls, by hand: the reader script
+  ran on them before the card script).
+- `GrantedAbilitiesTest#aGlobalTriggerHoldsATriggeredAbility` used `ON_ANY_PLAYER_GAINS_LIFE` as an arbitrary legacy
+  slot: it uses `ON_SELF_LOSES_CONTROL`. `LegacySlotTriggerTest`'s per-slot case runs 8 fewer times (it is
+  parameterised over `EffectSlot.values()`).
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that references one (168 classes, 1,358 tests), and
+  the two Shadowheart tests (34 tests): all passing.
+- Application: the trigger-model (`model.trigger.*`), watch, registry, misc and enter collector, pipeline,
+  granted-ability, card-ability, triggered-ability, freeze, architecture, simulation-copy, targeting-consistency,
+  legacy-binding, turn-cleanup and the six damage handler classes (510 tests, 510 at HEAD: 8 deleted cases, 8 new):
+  48 failures, exactly the tests that fail at HEAD (`57ebe72889`, same classes run in a worktree with the main tree's
+  `card-data-cache`): mock wiring in `TurnCleanupServiceTest` and the six damage handler tests, and the known ones in
+  `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 8 (the modal-mode, kicker and Reign of
   Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
 - The full suite was not run here.
 

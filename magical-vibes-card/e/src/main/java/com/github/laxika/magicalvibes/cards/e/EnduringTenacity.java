@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -18,7 +17,7 @@ import java.util.Set;
 public class EnduringTenacity extends Card {
 
     public EnduringTenacity() {
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+        addTrigger(Triggers.youGainLife(),
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new DyingPermanentWasCreatureConditionalEffect(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT))));

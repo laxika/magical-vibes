@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -28,8 +27,8 @@ public class MarinaVendrellsGrimoire extends Card {
         addStaticEffect(new NoMaximumHandSizeEffect());
         addStaticEffect(new CantLoseGameFromLifeEffect());
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new DrawCardsEqualToLifeGainedEffect());
-        addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, SequenceEffect.of(
+        addTrigger(Triggers.youGainLife(), new DrawCardsEqualToLifeGainedEffect());
+        addTrigger(Triggers.youLoseLife(), SequenceEffect.of(
                 new DiscardEffect(new EventValue(), DiscardRecipient.CONTROLLER),
                 new ConditionalEffect(new ControllerHandEmpty(), new ControllerLosesGameEffect())));
     }

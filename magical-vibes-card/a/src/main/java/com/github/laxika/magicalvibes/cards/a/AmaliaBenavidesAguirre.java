@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
@@ -27,7 +26,7 @@ public class AmaliaBenavidesAguirre extends Card {
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysEffect(0, 3));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, SequenceEffect.of(
+        addTrigger(Triggers.youGainLife(), SequenceEffect.of(
                 new ExploreEffect(),
                 ConditionalEffect.unless(
                         new AllOf(List.of(

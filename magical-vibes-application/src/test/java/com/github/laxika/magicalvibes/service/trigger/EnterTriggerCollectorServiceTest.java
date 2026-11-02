@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -322,11 +321,11 @@ class EnterTriggerCollectorServiceTest {
         OncePerTurnTriggerEffect effect = new OncePerTurnTriggerEffect(inner);
         Card source = new Card();
         source.setName("Source");
-        source.addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);
+        source.addTrigger(Triggers.youGainLife(), effect);
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
         AtomicInteger dispatchCount = new AtomicInteger();
-        registry.register(EffectSlot.ON_CONTROLLER_GAINS_LIFE, CardEffect.class,
+        registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, CardEffect.class,
                 (match, dispatchedEffect, context) -> {
                     dispatchCount.incrementAndGet();
                     return true;

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -25,7 +24,7 @@ public class CatCollector extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
         // "for the first time during each of your turns": the first life gain of the turn counts
         // even if it happened before this creature entered, and only on your own turn
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+        addTrigger(Triggers.youGainLife(),
                 OncePerTurnTriggerEffect.firstLifeGain(new ConditionalEffect(new ControllerTurn(),
                         new CreateTokenEffect(
                                 "Cat", 1, 1, CardColor.WHITE,

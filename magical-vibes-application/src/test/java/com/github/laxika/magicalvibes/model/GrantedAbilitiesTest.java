@@ -239,11 +239,11 @@ class GrantedAbilitiesTest {
 
     @Test
     void aGlobalTriggerHoldsATriggeredAbility() {
-        var global = new TemporaryGlobalTriggeredAbility(UUID.randomUUID(), new Card(), EffectSlot.ON_ANY_PLAYER_GAINS_LIFE,
-                DRAW_ONE);
+        var global = new TemporaryGlobalTriggeredAbility(UUID.randomUUID(), new Card(),
+                EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
 
-        assertThat(global.ability()).isEqualTo(LegacySlots.triggered(EffectSlot.ON_ANY_PLAYER_GAINS_LIFE, DRAW_ONE));
-        assertThat(global.slot()).isEqualTo(EffectSlot.ON_ANY_PLAYER_GAINS_LIFE);
+        assertThat(global.ability()).isEqualTo(LegacySlots.triggered(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE));
+        assertThat(global.slot()).isEqualTo(EffectSlot.ON_SELF_LOSES_CONTROL);
         assertThat(global.effect()).isEqualTo(DRAW_ONE);
     }
 }

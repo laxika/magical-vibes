@@ -228,7 +228,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.LifeGain(player1Id, 3);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -244,7 +244,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.LifeGain(player1Id, 1);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -259,12 +259,12 @@ class MiscTriggerCollectorServiceTest {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
         card.target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);
+                .addTrigger(Triggers.youGainLife(), effect);
         Permanent perm = new Permanent(card);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+                LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                 effect,
                 new TriggerContext.LifeGain(player1Id, 3));
 
@@ -282,12 +282,12 @@ class MiscTriggerCollectorServiceTest {
         Card card = createCard("Treebeard, Gracious Host");
         var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
         card.target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);
+                .addTrigger(Triggers.youGainLife(), effect);
         Permanent perm = new Permanent(card);
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+                LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                 effect,
                 new TriggerContext.LifeGain(player1Id, 3));
 
@@ -307,7 +307,7 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_OPPONENT_LOSES_LIFE,
+                LifeWatch.ON_OPPONENT_LOSES_LIFE,
                 effect,
                 new TriggerContext.LifeLoss(player2Id, 1))).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -324,7 +324,7 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_OPPONENT_LOSES_LIFE,
+                LifeWatch.ON_OPPONENT_LOSES_LIFE,
                 effect,
                 new TriggerContext.LifeLoss(player2Id, 2))).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -493,7 +493,7 @@ class MiscTriggerCollectorServiceTest {
         when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect,
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
                 new TriggerContext.LifeGain(player1Id, 3));
 
         assertThat(result).isTrue();
@@ -511,7 +511,7 @@ class MiscTriggerCollectorServiceTest {
         when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect,
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect,
                 new TriggerContext.LifeLoss(player1Id, 2));
 
         assertThat(result).isTrue();
@@ -1047,7 +1047,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(master, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertMillTriggerQueued(player1Id, 2);
@@ -1064,7 +1064,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(mindcrank, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertMillTriggerQueued(player2Id, 3);
@@ -1082,7 +1082,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(mindcrank, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
             assertMillTriggerQueued(player2Id, 1);
         }
@@ -1098,7 +1098,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(mindcrank, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Mindcrank triggers — Opponent mills 5 cards.")));
         }
@@ -1119,7 +1119,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1139,7 +1139,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         }
@@ -1153,7 +1153,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -1172,7 +1172,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1194,7 +1194,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1217,7 +1217,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1240,7 +1240,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
         }
@@ -1259,7 +1259,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1285,7 +1285,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1313,7 +1313,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1336,7 +1336,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 new TriggerMatchContext(gd, perm, player1Id, authoredEffect, perm.getCard(), true),
-                EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -1347,7 +1347,7 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(registry.dispatch(
                 new TriggerMatchContext(gd, perm, player1Id, authoredEffect, perm.getCard(), true),
-                EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect,
+                LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
                 new TriggerContext.LifeGain(player1Id, 4))).isTrue();
         assertThat(gd.stack).hasSize(2);
     }
@@ -1369,7 +1369,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1393,7 +1393,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             var entry = gd.stack.getLast();
             var resolved = (LoseLifeEffect) entry.getEffectsToResolve().getFirst();
@@ -1412,7 +1412,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -1436,7 +1436,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1458,7 +1458,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -1484,7 +1484,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);

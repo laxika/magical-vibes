@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +30,7 @@ public class TheArchimandrite extends Card {
                         CardSubtype.ARTIFICER,
                         CardSubtype.MONK));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, SequenceEffect.of(
+        addTrigger(Triggers.youGainLife(), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(new EventValue(), new Fixed(0), advisorArtificerOrMonk),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES,
                         advisorArtificerOrMonk)));

@@ -29,6 +29,8 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTriggers;
+import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTrigger;
+import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTapTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTapTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
@@ -291,6 +293,20 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
+                CollectsLifeTrigger lifeSingle = method.getAnnotation(CollectsLifeTrigger.class);
+                if (lifeSingle != null) {
+                    registerTriggerHandler(bean, method, lifeSingle.watch(), lifeSingle.value());
+                    count++;
+                }
+
+                CollectsLifeTriggers lifeContainer = method.getAnnotation(CollectsLifeTriggers.class);
+                if (lifeContainer != null) {
+                    for (CollectsLifeTrigger clt : lifeContainer.value()) {
+                        registerTriggerHandler(bean, method, clt.watch(), clt.value());
+                        count++;
+                    }
+                }
+
                 CollectsEmblemTrigger emblemSingle = method.getAnnotation(CollectsEmblemTrigger.class);
                 if (emblemSingle != null) {
                     registerEmblemTriggerHandler(bean, method, emblemSingle);
@@ -317,7 +333,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     /**
      * Registers a handler for {@code key}, an {@code EffectSlot}, a {@code ZoneChangeWatch}, a
      * {@code SpellAbilityWatch}, a {@code CombatWatch}, a {@code DamageWatch}, a {@code CounterWatch}, a
-     * {@code LibraryWatch} or a {@code TapWatch}.
+     * {@code LibraryWatch}, a {@code TapWatch} or a {@code LifeWatch}.
      */
     @SuppressWarnings("unchecked")
     private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {

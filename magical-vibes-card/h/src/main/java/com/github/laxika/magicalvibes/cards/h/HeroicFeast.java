@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -23,7 +22,7 @@ public class HeroicFeast extends Card {
     public HeroicFeast() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
         targetUpTo(new EventValue(), TargetFilters.creatureYouControl(), 1000)
-                .addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
+                .addTrigger(Triggers.youGainLife(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 

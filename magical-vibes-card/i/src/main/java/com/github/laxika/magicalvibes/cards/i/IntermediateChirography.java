@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ModifiedCreatureDiedUnderYourControlThisTurn;
@@ -42,8 +41,7 @@ public class IntermediateChirography extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        target(TargetFilters.creatureYouControl()).addEffect(
-                EffectSlot.ON_CONTROLLER_LOSES_LIFE,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youLoseLife(),
                 OncePerTurnTriggerEffect.firstLifeLoss(new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))));

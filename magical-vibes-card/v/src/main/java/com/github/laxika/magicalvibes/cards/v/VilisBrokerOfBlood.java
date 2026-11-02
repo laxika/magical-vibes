@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,6 +27,6 @@ public class VilisBrokerOfBlood extends Card {
                         "Target must be a creature")));
 
         // Whenever you lose life, draw that many cards.
-        addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, new DrawCardEffect(new EventValue()));
+        addTrigger(Triggers.youLoseLife(), new DrawCardEffect(new EventValue()));
     }
 }
