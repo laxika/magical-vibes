@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.h.HakkaWhisperingRaven;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.ForetoldCardsInExile;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfChosenTypeToHandRestEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class AlrundGodOfTheCosmos extends Card {
                 new CardsInHand(CountScope.CONTROLLER),
                 new ForetoldCardsInExile(CountScope.CONTROLLER));
         addStaticEffect(new BoostSelfEffect(count, count));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new RevealTopCardsOfChosenTypeToHandRestEffect(2));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Alrund, God of the Cosmos", List.of())

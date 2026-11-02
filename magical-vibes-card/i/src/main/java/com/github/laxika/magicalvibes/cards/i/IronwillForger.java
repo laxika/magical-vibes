@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class IronwillForger extends Card {
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))
                 )),
                 "Target must be a nonlegendary creature you control"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new ControllerControlsOwnCommander(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(

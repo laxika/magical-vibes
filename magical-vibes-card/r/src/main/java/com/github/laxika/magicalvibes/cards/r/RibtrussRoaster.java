@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class RibtrussRoaster extends Card {
         // At the beginning of your end step, create a number of 1/1 black and green Pest
         // creature tokens equal to the number of +1/+1 counters on this creature. They have
         // "When this token dies, you gain 1 life."
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new CreateTokenEffect(
                 CardType.CREATURE, new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                 "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),

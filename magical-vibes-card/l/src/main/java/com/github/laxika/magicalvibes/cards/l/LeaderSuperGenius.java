@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawBeforeConniveReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSH", collectorNumber = "64")
 public class LeaderSuperGenius extends Card {
@@ -14,6 +15,6 @@ public class LeaderSuperGenius extends Card {
         addStaticEffect(new DrawBeforeConniveReplacementEffect());
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new DrawDiscardAndConniveEffect(true));
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new DrawDiscardAndConniveEffect(true));
     }
 }

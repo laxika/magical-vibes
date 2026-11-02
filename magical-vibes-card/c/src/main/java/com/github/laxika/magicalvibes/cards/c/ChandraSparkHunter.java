@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -24,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +39,7 @@ public class ChandraSparkHunter extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a Vehicle you control"), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new AnimatePermanentsEffect(
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new AnimatePermanentsEffect(
                         null, null, List.of(), Set.of(Keyword.HASTE), null, Set.of(CardType.CREATURE),
                         GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, null));
 

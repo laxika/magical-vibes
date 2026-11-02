@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
@@ -13,12 +12,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "40")
 public class VeteranSurvivor extends Card {
 
     public VeteranSurvivor() {
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new SurvivalTriggerEffect(new ConditionalEffect(
                         new SourceIsTapped(),
                         new ExileGraveyardCardsEffect(

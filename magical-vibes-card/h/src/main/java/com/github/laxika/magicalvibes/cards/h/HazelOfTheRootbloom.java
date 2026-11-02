@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -42,8 +43,7 @@ public class HazelOfTheRootbloom extends Card {
         PermanentIsTokenPredicate token = new PermanentIsTokenPredicate();
         PermanentHasSubtypePredicate squirrel = new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL);
         target(new ControlledPermanentPredicateTargetFilter(
-                token, "Target must be a token you control")).addEffect(
-                EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                token, "Target must be a token you control")).addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 SequenceEffect.of(
                         new ConditionalEffect(
                                 new TargetPermanentMatches(squirrel),

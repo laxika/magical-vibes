@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastToughnessAmongOpponentCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
 public class PenregonBesieged extends Card {
 
     public PenregonBesieged() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ChooseOpponentCreatureAndPerpetuallyBoostEffect(
                         -1, -1, new PermanentHasLeastToughnessAmongOpponentCreaturesPredicate()));
 

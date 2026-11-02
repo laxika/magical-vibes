@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,12 +31,12 @@ public class TangleWire extends Card {
     public TangleWire() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(4)));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new TapPermanentsForAmountEffect(new CountersOnSource(CounterType.FADE),
                         ARTIFACT_CREATURE_OR_LAND));
-        addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 new TapPermanentsForAmountEffect(new CountersOnSource(CounterType.FADE),
                         ARTIFACT_CREATURE_OR_LAND));
     }

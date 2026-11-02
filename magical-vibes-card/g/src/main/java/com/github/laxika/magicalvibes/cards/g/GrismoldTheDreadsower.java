@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class GrismoldTheDreadsower extends Card {
 
     public GrismoldTheDreadsower() {
         // At the beginning of your end step, each player creates a 1/1 green Plant creature token.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new EachPlayerCreatesTokenEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new EachPlayerCreatesTokenEffect(
                 new CreateTokenEffect(1, "Plant", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.PLANT), Set.of(), Set.of())));
 

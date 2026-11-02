@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandWithManaValueEqualToSourceCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public class AetherVial extends Card {
 
     public AetherVial() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.CHARGE),
                         "Put a charge counter on Aether Vial?"));
 

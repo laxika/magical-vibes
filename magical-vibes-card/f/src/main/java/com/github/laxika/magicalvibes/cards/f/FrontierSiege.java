@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,11 +31,11 @@ public class FrontierSiege extends Card {
     public FrontierSiege() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new SourceHasChosenMode(KHANS),
                         new AwardManaEffect(ManaColor.GREEN, 2)));
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new SourceHasChosenMode(KHANS),
                         new AwardManaEffect(ManaColor.GREEN, 2)));

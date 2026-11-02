@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class RestlessBloodseeker extends Card {
         setBackFaceCard(new BloodsoakedReveler());
 
         // At the beginning of your end step, if you gained life this turn, create a Blood token.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new GainedLifeThisTurn(),
                 CreateTokenEffect.ofBloodToken(1)));
 

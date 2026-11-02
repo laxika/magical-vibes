@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHa
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DecayingSoil extends Card {
 
     public DecayingSoil() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileGraveyardCardsEffect(1, GraveyardExileScope.OWN));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ExileGraveyardCardsEffect(1, GraveyardExileScope.OWN));
 
         var threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,

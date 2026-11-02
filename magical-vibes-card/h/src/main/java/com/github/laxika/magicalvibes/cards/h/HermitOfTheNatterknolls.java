@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class HermitOfTheNatterknolls extends Card {
 
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                 SpellCastTriggerEffect.duringYourTurn(null, List.of(new DrawCardEffect(1))));
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 

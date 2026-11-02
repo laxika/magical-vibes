@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class SerratedArrows extends Card {
 
         // At the beginning of your upkeep, if there are no arrowhead counters on this artifact,
         // sacrifice it.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.ARROWHEAD)),
                 new SacrificeSelfEffect()));
 

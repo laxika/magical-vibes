@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Crystal Golem — {4} Artifact Creature — Golem 3/3.
@@ -14,6 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 public class CrystalGolem extends Card {
 
     public CrystalGolem() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new PhaseOutEffect(PhaseOutSubject.SOURCE));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new PhaseOutEffect(PhaseOutSubject.SOURCE));
     }
 }

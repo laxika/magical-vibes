@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +22,7 @@ import java.util.Set;
 public class BlackMarketConnections extends Card {
 
     public BlackMarketConnections() {
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, ChooseOneEffect.oneOrMore(List.of(
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Sell Contraband — Create a Treasure token. You lose 1 life.",
                         List.of(CreateTokenEffect.ofTreasureToken(1), new LoseLifeEffect(1))),

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefi
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "2")
 @CardRegistration(set = "OPCA", collectorNumber = "10")
@@ -25,7 +27,7 @@ public class TheAetherFlues extends Card {
                         "a creature"),
                 "Sacrifice a creature?");
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, sacrificeThenReveal);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, sacrificeThenReveal);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), sacrificeThenReveal);
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(
                 new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"),
                 "Put a creature card from your hand onto the battlefield?"));

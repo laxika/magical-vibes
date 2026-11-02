@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class MightMakesRight extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature an opponent controls"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsEachCreatureWithGreatestPower(),
                 SequenceEffect.of(
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),

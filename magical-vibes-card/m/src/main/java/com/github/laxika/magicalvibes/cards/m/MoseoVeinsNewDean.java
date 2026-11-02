@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -40,7 +41,7 @@ public class MoseoVeinsNewDean extends Card {
         // Infusion — At the beginning of your end step, if you gained life this turn, return up to
         // one target creature card with mana value X or less from your graveyard to the battlefield,
         // where X is the amount of life you gained this turn.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new GainedLifeThisTurn(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -21,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class TourachsGate extends Card {
                 "Sacrifice a Thrull: Put three time counters on this Aura."
         ));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1),
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect())));

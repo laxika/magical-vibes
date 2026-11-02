@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,7 +27,7 @@ public class RinoaAngelWing extends Card {
 
     public RinoaAngelWing() {
         PermanentHasKeywordPredicate flying = new PermanentHasKeywordPredicate(Keyword.FLYING);
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 1, flying),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, flying)));
 

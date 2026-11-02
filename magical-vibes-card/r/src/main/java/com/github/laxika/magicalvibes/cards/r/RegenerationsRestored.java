@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "151")
 @CardRegistration(set = "WHO", collectorNumber = "756")
@@ -30,7 +32,7 @@ public class RegenerationsRestored extends Card {
         // Vanishing: the upkeep removal and the last-counter sacrifice are separate triggers. The
         // sacrifice is added first so the card's own exile trigger sits above it on the stack and
         // can exile the enchantment (and earn the extra turn) before it is sacrificed.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
                         new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
         addEffect(EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED,

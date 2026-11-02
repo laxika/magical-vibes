@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffe
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ import java.util.Set;
 public class AlienInvasion extends Card {
 
     public AlienInvasion() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new CreateXTokenWithXCountersEffect(
                         alienToken(), new CountersOnSource(CounterType.INVASION), CounterType.PLUS_ONE_PLUS_ONE),
                 new PutCountersOnSourceCardEffect(CounterType.INVASION)));

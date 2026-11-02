@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesPermanentToSacrificeEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class DemonicHordes extends Card {
 
         // At the beginning of your upkeep, unless you pay {B}{B}{B}, tap this creature and
         // sacrifice a land of an opponent's choice.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ForcedCostOrElseEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new PayManaCost("{B}{B}{B}"),
                 List.of(
                         new TapPermanentsEffect(TapUntapScope.SELF),

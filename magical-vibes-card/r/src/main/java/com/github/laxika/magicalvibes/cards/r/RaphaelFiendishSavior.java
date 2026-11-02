@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardPutIntoYourGraveyardThisTurn;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -40,7 +40,7 @@ public class RaphaelFiendishSavior extends Card {
         // deals 1 damage to any target."
         List<Ability> devilTokenEffects =
                 List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new CreatureCardPutIntoYourGraveyardThisTurn(),
                 new CreateTokenEffect(1, "Devil", 1, 1, CardColor.RED,
                         List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects)));

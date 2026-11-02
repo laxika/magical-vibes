@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForN
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +31,7 @@ public class SamLoyalAttendant extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, CreateTokenEffect.ofFoodToken(1));
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), CreateTokenEffect.ofFoodToken(1));
 
         addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(

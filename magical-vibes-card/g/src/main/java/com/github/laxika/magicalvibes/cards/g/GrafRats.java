@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class GrafRats extends Card {
 
         // At the beginning of combat on your turn, if you both own and control this creature and a
         // creature named Midnight Scavengers, exile them, then meld them into Chittering Host.
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsSourceCardPredicate(),

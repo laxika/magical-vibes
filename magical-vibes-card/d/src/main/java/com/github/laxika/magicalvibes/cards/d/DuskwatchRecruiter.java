@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.cards.k.KrallenhordeHowler;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class DuskwatchRecruiter extends Card {
         ));
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform this creature.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnUntapLockedPermanentsEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class GiantOyster extends Card {
         ));
 
         // "... and at the beginning of each of your draw steps, put a -1/-1 counter on that creature."
-        addEffect(EffectSlot.DRAW_TRIGGERED,
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU),
                 new PutCountersOnUntapLockedPermanentsEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // "When this creature leaves the battlefield or becomes untapped, remove all -1/-1 counters

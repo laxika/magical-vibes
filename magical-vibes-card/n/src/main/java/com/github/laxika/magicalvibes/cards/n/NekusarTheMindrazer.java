@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "860")
 @CardRegistration(set = "SLD", collectorNumber = "1301")
@@ -17,7 +19,7 @@ public class NekusarTheMindrazer extends Card {
 
     public NekusarTheMindrazer() {
         // At the beginning of each player's draw step, that player draws an additional card.
-        addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new DrawCardForTargetPlayerEffect(1));
+        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1));
 
         // Whenever an opponent draws a card, Nekusar deals 1 damage to that player.
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,

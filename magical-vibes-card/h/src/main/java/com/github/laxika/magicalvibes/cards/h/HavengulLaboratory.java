@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentSubtypeAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "609")
@@ -33,7 +34,7 @@ public class HavengulLaboratory extends Card {
 
         // At the beginning of your end step, if you sacrificed three or more Clues this turn,
         // transform Havengul Laboratory.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new ControllerSacrificedPermanentSubtypeAtLeastThisTurn(3, CardSubtype.CLUE),
                         new TransformSelfEffect()));

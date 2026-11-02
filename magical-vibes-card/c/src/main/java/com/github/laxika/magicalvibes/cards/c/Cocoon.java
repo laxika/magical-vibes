@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfE
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class Cocoon extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(CounterType.PUPA, 3));
         addStaticEffect(DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterOrSacrificeSelfEffect(CounterType.PUPA, List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCounterOrSacrificeSelfEffect(CounterType.PUPA, List.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.INDEFINITE)
         )));

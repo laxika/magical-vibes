@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
@@ -28,6 +27,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndBecomeForetoldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -462,7 +463,7 @@ class LibraryChoiceHandlerServiceTest {
         ArgumentCaptor<Permanent> entered = ArgumentCaptor.forClass(Permanent.class);
         verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id),
                 entered.capture(), any(Set.class), any(List.class), isNull());
-        assertThat(entered.getValue().getPersistentTriggeredEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
+        assertThat(entered.getValue().getPersistentTriggerEffects(Triggers.endStep(ActivePlayer.YOU)))
                 .singleElement().isInstanceOf(ReturnToHandEffect.class);
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
     }

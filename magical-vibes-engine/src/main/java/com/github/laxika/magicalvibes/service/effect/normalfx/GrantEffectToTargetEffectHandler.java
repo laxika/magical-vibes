@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -121,6 +123,12 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
                     || target.getTemporaryStaticEffects().contains(granted);
         }
         EffectSlot slot = LegacySlots.slotOf(ability);
+        if (slot == null && ability instanceof TriggeredAbility triggered) {
+            Trigger trigger = triggered.conditions().getFirst().trigger();
+            return target.getCard().getTriggerEffects(trigger).contains(granted)
+                    || target.getPersistentTriggerEffects(trigger).contains(granted)
+                    || target.getTemporaryTriggerEffects(trigger).contains(granted);
+        }
         if (target.getCard().getEffects(slot).contains(granted)) {
             return true;
         }

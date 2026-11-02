@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMP", collectorNumber = "168")
 @CardRegistration(set = "SLD", collectorNumber = "1658")
@@ -21,7 +22,7 @@ public class ChaoticGoo extends Card {
 
         // "At the beginning of your upkeep, you may flip a coin. If you win the flip, put a +1/+1
         //  counter on this creature. If you lose the flip, remove a +1/+1 counter from this creature."
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(
                         new FlipCoinWinEffect(
                                 new PutCountersOnSourceEffect(1, 1, 1),

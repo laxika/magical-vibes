@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class CaseOfTheShatteredPact extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand()));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new AllOf(List.of(
                         new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE))),
                         new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLUE))),
@@ -41,7 +41,7 @@ public class CaseOfTheShatteredPact extends Card {
                 )), new SolveSourceEffect()));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ConditionalEffect(new AllOf(List.of(new SourceIsSolved())),
                                 new GrantKeywordEffect(Set.of(
                                         Keyword.FLYING,

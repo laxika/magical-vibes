@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "7")
 @CardRegistration(set = "NCC", collectorNumber = "105")
@@ -20,7 +22,7 @@ public class KrosDefenseContractor extends Card {
 
     public KrosDefenseContractor() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         new PutCounterOnTargetPermanentEffect(CounterType.SHIELD, 1));
 
         addEffect(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,

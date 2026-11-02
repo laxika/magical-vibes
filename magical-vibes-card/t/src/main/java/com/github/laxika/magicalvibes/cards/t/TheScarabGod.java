@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -39,7 +39,7 @@ public class TheScarabGod extends Card {
 
         // At the beginning of your upkeep, each opponent loses X life and you scry X,
         // where X is the number of Zombies you control.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new LoseLifeEffect(zombiesYouControl, LoseLifeRecipient.EACH_OPPONENT),
                 new ScryEffect(zombiesYouControl)));
 

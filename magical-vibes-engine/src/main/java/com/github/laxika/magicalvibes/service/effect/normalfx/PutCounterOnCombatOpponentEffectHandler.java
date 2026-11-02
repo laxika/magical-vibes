@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -51,9 +53,9 @@ public class PutCounterOnCombatOpponentEffectHandler implements NormalEffectHand
             target.addPersistentAbility(StaticAbility.of(counterEffect.grantedStaticEffect()));
         }
         if (counterEffect.grantedUpkeepEffect() != null) {
-            target.addPersistentTriggeredEffect(
-                    EffectSlot.UPKEEP_TRIGGERED,
-                    counterEffect.grantedUpkeepEffect());
+            target.addPersistentAbility(new TriggeredAbility(
+                    Triggers.upkeep(ActivePlayer.YOU),
+                    counterEffect.grantedUpkeepEffect()));
         }
     }
 }

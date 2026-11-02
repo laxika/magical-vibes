@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class CemeteryTampering extends Card {
 
     public CemeteryTampering() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ImprintFromTopCardsEffect(5, true));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"),
                 ConditionalEffect.unless(new GraveyardCardThreshold(20, null),
                         new PlayImprintedCardWithoutPayingManaCostEffect())));

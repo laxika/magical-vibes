@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class BringerOfTheRedDawn extends Card {
     public BringerOfTheRedDawn() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}{U}{B}{R}{G}"))));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 SequenceEffect.of(new MayEffect(
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.TARGET),

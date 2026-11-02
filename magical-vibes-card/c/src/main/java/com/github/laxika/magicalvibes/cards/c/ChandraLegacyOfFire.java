@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromChosenPerman
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class ChandraLegacyOfFire extends Card {
         PermanentCount planeswalkersYouControl = new PermanentCount(
                 new PermanentIsPlaneswalkerPredicate(), CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DealDamageToPlayersEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new DealDamageToPlayersEffect(
                 planeswalkersYouControl, DamageRecipient.EACH_OPPONENT));
 
         addActivatedAbility(new ActivatedAbility(

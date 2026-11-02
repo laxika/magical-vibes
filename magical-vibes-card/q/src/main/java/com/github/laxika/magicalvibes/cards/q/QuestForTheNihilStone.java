@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class QuestForTheNihilStone extends Card {
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS,
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Quest for the Nihil Stone?"));
-        addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(
                 new AllOf(List.of(
                         new ActivePlayerHandEmpty(),
                         new SourceCounterThreshold(2, CounterType.QUEST))),

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +29,8 @@ public class KrovikanHorror extends Card {
         // At the beginning of the end step, if this card is in your graveyard with a creature card
         // directly above it, you may return this card to your hand. Intervening-if on the ordered
         // graveyard is checked both as the ability triggers and as it resolves.
-        addEffect(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED,
+        addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.ANY), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE)),
                         new MayEffect(

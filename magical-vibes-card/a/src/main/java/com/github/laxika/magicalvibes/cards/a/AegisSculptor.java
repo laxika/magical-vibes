@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class AegisSculptor extends Card {
     public AegisSculptor() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
                 new AllOf(List.of(new GraveyardCardThreshold(2, new CardTruePredicate()))),
                 new MayEffect(
                         SequenceEffect.of(

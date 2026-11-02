@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOI", collectorNumber = "195")
 @CardRegistration(set = "SIR", collectorNumber = "187")
@@ -21,7 +23,7 @@ public class BriarbridgePatrol extends Card {
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE,
                 new TriggeringPermanentConditionalEffect(new PermanentIsCreaturePredicate(),
                         CreateTokenEffect.ofClueToken(1)));
-        addEffect(EffectSlot.END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new ConditionalEffect(
                         new ControllerSacrificedPermanentSubtypeAtLeastThisTurn(3, CardSubtype.CLUE),
                         new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")));

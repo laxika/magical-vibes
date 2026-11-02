@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class EdeaPossessedSorceress extends Card {
 
     public EdeaPossessedSorceress() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                         new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));

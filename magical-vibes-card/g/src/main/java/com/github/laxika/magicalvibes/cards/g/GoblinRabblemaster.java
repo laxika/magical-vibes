@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class GoblinRabblemaster extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
 
         // At the beginning of combat on your turn, create a 1/1 red Goblin creature token with haste.
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new CreateTokenEffect(
                 "Goblin",
                 1,
                 1,

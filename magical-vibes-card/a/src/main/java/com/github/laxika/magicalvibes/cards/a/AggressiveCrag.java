@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class AggressiveCrag extends Card {
 
     public AggressiveCrag() {
         // At the beginning of your combat step, tap Aggressive Crag.
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new TapPermanentsEffect(TapUntapScope.SELF));
 
         addActivatedAbility(new ActivatedAbility(

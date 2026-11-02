@@ -246,8 +246,8 @@ import lombok.Builder;
  *                             {@link #plusOneCountersIfCondition} when
  *                             those fields are non-null
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
- *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
- *                             Dead — "That creature gains Cumulative upkeep {2}.")
+ *                             cost as a persistent {@code Triggers.upkeep(ActivePlayer.YOU)} ability (e.g.
+ *                             Dreams of the Dead — "That creature gains Cumulative upkeep {2}.")
  * @param createTokensIfSubtype when non-null, resolve {@link #createTokensEffect} after the returned
  *                             permanent enters if the returned card has this subtype
  * @param createTokensEffect token-creation effect for the {@link #createTokensIfSubtype} rider

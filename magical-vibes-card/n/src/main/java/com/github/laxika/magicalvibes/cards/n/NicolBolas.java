@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class NicolBolas extends Card {
 
     public NicolBolas() {
         // At the beginning of your upkeep, sacrifice Nicol Bolas unless you pay {U}{B}{R}.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{U}{B}{R}"),
                         List.of(new SacrificeSelfEffect()),

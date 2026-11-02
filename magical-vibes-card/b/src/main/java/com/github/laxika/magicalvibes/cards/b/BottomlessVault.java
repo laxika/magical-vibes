@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class BottomlessVault extends Card {
         addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         // At the beginning of your upkeep, if this land is tapped, put a storage counter on it.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceIsTapped(), new PutCountersOnSelfEffect(CounterType.STORAGE)));
 
         // {T}, Remove any number of storage counters from this land: Add {B} for each removed.

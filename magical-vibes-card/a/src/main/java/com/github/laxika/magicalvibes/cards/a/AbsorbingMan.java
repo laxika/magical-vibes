@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +37,7 @@ public class AbsorbingMan extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetPredicate,
                 "Target must be an artifact, non-Aura enchantment, or land"), 0, 1)
-                .addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+                .addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                         new BecomeCopyOfTargetPermanentUntilYourNextTurnEffect(
                                 "Absorbing Man", 4, 4,
                                 Set.of(CardSubtype.HUMAN, CardSubtype.VILLAIN),

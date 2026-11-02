@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALL", collectorNumber = "108")
 public class LimDLsPaladin extends Card {
@@ -15,7 +17,7 @@ public class LimDLsPaladin extends Card {
     public LimDLsPaladin() {
         // At the beginning of your upkeep, you may discard a card. If you don't, sacrifice
         // this creature and draw a card.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new SacrificeUnlessDiscardCardTypeEffect(null, false, true));
 
         // Whenever this creature becomes blocked, it gets +6/+3 until end of turn.

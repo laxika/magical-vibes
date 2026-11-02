@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ public class ElendaAndAzor extends Card {
 
     public ElendaAndAzor() {
         addEffect(EffectSlot.ON_ATTACK, new PayXManaDrawXCardsEffect("{X}{W}{U}{B}"));
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new MayPayLifeEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new MayPayLifeEffect(
                 4,
                 new CreateTokenEffect(
                         new CardsDrawnThisTurn(), "Vampire Knight", 1, 1, CardColor.BLACK,

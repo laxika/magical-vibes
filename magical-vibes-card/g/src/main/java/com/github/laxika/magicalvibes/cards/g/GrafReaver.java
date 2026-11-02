@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +26,7 @@ public class GrafReaver extends Card {
                 new PermanentIsPlaneswalkerPredicate(), "Target must be a planeswalker."
         )).addEffect(EffectSlot.ON_EXPLOIT, new DestroyTargetPermanentEffect());
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
     }
 }

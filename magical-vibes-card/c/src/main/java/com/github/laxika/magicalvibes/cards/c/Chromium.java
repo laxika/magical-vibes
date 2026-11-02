@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ public class Chromium extends Card {
 
     public Chromium() {
         // At the beginning of your upkeep, sacrifice Chromium unless you pay {W}{U}{B}.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{W}{U}{B}"),
                         List.of(new SacrificeSelfEffect()),

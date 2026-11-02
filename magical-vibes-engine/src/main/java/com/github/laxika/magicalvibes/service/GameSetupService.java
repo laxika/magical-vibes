@@ -4,15 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
@@ -206,10 +208,11 @@ public class GameSetupService {
             }
 
             // Conspiracies start the game face up in the command zone rather than in the library.
-            // Their command-zone effect slot is the engine's zone-independent marker, so this also
+            // Their "at the beginning of your end step" ability that functions from the command zone is the
+            // engine's zone-independent marker, so this also
             // keeps future conspiracy implementations out of the opening hand automatically.
             List<Card> commandZoneCards = deck.stream()
-                    .filter(card -> !card.getEffects(EffectSlot.COMMAND_ZONE_END_STEP_TRIGGERED).isEmpty())
+                    .filter(card -> !card.getTriggerEffects(Triggers.endStep(ActivePlayer.YOU), Zone.COMMAND).isEmpty())
                     .toList();
             deck.removeAll(commandZoneCards);
 

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "216")
 @CardRegistration(set = "LGN", collectorNumber = "105")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LavabornMuse extends Card {
 
     public LavabornMuse() {
-        addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new DealDamageIfFewCardsInHandEffect(2, 3));
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new DealDamageIfFewCardsInHandEffect(2, 3));
     }
 }

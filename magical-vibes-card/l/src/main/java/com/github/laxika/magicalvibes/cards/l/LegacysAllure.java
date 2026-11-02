@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class LegacysAllure extends Card {
 
     public LegacysAllure() {
         // At the beginning of your upkeep, you may put a treasure counter on this enchantment.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new PutCountersOnSelfEffect(CounterType.TREASURE),
                 "Put a treasure counter on Legacy's Allure?"
         ));

@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class ForceOfNature extends Card {
 
     public ForceOfNature() {
         // At the beginning of your upkeep, this creature deals 8 damage to you unless you pay {G}{G}{G}{G}.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{G}{G}{G}{G}"),
                         List.of(new DealDamageToPlayersEffect(8, DamageRecipient.CONTROLLER)),

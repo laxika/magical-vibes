@@ -318,6 +318,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -2710,6 +2711,19 @@ public class GameQueryService {
         }
         List<CardEffect> effects = new ArrayList<>(card.getEffects(slot));
         effects.addAll(gameData.perpetualAbilityEffects(card.getId(), slot));
+        return List.copyOf(effects);
+    }
+
+    /**
+     * The effects of a graveyard card's triggered abilities with {@code trigger} that function from the graveyard,
+     * its perpetual grants included, respecting global ability loss.
+     */
+    public List<CardEffect> getEffectiveGraveyardTriggerEffects(GameData gameData, Card card, Trigger trigger) {
+        if (graveyardCardsHaveLostAllAbilities(gameData)) {
+            return List.of();
+        }
+        List<CardEffect> effects = new ArrayList<>(card.getTriggerEffects(trigger, Zone.GRAVEYARD));
+        effects.addAll(gameData.perpetualTriggerEffects(card.getId(), trigger, Zone.GRAVEYARD));
         return List.copyOf(effects);
     }
 

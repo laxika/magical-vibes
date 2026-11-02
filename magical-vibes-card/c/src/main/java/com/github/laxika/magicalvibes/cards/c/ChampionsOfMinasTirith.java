@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.OpponentCantAttackSourceControllerThisCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class ChampionsOfMinasTirith extends Card {
     public ChampionsOfMinasTirith() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
 
-        addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
                 new ConditionalEffect(new ControllerIsMonarch(), MayPayManaEffect.dynamic(
                         new CardsInHand(CountScope.CONTROLLER),
                         null,

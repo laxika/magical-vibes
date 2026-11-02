@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomOpponentMustAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C14", collectorNumber = "29")
 public class RavingDead extends Card {
 
     public RavingDead() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ChooseRandomOpponentMustAttackThisCombatEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new LoseLifeEffect(new Divided(new TargetPlayerLifeTotal(), 2), LoseLifeRecipient.TARGET_PLAYER));

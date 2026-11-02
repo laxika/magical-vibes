@@ -12,12 +12,14 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "602")
 public class MattMurdockJusticeSeeker extends Card {
 
     public MattMurdockJusticeSeeker() {
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new MayPayManaEffect("{1}",
                         new QueueReflexiveAbilityEffect(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),

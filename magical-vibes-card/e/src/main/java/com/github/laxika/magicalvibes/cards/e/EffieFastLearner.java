@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ import java.util.List;
 public class EffieFastLearner extends Card {
 
     public EffieFastLearner() {
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new SurvivalTriggerEffect(new ConditionalEffect(
                         new SourceIsTapped(),
                         SequenceEffect.of(

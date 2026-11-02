@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class LeafCrownedElder extends Card {
         // Kinship — At the beginning of your upkeep, you may look at the top card of your library.
         // If it shares a creature type with this creature, you may reveal it. If you do, you may
         // play that card without paying its mana cost. (If not played, it stays on top — no exile.)
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new KinshipEffect(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new KinshipEffect(List.of(
                 new RevealTopCardMayPlayFreeEffect(LookDestination.TOP_OF_LIBRARY))));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThisTurn;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,7 @@ import java.util.Set;
 public class TheRavenMan extends Card {
 
     public TheRavenMan() {
-        addEffect(EffectSlot.END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new ConditionalEffect(new AnyPlayerDiscardedCardThisTurn(), birdToken()));
 
         addActivatedAbility(new ActivatedAbility(

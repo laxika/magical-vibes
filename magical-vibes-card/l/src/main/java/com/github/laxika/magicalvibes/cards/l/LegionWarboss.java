@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class LegionWarboss extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new CreateTokenEffect(
                 1,
                 "Goblin",
                 1,
@@ -45,7 +47,7 @@ public class LegionWarboss extends Card {
                 List.of(CardSubtype.GOBLIN),
                 Set.of(),
                 Set.of(Keyword.HASTE)));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new MakeCreatedPermanentsMustAttackThisCombatEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class SkyriderPatrol extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature you control"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayPayManaEffect(
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayPayManaEffect(
                 "{G}{U}",
                 new QueueReflexiveAbilityEffect(SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),

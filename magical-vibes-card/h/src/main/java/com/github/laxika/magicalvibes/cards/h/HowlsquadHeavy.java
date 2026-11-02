@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsMustAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class HowlsquadHeavy extends Card {
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new CreateTokenEffect(
                 1,
                 "Goblin",
                 1,
@@ -40,7 +41,7 @@ public class HowlsquadHeavy extends Card {
                 List.of(CardSubtype.GOBLIN),
                 Set.of(),
                 Set.of()));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new MakeCreatedPermanentsMustAttackThisCombatEffect());
 
         addActivatedAbility(new ActivatedAbility(

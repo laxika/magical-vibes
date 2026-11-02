@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasBoon;
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class UnderbridgeWarlock extends Card {
                                         new LoseLifeEffect(5, LoseLifeRecipient.EACH_OPPONENT),
                                         new GainLifeEffect(5),
                                         new ConsumeBoonEffect(BoonTrigger.CONTROLLER_END_STEP)))));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new ControllerHasBoon(),
                         SequenceEffect.of(
                                 new MillEffect(3, MillRecipient.CONTROLLER),

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * <p>{@code payer} redirects the "may pay" prompt away from the ability's controller:
  * {@link MayPayPayer#ENCHANTED_CONTROLLER} prompts the enchanted permanent's controller — the
  * player carried on the stack entry's {@code targetId} by an
- * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} trigger (Paralyze) — and
+ * {@code Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)} trigger (Paralyze) — and
  * {@link MayPayPayer#DEFENDING_PLAYER} prompts the player being attacked, read from an
  * {@code ON_ATTACK} trigger's {@code attackedTargetId} (Mtenda Lion).
  *

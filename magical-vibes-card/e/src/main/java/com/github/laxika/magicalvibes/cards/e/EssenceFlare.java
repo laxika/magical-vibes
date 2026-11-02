@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ICE", collectorNumber = "69")
 @CardRegistration(set = "ME2", collectorNumber = "48")
@@ -20,7 +21,7 @@ public class EssenceFlare extends Card {
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // put a -0/-1 counter on that creature.
-                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+                .addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                         new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ZERO_MINUS_ONE));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivate
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M12", collectorNumber = "163")
 @CardRegistration(set = "MM3", collectorNumber = "118")
@@ -24,7 +25,7 @@ public class ArachnusWeb extends Card {
                 .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
                 // At the beginning of the end step, if enchanted creature's power is 4 or greater,
                 // destroy this Aura.
-                .addEffect(EffectSlot.END_STEP_TRIGGERED,
+                .addTrigger(Triggers.endStep(ActivePlayer.ANY),
                         new ConditionalEffect(new EnchantedCreaturePowerAtLeast(4),
                                 new DestroyReferencedPermanentEffect(PermanentReference.SOURCE)));
     }

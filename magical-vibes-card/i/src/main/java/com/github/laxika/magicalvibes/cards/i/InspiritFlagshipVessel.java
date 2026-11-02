@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -23,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +39,7 @@ public class InspiritFlagshipVessel extends Card {
                 anotherArtifact, "Target must be another artifact you control");
 
         target(artifactYouControl, 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ChooseOneForTargetPermanentEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Put a +1/+1 counter on it",

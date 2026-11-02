@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.MoonscarredWerewolf;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DKA", collectorNumber = "125")
 @CardRegistration(set = "INR", collectorNumber = "212")
@@ -20,7 +21,7 @@ public class ScornedVillager extends Card {
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
 
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 

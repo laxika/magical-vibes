@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,7 +37,7 @@ public class Octomancer extends Card {
                         new PermanentIsTokenPredicate(),
                         new PermanentEnteredBattlefieldThisTurnPredicate())),
                 "Target must be a creature token that entered this turn"))
-                .addEffect(EffectSlot.END_STEP_TRIGGERED, new CreateTokenCopyOfTargetPermanentEffect());
+                .addTrigger(Triggers.endStep(ActivePlayer.ANY), new CreateTokenCopyOfTargetPermanentEffect());
     }
 
     private static CreateTokenEffect octopusToken() {

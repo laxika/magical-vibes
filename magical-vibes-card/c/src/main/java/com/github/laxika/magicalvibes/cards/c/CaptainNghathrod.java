@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class CaptainNghathrod extends Card {
 
         // At the beginning of your end step, return target artifact or creature card from an opponent's
         // graveyard that was put there from their library this turn to the battlefield under your control.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)

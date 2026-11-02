@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZNR", collectorNumber = "2")
 public class AngelOfDestiny extends Card {
@@ -24,7 +26,7 @@ public class AngelOfDestiny extends Card {
                                 new GainLifeEffect(new EventValue()),
                                 new GainLifeEffect(new EventValue(), GainLifeRecipient.TRIGGERING_PLAYER))));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new ControllerLifeAtLeast(15, true),
                         new EachPlayerAttackedBySourceLosesGameEffect()));

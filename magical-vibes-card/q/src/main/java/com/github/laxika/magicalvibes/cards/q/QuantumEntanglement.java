@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class QuantumEntanglement extends Card {
     public QuantumEntanglement() {
         SpellTarget creatureTarget = target(TargetFilters.creatureYouControl());
         creatureTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), mayFlicker());
-        creatureTarget.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, mayFlicker());
+        creatureTarget.addTrigger(Triggers.endStep(ActivePlayer.YOU), mayFlicker());
     }
 
     private static MayPayManaEffect mayFlicker() {

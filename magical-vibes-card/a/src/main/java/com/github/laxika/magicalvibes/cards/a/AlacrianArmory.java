@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,11 +35,11 @@ public class AlacrianArmory extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNT),
                                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))))),
                 "Target must be a Mount or Vehicle you control"), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         ConditionalEffect.unless(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.MOUNT)),
                                 new BecomeSaddledUntilEndOfTurnEffect(GrantScope.TARGET)))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         ConditionalEffect.unless(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
                                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null, Set.of(),

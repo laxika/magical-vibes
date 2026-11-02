@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class OptimusPrimeHero extends Card {
         setBackFaceCard(new OptimusPrimeAutobotLeader());
         addCastingOption(AlternateHandCast.moreThanMeetsTheEye("{2}{U}{R}{W}"));
 
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new BolsterEffect(1));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new BolsterEffect(1));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new ReturnSourceTransformedFromGraveyardEffect(false, true));
     }

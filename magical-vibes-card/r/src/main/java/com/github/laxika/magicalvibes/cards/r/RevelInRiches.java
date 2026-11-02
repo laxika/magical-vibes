@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class RevelInRiches extends Card {
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), CreateTokenEffect.ofTreasureToken(1));
 
         // At the beginning of your upkeep, if you control ten or more Treasures, you win the game.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new ControlsPermanentCount(10, new PermanentHasSubtypePredicate(CardSubtype.TREASURE)), new WinGameEffect()));
     }
 }

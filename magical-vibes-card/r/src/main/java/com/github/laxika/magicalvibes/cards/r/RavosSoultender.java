@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C16", collectorNumber = "39")
 public class RavosSoultender extends Card {
@@ -23,7 +24,7 @@ public class RavosSoultender extends Card {
         CardTypePredicate creatureCard = new CardTypePredicate(CardType.CREATURE);
         target(new GraveyardCardPredicateTargetFilter(
                 creatureCard, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1)
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(creatureCard)
                         .targetGraveyard(true)

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class LoreholdExcavation extends Card {
     public LoreholdExcavation() {
         // At the beginning of your end step, mill a card. If a land card was milled this way,
         // you gain 1 life. Otherwise, this enchantment deals 1 damage to each opponent.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MillControllerThenIfMilledEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MillControllerThenIfMilledEffect(
                 1,
                 new CardTypePredicate(CardType.LAND),
                 new GainLifeEffect(1),

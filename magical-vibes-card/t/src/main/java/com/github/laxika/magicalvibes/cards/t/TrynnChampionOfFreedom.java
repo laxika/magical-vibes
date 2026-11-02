@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -44,7 +44,7 @@ public class TrynnChampionOfFreedom extends Card {
                 MayChoicePlayer.TARGET_PLAYER
         ));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new Raid(), new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of())));
     }

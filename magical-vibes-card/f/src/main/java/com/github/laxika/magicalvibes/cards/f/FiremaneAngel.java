@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
@@ -14,6 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,11 +27,12 @@ import java.util.List;
 public class FiremaneAngel extends Card {
 
     public FiremaneAngel() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(
                         new ConditionalEffect(new SourceIsOnBattlefield(), new GainLifeEffect(1)),
                         "Gain 1 life?"));
-        addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 new MayEffect(
                         new ConditionalEffect(new SourceCardInGraveyard(), new GainLifeEffect(1)),
                         "Gain 1 life?"));

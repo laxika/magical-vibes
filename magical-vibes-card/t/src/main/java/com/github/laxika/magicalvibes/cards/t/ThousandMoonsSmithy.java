@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,7 +33,7 @@ public class ThousandMoonsSmithy extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), gnomeToken());
 
         PermanentAnyOfPredicate artifactsOrCreatures = artifactsOrCreatures();
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new MayPayTapPermanentsEffect(
                         new TapMultiplePermanentsCost(5, artifactsOrCreatures),
                         new TransformSelfEffect(),

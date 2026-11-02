@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOI", collectorNumber = "169")
 public class KessigForgemaster extends Card {
@@ -20,7 +22,7 @@ public class KessigForgemaster extends Card {
         addEffect(EffectSlot.ON_BLOCK, damage);
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, damage, TriggerMode.PER_BLOCKER);
 
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 

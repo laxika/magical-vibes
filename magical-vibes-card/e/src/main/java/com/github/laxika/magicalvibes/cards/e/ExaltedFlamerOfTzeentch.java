@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
 public class ExaltedFlamerOfTzeentch extends Card {
 
     public ExaltedFlamerOfTzeentch() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

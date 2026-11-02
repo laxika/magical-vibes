@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,11 +21,11 @@ public class ColdSnap extends Card {
 
     public ColdSnap() {
         // Cumulative upkeep {2}
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{2}"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{2}"));
 
         // At the beginning of each player's upkeep, deal damage to that player equal to
-        // the number of snow lands they control. EACH_UPKEEP_TRIGGERED sets the active player as target.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        // the number of snow lands they control. Triggers.upkeep(ActivePlayer.ANY) sets the active player as target.
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new DealDamageToPlayersEffect(
                         new PermanentCount(
                                 new PermanentAllOfPredicate(List.of(

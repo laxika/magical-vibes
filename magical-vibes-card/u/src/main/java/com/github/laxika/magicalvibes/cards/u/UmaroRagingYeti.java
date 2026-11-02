@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
@@ -22,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -51,7 +52,7 @@ public class UmaroRagingYeti extends Card {
                 "Umaro deals 5 damage to any target",
                 new DealDamageToAnyTargetEffect(5), ANY_TARGET);
 
-        target(ANY_TARGET).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(ANY_TARGET).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ChooseOneAtRandomEffect(List.of(pump, discardAndDraw, damage)));
     }
 }

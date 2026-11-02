@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class VancesBlastingCannons extends Card {
 
         // At the beginning of your upkeep, exile the top card of your library.
         // If it's a nonland card, you may cast that card this turn.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ExileTopCardsMayCastMatchingThisTurnEffect(
                         1, new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
 

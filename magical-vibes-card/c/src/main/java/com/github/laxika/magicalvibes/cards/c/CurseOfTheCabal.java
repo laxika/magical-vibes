@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Divided;
@@ -21,6 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "99")
@@ -44,7 +47,8 @@ public class CurseOfTheCabal extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withSuspendsSourceFromHand(2));
 
-        addEffect(EffectSlot.SUSPENDED_EACH_UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.ANY), AbilityZones.EXILE),
+                TriggerOptions.DEFAULT, new ConditionalEffect(
                 new SourceCardSuspended(),
                 new MayEffect(
                         SequenceEffect.of(

@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.t.ThroneOfDeath;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class EgonGodOfDeath extends Card {
         setBackFaceCard(new ThroneOfDeath());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ForcedCostOrElseEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new ExileNCardsFromGraveyardCost(2, null),
                 List.of(new SacrificeSelfEffect(), new DrawCardEffect(1))));
         addSpellEffect(new ChooseOneEffect(List.of(

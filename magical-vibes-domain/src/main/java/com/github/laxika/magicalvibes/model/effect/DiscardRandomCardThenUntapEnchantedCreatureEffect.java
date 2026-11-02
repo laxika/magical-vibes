@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Models the "if the player does" half of Apathy: "At the beginning of the upkeep of enchanted
  * creature's controller, that player may discard a card at random. If the player does, untap that
  * creature." Wrap it in {@code MayPayManaEffect(null, …, MayPayPayer.ENCHANTED_CONTROLLER)} on the
- * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} slot so the "may" is offered to the
+ * {@code Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)} slot so the "may" is offered to the
  * enchanted creature's controller (the Dance of the Dead pay-to-untap shape with a random discard
  * instead of a mana cost).
  *

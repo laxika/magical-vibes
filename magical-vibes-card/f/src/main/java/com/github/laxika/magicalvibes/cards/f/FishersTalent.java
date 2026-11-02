@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -22,6 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,7 @@ public class FishersTalent extends Card {
                 CardColor.BLUE, null, List.of(CardSubtype.FISH), Set.of(), Set.of(),
                 false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 ConditionalEffect.unless(
                         new TopCardOfLibraryType(CardType.LAND, LibraryOwner.CONTROLLER),
                         new MayEffect(

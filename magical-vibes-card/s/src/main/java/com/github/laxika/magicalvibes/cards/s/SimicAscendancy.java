@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class SimicAscendancy extends Card {
 
         addEffect(EffectSlot.ON_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ALLY_CREATURE,
                 new PutCountersOnSelfEffect(CounterType.GROWTH, new EventValue()));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceCounterThreshold(20, CounterType.GROWTH), new WinGameEffect()));
     }
 }

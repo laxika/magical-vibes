@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -30,9 +32,9 @@ public class WaywardAngel extends Card {
                 new GrantColorEffect(CardColor.BLACK, GrantScope.SELF, true)));
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.UPKEEP_TRIGGERED,
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                SacrificeRecipient.CONTROLLER),
+                                SacrificeRecipient.CONTROLLER)),
                         GrantScope.SELF)));
     }
 }

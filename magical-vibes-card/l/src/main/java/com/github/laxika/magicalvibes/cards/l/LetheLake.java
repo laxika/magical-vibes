@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "21")
 @CardRegistration(set = "OPCA", collectorNumber = "47")
 public class LetheLake extends Card {
 
     public LetheLake() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MillEffect(10, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MillEffect(10, MillRecipient.CONTROLLER));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))

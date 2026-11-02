@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ISD", collectorNumber = "114")
 public class ScreechingBat extends Card {
@@ -13,7 +14,7 @@ public class ScreechingBat extends Card {
         setBackFaceCard(new StalkingVampire());
 
         // At the beginning of your upkeep, you may pay {2}{B}{B}. If you do, transform Screeching Bat.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayPayManaEffect("{2}{B}{B}", new TransformSelfEffect(),
                         "Pay {2}{B}{B} to transform Screeching Bat?"));
     }

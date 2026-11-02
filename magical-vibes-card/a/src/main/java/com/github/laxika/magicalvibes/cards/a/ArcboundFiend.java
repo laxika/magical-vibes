@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class ArcboundFiend extends Card {
     public ArcboundFiend() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(
                         new MoveCounterFromTargetCreatureToSourceEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         "Move a +1/+1 counter from target creature onto this creature?"));

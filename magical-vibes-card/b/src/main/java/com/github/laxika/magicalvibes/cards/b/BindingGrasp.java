@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class BindingGrasp extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // At the beginning of your upkeep, sacrifice this Aura unless you pay {1}{U}.
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         new ForcedCostOrElseEffect(
                                 new PayManaCost("{1}{U}"),
                                 List.of(new SacrificeSelfEffect()),

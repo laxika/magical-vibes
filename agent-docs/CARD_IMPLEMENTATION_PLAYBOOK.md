@@ -84,14 +84,14 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/o/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
 
 - Upkeep sacrifice-unless-discard (any card):
-  - `addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessDiscardCardTypeEffect(null))`
+  - `addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessDiscardCardTypeEffect(null))`
   - For a reflexive post-discard effect, use `new SacrificeUnlessDiscardCardTypeEffect(null, thenEffect)`; target filters on `thenEffect` receive the discarded card's mana value as X.
   - Pass `CardType.X` instead of `null` to restrict to a specific card type
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Controller draw step may-trigger with targeting:
-  - `addEffect(EffectSlot.DRAW_TRIGGERED, new MayEffect(new DealDamageToTargetCreatureEffect(N), "prompt"))`
-  - `DRAW_TRIGGERED` fires only on the controller's draw step; use `EACH_DRAW_TRIGGERED` for all draw steps
+  - `addTrigger(Triggers.drawStep(ActivePlayer.YOU), new MayEffect(new DealDamageToTargetCreatureEffect(N), "prompt"))`
+  - `Triggers.drawStep(ActivePlayer.YOU)` fires only on the controller's draw step; use `Triggers.drawStep(ActivePlayer.ANY)` for all draw steps
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Opponent draw trigger:
@@ -215,7 +215,7 @@ public class ExampleCard extends Card {
 
 - Graveyard activated ability (pay mana from graveyard zone):
   - `addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(false, cost, List.of(effect), description))` — activated ability usable while card is in graveyard
-  - Distinct from `GRAVEYARD_UPKEEP_TRIGGERED` which is a triggered ability firing on upkeep
+  - Distinct from `Triggers.upkeep(ActivePlayer.YOU) from the graveyard` which is a triggered ability firing on upkeep
   - Blocked by Pithing Needle. Mana is paid on activation. Puts ACTIVATED_ABILITY on stack.
   - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MagmaPhoenix.java`
 
@@ -244,7 +244,7 @@ public class ExampleCard extends Card {
 
 `MayEffect(CardEffect wrapped, String prompt)` wraps an inner effect with a "you may" choice at resolution time. Understanding the lifecycle prevents unnecessary code-tracing:
 
-### Flow for `UPKEEP_TRIGGERED` with `MayEffect`
+### Flow for `Triggers.upkeep(ActivePlayer.YOU)` with `MayEffect`
 
 1. **Trigger time**: `StepTriggerService` sees `MayEffect` in the upkeep effects → calls `gameData.queueMayAbility(card, controllerId, may, null, perm.getId())` which pushes a `StackEntry` with the `MayEffect` and `sourcePermanentId = perm.getId()`.
 2. **Stack resolution**: `EffectResolutionService` encounters the `MayEffect` → dispatches to the `MayEffectHandler` in `normalfx` → sets `resolvingMayEffectFromStack = true` and adds a `PendingMayAbility`.
@@ -271,7 +271,7 @@ harness.handleMayAbilityChosen(player1, true);  // or false to decline
 ### Usage on cards
 
 ```java
-.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+.addTrigger(Triggers.upkeep(ActivePlayer.YOU), 
         new MayEffect(new YourInnerEffect(), "Do the thing?"))
 ```
 
@@ -517,9 +517,9 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
    - Add front face abilities/effects
    - Override `getBackFaceClassName()` returning `"BackFaceName"`
 3. **Transform trigger** — Choose the right pattern:
-   - Werewolf: `EACH_UPKEEP_TRIGGERED` + `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` (front) / `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` (back)
+   - Werewolf: `Triggers.upkeep(ActivePlayer.ANY)` + `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` (front) / `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` (back)
    - Life threshold: `ConditionalEffect(new ControllerLifeAtLeast(N), TransformSelfEffect())` or `ConditionalEffect(new ControllerLifeAtMost(N), MayEffect(TransformSelfEffect(), "..."))`
-   - Every player's life: `ConditionalEffect(new EachPlayerLifeAtMost(N), TransformSelfEffect())` on `UPKEEP_TRIGGERED` (Cryptolith Fragment)
+   - Every player's life: `ConditionalEffect(new EachPlayerLifeAtMost(N), TransformSelfEffect())` on `Triggers.upkeep(ActivePlayer.YOU)` (Cryptolith Fragment)
    - Counter threshold: `PutCounterOnSelfThenTransformIfThresholdEffect(counterType, N, optional, onTransformEffects)`
    - Creature count: `ConditionalEffect(new ControlsPermanentCount(N, PermanentIsCreaturePredicate), TransformSelfEffect())`
    - Activated ability: `ActivatedAbility(tap, null, List.of(TransformSelfEffect()), "...")` with optional subtype restriction
@@ -611,7 +611,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new CardDirectlyAboveSelfInGraveyard(filter), wrapped)` | - | yes | yes (graveyard upkeep / graveyard end step) | like the above but matches only the single card *immediately* above self in the ordered graveyard. Krovikan Horror: `new CardTypePredicate(CardType.CREATURE)` |
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
-| `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `DRAW_TRIGGERED` deals 1 damage to controller only while tapped |
+| `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `Triggers.drawStep(ActivePlayer.YOU)` deals 1 damage to controller only while tapped |
 | `ConditionalEffect(new SourceStartedTurnUntapped(), wrapped)` | - | yes | - | intervening-if "if this permanent started the turn untapped" — reads the source's status before its controller's untap step; use for Rasputin Dreamweaver's upkeep trigger |
 | `ConditionalEffect(new SourceIsCreature(), wrapped)` | - | yes | - | intervening-if "if this permanent is a creature" — reads the source's effective creature type |
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
@@ -628,7 +628,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |
 | `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new AnyPlayerControlsPermanent(filter), wrapped)` | yes | - | - |
-| `ConditionalEffect(new ActivePlayerControlsPermanent(filter), wrapped)` | - | yes | yes (each-player upkeep) | "if **that player** controls a [filter]" on `EACH_UPKEEP_TRIGGERED` — scoped to `gameData.activePlayerId`, not the source's controller (Urborg Stalker). Checked as intervening-if in `StepTriggerService` and re-checked at resolution |
+| `ConditionalEffect(new ActivePlayerControlsPermanent(filter), wrapped)` | - | yes | yes (each-player upkeep) | "if **that player** controls a [filter]" on `Triggers.upkeep(ActivePlayer.ANY)` — scoped to `gameData.activePlayerId`, not the source's controller (Urborg Stalker). Checked as intervening-if in `StepTriggerService` and re-checked at resolution |
 | `ConditionalEffect(new SelfHasKeyword(keyword), wrapped)` | yes | - | - |
 | `ConditionalEffect(new TopCardOfLibraryColor(color), wrapped)` | yes | - | - |
 | `ConditionalEffect(new BlockedByMinCreatures(minBlockers), wrapped)` | yes | - | - |

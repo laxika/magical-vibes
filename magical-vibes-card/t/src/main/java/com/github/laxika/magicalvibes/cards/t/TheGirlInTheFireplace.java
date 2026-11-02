@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +35,8 @@ public class TheGirlInTheFireplace extends Card {
                 List.of(CardSubtype.HUMAN, CardSubtype.NOBLE), Set.of(Keyword.VANISHING), Set.of(),
                 List.of(
                         StaticAbility.of(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3))),
-                        LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)),
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)),
                         StaticAbility.of(new PreventAllDamageEffect()))));
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(

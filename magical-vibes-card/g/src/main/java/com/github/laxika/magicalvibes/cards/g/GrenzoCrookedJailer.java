@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.HeistTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class GrenzoCrookedJailer extends Card {
 
         target(opponentFilter)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new HeistTargetLibraryEffect())
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new HeistTargetLibraryEffect());
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new HeistTargetLibraryEffect());
 
         addStaticEffect(new AlternativeCostForSpellsEffect(
                 "{0}",

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class LuxArtillery extends Card {
                         new CardTypePredicate(CardType.CREATURE))),
                 List.of(new GrantAdditionalCountersToCastSpellEffect())));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlledPermanentCounterTotalAtLeast(
                         30,
                         CounterType.ANY,

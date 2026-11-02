@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -14,8 +15,7 @@ import java.util.Set;
 public class TaskmasterMercenaryMimic extends Card {
 
     public TaskmasterMercenaryMimic() {
-        target(0, 1).addEffect(
-                EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        target(0, 1).addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect(
                         "Taskmaster, Mercenary Mimic",
                         Set.of(CardSubtype.HUMAN, CardSubtype.MERCENARY, CardSubtype.VILLAIN),

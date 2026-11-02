@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "35")
 public class CuriousObsession extends Card {
@@ -24,7 +26,7 @@ public class CuriousObsession extends Card {
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new MayEffect(new DrawCardEffect(1), "Draw a card?"),
                         GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new NotCondition(new AttackedWithCreaturesThisTurn(1)),
                         new SacrificeSelfEffect()));
     }

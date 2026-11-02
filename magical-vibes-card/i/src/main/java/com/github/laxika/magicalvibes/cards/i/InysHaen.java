@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class InysHaen extends Card {
     public InysHaen() {
         MillEffect millThree = new MillEffect(3, MillRecipient.CONTROLLER);
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, millThree);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, millThree);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), millThree);
 
         addEffect(EffectSlot.PLANESWALK_FROM_TRIGGERED,
                 new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(

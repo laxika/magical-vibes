@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class AbidingGrace extends Card {
                 new CardMaxManaValuePredicate(1)));
         var ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "You gain 1 life",
                         new GainLifeEffect(1)),

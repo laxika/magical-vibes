@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class RionyaFireDancer extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature you control"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(), true, true,
                         false, false, false, false, null, Set.of(), false, List.of(),

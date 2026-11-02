@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.ExiledCardPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public class TheAnimus extends Card {
 
     public TheAnimus() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,

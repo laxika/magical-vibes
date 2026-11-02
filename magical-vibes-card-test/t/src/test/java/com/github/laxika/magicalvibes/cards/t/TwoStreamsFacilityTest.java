@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -53,14 +55,14 @@ class TwoStreamsFacilityTest extends BaseCardTest {
 
         source.getChosenModeByPlayer().clear();
         gd.turnNumber = 2;
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.UPKEEP_TRIGGERED,
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.upkeep(ActivePlayer.YOU),
                 player1.getId()));
         harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(source.getChosenModeByPlayer()).isEmpty();
 
         gd.turnNumber = 1;
-        harness.inMutationScope(() -> planar.trigger(gd, source, EffectSlot.UPKEEP_TRIGGERED,
+        harness.inMutationScope(() -> planar.trigger(gd, source, Triggers.upkeep(ActivePlayer.YOU),
                 player1.getId()));
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Green anchor");

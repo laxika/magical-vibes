@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.CrystallizedSerah;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class SerahFarron extends Card {
 
         addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 legendaryCreatureSpell(), 2));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(new ControlsOtherPermanentCount(2, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)

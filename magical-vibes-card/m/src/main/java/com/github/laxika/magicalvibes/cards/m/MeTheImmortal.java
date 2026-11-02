@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PreserveCountersOnZoneChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class MeTheImmortal extends Card {
 
     public MeTheImmortal() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "+1/+1 counter", new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 new ChooseOneEffect.ChooseOneOption(

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "604")
 public class UNITHeadquarters extends Card {
@@ -14,7 +16,7 @@ public class UNITHeadquarters extends Card {
     public UNITHeadquarters() {
         CreateTokenEffect soldier = CreateTokenEffect.whiteSoldier(1).withTapped(true);
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, soldier);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, soldier);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), soldier);
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));

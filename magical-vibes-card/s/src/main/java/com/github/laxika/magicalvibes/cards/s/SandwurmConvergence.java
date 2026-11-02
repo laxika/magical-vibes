@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class SandwurmConvergence extends Card {
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)), true));
 
         // At the beginning of your end step, create a 5/5 green Wurm creature token.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new CreateTokenEffect(
                 "Wurm", 5, 5, CardColor.GREEN, List.of(CardSubtype.WURM), Set.of(), Set.of()));
     }
 }

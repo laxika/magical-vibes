@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code predicate} across every battlefield to untap.
  *
  * <p>With {@code targetPlayerChooses} the stack entry's target player picks instead of the
- * controller — used by {@code EACH_UPKEEP_TRIGGERED} abilities worded "that player untaps a land
+ * controller — used by {@code Triggers.upkeep(ActivePlayer.ANY)} abilities worded "that player untaps a land
  * they control" (Hokori, Dust Drinker). Restrict the candidates to that player's permanents through
  * {@code predicate} (e.g. a {@code PermanentControlledByActivePlayerPredicate} conjunct).
  *

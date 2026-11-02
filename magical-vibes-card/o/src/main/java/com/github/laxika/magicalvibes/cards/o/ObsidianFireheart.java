@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,10 +32,10 @@ public class ObsidianFireheart extends Card {
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.BLAZE, 1),
                         new GrantEffectToTargetEffect(
-                                EffectSlot.UPKEEP_TRIGGERED,
+                                new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 ConditionalEffect.atTriggerTime(
                                         new SourceCounterThreshold(1, CounterType.BLAZE),
-                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)))
+                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))))
                 ),
                 "{1}{R}{R}: Put a blaze counter on target land without a blaze counter on it. For as long as that land has a blaze counter on it, it has \"At the beginning of your upkeep, this land deals 1 damage to you.\"",
                 new PermanentPredicateTargetFilter(

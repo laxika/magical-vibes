@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ public class BrightcapBadger extends Card {
                 ManaAbilities.tapFor(ManaColor.GREEN),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FUNGUS, CardSubtype.SAPROLING))));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new CreateTokenEffect(
                 "Saproling", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
     }

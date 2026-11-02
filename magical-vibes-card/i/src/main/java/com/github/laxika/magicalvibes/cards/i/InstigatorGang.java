@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.w.WildbloodPack;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ISD", collectorNumber = "149")
 public class InstigatorGang extends Card {
@@ -23,7 +24,7 @@ public class InstigatorGang extends Card {
         addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.SELF, new PermanentIsAttackingPredicate()));
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Instigator Gang.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 

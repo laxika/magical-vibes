@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class PuppetConjurer extends Card {
         ));
 
         // At the beginning of your upkeep, sacrifice a Homunculus.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificePermanentsEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentsEffect(
                 1,
                 new PermanentHasSubtypePredicate(CardSubtype.HOMUNCULUS),
                 SacrificeRecipient.CONTROLLER));

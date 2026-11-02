@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEachPlayerThenMayExileMilledCreatureAndBecomeCopyEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -60,7 +61,7 @@ public class MillEachPlayerThenMayExileMilledCreatureAndBecomeCopyChoiceHandler
 
         List<Integer> validIndices = IntStream.range(0, candidates.size()).boxed().toList();
         List<CardEffect> exileEffects = List.of(new ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect(
-                EffectSlot.UPKEEP_TRIGGERED));
+                Triggers.upkeep(ActivePlayer.YOU)));
         // The exile and the copy are part of this ability's own resolution, so the chosen card is
         // applied to a resolving entry instead of creating another stack object.
         gameData.resolvedMayTargetingEntry = new StackEntry(

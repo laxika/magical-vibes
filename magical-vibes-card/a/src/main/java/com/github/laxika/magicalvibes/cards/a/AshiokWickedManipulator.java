@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
@@ -24,6 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -58,7 +59,8 @@ public class AshiokWickedManipulator extends Card {
                         false,
                         false,
                         List.of(
-                                LegacySlots.triggered(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                                new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                                        new ConditionalEffect(
                                         new CardPutIntoExileThisTurn(),
                                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)))),
                         List.of(),

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingAndPutCounterEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public class QuestForUlasTemple extends Card {
 
     public QuestForUlasTemple() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new LookAtTopCardMayRevealMatchingAndPutCounterEffect(
                         new CardTypePredicate(CardType.CREATURE), CounterType.QUEST),
                 "Look at the top card of your library?"));
@@ -36,7 +37,7 @@ public class QuestForUlasTemple extends Card {
                         new CardSubtypePredicate(CardSubtype.SERPENT)
                 ))
         ));
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.QUEST),
                 new MayEffect(
                         new PutCardToBattlefieldEffect(

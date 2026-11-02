@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -35,7 +35,7 @@ public class PrimaryResearch extends Card {
                 .build());
 
         // At the beginning of your end step, if a card left your graveyard this turn, draw a card.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new CardsLeftGraveyardThisTurn(),
                 new DrawCardEffect(1)));
     }

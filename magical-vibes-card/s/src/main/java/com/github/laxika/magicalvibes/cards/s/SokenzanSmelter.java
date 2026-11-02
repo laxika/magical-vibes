@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaAndSacrificePermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,7 @@ import java.util.Set;
 public class SokenzanSmelter extends Card {
 
     public SokenzanSmelter() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new MayPayManaAndSacrificePermanentEffect(
                         "{1}",
                         new PermanentIsArtifactPredicate(),

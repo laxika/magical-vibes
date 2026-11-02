@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOC", collectorNumber = "13")
 @CardRegistration(set = "HOC", collectorNumber = "53")
@@ -27,7 +28,7 @@ public class DawnOfANewAge extends Card {
                 CounterType.HOPE,
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.HOPE),
                         SequenceEffect.of(

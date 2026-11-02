@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -111,11 +115,11 @@ class GrantedAbilitiesTest {
         permanent.addTemporaryTriggeredEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, DRAW_ONE);
         permanent.addCombatTriggeredEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, DRAW_TWO);
         permanent.addUntilNextUpkeepTriggeredEffect(expiryPlayer, EffectSlot.ON_SELF_BECOMES_UNTAPPED, GAIN_ONE);
-        permanent.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, DRAW_ONE);
+        permanent.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), DRAW_ONE));
 
         assertThat(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED))
                 .containsExactly(DRAW_ONE, DRAW_TWO, GAIN_ONE);
-        assertThat(permanent.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED)).containsExactly(DRAW_ONE);
+        assertThat(permanent.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU))).containsExactly(DRAW_ONE);
 
         permanent.clearUntilNextUpkeepTriggeredEffects(expiryPlayer);
         permanent.clearCombatState();
@@ -217,10 +221,10 @@ class GrantedAbilitiesTest {
 
     @Test
     void grantEffectsHoldTheAbilityTheirSlotAndEffectStandFor() {
-        var grant = new GrantEffectToTargetEffect(EffectSlot.UPKEEP_TRIGGERED, DRAW_ONE);
+        var grant = new GrantEffectToTargetEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, DRAW_ONE);
 
-        assertThat(grant.grantedAbility()).isEqualTo(LegacySlots.ability(EffectSlot.UPKEEP_TRIGGERED, DRAW_ONE));
-        assertThat(grant.slot()).isEqualTo(EffectSlot.UPKEEP_TRIGGERED);
+        assertThat(grant.grantedAbility()).isEqualTo(LegacySlots.ability(EffectSlot.ON_SELF_BECOMES_UNTAPPED, DRAW_ONE));
+        assertThat(grant.slot()).isEqualTo(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
         assertThat(grant.grantedEffect()).isEqualTo(DRAW_ONE);
 
         var handGrant = new PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect(EffectSlot.ON_SELF_CAST,

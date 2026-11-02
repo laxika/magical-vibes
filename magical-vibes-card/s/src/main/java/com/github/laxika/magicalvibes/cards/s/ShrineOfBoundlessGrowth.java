@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class ShrineOfBoundlessGrowth extends Card {
 
     public ShrineOfBoundlessGrowth() {
         // At the beginning of your upkeep, put a charge counter on Shrine of Boundless Growth.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.CHARGE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a green spell, put a charge counter on Shrine of Boundless Growth.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,

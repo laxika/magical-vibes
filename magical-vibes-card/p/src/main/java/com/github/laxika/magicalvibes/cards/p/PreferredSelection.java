@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MIR", collectorNumber = "233")
 public class PreferredSelection extends Card {
@@ -22,7 +23,7 @@ public class PreferredSelection extends Card {
         // Either branch then shows the same two cards: paying picks one for hand and leaves the
         // other on top, declining picks the one that stays on top and bottoms the other — for two
         // cards that is exactly "put one of those cards on the bottom".
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new LookAtTopCardsOfTargetLibraryEffect(2, TargetLibraryAction.LOOK_ONLY),
                 new MayPayManaEffect(
                         "{2}{G}{G}",

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandT
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCardsInHandGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOK", collectorNumber = "114")
 public class SokenzanRenegade extends Card {
@@ -14,7 +16,7 @@ public class SokenzanRenegade extends Card {
     public SokenzanRenegade() {
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new APlayerHasMoreCardsInHandThanEachOtherPlayer(),
                 new PlayerWithMostCardsInHandGainsControlOfSourceCreatureEffect()));
     }

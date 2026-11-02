@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class HedronAlignment extends Card {
 
     public HedronAlignment() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new RevealOwnHandEffect(),
                         ConditionalEffect.unless(

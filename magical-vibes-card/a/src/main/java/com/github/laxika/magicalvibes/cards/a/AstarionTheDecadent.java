@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ import java.util.List;
 public class AstarionTheDecadent extends Card {
 
     public AstarionTheDecadent() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Feed — Target opponent loses life equal to the amount of life they lost this turn.",
                         new LoseLifeEffect(

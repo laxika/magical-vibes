@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class ZedruuTheGreathearted extends Card {
     public ZedruuTheGreathearted() {
         PermanentCount permanentsYouOwnOpponentsControl = new PermanentCount(
                 new PermanentOwnedBySourceControllerPredicate(), CountScope.OPPONENTS);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new GainLifeEffect(permanentsYouOwnOpponentsControl),
                 new DrawCardEffect(permanentsYouOwnOpponentsControl)));
 

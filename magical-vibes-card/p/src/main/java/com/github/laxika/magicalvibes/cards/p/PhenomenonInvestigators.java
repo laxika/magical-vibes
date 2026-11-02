@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentOwnedByPlayerToHandThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,7 +37,7 @@ public class PhenomenonInvestigators extends Card {
                         List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT)));
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), believeHorror);
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceHasChosenMode(DOUBT),
                         new MayEffect(
                                 new ReturnPermanentOwnedByPlayerToHandThenEffect(

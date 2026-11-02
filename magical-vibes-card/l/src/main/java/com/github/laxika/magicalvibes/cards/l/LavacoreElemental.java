@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "103")
 public class LavacoreElemental extends Card {
 
     public LavacoreElemental() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(1)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
 
         // Whenever a creature you control deals combat damage to a player, put a time counter on this creature.

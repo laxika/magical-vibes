@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.FoulRebirth;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class PromiseOfAclazotz extends Card {
         PermanentAllOfPredicate nonDemonCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON))));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
                 new SacrificePermanentThenEffect(
                         nonDemonCreature,
                         new PopulateEffect(),

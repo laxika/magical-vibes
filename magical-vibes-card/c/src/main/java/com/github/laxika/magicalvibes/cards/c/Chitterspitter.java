@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MaySacrificePermanentForCounterSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ import java.util.Set;
 public class Chitterspitter extends Card {
 
     public Chitterspitter() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MaySacrificePermanentForCounterSourceEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MaySacrificePermanentForCounterSourceEffect(
                 new PermanentIsTokenPredicate(), "a token", CounterType.ACORN));
 
         addStaticEffect(new StaticBoostEffect(

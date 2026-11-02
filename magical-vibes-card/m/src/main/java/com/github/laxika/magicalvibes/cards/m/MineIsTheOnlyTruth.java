@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +19,7 @@ public class MineIsTheOnlyTruth extends Card {
     public MineIsTheOnlyTruth() {
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null, List.of(new DrawCardEffect())));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new ControllerDrewAtLeastCardsLastTurn(1), new SacrificeSelfEffect()));
     }
 }

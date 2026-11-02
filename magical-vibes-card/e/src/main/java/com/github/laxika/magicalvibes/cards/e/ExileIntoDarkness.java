@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInHandThanEachOpponent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +31,8 @@ public class ExileIntoDarkness extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentMaxManaValuePredicate(3))),
                 SacrificeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new ControllerHasMoreCardsInHandThanEachOpponent(),
                         new MayEffect(

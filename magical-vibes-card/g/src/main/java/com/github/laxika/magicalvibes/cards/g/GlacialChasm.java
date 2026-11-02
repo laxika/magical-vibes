@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class GlacialChasm extends Card {
 
     public GlacialChasm() {
         // Cumulative upkeep—Pay 2 life.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, CumulativeUpkeepEffect.life(2));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), CumulativeUpkeepEffect.life(2));
 
         // When this land enters, sacrifice a land. Glacial Chasm itself is a legal choice.
         addTrigger(Triggers.enters(ObjectRelation.THIS),

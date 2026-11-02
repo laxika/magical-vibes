@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInHandThanEachOpponent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,12 +12,17 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOK", collectorNumber = "61")
 public class AkutaBornOfAsh extends Card {
 
     public AkutaBornOfAsh() {
-        addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new ControllerHasMoreCardsInHandThanEachOpponent(),
                         new MayEffect(

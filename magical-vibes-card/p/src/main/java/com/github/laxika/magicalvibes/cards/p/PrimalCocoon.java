@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M11", collectorNumber = "191")
 public class PrimalCocoon extends Card {
@@ -17,7 +19,8 @@ public class PrimalCocoon extends Card {
 
         target(TargetFilters.creature())
                 // At the beginning of your upkeep, put a +1/+1 counter on enchanted creature.
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                        new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
 
                 // When enchanted creature attacks or blocks, sacrifice Primal Cocoon.
                 .addEffect(EffectSlot.ON_ATTACK, new SacrificeSelfEffect())

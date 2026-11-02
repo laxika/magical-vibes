@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class LavabrinkFloodgates extends Card {
                         List.of(new RemoveCounterFromSourceEffect(CounterType.DOOM, 1)))
         ), true, 0, 1, false);
 
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), SequenceEffect.of(
                 putOrRemove,
                 new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.DOOM),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "IKO", collectorNumber = "200")
 @CardRegistration(set = "C21", collectorNumber = "227")
@@ -20,7 +21,7 @@ public class PrimalEmpathy extends Card {
 
     public PrimalEmpathy() {
         ControlsCreatureWithGreatestPower greatestPower = new ControlsCreatureWithGreatestPower();
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 ConditionalEffect.unless(greatestPower, new DrawCardEffect()),
                 ConditionalEffect.unless(new NotCondition(greatestPower),
                         new PutCounterOnChosenOwnPermanentEffect(

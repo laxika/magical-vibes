@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,14 +34,14 @@ public class BetorAncestorsVoice extends Card {
 
         target(new ControlledPermanentPredicateTargetFilter(
                 otherCreatureYouControl, "Target must be another creature you control"), 0, 1)
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new PutCounterOnTargetPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new LifeGainedThisTurn(CountScope.CONTROLLER)));
 
         target(new GraveyardCardPredicateTargetFilter(new CardTypePredicate(CardType.CREATURE),
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1)
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

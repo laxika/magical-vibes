@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -51,7 +53,7 @@ public class YunaHopeOfSpira extends Card {
                                 new PermanentIsEnchantmentPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.ENCHANTMENT))
                 .targetGraveyard(true)

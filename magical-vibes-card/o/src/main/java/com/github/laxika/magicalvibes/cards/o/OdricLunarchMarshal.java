@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +55,7 @@ public class OdricLunarchMarshal extends Card {
                 new GrantKeywordEffect(keyword, GrantScope.ALL_OWN_CREATURES)
         )).toList());
         shared.add(new GrantHexproofVariantsSharedByOwnCreaturesUntilEndOfTurnEffect());
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 SequenceEffect.of(shared.toArray(CardEffect[]::new)));
     }
 }

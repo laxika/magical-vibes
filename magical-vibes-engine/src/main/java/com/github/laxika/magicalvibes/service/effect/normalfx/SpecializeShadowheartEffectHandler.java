@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.SpecializeShadowheartEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -92,7 +94,7 @@ public class SpecializeShadowheartEffectHandler implements NormalEffectHandlerBe
                     + specialize.color());
         }
 
-        specialized.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        specialized.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_PLAYER));
         CardEffect lifeLossTrigger = ShadowheartSharranCleric.specializedLifeLossTrigger(specialize.color());
         if (lifeLossTrigger != null) {

@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "597")
 public class ThePyramidOfMars extends Card {
 
     public ThePyramidOfMars() {
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, new SurveilEffect(2));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(2));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SurveilEffect(2));
 
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
         addEffect(EffectSlot.CHAOS_TRIGGERED, ReturnCardFromGraveyardEffect.builder()

@@ -1918,6 +1918,32 @@ public class Card {
         return view == null ? List.of() : view.registrations();
     }
 
+    /**
+     * The effects of this card's triggered abilities that have {@code trigger} as a trigger condition functioning in
+     * {@code zone}, in the order the abilities were added: {@code getTriggerEffects(Triggers.upkeep(ActivePlayer.YOU),
+     * Zone.GRAVEYARD)} for "at the beginning of your upkeep" abilities that trigger from the graveyard.
+     */
+    public List<CardEffect> getTriggerEffects(Trigger trigger, Zone zone) {
+        return getTriggerEffectRegistrations(trigger, zone).stream().map(EffectRegistration::effect).toList();
+    }
+
+    /**
+     * The registrations of this card's triggered abilities that have {@code trigger} as a trigger condition
+     * functioning in {@code zone}, in the order the abilities were added, with their trigger modes.
+     */
+    public List<EffectRegistration> getTriggerEffectRegistrations(Trigger trigger, Zone zone) {
+        if (!slotIndex().byTrigger().containsKey(trigger)) {
+            return List.of();
+        }
+        List<EffectRegistration> registrations = new ArrayList<>();
+        for (TriggeredAbility ability : getTriggeredAbilities()) {
+            if (ability.hasTrigger(trigger, zone)) {
+                registrations.addAll(ability.effects());
+            }
+        }
+        return registrations;
+    }
+
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
     public boolean isSimultaneousWithPrevious(CardEffect effect) {
         for (EffectRegistration reg : getSpellEffectRegistrations()) {

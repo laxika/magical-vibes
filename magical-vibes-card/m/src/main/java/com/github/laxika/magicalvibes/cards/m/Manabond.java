@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllLandsFromHandAndDiscardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EXO", collectorNumber = "113")
 @CardRegistration(set = "TPR", collectorNumber = "179")
@@ -12,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAllLandsFromHandAndDiscard
 public class Manabond extends Card {
 
     public Manabond() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
                 new PutAllLandsFromHandAndDiscardEffect(),
                 "Reveal your hand and put all land cards from it onto the battlefield?"));
     }

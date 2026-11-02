@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddCounterToEnchantedCreatureThenDestroyAtThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class ConsumingFerocity extends Card {
         // At the beginning of your upkeep, put a +1/+0 counter on enchanted creature. If that creature
         // has three or more +1/+0 counters on it, it deals damage equal to its power to its controller,
         // then destroy that creature and it can't be regenerated.
-        .addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new AddCounterToEnchantedCreatureThenDestroyAtThresholdEffect(CounterType.PLUS_ONE_PLUS_ZERO, 3));
     }
 }

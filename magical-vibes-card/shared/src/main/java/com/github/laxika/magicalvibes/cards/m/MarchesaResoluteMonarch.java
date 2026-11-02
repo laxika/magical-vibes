@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class MarchesaResoluteMonarch extends Card {
 
     public MarchesaResoluteMonarch() {
         target(TargetFilters.permanent(), 0, 1)
                 .addEffect(EffectSlot.ON_ATTACK, new RemoveAllCountersFromTargetPermanentEffect());
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControllerWasNotDealtCombatDamageSinceLastTurn(),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));
     }

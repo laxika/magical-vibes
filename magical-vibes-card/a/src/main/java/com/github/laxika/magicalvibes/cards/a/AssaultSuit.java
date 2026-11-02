@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnc
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "369")
 @CardRegistration(set = "C14", collectorNumber = "53")
@@ -30,7 +31,7 @@ public class AssaultSuit extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new EnchantedCreatureCantAttackControllerEffect());
         addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBeSacrificedEffect()));
-        addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new MayEffect(
                 SequenceEffect.of(
                         new TargetPlayerGainsControlOfEnchantedPermanentEffect(ControlDuration.END_OF_TURN, false),
                         new UntapPermanentsEffect(TapUntapScope.ENCHANTED)),

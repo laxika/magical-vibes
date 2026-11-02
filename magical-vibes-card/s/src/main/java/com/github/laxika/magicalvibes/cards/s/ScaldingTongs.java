@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Scalding Tongs — "At the beginning of your upkeep, if you have three or fewer cards in hand,
@@ -20,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 public class ScaldingTongs extends Card {
 
     public ScaldingTongs() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new CardsInHandAtMost(3),
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(1, PlayerRelation.OPPONENT)));
     }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "42")
 public class LightningReaver extends Card {
@@ -20,7 +22,7 @@ public class LightningReaver extends Card {
 
         // At the beginning of your end step, this creature deals damage equal to the number of
         // charge counters on it to each opponent.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new DealDamageToPlayersEffect(new CountersOnSource(CounterType.CHARGE), DamageRecipient.EACH_OPPONENT));
     }
 }

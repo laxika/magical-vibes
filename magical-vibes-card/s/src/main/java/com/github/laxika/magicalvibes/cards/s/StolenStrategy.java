@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "192")
 @CardRegistration(set = "PIP", collectorNumber = "467")
@@ -17,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class StolenStrategy extends Card {
 
     public StolenStrategy() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_OPPONENT));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true,

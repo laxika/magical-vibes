@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "172")
 @CardRegistration(set = "C18", collectorNumber = "16")
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class LoyalSubordinate extends Card {
 
     public LoyalSubordinate() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConditionalEffect(new ControllerControlsOwnCommander(),
                         new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT)));
     }

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentO
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "67")
 @CardRegistration(set = "MSC", collectorNumber = "382")
@@ -26,7 +28,7 @@ public class MBakuJabariChieftain extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        )).addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new NoMonarch(), new TargetPlayerBecomesMonarchEffect()));
 
         addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,

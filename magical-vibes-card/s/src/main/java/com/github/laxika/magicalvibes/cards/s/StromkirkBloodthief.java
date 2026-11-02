@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "185")
 @CardRegistration(set = "MID", collectorNumber = "123")
@@ -22,7 +23,7 @@ public class StromkirkBloodthief extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                 "Target must be a Vampire you control"
-        )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        )).addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new OpponentLostLifeThisTurn(1),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
         ));

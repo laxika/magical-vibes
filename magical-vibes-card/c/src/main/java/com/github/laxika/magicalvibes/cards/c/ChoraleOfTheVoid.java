@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "91")
 public class ChoraleOfTheVoid extends Card {
@@ -27,7 +29,7 @@ public class ChoraleOfTheVoid extends Card {
                         .enterTapped(true)
                         .enterAttacking(true)
                         .build());
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 ConditionalEffect.unless(new NotCondition(new VoidCondition()), new SacrificeSelfEffect()));
     }
 }

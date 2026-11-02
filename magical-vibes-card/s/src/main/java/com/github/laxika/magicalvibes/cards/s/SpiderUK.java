@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class SpiderUK extends Card {
                 new ManaCastingCost("{2}{W}"),
                 new ReturnPermanentsCost(1, tappedCreature))));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE), 2),
                 SequenceEffect.of(new DrawCardEffect(1), new GainLifeEffect(2))));
     }

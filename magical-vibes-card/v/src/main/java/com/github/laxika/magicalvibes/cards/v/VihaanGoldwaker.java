@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -37,7 +38,7 @@ public class VihaanGoldwaker extends Card {
 
         // At the beginning of combat on your turn, you may have Treasures you control become
         // 3/3 Construct Assassin artifact creatures in addition to their other types until end of turn.
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 new AnimatePermanentsEffect(
                         new Fixed(3), new Fixed(3),
                         List.of(CardSubtype.CONSTRUCT, CardSubtype.ASSASSIN),

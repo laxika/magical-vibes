@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,7 @@ public class TheFourthSphere extends Card {
         PermanentPredicate nonblackCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new SacrificePermanentsEffect(1, nonblackCreature, SacrificeRecipient.CONTROLLER));
         addEffect(EffectSlot.CHAOS_TRIGGERED, CreateTokenEffect.blackZombie(1));
     }

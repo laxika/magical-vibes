@@ -9,7 +9,7 @@ import java.util.UUID;
  * by the paired creation effect (an {@link EachPlayerCreatesTokenEffect} with
  * {@code recordAsCreatedWithSource}), so the tokens are found regardless of who controls them now.
  *
- * <p>Works on {@code END_STEP_TRIGGERED} (the stack entry carries the source permanent id) and on
+ * <p>Works on {@code Triggers.endStep(ActivePlayer.ANY)} (the stack entry carries the source permanent id) and on
  * "when this leaves the battlefield", where the source is already gone and the collector bakes its
  * id into {@code sourcePermanentId} instead.
  *

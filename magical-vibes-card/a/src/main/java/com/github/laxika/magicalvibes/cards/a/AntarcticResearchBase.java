@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "567")
 public class AntarcticResearchBase extends Card {
@@ -21,7 +23,7 @@ public class AntarcticResearchBase extends Card {
     public AntarcticResearchBase() {
         CreateTokenEffect clue = CreateTokenEffect.ofClueToken(1);
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, clue);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, clue);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), clue);
 
         PermanentCount artifactsYouControl = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);

@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.p.PerfectedForm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillAndTransformIfTypesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -19,7 +20,7 @@ public class AberrantResearcher extends Card {
 
         // At the beginning of your upkeep, mill a card. If an instant or sorcery card was
         // milled this way, transform this creature.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MillAndTransformIfTypesEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
     }
 

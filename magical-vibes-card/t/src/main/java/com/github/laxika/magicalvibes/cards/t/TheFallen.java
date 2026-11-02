@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToOpponentsAndPlaneswalkersDamagedBySourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CHR", collectorNumber = "38")
 @CardRegistration(set = "DRK", collectorNumber = "53")
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToOpponentsAndPlane
 public class TheFallen extends Card {
 
     public TheFallen() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new DealDamageToOpponentsAndPlaneswalkersDamagedBySourceEffect(1));
     }
 }

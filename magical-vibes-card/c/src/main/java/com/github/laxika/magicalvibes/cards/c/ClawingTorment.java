@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,8 +32,8 @@ public class ClawingTorment extends Card {
                                 new PermanentIsCreaturePredicate()))
                 .addStaticEffect(new CantBlockEffect())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.UPKEEP_TRIGGERED,
-                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER),
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                        new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER)),
                         GrantScope.ENCHANTED_PERMANENT));
     }
 }

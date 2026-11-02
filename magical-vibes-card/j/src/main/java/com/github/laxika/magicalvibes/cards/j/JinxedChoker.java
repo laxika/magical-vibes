@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,11 +28,11 @@ public class JinxedChoker extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new TargetPlayerGainsControlOfSourceCreatureEffect(),
                 new PutCountersOnSelfEffect(CounterType.CHARGE)));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new DealDamageToPlayersEffect(new CountersOnSource(CounterType.CHARGE), DamageRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(

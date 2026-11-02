@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +26,8 @@ public class PyreZombie extends Card {
     public PyreZombie() {
         // At the beginning of your upkeep, if this card is in your graveyard, you may pay
         // {1}{B}{B}. If you do, return it to your hand.
-        addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 ConditionalEffect.unless(new SourceCardInGraveyard(), new MayPayManaEffect("{1}{B}{B}",
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)

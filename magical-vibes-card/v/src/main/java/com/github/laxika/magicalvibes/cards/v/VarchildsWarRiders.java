@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +20,7 @@ public class VarchildsWarRiders extends Card {
     public VarchildsWarRiders() {
         // Cumulative upkeep — Have an opponent create a 1/1 red Survivor creature token
         // (one per age counter).
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, CumulativeUpkeepEffect.opponentToken(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), CumulativeUpkeepEffect.opponentToken(
                 new CreateTokenEffect("Survivor", 1, 1, CardColor.RED,
                         List.of(CardSubtype.SURVIVOR), Set.of(), Set.of())));
 

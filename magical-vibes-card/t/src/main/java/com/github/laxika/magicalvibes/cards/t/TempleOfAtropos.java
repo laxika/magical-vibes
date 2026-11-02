@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalBeginningPhaseEffec
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.ReverseTurnOrderEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "602")
 public class TempleOfAtropos extends Card {
 
     public TempleOfAtropos() {
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new AdditionalBeginningPhaseEffect(true));
+        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new AdditionalBeginningPhaseEffect(true));
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 new ReverseTurnOrderEffect(),
                 new PlaneswalkEffect()));

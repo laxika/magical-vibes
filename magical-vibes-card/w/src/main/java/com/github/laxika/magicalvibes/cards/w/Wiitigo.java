@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ICE", collectorNumber = "276")
 @CardRegistration(set = "ME2", collectorNumber = "186")
@@ -18,7 +19,7 @@ public class Wiitigo extends Card {
 
         // "At the beginning of your upkeep, put a +1/+1 counter on this creature if it has blocked
         //  or been blocked since your last upkeep. Otherwise, remove a +1/+1 counter from it."
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

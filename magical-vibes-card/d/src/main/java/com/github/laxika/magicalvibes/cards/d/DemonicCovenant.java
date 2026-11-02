@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTwoThenSacrificeSelfIfMilledCardsShareAllTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class DemonicCovenant extends Card {
                         new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.DEMON)),
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 SequenceEffect.of(
                         new CreateTokenEffect("Demon", 5, 5, CardColor.BLACK,
                                 List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), Set.of()),

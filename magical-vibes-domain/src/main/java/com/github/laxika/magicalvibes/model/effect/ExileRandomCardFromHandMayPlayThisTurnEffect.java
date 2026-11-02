@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * (Elkin Lair).
  * <p>
  * The affected player is the stack entry's {@code targetId} (set to the active player by
- * {@code EACH_UPKEEP_TRIGGERED}). Empty hand is a no-op. Play permission uses
+ * {@code Triggers.upkeep(ActivePlayer.ANY)}). Empty hand is a no-op. Play permission uses
  * {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireEndOfTurn}; unplayed cleanup is
  * an {@code ExileToOwnerGraveyardAtNextEndStep} delayed action.
  */

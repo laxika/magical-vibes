@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -65,7 +66,7 @@ public class HuntersTalent extends Card {
                                 new SourceClassLevelAtLeast(2),
                                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceClassLevelAtLeast(3),
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(

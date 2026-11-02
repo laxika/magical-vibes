@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Elkin Lair: the target player (active player from {@code EACH_UPKEEP_TRIGGERED}) exiles a random
+ * Elkin Lair: the target player (active player from {@code Triggers.upkeep(ActivePlayer.ANY)}) exiles a random
  * hand card, may play it this turn, and unplayed cards go to the graveyard at the next end step.
  */
 @Slf4j

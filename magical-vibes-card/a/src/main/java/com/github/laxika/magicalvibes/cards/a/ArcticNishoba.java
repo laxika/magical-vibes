@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ArcticNishoba extends Card {
 
     public ArcticNishoba() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{G/W}"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{G/W}"));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new GainLifeEffect(new Scaled(new CountersOnSource(CounterType.AGE), 2)));
     }

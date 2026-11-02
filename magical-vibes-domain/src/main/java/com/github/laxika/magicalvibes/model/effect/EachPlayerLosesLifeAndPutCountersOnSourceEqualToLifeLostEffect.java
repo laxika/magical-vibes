@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * "Each player loses {@code lifeLossPerPlayer} life. Put a +1/+1 counter on this creature for each 1
- * life lost this way." (Blood Tyrant, UPKEEP_TRIGGERED.)
+ * life lost this way." (Blood Tyrant, Triggers.upkeep(ActivePlayer.YOU).)
  *
  * <p>Every player loses the fixed amount, the total life <em>actually</em> lost is summed (a player
  * whose life can't change contributes nothing — CR "this way"), and that many +1/+1 counters are

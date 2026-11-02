@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect;
@@ -71,11 +71,11 @@ public class ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler
                     .toList();
             permanentCopierService.applyCloneCopy(source, targetCard, null, null, Set.of(),
                     retainedAbilities);
-            if (copyEffect.retainedEffectSlot() != null) {
-                for (EffectRegistration registration : retainedSource.getEffectRegistrations(
-                        copyEffect.retainedEffectSlot())) {
-                    source.getCard().addEffect(copyEffect.retainedEffectSlot(),
-                            registration.effect(), registration.triggerMode());
+            if (copyEffect.retainedTrigger() != null) {
+                for (TriggeredAbility ability : retainedSource.getTriggeredAbilities()) {
+                    if (ability.hasTrigger(copyEffect.retainedTrigger())) {
+                        source.getCard().addTriggeredAbility(ability);
+                    }
                 }
             }
             gameLogService.append(gameData,

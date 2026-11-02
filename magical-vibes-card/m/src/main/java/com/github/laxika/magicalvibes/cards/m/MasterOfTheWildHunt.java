@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,7 @@ public class MasterOfTheWildHunt extends Card {
 
     public MasterOfTheWildHunt() {
         // At the beginning of your upkeep, create a 2/2 green Wolf creature token.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenEffect(
                 "Wolf", 2, 2, CardColor.GREEN,
                 List.of(CardSubtype.WOLF),
                 Set.of(), Set.of()

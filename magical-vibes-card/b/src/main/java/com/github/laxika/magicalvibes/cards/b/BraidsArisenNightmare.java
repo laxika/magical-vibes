@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "84")
@@ -29,7 +30,7 @@ public class BraidsArisenNightmare extends Card {
                     new PermanentIsPlaneswalkerPredicate()));
 
     public BraidsArisenNightmare() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayEffect(
                         new SacrificePermanentThenEffect(
                                 SACRIFICEABLE_PERMANENT,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,7 +38,7 @@ public class WilheltTheRotcleaver extends Card {
                         CreateTokenEffect.blackZombieWithDecayed(1)));
 
         // At the beginning of your end step, you may sacrifice a Zombie. If you do, draw a card.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                         new DrawCardEffect(),

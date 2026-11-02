@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class ShaukuEndbringer extends Card {
         ));
 
         // At the beginning of your upkeep, you lose 3 life.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new LoseLifeEffect(3));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new LoseLifeEffect(3));
 
         // {T}: Exile target creature and put a +1/+1 counter on Shauku. A single target, so an
         // illegal target on resolution counters the whole ability and no counter is placed.

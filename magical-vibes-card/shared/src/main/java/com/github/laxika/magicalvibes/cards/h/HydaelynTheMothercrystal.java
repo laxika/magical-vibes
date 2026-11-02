@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,12 +35,12 @@ public class HydaelynTheMothercrystal extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetCreature,
                 "Target must be another creature you control"))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
                                 GrantDuration.UNTIL_YOUR_NEXT_TURN))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
                                 new DrawCardEffect(), false));

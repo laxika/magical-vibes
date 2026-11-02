@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "USG", collectorNumber = "240")
 @CardRegistration(set = "SLD", collectorNumber = "279")
@@ -33,8 +34,8 @@ public class CarpetOfFlowers extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
         SpellTarget opponentTarget = target(opponent);
-        opponentTarget.addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, ability());
-        opponentTarget.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, ability());
+        opponentTarget.addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), ability());
+        opponentTarget.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), ability());
     }
 
     private CardEffect ability() {

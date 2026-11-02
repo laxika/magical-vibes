@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -29,7 +29,7 @@ import java.util.List;
 public class AdvancedReconstruction extends Card {
 
     public AdvancedReconstruction() {
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(1, MillRecipient.CONTROLLER),
                 new ExileRandomCardFromGraveyardMayPlayThisTurnEffect()));
 

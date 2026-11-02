@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayLandsIfPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
 
@@ -22,6 +23,6 @@ public class WormsOfTheEarth extends Card {
         addStaticEffect(new CardsCantEnterBattlefieldFromZonesEffect(
                 new CardTypePredicate(CardType.LAND),
                 EnumSet.complementOf(EnumSet.of(Zone.BATTLEFIELD))));
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new WormsOfTheEarthEffect());
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new WormsOfTheEarthEffect());
     }
 }

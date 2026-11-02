@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.i.InsectileAberration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -25,7 +26,7 @@ public class DelverOfSecrets extends Card {
         // At the beginning of your upkeep, look at the top card of your library.
         // You may reveal that card. If an instant or sorcery card is revealed this way,
         // transform Delver of Secrets.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new LookAtTopCardMayRevealTypeTransformEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
     }
 

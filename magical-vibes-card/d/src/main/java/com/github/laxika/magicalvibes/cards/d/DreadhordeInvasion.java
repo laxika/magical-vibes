@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ import java.util.List;
 public class DreadhordeInvasion extends Card {
 
     public DreadhordeInvasion() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new LoseLifeEffect(1), new AmassGoblinsEffect(1, CardSubtype.ZOMBIE)));
 
         PermanentPredicate qualifyingZombieToken = new PermanentAllOfPredicate(List.of(

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class TovolarDireOverlord extends Card {
         PermanentPredicate humanWerewolf = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                 new PermanentHasSubtypePredicate(CardSubtype.WEREWOLF)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanentCount(3, wolfOrWerewolf),
                 SequenceEffect.of(
                         new BecomeNightEffect(),

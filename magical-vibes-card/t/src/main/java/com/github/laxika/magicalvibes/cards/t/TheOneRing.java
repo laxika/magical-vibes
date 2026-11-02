@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverything
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class TheOneRing extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new WasCast(true), new GrantProtectionFromEverythingUntilNextTurnEffect()));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new LoseLifeEffect(new CountersOnSource(CounterType.BURDEN), LoseLifeRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(

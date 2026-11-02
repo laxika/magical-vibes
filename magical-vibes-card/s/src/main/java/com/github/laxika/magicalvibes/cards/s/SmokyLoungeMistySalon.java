@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +36,7 @@ public class SmokyLoungeMistySalon extends Card {
                         .withManaCost("{3}{U}")
         )));
 
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new AwardRestrictedManaEffect(
                         ManaColor.RED, 2,

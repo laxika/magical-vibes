@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ public class HeatShimmer extends Card {
                         List.of(), Set.of(), null, null, Map.of(),
                         false, false, false, false,
                         false, false, null, Set.of(Keyword.HASTE),
-                        false, List.of(LegacySlots.triggered(EffectSlot.END_STEP_TRIGGERED, List.<CardEffect>of(new ExileSelfEffect()))),
+                        false, List.of(new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), new ExileSelfEffect())),
                         List.of(), false, false,
                         new Fixed(1), false, Set.of()));
     }

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPr
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class BombSquad extends Card {
                 "{T}: Put a fuse counter on target creature.",
                 TargetFilters.creature()));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnEachMatchingPermanentEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.FUSE,
                 1,
                 new PermanentAllOfPredicate(List.of(

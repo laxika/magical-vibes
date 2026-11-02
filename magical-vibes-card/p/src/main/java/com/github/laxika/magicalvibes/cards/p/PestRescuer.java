@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AdditionalLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +34,7 @@ public class PestRescuer extends Card {
     public PestRescuer() {
         // At the beginning of each upkeep, if you don't control a Pest creature token, create a 1/1
         // black and green Pest creature token with "When this token dies, you gain 1 life."
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ConditionalEffect(
                 new ControlsPermanentCountAtMost(0, PEST_CREATURE_TOKEN), pestToken()));
 
         // If you would gain life, you gain that much life plus 1 instead.

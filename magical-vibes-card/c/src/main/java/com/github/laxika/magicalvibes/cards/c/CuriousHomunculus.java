@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.v.VoraciousReader;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,7 @@ public class CuriousHomunculus extends Card {
                 "{T}: Add {C}. Spend this mana only to cast an instant or sorcery spell."
         ));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new GraveyardCardThreshold(3, new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))),

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.LegacySlots;
  * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryTriggeredEffect} (cleared by
  * {@code resetModifiers()}).
  *
- * <p>Example: Balduvian Shaman grants {@link EffectSlot#UPKEEP_TRIGGERED} +
+ * <p>Example: Balduvian Shaman grants {@code Triggers.upkeep(ActivePlayer.YOU)} +
  * {@link CumulativeUpkeepEffect} indefinitely.
  *
  * @param grantedAbility the granted ability

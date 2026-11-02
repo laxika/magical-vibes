@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.CardTypesAmongControlledPermanentsAndGraveyardAtLeast;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class HappilyEverAfter extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GainLifeEffect(new Fixed(5), GainLifeRecipient.EACH_PLAYER));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EachPlayerDrawsCardEffect(1));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(
                         new ColorsAmongControlledPermanentsAtLeast(5),
                         new CardTypesAmongControlledPermanentsAndGraveyardAtLeast(6),

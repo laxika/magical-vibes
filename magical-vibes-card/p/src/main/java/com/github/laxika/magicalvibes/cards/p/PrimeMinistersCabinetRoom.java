@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.WillOfTheCouncilEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "596")
 public class PrimeMinistersCabinetRoom extends Card {
@@ -14,7 +16,7 @@ public class PrimeMinistersCabinetRoom extends Card {
         // At the beginning of combat on your turn, up to one target creature you control becomes a
         // copy of target creature an opponent controls.
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new MakeTargetCopyOfTargetPermanentEffect());
         target(TargetFilters.creatureAnOpponentControls());
 

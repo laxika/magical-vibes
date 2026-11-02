@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "4ED", collectorNumber = "352")
 @CardRegistration(set = "SUM", collectorNumber = "278")
@@ -28,7 +29,7 @@ public class TheRack extends Card {
         // cards in their hand." Remember that player even if this artifact changes controllers.
         // X = max(0, 3 - cards in hand), floored so a full hand deals no damage.
         addStaticEffect(new ChooseOpponentOnEnterEffect());
-        addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 new DealDamageToPlayersEffect(
                         new Max(new Fixed(0),
                                 new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1))),

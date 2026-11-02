@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * — resolved immediately (Jace, Vryn's Prodigy). The permanent that comes back is a new object, so
  * anything tracked on the old one (damage, counters, attachments, "this turn" markers) is gone.
  *
- * <p>Kytheon, Hero of Akros puts it on {@code END_OF_COMBAT_TRIGGERED} behind an intervening-if
+ * <p>Kytheon, Hero of Akros puts it on {@code Triggers.endOfCombat()} behind an intervening-if
  * condition for its "at end of combat" version.
  *
  * @param thenEffect optional "If you do, …" payload (Liliana, Heretical Healer's Zombie token),

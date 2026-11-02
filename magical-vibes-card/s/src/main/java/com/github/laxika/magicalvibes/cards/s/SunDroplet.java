@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MRD", collectorNumber = "249")
 @CardRegistration(set = "C13", collectorNumber = "261")
@@ -19,7 +21,7 @@ public class SunDroplet extends Card {
     public SunDroplet() {
         addEffect(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE,
                 new PutCountersOnSelfEffect(CounterType.CHARGE, new EventValue()));
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new MayEffect(
                         new RemoveCounterAndGainLifeEffect(CounterType.CHARGE, 1, CounterRemovalSubject.SOURCE),
                         "Remove a charge counter from Sun Droplet to gain 1 life?"));

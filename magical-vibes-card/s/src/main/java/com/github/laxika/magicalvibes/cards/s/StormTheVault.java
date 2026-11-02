@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "173")
 public class StormTheVault extends Card {
@@ -20,7 +22,7 @@ public class StormTheVault extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null, CreateTokenEffect.ofTreasureToken(1), false, true));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new ControlsPermanentCount(5, new PermanentIsArtifactPredicate()),
                         new TransformSelfEffect()));
     }

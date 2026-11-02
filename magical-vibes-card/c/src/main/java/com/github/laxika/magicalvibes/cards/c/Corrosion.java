@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCo
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ import java.util.List;
 public class Corrosion extends Card {
 
     public Corrosion() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{1}"));
 
         // Put a rust counter on each artifact target opponent controls. Then destroy each artifact
         // with mana value ≤ rust counters on it (can't be regenerated). Ruling: only artifacts that
@@ -34,7 +34,7 @@ public class Corrosion extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.RUST, 1,
                         new PermanentIsArtifactPredicate(),

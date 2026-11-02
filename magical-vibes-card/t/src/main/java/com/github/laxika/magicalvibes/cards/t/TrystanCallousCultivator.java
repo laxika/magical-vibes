@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class TrystanCallousCultivator extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), millThenGainLife());
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), millThenGainLife());
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new MayPayManaEffect("{B}", new TransformSelfEffect(),
                         "Pay {B} to transform Trystan?"));
     }

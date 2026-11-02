@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,9 +24,9 @@ public class BolgEreborsReckoning extends Card {
         PermanentPredicate otherGoblinOrOrc = new PermanentAllOfPredicate(List.of(
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN, CardSubtype.ORC)),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 new BoostAllOwnCreaturesEffect(2, 2, otherGoblinOrOrc));
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 new BoostAllCreaturesEffect(-1, -1,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }

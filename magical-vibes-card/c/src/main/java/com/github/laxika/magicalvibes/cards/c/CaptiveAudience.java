@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class CaptiveAudience extends Card {
     public CaptiveAudience() {
         // "enters under the control of an opponent of your choice" is a replacement, not a trigger
         addStaticEffect(new ChooseOpponentGainsControlOfSourceEffect());
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ChooseModeNotYetChosenEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Your life total becomes 4",
                         new SetLifeTotalEffect(4)),

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,6 +27,6 @@ public class FrenziedFugue extends Card {
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, effect);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), effect);
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,7 +27,7 @@ public class UnshakableTail extends Card {
 
     public UnshakableTail() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(1));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SurveilEffect(1));
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE,
                 ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE,

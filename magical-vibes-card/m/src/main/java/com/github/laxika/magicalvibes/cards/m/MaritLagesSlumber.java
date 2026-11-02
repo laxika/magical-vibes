@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -35,7 +35,7 @@ public class MaritLagesSlumber extends Card {
         // At the beginning of your upkeep, if you control ten or more snow permanents, sacrifice
         // this enchantment. If you do, create Marit Lage, a legendary 20/20 black Avatar creature
         // token with flying and indestructible.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanentCount(10, new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
                 new SacrificeSelfThenEffect(new CreateTokenEffect(
                         CardType.CREATURE,

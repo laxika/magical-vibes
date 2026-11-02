@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayCastRandomCardExiledWithSo
 import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "182")
@@ -26,7 +28,7 @@ public class RiverSongsDiary extends Card {
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new SpellCastFromHandTriggerEffect(instantOrSorcery,
                         List.of(new ExileTriggeringSpellWithSourceEffect())));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceExiledCardsThreshold(4), new MayCastRandomCardExiledWithSourceEffect()));
     }
 }

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
 public class RoilingVortex extends Card {
 
     public RoilingVortex() {
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new DealDamageToPlayersEffect(1, DamageRecipient.ACTIVE_PLAYER));
 
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(

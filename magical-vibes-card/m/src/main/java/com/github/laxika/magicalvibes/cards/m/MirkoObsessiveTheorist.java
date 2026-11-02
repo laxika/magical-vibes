@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class MirkoObsessiveTheorist extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_SURVEILS,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(

@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantEscapeToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "THB", collectorNumber = "161")
 @CardRegistration(set = "THB", collectorNumber = "324")
@@ -21,6 +22,6 @@ public class UnderworldBreach extends Card {
     public UnderworldBreach() {
         addStaticEffect(new GrantEscapeToGraveyardCardsEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new SacrificeSelfEffect());
     }
 }

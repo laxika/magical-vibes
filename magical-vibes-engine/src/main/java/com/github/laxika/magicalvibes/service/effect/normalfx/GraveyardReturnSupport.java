@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -19,7 +22,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -856,8 +858,8 @@ public class GraveyardReturnSupport {
                         effect.counterCountIfExiledCostCardHasSubtype());
             }
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
-                p.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED,
-                        new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost()));
+                p.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                        new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost())));
             }
             grantOnDeathEffect(p, effect.grantOnDeathEffect(), cardOwnerId != null ? cardOwnerId : card.getOwnerId());
             if (effect.battlefieldEffectGrants() != null) {

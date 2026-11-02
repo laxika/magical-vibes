@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ODY", collectorNumber = "182")
 @CardRegistration(set = "MH2", collectorNumber = "277")
@@ -16,7 +18,7 @@ public class ChanceEncounter extends Card {
     public ChanceEncounter() {
         addEffect(EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP,
                 new PutCountersOnSelfEffect(CounterType.LUCK));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new SourceCounterThreshold(10, CounterType.LUCK),
                         new WinGameEffect()));

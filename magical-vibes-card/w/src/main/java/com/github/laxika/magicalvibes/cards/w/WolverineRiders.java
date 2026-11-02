@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class WolverineRiders extends Card {
 
     public WolverineRiders() {
         // At the beginning of each upkeep, create a 1/1 green Elf Warrior creature token.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new CreateTokenEffect(
                 "Elf Warrior",
                 1,
                 1,

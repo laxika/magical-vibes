@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class SunfrillImitator extends Card {
         ));
         BecomeCopyOfTargetCreaturePermanentlyEffect copyEffect =
                 new BecomeCopyOfTargetCreaturePermanentlyEffect(
-                        "Sunfrill Imitator", EffectSlot.ON_ATTACK, anotherDinosaurYouControl);
+                        "Sunfrill Imitator", new LegacySlotTrigger(EffectSlot.ON_ATTACK), anotherDinosaurYouControl);
         target(new PermanentPredicateTargetFilter(
                 anotherDinosaurYouControl,
                 "Target must be another Dinosaur you control"

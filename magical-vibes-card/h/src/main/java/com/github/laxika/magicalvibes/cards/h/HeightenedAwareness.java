@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PCY", collectorNumber = "37")
 public class HeightenedAwareness extends Card {
@@ -14,6 +15,6 @@ public class HeightenedAwareness extends Card {
         addStaticEffect(new DiscardHandAsEntersEffect());
 
         // At the beginning of your draw step, draw an additional card.
-        addEffect(EffectSlot.DRAW_TRIGGERED, new DrawCardEffect(1));
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU), new DrawCardEffect(1));
     }
 }

@@ -16,7 +16,7 @@ public record BecomeCopyOfTargetCreatureEffect(
         boolean canTargetSelf) implements CardEffect {
 
     public BecomeCopyOfTargetCreatureEffect() {
-        this(EffectSlot.UPKEEP_TRIGGERED, true, false);
+        this(null, true, false);
     }
 
     public BecomeCopyOfTargetCreatureEffect(EffectSlot retainedEffectSlot) {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ import java.util.List;
 public class GabrielAngelfire extends Card {
 
     public GabrielAngelfire() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Flying", new GrantKeywordEffect(
                         Keyword.FLYING, GrantScope.SELF, GrantDuration.UNTIL_YOUR_NEXT_UPKEEP)),
                 new ChooseOneEffect.ChooseOneOption("First strike", new GrantKeywordEffect(

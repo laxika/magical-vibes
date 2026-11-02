@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ActivePlayerPutsCardFromHandOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class BraidsConjurerAdept extends Card {
 
     public BraidsConjurerAdept() {
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new MayEffect(
                 new ActivePlayerPutsCardFromHandOntoBattlefieldEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),

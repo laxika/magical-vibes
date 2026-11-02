@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUn
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfEachOpponentWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +21,7 @@ public class KrangShredder extends Card {
                 new ExileTopUntilNonlandOfEachOpponentWithSourceEffect();
         addTrigger(Triggers.enters(ObjectRelation.THIS), exileEffect);
         addEffect(EffectSlot.ON_ATTACK, exileEffect);
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new PermanentLeftBattlefieldUnderYourControlThisTurn(),
                         new MayCastCardExiledWithSourceEffect()));
     }

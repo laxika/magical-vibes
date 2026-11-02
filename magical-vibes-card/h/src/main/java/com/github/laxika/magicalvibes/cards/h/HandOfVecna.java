@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class HandOfVecna extends Card {
         CardsInHand hand = new CardsInHand(CountScope.CONTROLLER);
         PermanentNamedPredicate vecna = new PermanentNamedPredicate("Vecna");
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new BoostEquippedCreatureUntilEndOfTurnEffect(hand, hand, vecna));
 
         addActivatedAbility(new ActivatedAbility(

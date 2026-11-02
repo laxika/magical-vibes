@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +28,8 @@ public class AvariceAmulet extends Card {
         addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(1), GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                        new DrawCardEffect(1)), GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, target opponent gains control of this Equipment.
         // The opponent is chosen as the death trigger goes on the stack, not when the artifact is cast.

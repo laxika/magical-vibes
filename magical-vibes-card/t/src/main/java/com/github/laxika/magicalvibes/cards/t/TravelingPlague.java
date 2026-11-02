@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreat
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class TravelingPlague extends Card {
 
     public TravelingPlague() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.PLAGUE))
+                .addTrigger(Triggers.upkeep(ActivePlayer.ANY), new PutCountersOnSelfEffect(CounterType.PLAGUE))
                 .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(new CountersOnSource(CounterType.PLAGUE), -1),
                         new Scaled(new CountersOnSource(CounterType.PLAGUE), -1),

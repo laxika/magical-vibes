@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GaladrielElvenQueenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "3")
 @CardRegistration(set = "LTC", collectorNumber = "83")
@@ -16,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class GaladrielElvenQueen extends Card {
 
     public GaladrielElvenQueen() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new AnotherPermanentEnteredThisTurn(new CardSubtypePredicate(CardSubtype.ELF)),
                 new GaladrielElvenQueenEffect()));
     }

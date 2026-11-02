@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "55")
 @CardRegistration(set = "FIC", collectorNumber = "152")
@@ -19,7 +21,7 @@ public class GauFeralYouth extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new ConditionalEffect(
                         new CardsLeftGraveyardThisTurn(),
                         new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT)));

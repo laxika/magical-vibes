@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,12 +23,12 @@ public class BarrensteppeSiege extends Card {
     public BarrensteppeSiege() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of("Abzan", "Mardu")));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceHasChosenMode("Abzan"),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceHasChosenMode("Mardu"),
                         new CreatureDiedUnderYourControlThisTurn())),

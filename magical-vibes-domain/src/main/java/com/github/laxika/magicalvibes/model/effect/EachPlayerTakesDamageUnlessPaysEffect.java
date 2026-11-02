@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /**
- * UPKEEP_TRIGGERED: for each player (APNAP), this permanent deals {@code damage} to that player
+ * Triggers.upkeep(ActivePlayer.YOU): for each player (APNAP), this permanent deals {@code damage} to that player
  * unless they pay {@code manaCost}. Each player chooses independently — paying avoids only their
  * own damage; declining (or being unable to pay) deals the damage to that player before the next
  * is offered. Used by Lim-Dûl's Hex ({@code "{B/3}"} for "pay {B} or {3}").

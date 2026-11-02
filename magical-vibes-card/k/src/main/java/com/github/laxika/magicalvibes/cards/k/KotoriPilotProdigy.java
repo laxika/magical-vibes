@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,7 +49,7 @@ public class KotoriPilotProdigy extends Card {
         target(new PermanentPredicateTargetFilter(
                 ARTIFACT_CREATURE_YOU_CONTROL,
                 "Target must be an artifact creature you control"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.VIGILANCE), GrantScope.TARGET));
     }
 }

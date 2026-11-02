@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +35,7 @@ public class PoppetStitcher extends Card {
                 List.of(CreateTokenEffect.blackZombieWithDecayed(1)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, zombieTrigger);
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanentCount(3, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTokenPredicate()))),

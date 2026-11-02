@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromNamedPlanesToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "25")
 @CardRegistration(set = "OPCA", collectorNumber = "52")
 public class MountKeralia extends Card {
 
     public MountKeralia() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new PutCountersOnSelfEffect(CounterType.PRESSURE));
         addEffect(EffectSlot.PLANESWALK_FROM_TRIGGERED,
                 new MassDamageEffect(new CountersOnSource(CounterType.PRESSURE), false, true, null));

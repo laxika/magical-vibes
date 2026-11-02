@@ -14,13 +14,15 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "26")
 @CardRegistration(set = "OPCA", collectorNumber = "54")
 public class NaarIsle extends Card {
 
     public NaarIsle() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.FLAME),
                 new DealDamageToPlayersEffect(new CountersOnSource(CounterType.FLAME),
                         DamageRecipient.CONTROLLER)));

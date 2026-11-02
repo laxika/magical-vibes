@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ import java.util.List;
 public class WhisperwoodElemental extends Card {
 
     public WhisperwoodElemental() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ManifestTopCardEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ManifestTopCardEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

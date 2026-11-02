@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class GlassworksShatteredYard extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceRoomDoorUnlocked(1),
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
     }

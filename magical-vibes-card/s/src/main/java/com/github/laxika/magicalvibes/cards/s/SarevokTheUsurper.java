@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -27,6 +26,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -42,8 +43,7 @@ public class SarevokTheUsurper extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public SarevokTheUsurper() {
-        target(TargetFilters.creatureYouControl()).addEffect(
-                EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new BoostTargetCreatureEffect(
                         new CardsInGraveyard(CREATURE_CARDS, CountScope.CONTROLLER), new Fixed(0)));
 

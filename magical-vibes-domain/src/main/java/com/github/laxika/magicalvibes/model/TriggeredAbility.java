@@ -88,6 +88,15 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         return conditions.stream().anyMatch(condition -> condition.trigger().equals(trigger));
     }
 
+    /**
+     * Whether {@code trigger} is one of this ability's trigger conditions and that condition functions in
+     * {@code zone}.
+     */
+    public boolean hasTrigger(Trigger trigger, Zone zone) {
+        return conditions.stream().anyMatch(condition -> condition.trigger().equals(trigger)
+                && condition.zones().functionsIn(zone));
+    }
+
     /** This ability with {@code effects} in place of its effects. */
     public TriggeredAbility withEffects(List<EffectRegistration> effects) {
         return new TriggeredAbility(conditions, options, effects, chapterTargets);

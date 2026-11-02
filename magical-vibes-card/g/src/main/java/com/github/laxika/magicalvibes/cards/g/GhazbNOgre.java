@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "298")
 @CardRegistration(set = "CHR", collectorNumber = "65")
@@ -12,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsContro
 public class GhazbNOgre extends Card {
 
     public GhazbNOgre() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PlayerWithMostLifeGainsControlOfSourceCreatureEffect());
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PlayerWithMostLifeGainsControlOfSourceCreatureEffect());
     }
 }

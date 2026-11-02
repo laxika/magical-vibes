@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CHK", collectorNumber = "69")
 @CardRegistration(set = "EMA", collectorNumber = "54")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class HondenOfSeeingWinds extends Card {
 
     public HondenOfSeeingWinds() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new DrawCardEffect(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER)));
     }

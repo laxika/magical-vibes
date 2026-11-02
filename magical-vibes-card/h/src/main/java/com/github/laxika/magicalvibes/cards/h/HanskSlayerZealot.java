@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -29,7 +29,7 @@ public class HanskSlayerZealot extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenForTargetPlayerEffect(
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenForTargetPlayerEffect(
                 new CreateTokenEffect(3, "Walker", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE), Set.of(), Set.of())));
 

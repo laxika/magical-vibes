@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "46")
@@ -25,7 +27,7 @@ public class FandanielTelophoroiAscian extends Card {
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(instantOrSorcery, List.of(new SurveilEffect(1))));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffect(
                         new Scaled(new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER), 2)));
     }

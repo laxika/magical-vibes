@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M10", collectorNumber = "125")
 @CardRegistration(set = "ME1", collectorNumber = "87")
@@ -17,6 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class BallLightning extends Card {
 
     public BallLightning() {
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new SacrificeSelfEffect());
     }
 }

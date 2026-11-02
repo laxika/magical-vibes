@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "201")
 public class EvidenceExaminer extends Card {
 
     public EvidenceExaminer() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new MayEffect(new CollectEvidenceEffect(4), "Collect evidence 4?"));
         addEffect(EffectSlot.ON_CONTROLLER_COLLECTS_EVIDENCE, CreateTokenEffect.ofClueToken(1));
     }

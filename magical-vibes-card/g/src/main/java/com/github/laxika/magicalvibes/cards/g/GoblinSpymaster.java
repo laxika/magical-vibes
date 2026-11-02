@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,7 @@ public class GoblinSpymaster extends Card {
     public GoblinSpymaster() {
         // At the beginning of each opponent's end step, that player creates a 1/1 red Goblin
         // creature token with "Creatures you control attack each combat if able."
-        addEffect(EffectSlot.OPPONENT_END_STEP_TRIGGERED, new CreateTokenForTriggeringPlayerEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.OPPONENT), new CreateTokenForTriggeringPlayerEffect(
                 new CreateTokenEffect(
                         1,
                         "Goblin",

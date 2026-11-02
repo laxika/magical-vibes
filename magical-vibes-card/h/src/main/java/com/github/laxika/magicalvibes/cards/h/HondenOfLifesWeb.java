@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,7 @@ import java.util.Set;
 public class HondenOfLifesWeb extends Card {
 
     public HondenOfLifesWeb() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER),
                 "Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
     }

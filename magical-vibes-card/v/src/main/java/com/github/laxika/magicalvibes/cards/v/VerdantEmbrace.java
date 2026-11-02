@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class VerdantEmbrace extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.EACH_UPKEEP_TRIGGERED,
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
                         new CreateTokenEffect(
                                 "Saproling",
                                 1,
@@ -32,7 +34,7 @@ public class VerdantEmbrace extends Card {
                                 List.of(CardSubtype.SAPROLING),
                                 Set.of(),
                                 Set.of()
-                        ),
+                        )),
                         GrantScope.ENCHANTED_CREATURE));
     }
 }

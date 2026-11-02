@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.EnchantedCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M14", collectorNumber = "53")
 @CardRegistration(set = "ROE", collectorNumber = "61")
@@ -21,7 +22,7 @@ public class Domestication extends Card {
                 .addStaticEffect(new ControlEnchantedCreatureEffect())
                 // At the beginning of your end step, if enchanted creature's power is 4 or greater,
                 // sacrifice this Aura.
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new ConditionalEffect(new EnchantedCreaturePowerAtLeast(4),
                                 new SacrificeSelfEffect()));
     }

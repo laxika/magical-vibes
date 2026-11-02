@@ -3646,7 +3646,7 @@ public class PermanentRemovalService {
         // Wall of Nets style: the exile is the source's end-of-combat triggered ability, and the return is its
         // separate leaves-the-battlefield triggered ability, so it goes on the stack when cards were exiled.
         boolean returnsThroughEndOfCombatLeavesTrigger = !pendingReturns.isEmpty()
-                && removedPermanent.getCard().getEffects(EffectSlot.END_OF_COMBAT_TRIGGERED).stream()
+                && removedPermanent.getCard().getTriggerEffects(Triggers.endOfCombat()).stream()
                 .anyMatch(effect -> effect instanceof ExileAllPermanentsUntilSourceLeavesEffect exileAll
                         && exileAll.returnsOnSourceLeavesTrigger());
         returnsThroughLeavesTrigger |= returnsThroughEndOfCombatLeavesTrigger;

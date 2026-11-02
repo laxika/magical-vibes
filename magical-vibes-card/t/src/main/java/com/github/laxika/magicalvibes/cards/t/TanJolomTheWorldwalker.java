@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -37,7 +38,7 @@ public class TanJolomTheWorldwalker extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                 )),
                 "Target must be a noncreature, nontoken artifact or land you control"
-        ), 0, 1).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        ), 0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new AnimatePermanentsEffect(
                         3, 3,
                         List.of(CardSubtype.SPIRIT),

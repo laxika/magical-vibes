@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDSK", collectorNumber = "18")
 public class WaryZoneGuard extends Card {
@@ -20,7 +21,7 @@ public class WaryZoneGuard extends Card {
     public WaryZoneGuard() {
         addStaticEffect(new EntersTappedEffect());
 
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new SurvivalTriggerEffect(new ConditionalEffect(
                         new SourceIsTapped(),
                         SequenceEffect.of(

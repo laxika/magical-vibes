@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffec
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YLCI", collectorNumber = "7")
 public class LandloreNavigator extends Card {
 
     public LandloreNavigator() {
         addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofMapToken(1));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 2),
                 new ConjureCardToBattlefieldEffect("UDS", "49")));
     }

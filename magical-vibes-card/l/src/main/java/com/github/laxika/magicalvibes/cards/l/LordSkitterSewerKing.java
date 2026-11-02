@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +29,7 @@ public class LordSkitterSewerKing extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.RAT),
                         ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard()));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new CreateTokenEffect(1, "Rat", 1, 1, CardColor.BLACK,
                         List.of(CardSubtype.RAT), Set.of(), Set.of(),
                         List.of(StaticAbility.of(new CantBlockEffect()))));

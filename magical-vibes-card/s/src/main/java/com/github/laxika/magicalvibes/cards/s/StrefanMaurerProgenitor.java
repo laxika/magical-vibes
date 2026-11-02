@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class StrefanMaurerProgenitor extends Card {
             new CardSubtypePredicate(CardSubtype.VAMPIRE)));
 
     public StrefanMaurerProgenitor() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 CreateTokenEffect.ofBloodToken(new Sum(
                         new OpponentsWhoLostLifeThisTurn(),
                         new FixedIfCondition(new ControllerLostLifeThisTurn(1), 1, 0))));

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class OrcishMine extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.ORE, new Fixed(3)));
         // At the beginning of your upkeep and whenever enchanted land becomes tapped, remove an ore
         // counter from this Aura.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
         // When the last ore counter is removed, destroy enchanted land and this Aura deals 2 damage to
         // that land's controller. A state trigger, so it fires however the last counter was removed.

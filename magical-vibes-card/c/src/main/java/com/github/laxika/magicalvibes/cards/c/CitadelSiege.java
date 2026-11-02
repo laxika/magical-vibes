@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePl
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,14 +34,14 @@ public class CitadelSiege extends Card {
 
         var target = target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature"));
-        target.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceHasChosenMode(KHANS),
                         PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                 CounterType.PLUS_ONE_PLUS_ONE, 2,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentControlledBySourceControllerPredicate())))));
-        target.addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED,
+        target.addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT),
                 new ConditionalEffect(new SourceHasChosenMode(DRAGONS),
                         new TapPermanentsEffect(TapUntapScope.TARGET,
                                 new PermanentAllOfPredicate(List.of(

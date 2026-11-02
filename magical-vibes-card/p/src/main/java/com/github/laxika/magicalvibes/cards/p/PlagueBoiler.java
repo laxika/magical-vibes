@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ import java.util.List;
 public class PlagueBoiler extends Card {
 
     public PlagueBoiler() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.PLAGUE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.PLAGUE));
 
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 new PermanentHasAtLeastCountersPredicate(CounterType.PLAGUE, 3),

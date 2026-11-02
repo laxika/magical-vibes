@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,7 @@ import java.util.Set;
 public class TheBookOfVileDarkness extends Card {
 
     public TheBookOfVileDarkness() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControllerLostLifeThisTurn(2), CreateTokenEffect.blackZombie(1)));
 
         PermanentAllOfPredicate eyeOfVecna = artifactNamed("Eye of Vecna");

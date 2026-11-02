@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class CaseOfTheRansackedLab extends Card {
 
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(instantOrSorcery, 1, CostModificationScope.SELF));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new AllOf(List.of(
                         new ControllerCastFourOrMoreSpellsThisTurn(instantOrSorcery),
                         new NotCondition(new SourceIsSolved())

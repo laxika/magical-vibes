@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class IslandFishJasconius extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // "At the beginning of your upkeep, you may pay {U}{U}{U}. If you do, untap this creature."
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
                 "{U}{U}{U}",
                 new UntapPermanentsEffect(TapUntapScope.SELF),
                 "Pay {U}{U}{U} to untap Island Fish Jasconius?"));

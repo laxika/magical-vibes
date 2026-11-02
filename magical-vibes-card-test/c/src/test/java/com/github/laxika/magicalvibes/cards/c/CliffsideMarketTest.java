@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -48,7 +51,7 @@ class CliffsideMarketTest extends BaseCardTest {
 
         harness.setLife(player1, 7);
         harness.setLife(player2, 19);
-        resolveLifeExchange(EffectSlot.UPKEEP_TRIGGERED);
+        resolveLifeExchange(Triggers.upkeep(ActivePlayer.YOU));
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 7);
     }
@@ -81,6 +84,16 @@ class CliffsideMarketTest extends BaseCardTest {
     private void resolveLifeExchange(EffectSlot slot) {
         PlanarObject plane = gd.planechase.faceUp.getFirst();
         harness.inMutationScope(() -> planar.trigger(gd, plane, slot, player1.getId()));
+        resolveTriggeredLifeExchange();
+    }
+
+    private void resolveLifeExchange(Trigger trigger) {
+        PlanarObject plane = gd.planechase.faceUp.getFirst();
+        harness.inMutationScope(() -> planar.trigger(gd, plane, trigger, player1.getId()));
+        resolveTriggeredLifeExchange();
+    }
+
+    private void resolveTriggeredLifeExchange() {
         harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
 
         PendingInteraction.PermanentChoice targetChoice =
@@ -99,7 +112,7 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.setLife(player1, 11);
         harness.setLife(player2, 23);
         PlanarObject plane = gd.planechase.faceUp.getFirst();
-        harness.inMutationScope(() -> planar.trigger(gd, plane, EffectSlot.UPKEEP_TRIGGERED, player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, plane, Triggers.upkeep(ActivePlayer.YOU), player1.getId()));
         harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -115,7 +128,7 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.setLife(player1, 11);
         harness.setLife(player2, 23);
         PlanarObject plane = gd.planechase.faceUp.getFirst();
-        harness.inMutationScope(() -> planar.trigger(gd, plane, EffectSlot.UPKEEP_TRIGGERED, player1.getId()));
+        harness.inMutationScope(() -> planar.trigger(gd, plane, Triggers.upkeep(ActivePlayer.YOU), player1.getId()));
         harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();

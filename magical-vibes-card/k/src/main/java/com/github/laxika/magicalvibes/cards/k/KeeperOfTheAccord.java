@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreCreaturesThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsMoreLandsThanController;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,12 +30,12 @@ import java.util.Set;
 public class KeeperOfTheAccord extends Card {
 
     public KeeperOfTheAccord() {
-        addEffect(EffectSlot.OPPONENT_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.OPPONENT), new ConditionalEffect(
                 new TargetPlayerControlsMoreCreaturesThanController(),
                 new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.SOLDIER), Set.of(), Set.of())));
 
-        addEffect(EffectSlot.OPPONENT_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.OPPONENT), new ConditionalEffect(
                 new TargetPlayerControlsMoreLandsThanController(),
                 new MayEffect(
                         new SearchLibraryEffect(new CardAllOfPredicate(List.of(

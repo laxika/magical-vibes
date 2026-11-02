@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -31,7 +33,7 @@ public class TraumaticPrank extends Card {
                 .addSpellEffect(new PerpetuallyGrantStaticEffectToTargetCreatureEffect(
                         new CantBlockEffect()))
                 .addSpellEffect(new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
-                        EffectSlot.UPKEEP_TRIGGERED,
-                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)));
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))));
     }
 }

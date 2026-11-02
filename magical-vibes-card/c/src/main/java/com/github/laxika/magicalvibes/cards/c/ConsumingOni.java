@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToRandomMatchingHandCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +17,7 @@ import java.util.List;
 public class ConsumingOni extends Card {
 
     public ConsumingOni() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new PerpetuallyGrantTriggeredAbilityToRandomMatchingHandCardEffect(
                         EffectSlot.ON_SELF_CAST,
                         List.of(new LoseLifeEffect(3)),

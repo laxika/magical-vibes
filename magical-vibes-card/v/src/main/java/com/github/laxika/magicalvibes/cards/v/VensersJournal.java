@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOM", collectorNumber = "220")
 @CardRegistration(set = "C21", collectorNumber = "273")
@@ -15,6 +16,6 @@ public class VensersJournal extends Card {
 
     public VensersJournal() {
         addStaticEffect(new NoMaximumHandSizeEffect());
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
     }
 }

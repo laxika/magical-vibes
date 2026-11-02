@@ -19,19 +19,8 @@ public enum EffectSlot {
     /** Triggers when this permanent changes control away from its current controller. */
     ON_SELF_LOSES_CONTROL,
     ON_BLOCK,
-    UPKEEP_TRIGGERED,
-    /** Triggers at the beginning of its controller's upkeep while the source card is in the command zone. */
-    COMMAND_ZONE_UPKEEP_TRIGGERED,
-    GRAVEYARD_UPKEEP_TRIGGERED,
-    EACH_UPKEEP_TRIGGERED,
-    SUSPENDED_EACH_UPKEEP_TRIGGERED,
-    /** Triggers at the beginning of its owner's upkeep while this card is exiled with scream counters. */
-    EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED,
-    /** Triggers at the beginning of its owner's upkeep while this card is exiled. */
-    EXILED_UPKEEP_TRIGGERED,
     /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
     ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
-    OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
     /** Triggers when this permanent's controller sets a scheme in motion. */
@@ -88,35 +77,6 @@ public enum EffectSlot {
      *  the (non-targeting) {@code sourcePermanentId} and the defending player as the {@code targetId}.
      *  Checked in {@code CombatBlockService}. Used by Cloak of Confusion. */
     ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED,
-    DRAW_TRIGGERED,
-    EACH_DRAW_TRIGGERED,
-    END_STEP_TRIGGERED,
-    /** End-step trigger fired from a card sitting in its owner's graveyard ("At the beginning of the
-     *  end step, if this card is in your graveyard …"). Fires at EVERY end step, not just the card
-     *  owner's, and is scanned across all players' graveyards by
-     *  {@code StepTriggerService.handleEndStepTriggers}. Supports an intervening-if
-     *  {@link com.github.laxika.magicalvibes.model.effect.ConditionalEffect} gate checked at trigger
-     *  time. Used by Krovikan Horror. Contrast {@link #GRAVEYARD_UPKEEP_TRIGGERED}. */
-    GRAVEYARD_END_STEP_TRIGGERED,
-    /** End-step trigger fired from a card in its owner's graveyard during that owner's end step. */
-    GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED,
-    CONTROLLER_END_STEP_TRIGGERED,
-    /** End-step trigger fired from a card in its owner's command zone. */
-    COMMAND_ZONE_END_STEP_TRIGGERED,
-    /** "At the beginning of each end step" trigger fired from a face-up card in any player's command
-     *  zone (ongoing schemes such as Dark Wings Bring Your Downfall). Fires at every end step, not just
-     *  the card owner's, and is scanned across all players' command zones by
-     *  {@code StepTriggerService.handleEndStepTriggers}. Supports an intervening-if
-     *  {@link com.github.laxika.magicalvibes.model.effect.ConditionalEffect} gate checked at trigger
-     *  time. Contrast {@link #COMMAND_ZONE_END_STEP_TRIGGERED}, which is the owner's end step only. */
-    COMMAND_ZONE_EACH_END_STEP_TRIGGERED,
-    /** "At the beginning of each opponent's end step" — fires during the end step of any player who
-     *  is an opponent of this permanent's controller (i.e. not the controller's own end step).
-     *  Checked in {@code StepTriggerService.handleEndStepTriggers}, which bakes the end-step player
-     *  (that opponent) into the stack entry's {@code targetId} so an intervening-if
-     *  {@link com.github.laxika.magicalvibes.model.effect.ConditionalEffect} can gate on "that player"
-     *  (e.g. {@code EndStepPlayerDidntCastCreatureSpell}). Used by Predatory Advantage. */
-    OPPONENT_END_STEP_TRIGGERED,
     ON_CONTROLLER_DRAWS,
     /** Triggers when the controller draws their second card of the turn. */
     ON_CONTROLLER_DRAWS_SECOND_CARD,
@@ -353,33 +313,6 @@ public enum EffectSlot {
      *  prevented by Leonin Arbiter never happens and does not trigger this. Used by
      *  Ob Nixilis, Unshackled. */
     ON_OPPONENT_SEARCHES_LIBRARY,
-    ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
-    /** Triggers during the upkeep of the Aura's own controller ("At the beginning of your upkeep,
-     *  enchanted permanent's controller ..."). Checked in {@code StepTriggerService} next to
-     *  {@link #ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED}; the enchanted permanent's controller
-     *  is baked in as {@code targetId} so {@code TARGET_PLAYER}-scoped effects act on them, while the
-     *  Aura's controller controls the ability. Used by Strangling Grasp. */
-    ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED,
-    /** Triggers during the draw step of the enchanted permanent's controller ("At the beginning of
-     *  the draw step of enchanted creature's controller, that player draws an additional card").
-     *  Checked in {@code StepTriggerService.handleDrawStepTriggers}; bakes that player as
-     *  {@code targetId}. Used by Righteous Authority. */
-    ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED,
-    /** Triggers during the end step of the enchanted permanent's controller ("At the beginning of
-     *  your end step" on an ability granted to the enchanted permanent). Checked in
-     *  {@code StepTriggerService.handleEndStepTriggers}. Used by Nettlevine Blight. */
-    ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
-    ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-    /** Aura slot for player-enchanting Curses: "At the beginning of enchanted player's draw step, ...".
-     *  Fires during the enchanted player's draw step and bakes that player's id as the
-     *  non-targeting {@code targetId}. */
-    ENCHANTED_PLAYER_DRAW_TRIGGERED,
-    /** Aura slot for player-enchanting Curses: "At the beginning of each end step, enchanted player …".
-     *  Fires at EVERY end step (any player's turn), unlike {@link #ENCHANTED_PLAYER_UPKEEP_TRIGGERED}
-     *  which is gated to the enchanted player's own upkeep. The enchanted player's id is baked as the
-     *  (non-targeting) {@code targetId} so a {@code MillEffect(TARGET_PLAYER)} lands on them. Checked in
-     *  {@code StepTriggerService.handleEndStepTriggers}. Used by Fraying Sanity. */
-    ENCHANTED_PLAYER_END_STEP_TRIGGERED,
     /** Triggers whenever the controller fully unlocks a Room. */
     ON_ALLY_ROOM_FULLY_UNLOCKED,
     /** Triggers whenever the controller fully unlocks a Room while this card is in the controller's
@@ -457,44 +390,7 @@ public enum EffectSlot {
     ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES,
     /** Triggers when the final chapter ability of a Saga triggers, i.e. is put on the stack (Historian's Boon). */
     ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS,
-    /** Triggers at the beginning of combat on the controller's turn.
-     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
-    BEGINNING_OF_COMBAT_TRIGGERED,
-    /** Triggers at the beginning of combat on this card's owner's turn while the card is in their
-     *  graveyard. Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
-    GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
-    /** Triggers at the beginning of each combat (any player's turn), not only the controller's.
-     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning all
-     *  battlefields. Used by Majestic Myriarch / Odric, Lunarch Marshal. */
-    EACH_BEGINNING_OF_COMBAT_TRIGGERED,
-    /** Triggers at the beginning of combat on each opponent's turn (never on the controller's).
-     *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning every
-     *  battlefield other than the active player's. Used by Sentinel of the Eternal Watch. */
-    OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED,
-    /** "At end of combat, …" — triggers as the end of combat step begins (CR 511.2), for every
-     *  combat phase on any player's turn, not only the controller's. Fires on every permanent
-     *  carrying this slot across all battlefields. Checked in
-     *  {@code StepTriggerService.handleEndOfCombatTriggers}, called from
-     *  {@code TurnProgressionService} right after {@code CombatService.clearCombatState}. The
-     *  trigger is queued as a non-targeting triggered ability. Used by Heat Stroke. */
-    END_OF_COMBAT_TRIGGERED,
-    /** Triggers at the beginning of the active player's precombat main phase on the
-     *  controller's turn. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
-    PRECOMBAT_MAIN_TRIGGERED,
-    /** Triggers at the beginning of the owner's precombat main phase while the source card is in
-     *  its owner's graveyard. Checked in {@code StepTriggerService.handlePrecombatMainTriggers}. */
-    GRAVEYARD_PRECOMBAT_MAIN_TRIGGERED,
-    /** Triggers at the beginning of each player's first main phase (any player's turn), not only
-     *  the controller's. Checked in {@code StepTriggerService.handlePrecombatMainTriggers} by
-     *  scanning all battlefields; the trigger is controlled by the source's controller while the
-     *  active player is carried as the stack entry's target. Used by Eladamri's Vineyard. */
-    EACH_PRECOMBAT_MAIN_TRIGGERED,
-    /** Triggers at the beginning of each of the controller's postcombat main phases.
-     *  Checked in {@code StepTriggerService.handlePostcombatMainTriggers}. */
-    POSTCOMBAT_MAIN_TRIGGERED,
 
-    /** Fires only at the beginning of the controller's second main phase of the turn. */
-    SECOND_MAIN_PHASE_TRIGGERED,
     /** Triggers whenever a creature an opponent controls is dealt damage (combat or non-combat).
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */

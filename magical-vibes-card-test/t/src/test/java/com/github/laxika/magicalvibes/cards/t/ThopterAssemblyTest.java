@@ -107,7 +107,7 @@ class ThopterAssemblyTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        // Stack should be empty — UPKEEP_TRIGGERED only fires on controller's upkeep
+        // Stack should be empty — Triggers.upkeep(ActivePlayer.YOU) only fires on controller's upkeep
         assertThat(gd.stack).isEmpty();
 
         harness.assertOnBattlefield(player1, "Thopter Assembly");

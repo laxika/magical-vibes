@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * "That player may pay {M} or N life. If the player does, [wrapped]." The payer is the stack
- * entry's {@code targetId} (the active player for an {@code EACH_UPKEEP_TRIGGERED} trigger), not
+ * entry's {@code targetId} (the active player for an {@code Triggers.upkeep(ActivePlayer.ANY)} trigger), not
  * the source's controller. A player who can pay neither resource is never asked.
  *
  * <p>When the player can afford both halves they pick one (or decline) from a list; otherwise the

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -90,7 +92,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         if (e.sacrificeAtEndStep() && (e.tokenCopy() || (e.permanentSpellToken() && permanentSpell))) {
             // "At the beginning of the end step, sacrifice this permanent" is a gained triggered ability,
             // so it triggers at every end step until the token is gone (a countered trigger fires again).
-            copyCard.addEffect(com.github.laxika.magicalvibes.model.EffectSlot.END_STEP_TRIGGERED,
+            copyCard.addTrigger(Triggers.endStep(ActivePlayer.ANY),
                     new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect());
         }
         if (!e.additionalTypes().isEmpty()) {

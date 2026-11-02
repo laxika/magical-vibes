@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisCombatPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class GlenElendra extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_PLAYER_DAMAGED_BY_FIRST_TARGET_THIS_COMBAT);
         target(new ControlledPermanentPredicateTargetFilter(
                 damagedCreature, "First target must be a creature you control that dealt combat damage to a player this combat"));
-        target(TargetFilters.creature()).addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.endOfCombat(),
                 new MayEffect(new ExchangeControlOfTargetPermanentsEffect(
                         creature, false, false, true, false, false, false, false, false,
                         damagedCreature, false), "Exchange control of the two target creatures?"));

@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class OkoLorwynLiege extends Card {
     public OkoLorwynLiege() {
         setBackFaceCard(new OkoShadowmoorScion());
 
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new MayPayManaEffect("{G}", new TransformSelfEffect(), "Pay {G} to transform Oko?"));
 
         addActivatedAbility(new ActivatedAbility(

@@ -2,15 +2,16 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "USG", collectorNumber = "284")
 @CardRegistration(set = "DMR", collectorNumber = "183")
 public class WildDogs extends Card {
 
     public WildDogs() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PlayerWithMostLifeGainsControlOfSourceCreatureEffect());
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PlayerWithMostLifeGainsControlOfSourceCreatureEffect());
         addCycling("{2}");
     }
 }

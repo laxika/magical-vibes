@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RiskyMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONS", collectorNumber = "223")
 public class RiskyMove extends Card {
 
     public RiskyMove() {
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer());
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
+                TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer());
         addEffect(EffectSlot.ON_SELF_BECOMES_CONTROLLED, new RiskyMoveEffect());
     }
 }

@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ public class KujaGenomeSorcerer extends Card {
     public KujaGenomeSorcerer() {
         setBackFaceCard(new TranceKujaFateDefied());
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new CreateTokenEffect(
                         CardType.CREATURE, 1, "Wizard", 0, 1, CardColor.BLACK, null,
                         List.of(CardSubtype.WIZARD), Set.of(), Set.of(), false, true,

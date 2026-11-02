@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFrom
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -48,7 +48,7 @@ public class DesertWarfare extends Card {
 
         PermanentHasSubtypePredicate desertPermanent = new PermanentHasSubtypePredicate(CardSubtype.DESERT);
         PermanentCount deserts = new PermanentCount(desertPermanent, CountScope.CONTROLLER);
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanentCount(5, desertPermanent),
                 new CreateTokenEffect(
                         CardType.CREATURE,

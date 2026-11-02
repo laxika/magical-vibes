@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,6 +24,6 @@ public class CrumblingAshes extends Card {
                         new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE)
                 )),
                 "Target must be a creature with a -1/-1 counter on it"
-        )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new DestroyTargetPermanentEffect());
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyTargetPermanentEffect());
     }
 }

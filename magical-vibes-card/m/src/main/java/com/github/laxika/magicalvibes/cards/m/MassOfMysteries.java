@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class MassOfMysteries extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another Elemental creature you control"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_ATTACK,
                         new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(true)));

@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
@@ -99,7 +101,8 @@ public class PermanentCounterSupport {
                 || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
             return;
         }
-        for (CardEffect effect : source.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED)) {
+        for (CardEffect effect : source.getCard()
+                .getTriggerEffects(Triggers.upkeep(ActivePlayer.YOU), Zone.BATTLEFIELD)) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect removal
                     && removal.counterType() == counterType && removal.onlyIfLastCounterRemoved()
                     && removal.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.DrawGameEffect) {

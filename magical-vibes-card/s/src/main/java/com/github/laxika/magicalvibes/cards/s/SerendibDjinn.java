@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class SerendibDjinn extends Card {
     public SerendibDjinn() {
         // At the beginning of your upkeep, sacrifice a land. If you sacrifice an Island this way,
         // this creature deals 3 damage to you.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificePermanentThenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentThenEffect(
                 new PermanentIsLandPredicate(),
                 new DealDamageToControllerIfSacrificedCardMatchesEffect(
                         new CardSubtypePredicate(CardSubtype.ISLAND), 3),

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEnd
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CHK", collectorNumber = "258")
 public class JunkyoBell extends Card {
@@ -22,7 +23,7 @@ public class JunkyoBell extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(
                                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class HotelOfFears extends Card {
             new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
     public HotelOfFears() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffect());
 
         PutCounterOnTargetPermanentEffect counterEffect = new PutCounterOnTargetPermanentEffect(

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,7 @@ public class ShrineOfLoyalLegions extends Card {
 
     public ShrineOfLoyalLegions() {
         // At the beginning of your upkeep, put a charge counter on Shrine of Loyal Legions.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.CHARGE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a white spell, put a charge counter on Shrine of Loyal Legions.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,

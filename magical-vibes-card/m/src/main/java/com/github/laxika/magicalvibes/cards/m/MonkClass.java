@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -20,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -43,7 +44,7 @@ public class MonkClass extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new ExileTopCardMayPlayWhileExiledEffect(
                         new ControllerCastSpellThisTurn(new CardTruePredicate()), false, false,

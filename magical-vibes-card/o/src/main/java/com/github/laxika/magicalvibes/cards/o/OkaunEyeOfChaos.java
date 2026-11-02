@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +23,7 @@ public class OkaunEyeOfChaos extends Card {
                 "Have target player put Zndrsplt into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new FlipUntilLoseEffect(null));
         addEffect(EffectSlot.ON_ANY_PLAYER_WINS_COIN_FLIP,
                 new DoubleSelfPowerToughnessEffect());

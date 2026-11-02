@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -21,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class ByElspethsCommand extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardSubtypePredicate(CardSubtype.SOLDIER)));
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ChooseModeNotYetChosenThisTurnEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 TARGET_SOLDIER_MODE,

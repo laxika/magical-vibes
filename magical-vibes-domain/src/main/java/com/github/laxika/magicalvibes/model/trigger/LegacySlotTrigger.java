@@ -21,7 +21,7 @@ public record LegacySlotTrigger(EffectSlot slot) implements Trigger {
 
     /**
      * The zone that the slot's name starts with ({@code GRAVEYARD_}, {@code COMMAND_ZONE_},
-     * {@code EXILE_}, {@code EXILED_} or {@code HAND_}), and the battlefield for a slot without one.
+     * {@code EXILE_} or {@code HAND_}), and the battlefield for a slot without one.
      * The collectors of some unprefixed slots look in other zones as well; they decide where a
      * legacy slot works, not this value.
      */
@@ -34,7 +34,7 @@ public record LegacySlotTrigger(EffectSlot slot) implements Trigger {
         if (name.startsWith("COMMAND_ZONE_")) {
             return AbilityZones.COMMAND;
         }
-        if (name.startsWith("EXILE_") || name.startsWith("EXILED_")) {
+        if (name.startsWith("EXILE_")) {
             return AbilityZones.EXILE;
         }
         if (name.startsWith("HAND_")) {

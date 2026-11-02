@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMT", collectorNumber = "29")
 @CardRegistration(set = "TMT", collectorNumber = "227")
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class AprilONeilHacktivist extends Card {
 
     public AprilONeilHacktivist() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new DrawCardEffect(new CardTypesAmongSpellsCastThisTurn()));
     }
 }

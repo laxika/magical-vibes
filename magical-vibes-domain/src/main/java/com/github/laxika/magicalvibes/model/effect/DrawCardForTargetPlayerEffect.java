@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param targetsPlayer          whether this effect itself establishes a player target
  * @param targetGroup            activated-ability target group to draw for, or {@code -1} for
  *                               the entry's normal target resolution
- * @param opponentDrawStepOnly   whether an {@code EACH_DRAW_TRIGGERED} instance skips the
+ * @param opponentDrawStepOnly   whether an {@code Triggers.drawStep(ActivePlayer.ANY)} instance skips the
  *                               source controller's draw step
  */
 public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped,

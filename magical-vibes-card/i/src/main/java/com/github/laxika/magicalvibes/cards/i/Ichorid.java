@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,6 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,9 +29,10 @@ import java.util.List;
 public class Ichorid extends Card {
 
     public Ichorid() {
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new SacrificeSelfEffect());
 
-        addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new SourceCardInGraveyard(),
                         ExileOwnGraveyardCardThenEffect.ifYouDo(

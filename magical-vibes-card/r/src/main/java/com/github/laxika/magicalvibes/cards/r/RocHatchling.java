@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Roc Hatchling — {R} Creature — Bird 0/1.
@@ -29,7 +30,7 @@ public class RocHatchling extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.SHELL, new Fixed(4)));
 
         // At the beginning of your upkeep, remove a shell counter from this creature.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new RemoveCounterFromSourceEffect(CounterType.SHELL, 1));
 
         // As long as this creature has no shell counters on it, it gets +3/+2 and has flying.

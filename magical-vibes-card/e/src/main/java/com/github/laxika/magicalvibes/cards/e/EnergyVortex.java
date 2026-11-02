@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,11 +23,11 @@ public class EnergyVortex extends Card {
         // keeps being the chosen player if control of the enchantment changes.
         addStaticEffect(new ChooseOpponentOnEnterEffect());
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveAllCountersEffect(CounterType.VORTEX));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveAllCountersEffect(CounterType.VORTEX));
 
         // At the beginning of the chosen player's upkeep, deal 3 damage to them unless they pay {1}
         // for each vortex counter.
-        addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 new DamageTargetPlayerUnlessPaysPerCounterEffect(3, CounterType.VORTEX, "{1}"));
 
         addActivatedAbility(new ActivatedAbility(

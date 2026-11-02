@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ import java.util.List;
 public class RoccoStreetChef extends Card {
 
     public RoccoStreetChef() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new EachPlayerExilesTopCardMayPlayUntilNextEndStepEffect());
 
         CardEffect reward = SequenceEffect.of(

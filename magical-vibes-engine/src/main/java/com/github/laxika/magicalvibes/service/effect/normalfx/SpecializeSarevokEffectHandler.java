@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.cards.s.SarevokTheUsurper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeSarevokEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -47,8 +48,8 @@ public class SpecializeSarevokEffectHandler implements NormalEffectHandlerBean {
         specialized.setToughness(4);
         setFaceCharacteristics(specialized, specialize.color());
 
-        specialized.target(TargetFilters.creatureYouControl()).addEffect(
-                EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        specialized.target(TargetFilters.creatureYouControl()).addTrigger(
+                Triggers.beginningOfCombat(ActivePlayer.YOU),
                 SarevokTheUsurper.specializedCombatTrigger(specialize.color()));
         source.exchangeCard(specialized);
 

@@ -2,19 +2,20 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkToSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ICE", collectorNumber = "76")
 public class IllusionaryPresence extends Card {
 
     public IllusionaryPresence() {
         // Cumulative upkeep {U}
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{U}"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{U}"));
 
         // At the beginning of your upkeep, choose a land type. This creature gains landwalk of the
         // chosen type until end of turn.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new GrantChosenLandwalkToSelfEffect());
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GrantChosenLandwalkToSelfEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPe
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,7 +32,7 @@ public class OverseerOfVault76 extends Card {
                 new EnteringCreatureMaxPowerConditionalEffect(3,
                         new PutCountersOnSelfEffect(CounterType.QUEST)));
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new RemoveCounterFromControlledPermanentCost(
                                 List.of(CounterType.QUEST), 3, new PermanentTruePredicate(), false),

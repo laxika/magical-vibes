@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +38,7 @@ public class FaithfulSquire extends Card {
         // you may flip it." - every end step, not just yours; the counter count is an intervening-if
         // so it is checked both on trigger and on resolution. This is a flip card (rule 710), so the
         // flip flag keeps it from counting as a transformation for "transforms" triggers.
-        addEffect(EffectSlot.END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.KI),
                         new MayEffect(new TransformToBackFaceEffect(true), "Flip Faithful Squire?")));

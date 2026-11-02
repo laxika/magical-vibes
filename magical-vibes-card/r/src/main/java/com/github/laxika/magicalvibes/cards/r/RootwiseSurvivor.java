@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +26,7 @@ import java.util.Set;
 public class RootwiseSurvivor extends Card {
 
     public RootwiseSurvivor() {
-        target(TargetFilters.landYouControl(), 0, 1).addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+        target(TargetFilters.landYouControl(), 0, 1).addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new SurvivalTriggerEffect(new ConditionalEffect(
                         new SourceIsTapped(),
                         SequenceEffect.of(

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtE
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -287,8 +288,8 @@ class TargetPolarityGuardTest {
                 .isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
                 new com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
-                        EffectSlot.EACH_UPKEEP_TRIGGERED,
-                        new com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect(-1, -1)),
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
+                                new com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect(-1, -1))),
                 aiPlayerId)).isEqualTo(TargetPolarity.HARMFUL);
     }
 

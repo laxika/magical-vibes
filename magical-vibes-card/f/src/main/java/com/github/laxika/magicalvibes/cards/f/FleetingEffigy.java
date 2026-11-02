@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
 public class FleetingEffigy extends Card {
 
     public FleetingEffigy() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ReturnToHandEffect.self());
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), ReturnToHandEffect.self());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

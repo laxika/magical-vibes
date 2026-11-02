@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -21,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ import java.util.List;
 public class GloriousSunrise extends Card {
 
     public GloriousSunrise() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ChooseOneEffect(List.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control get +1/+1 and gain trample until end of turn.",
                         List.of(

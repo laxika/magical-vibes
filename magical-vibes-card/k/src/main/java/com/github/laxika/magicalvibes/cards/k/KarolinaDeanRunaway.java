@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToActivePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class KarolinaDeanRunaway extends Card {
         // At the beginning of your first main phase, add {W}{U}{B}{R}{G}.
         // This mana can't be spent to cast spells from your hand.
         ManaRestriction restriction = new ManaRestriction.NonHandSpells();
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new SequenceEffect(List.of(
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new SequenceEffect(List.of(
                 new AwardManaToActivePlayerEffect(ManaColor.WHITE, 1, restriction),
                 new AwardManaToActivePlayerEffect(ManaColor.BLUE, 1, restriction),
                 new AwardManaToActivePlayerEffect(ManaColor.BLACK, 1, restriction),

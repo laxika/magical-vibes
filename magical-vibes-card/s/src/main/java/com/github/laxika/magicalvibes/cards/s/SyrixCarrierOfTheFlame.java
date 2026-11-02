@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -49,7 +49,7 @@ public class SyrixCarrierOfTheFlame extends Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any target")).addEffect(EffectSlot.END_STEP_TRIGGERED,
+                "Target must be any target")).addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new ConditionalEffect(new CreatureCardLeftGraveyardThisTurn(),
                         new TargetCreatureDealsPowerDamageToAnyTargetEffect()));
 

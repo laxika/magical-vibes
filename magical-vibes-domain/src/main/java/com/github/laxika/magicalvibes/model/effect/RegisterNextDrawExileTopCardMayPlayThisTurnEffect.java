@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * top card of their library instead and may play it this turn (Urabrask, Heretic Praetor).
  *
  * <p>The affected player is the stack entry's {@code targetId}, which is the active player for an
- * {@code OPPONENT_UPKEEP_TRIGGERED} ability. Registrations are counted in
+ * {@code Triggers.upkeep(ActivePlayer.OPPONENT)} ability. Registrations are counted in
  * {@code GameData.pendingNextDrawExileTopCard} and consumed by {@code DrawService}.
  */
 public record RegisterNextDrawExileTopCardMayPlayThisTurnEffect() implements CardEffect {

@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawCardAndRestrictAttackingEffect;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "156")
 @CardRegistration(set = "WHO", collectorNumber = "440")
@@ -16,7 +17,7 @@ public class TheSecondDoctor extends Card {
 
     public TheSecondDoctor() {
         addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new EachPlayerMayDrawCardAndRestrictAttackingEffect());
     }
 }

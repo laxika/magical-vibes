@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ThoughtLash extends Card {
 
     public ThoughtLash() {
         // The library-exile ability triggers separately when the cumulative upkeep is not paid.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 CumulativeUpkeepEffect.exileTopCard(List.of(new QueueReflexiveAbilityEffect(
                         new ExileControllerLibraryEffect()))));
 

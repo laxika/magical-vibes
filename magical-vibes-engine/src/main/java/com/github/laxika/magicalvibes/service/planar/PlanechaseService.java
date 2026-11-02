@@ -5,6 +5,10 @@ import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.planar.*;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -350,8 +354,17 @@ public class PlanechaseService {
     }
 
     public void trigger(GameData game, PlanarObject object, EffectSlot slot, UUID controller) {
+        trigger(game, object, object.getCard().getEffects(slot), controller);
+    }
+
+    /** Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. */
+    public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
+        trigger(game, object, object.getCard().getTriggerEffects(trigger), controller);
+    }
+
+    private void trigger(GameData game, PlanarObject object, List<CardEffect> abilityEffects, UUID controller) {
         Card card = object.getCard();
-        List<CardEffect> effects = card.getEffects(slot).stream()
+        List<CardEffect> effects = abilityEffects.stream()
                 .filter(effect -> !(effect instanceof ConditionalEffect conditional)
                         || !conditional.interveningIf()
                         || conditionEvaluationService.isMet(game, conditional.condition(),
@@ -443,21 +456,17 @@ public class PlanechaseService {
         return targetGroup.getMinTargets() == 1 && targetGroup.getMaxTargets() == 1;
     }
 
-    public void step(GameData game, EffectSlot... slots) {
+    /** Puts each face-up planar object's abilities with {@code triggers}, in that order, on the stack. */
+    public void step(GameData game, StepTrigger... triggers) {
         if (game.planechase == null) return;
         game.planechase.controllerId = game.activePlayerId;
         for (PlanarObject object : List.copyOf(game.planechase.faceUp)) {
-            for (EffectSlot slot : slots) trigger(game, object, slot, game.activePlayerId);
+            for (StepTrigger trigger : triggers) trigger(game, object, trigger, game.activePlayerId);
         }
     }
 
     public void drawStep(GameData game) {
-        if (game.planechase == null) return;
-        game.planechase.controllerId = game.activePlayerId;
-        for (PlanarObject object : List.copyOf(game.planechase.faceUp)) {
-            trigger(game, object, EffectSlot.DRAW_TRIGGERED, game.activePlayerId);
-            trigger(game, object, EffectSlot.EACH_DRAW_TRIGGERED, game.activePlayerId);
-        }
+        step(game, Triggers.drawStep(ActivePlayer.YOU), Triggers.drawStep(ActivePlayer.ANY));
     }
 
     public boolean checkPhenomena(GameData game) {

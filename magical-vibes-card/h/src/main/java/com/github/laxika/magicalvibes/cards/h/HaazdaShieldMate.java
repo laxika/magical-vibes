@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
 public class HaazdaShieldMate extends Card {
 
     public HaazdaShieldMate() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ForcedCostOrElseEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new PayManaCost("{W}{W}"),
                 List.of(new SacrificeSelfEffect()),
                 true));

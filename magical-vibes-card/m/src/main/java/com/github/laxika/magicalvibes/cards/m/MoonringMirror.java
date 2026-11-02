@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileHandFaceDownThenReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CHK", collectorNumber = "262")
 public class MoonringMirror extends Card {
@@ -17,7 +19,7 @@ public class MoonringMirror extends Card {
         // At the beginning of your upkeep, you may exile all cards from your hand face down. If you
         // do, put all other cards you own exiled with this artifact into your hand. An empty hand
         // still counts as exiling all cards from it, so the return half happens either way.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new ExileHandFaceDownThenReturnCardsExiledWithSourceEffect(),
                 "Exile all cards from your hand face down and take back the cards exiled with Moonring Mirror?"));
     }

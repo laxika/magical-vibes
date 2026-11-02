@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,7 +37,7 @@ public class ProftsEideticMemory extends Card {
                 )),
                 "Target must be a creature you control"
         );
-        target(targetCreatureYouControl).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(targetCreatureYouControl).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new ControllerDrewAtLeastCardsThisTurn(2),
                         new PutCounterOnTargetPermanentEffect(

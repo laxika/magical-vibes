@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ import java.util.List;
 public class OrneryTumblewagg extends Card {
 
     public OrneryTumblewagg() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToLifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SHM", collectorNumber = "81")
 @CardRegistration(set = "2XM", collectorNumber = "113")
@@ -16,6 +17,6 @@ public class WoundReflection extends Card {
     public WoundReflection() {
         // At the beginning of each end step, each opponent loses life equal to the life they lost
         // this turn. (Damage causes loss of life.)
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new EachOpponentLosesLifeEqualToLifeLostThisTurn());
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new EachOpponentLosesLifeEqualToLifeLostThisTurn());
     }
 }

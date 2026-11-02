@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class HeraldOfLeshrac extends Card {
         PermanentAllOfPredicate landsYouControlButDoNotOwn = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 CumulativeUpkeepEffect.gainControlOf(new PermanentIsLandPredicate()));
         addStaticEffect(new DynamicStaticBoostEffect(
                 new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER),

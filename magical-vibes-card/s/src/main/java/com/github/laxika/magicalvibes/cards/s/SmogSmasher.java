@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ public class SmogSmasher extends Card {
                 new AllyCombatDamageTriggerEffect(null,
                         new ConjureDuplicateOfTargetCreatureIntoExileEffect(), false, true));
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new MaxSpeed(),
                 new ReturnAllCardsExiledWithSourceEffect(true, null, false, Set.of(Keyword.HASTE),
                         null, null, null, null, false, false, true)));

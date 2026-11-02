@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,7 @@ public class EstridsInvocation extends Card {
                 "enchantment you control",
                 Set.of(),
                 List.of(
-                        LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, List.of(
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), 
                         new MayEffect(
                                 new FlickerEffect(
                                         FlickerScope.SELF,
@@ -46,7 +47,7 @@ public class EstridsInvocation extends Card {
                                 ),
                                 "Exile this enchantment?"
                         )
-                )))
+                ))
         ));
     }
 }

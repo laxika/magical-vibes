@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,7 +37,7 @@ public class LordSkittersBlessing extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
 
-        addEffect(EffectSlot.DRAW_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsEnchantedPredicate()))),

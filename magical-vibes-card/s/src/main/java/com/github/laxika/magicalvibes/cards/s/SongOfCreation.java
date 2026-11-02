@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,6 +25,6 @@ public class SongOfCreation extends Card {
                 new SpellCastTriggerEffect(null, List.of(new DrawCardEffect(2))));
 
         // At the beginning of your end step, discard your hand.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DiscardHandEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new DiscardHandEffect());
     }
 }

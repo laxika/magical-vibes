@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -42,7 +43,7 @@ class PoolsOfBecomingTest extends BaseCardTest {
         harness.setHand(player1, hand);
         harness.setLibrary(player1, library);
 
-        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -79,7 +80,7 @@ class PoolsOfBecomingTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(libraryCard));
 
-        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -93,7 +94,7 @@ class PoolsOfBecomingTest extends BaseCardTest {
         harness.setHand(player1, List.of(handCard));
         harness.setLibrary(player1, List.of());
 
-        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
@@ -107,7 +108,7 @@ class PoolsOfBecomingTest extends BaseCardTest {
         harness.setHand(player1, hand);
         harness.setLibrary(player1, List.of());
 
-        harness.inMutationScope(() -> planar.step(gd, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
         resolveAllTriggers();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
         resolveAllTriggers();

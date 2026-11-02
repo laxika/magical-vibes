@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "138")
 public class DelinaWildMage extends Card {
@@ -21,7 +22,7 @@ public class DelinaWildMage extends Card {
                 new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(), false, false, false, true,
                         false, false, null, Set.of(), false,
-                        List.of(LegacySlots.triggered(EffectSlot.END_OF_COMBAT_TRIGGERED, List.of(new ExileSelfEffect()))),
+                        List.of(new TriggeredAbility(Triggers.endOfCombat(), new ExileSelfEffect())),
                         List.of(), false, true, new Fixed(1), false, Set.of(), true);
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ATTACK,

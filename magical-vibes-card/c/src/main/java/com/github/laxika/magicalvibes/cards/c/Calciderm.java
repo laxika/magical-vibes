@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "23")
 @CardRegistration(set = "EMA", collectorNumber = "5")
@@ -20,7 +22,7 @@ public class Calciderm extends Card {
     public Calciderm() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
         // Vanishing: the upkeep removal and the last-counter sacrifice are separate triggers
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.TIME),
                         new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
         addEffect(EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class HibernationsEnd extends Card {
 
     public HibernationsEnd() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, CumulativeUpkeepEffect.withPaidEffects(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), CumulativeUpkeepEffect.withPaidEffects(
                 "{1}", List.of(new MayEffect(new SearchLibraryEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         LibrarySearchDestination.BATTLEFIELD,

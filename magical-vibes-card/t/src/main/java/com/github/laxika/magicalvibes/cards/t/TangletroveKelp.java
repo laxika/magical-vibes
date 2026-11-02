@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class TangletroveKelp extends Card {
         // Ward {2}.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
 
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new AnimatePermanentsEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), new AnimatePermanentsEffect(
                 new Fixed(6), new Fixed(6),
                 List.of(CardSubtype.PLANT),
                 Set.of(),

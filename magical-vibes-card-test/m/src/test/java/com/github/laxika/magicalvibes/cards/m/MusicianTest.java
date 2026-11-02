@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DestroyUnlessPaysPerCounterEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ class MusicianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.MUSIC)).isEqualTo(1);
-        assertThat(bears.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
+        assertThat(bears.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU)))
                 .containsExactly(new DestroyUnlessPaysPerCounterEffect(CounterType.MUSIC, "{1}"));
         assertThat(musician.isTapped()).isTrue();
     }
@@ -56,7 +57,7 @@ class MusicianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.MUSIC)).isEqualTo(2);
-        assertThat(bears.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
+        assertThat(bears.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU))).hasSize(1);
     }
 
     @Test

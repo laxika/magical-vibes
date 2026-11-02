@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ICE", collectorNumber = "338")
 @CardRegistration(set = "ME4", collectorNumber = "228")
@@ -36,7 +37,7 @@ public class SoldeviGolem extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a tapped creature an opponent controls");
 
-        target(tappedOpponentCreature).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        target(tappedOpponentCreature).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
                         ConditionalEffect.unless(

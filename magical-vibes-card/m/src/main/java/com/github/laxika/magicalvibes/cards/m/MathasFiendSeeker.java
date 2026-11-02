@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class MathasFiendSeeker extends Card {
 
     public MathasFiendSeeker() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY),
                         new GrantEffectsToCounterBearersEffect(CounterType.BOUNTY, List.of(
                                 new GrantTriggeredAbilityEffect(

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -27,6 +26,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -56,7 +57,7 @@ public class SynthesizerLabship extends Card {
         target(new PermanentPredicateTargetFilter(
                 OTHER_ARTIFACT_YOU_CONTROL,
                 "Target must be another artifact you control"
-        ), 0, 1).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, ConditionalEffect.atTriggerTime(
+        ), 0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(2, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         new Fixed(2), new Fixed(2), List.of(), Set.of(Keyword.FLYING), null,

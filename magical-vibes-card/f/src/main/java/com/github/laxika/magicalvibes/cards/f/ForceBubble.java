@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class ForceBubble extends Card {
                 new PermanentHasAtLeastCountersPredicate(CounterType.DEPLETION, 4),
                 List.of(new SacrificeSelfEffect()),
                 "Force Bubble's state-triggered ability"));
-        addEffect(EffectSlot.END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new RemoveAllCountersEffect(CounterType.DEPLETION));
     }
 }

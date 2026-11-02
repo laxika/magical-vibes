@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOB", collectorNumber = "110")
 @CardRegistration(set = "HOC", collectorNumber = "110")
@@ -17,6 +19,6 @@ public class SmaugTheMagnificent extends Card {
     public SmaugTheMagnificent() {
         addEffect(EffectSlot.ON_ATTACK, new DealDamageToAnyTargetEffect(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), CreateTokenEffect.ofTreasureToken(1));
     }
 }

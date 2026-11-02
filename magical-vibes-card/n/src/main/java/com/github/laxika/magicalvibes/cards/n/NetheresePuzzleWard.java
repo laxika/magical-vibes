@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD4Effect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFC", collectorNumber = "17")
 public class NetheresePuzzleWard extends Card {
 
     public NetheresePuzzleWard() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new RollD4Effect(null, new ScryEffect(new EventValue())));
         addEffect(EffectSlot.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT,
                 new DrawCardEffect());

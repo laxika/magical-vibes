@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +41,7 @@ public class TheCheetahPlanet extends Card {
                 .addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT)))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.CAT)));
 

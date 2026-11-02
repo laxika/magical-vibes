@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +23,7 @@ public class GlintSleeveSiphoner extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), gainEnergy);
         addEffect(EffectSlot.ON_ATTACK, gainEnergy);
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-2),

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -75,6 +77,7 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
     }
 
     private void addPerpetualEndStepSacrifice(GameData gameData, UUID cardId) {
-        gameData.grantPerpetualAbility(cardId, EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new SacrificeSelfEffect());
+        gameData.grantPerpetualAbility(cardId,
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU), new SacrificeSelfEffect()));
     }
 }

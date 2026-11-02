@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class TheLadyOfOtaria extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new TapUntappedPermanentsCost(3, new PermanentHasSubtypePredicate(CardSubtype.DWARF)))));
 
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new LandPutIntoGraveyardFromBattlefieldThisTurn(),
                 new LookAtTopCardsEffect(new Fixed(4), new Fixed(4),
                         new CardSubtypePredicate(CardSubtype.DWARF),

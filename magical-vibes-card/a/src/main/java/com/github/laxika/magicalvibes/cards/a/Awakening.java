@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
 public class Awakening extends Card {
 
     public Awakening() {
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new UntapPermanentsEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new UntapPermanentsEffect(
                 TapUntapScope.ALL_PERMANENTS,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

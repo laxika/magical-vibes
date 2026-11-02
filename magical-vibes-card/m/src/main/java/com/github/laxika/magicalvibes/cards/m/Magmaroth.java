@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class Magmaroth extends Card {
 
     public Magmaroth() {
         // At the beginning of your upkeep, put a -1/-1 counter on this creature.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.MINUS_ONE_MINUS_ONE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.MINUS_ONE_MINUS_ONE));
 
         // Whenever you cast a noncreature spell, remove a -1/-1 counter from this creature.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

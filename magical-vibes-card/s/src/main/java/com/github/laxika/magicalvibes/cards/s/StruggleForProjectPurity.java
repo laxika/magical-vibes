@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class StruggleForProjectPurity extends Card {
     public StruggleForProjectPurity() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(BROTHERHOOD, ENCLAVE)));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceHasChosenMode(BROTHERHOOD),
                 SequenceEffect.of(
                         new EachOpponentDrawsCardEffect(1),

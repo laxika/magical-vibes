@@ -30,10 +30,9 @@ class LegacySlotTriggerTest {
     @ParameterizedTest
     @CsvSource({
             "ON_SELF_BECOMES_UNTAPPED, BATTLEFIELD",
-            "GRAVEYARD_UPKEEP_TRIGGERED, GRAVEYARD",
-            "COMMAND_ZONE_UPKEEP_TRIGGERED, COMMAND",
+            "GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, GRAVEYARD",
+            "COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK, COMMAND",
             "EXILE_ON_CONTROLLER_CASTS_SPELL, EXILE",
-            "EXILED_UPKEEP_TRIGGERED, EXILE",
             "HAND_ON_CONTROLLER_CASTS_SPELL, HAND"
     })
     void functionsFromTheZoneItsNameStartsWith(EffectSlot slot, Zone zone) {

@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOI", collectorNumber = "63")
 @CardRegistration(set = "SIR", collectorNumber = "71")
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class ForgottenCreation extends Card {
 
     public ForgottenCreation() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new DiscardOwnHandThenDrawThatManyEffect(),
                 "Discard your hand and draw that many cards?"));
     }

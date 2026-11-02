@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,7 +32,7 @@ public class BarrinTolarianArchmage extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another creature or planeswalker"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target());
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new PermanentPutIntoYourHandFromBattlefieldThisTurn(), new DrawCardEffect(1)));
     }
 }

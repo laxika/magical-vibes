@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CON", collectorNumber = "99")
 @CardRegistration(set = "C16", collectorNumber = "183")
@@ -15,7 +17,7 @@ public class BloodTyrant extends Card {
     public BloodTyrant() {
         // At the beginning of your upkeep, each player loses 1 life. Put a +1/+1 counter on this
         // creature for each 1 life lost this way.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffect(1));
 
         // Whenever a player loses the game, put five +1/+1 counters on this creature. (2-player engine:

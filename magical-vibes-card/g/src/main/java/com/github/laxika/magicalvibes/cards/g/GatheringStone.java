@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,6 +29,6 @@ public class GatheringStone extends Card {
         LookAtTopCardMayRevealMatchingToHandEffect topCard =
                 new LookAtTopCardMayRevealMatchingToHandEffect(chosenType, true);
         addTrigger(Triggers.enters(ObjectRelation.THIS), topCard);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, topCard);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), topCard);
     }
 }

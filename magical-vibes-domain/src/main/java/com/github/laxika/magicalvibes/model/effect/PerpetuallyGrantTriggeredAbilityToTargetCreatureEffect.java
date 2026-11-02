@@ -22,6 +22,11 @@ public record PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
         this(triggeredAbilitySlot, triggeredAbility, null);
     }
 
+    /** The perpetual grant of {@code grantedAbility} to any target creature. */
+    public PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(Ability grantedAbility) {
+        this(grantedAbility, null);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.creature(), filter);

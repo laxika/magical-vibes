@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.condition.FullParty;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class SquadCommander extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 new PartySize(), "Kor Warrior", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.KOR, CardSubtype.WARRIOR), Set.of(), Set.of()));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                 new FullParty(),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 0),

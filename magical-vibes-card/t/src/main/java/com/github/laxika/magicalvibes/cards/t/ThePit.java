@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,8 @@ public class ThePit extends Card {
                 "Angel", 3, 3, CardColor.WHITE, List.of(CardSubtype.ANGEL),
                 Set.of(Keyword.FLYING), Set.of());
 
-        List<Ability> demonEffects = List.of(LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, new SacrificeOtherCreatureOrDamageEffect(6)));
+        List<Ability> demonEffects = List.of(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                new SacrificeOtherCreatureOrDamageEffect(6)));
         CreateTokenEffect demon = new CreateTokenEffect(
                 1, "Demon", 6, 6, CardColor.BLACK, List.of(CardSubtype.DEMON),
                 Set.of(Keyword.FLYING, Keyword.TRAMPLE), Set.of(), demonEffects);

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,7 @@ public class PrestonGarveyMinuteman extends Card {
 
     public PrestonGarveyMinuteman() {
         target(TargetFilters.landYouControl(), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new CreateTokenAttachedToTargetEffect(settlementToken(), new PermanentIsLandPredicate()));
 
         addEffect(EffectSlot.ON_ATTACK, new UntapPermanentsEffect(

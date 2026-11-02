@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOf
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,7 +34,7 @@ public class SyggWanderwineWisdom extends Card {
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), combatDamageDraw);
 
         // At the beginning of your first main phase, you may pay {W}. If you do, transform Sygg.
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new MayPayManaEffect("{W}", new TransformSelfEffect(), "Pay {W} to transform Sygg?"));
     }
 

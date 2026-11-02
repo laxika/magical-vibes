@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrAsNonAuraEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -73,7 +74,7 @@ public class ReturnSourceAuraToCreatureOrAsNonAuraEffectHandler implements Norma
             nonAuraCard.setSubtypes(nonAuraCard.getSubtypes().stream()
                     .filter(subtype -> subtype != CardSubtype.AURA)
                     .toList());
-            nonAuraCard.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+            nonAuraCard.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                     new DealDamageToPlayerEffect(1, dyingCreatureControllerId));
 
             Permanent nonAuraPermanent = new Permanent(nonAuraCard);

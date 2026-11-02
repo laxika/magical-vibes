@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class ScavengingGhoul extends Card {
     public ScavengingGhoul() {
         // At the beginning of each end step, put a corpse counter on this creature
         // for each creature that died this turn (any player).
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new PutCountersOnSelfEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new PutCountersOnSelfEffect(
                 CounterType.CORPSE, new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
 
         // Remove a corpse counter from this creature: Regenerate this creature.

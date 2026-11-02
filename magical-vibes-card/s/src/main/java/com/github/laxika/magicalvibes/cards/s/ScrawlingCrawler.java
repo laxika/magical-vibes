@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "132")
 @CardRegistration(set = "FDN", collectorNumber = "354")
@@ -16,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class ScrawlingCrawler extends Card {
 
     public ScrawlingCrawler() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new EachPlayerDrawsCardEffect(1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new EachPlayerDrawsCardEffect(1));
         addEffect(EffectSlot.ON_OPPONENT_DRAWS, new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }

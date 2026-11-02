@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "595")
 public class Pompeii extends Card {
@@ -23,7 +25,7 @@ public class Pompeii extends Card {
     public Pompeii() {
         PutCountersOnSelfEffect eruptionCounter = new PutCountersOnSelfEffect(CounterType.ERUPTION);
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, eruptionCounter);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, eruptionCounter);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), eruptionCounter);
 
         addEffect(EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
                 new ConditionalEffect(new NotCondition(new EventValueAtLeast(1)),

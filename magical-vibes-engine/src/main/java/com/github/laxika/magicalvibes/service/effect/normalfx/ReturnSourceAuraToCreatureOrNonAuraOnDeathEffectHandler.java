@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayerAtUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -111,8 +113,8 @@ public class ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler implements 
 
         Permanent enchantment = new Permanent(auraCard);
         enchantment.setCard(copy);
-        enchantment.addPersistentTriggeredEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new DealDamageToPlayerAtUpkeepEffect(damagedPlayerId));
+        enchantment.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
+                new DealDamageToPlayerAtUpkeepEffect(damagedPlayerId)));
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, enchantment);
 
         gameLogService.append(gameData, GameLog.cardThen(copy,

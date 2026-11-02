@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MIR", collectorNumber = "125")
 public class ForsakenWastes extends Card {
@@ -14,8 +16,8 @@ public class ForsakenWastes extends Card {
     public ForsakenWastes() {
         addStaticEffect(new PlayersCantGainLifeEffect());
 
-        // EACH_UPKEEP_TRIGGERED sets the active player as the target, so "that player loses 1 life".
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER));
+        // Triggers.upkeep(ActivePlayer.ANY) sets the active player as the target, so "that player loses 1 life".
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER));
 
         // The trigger is queued against the spell that targeted this enchantment (STACK zone), so the
         // life loss hits that spell's controller.

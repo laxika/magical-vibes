@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomPlayerDiscardsAndLosesLifeIfLandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "14")
 @CardRegistration(set = "OPCA", collectorNumber = "26")
@@ -16,7 +18,7 @@ public class FurnaceLayer extends Card {
         RandomPlayerDiscardsAndLosesLifeIfLandEffect discardEffect =
                 new RandomPlayerDiscardsAndLosesLifeIfLandEffect();
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, discardEffect);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, discardEffect);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), discardEffect);
 
         target(TargetFilters.nonlandPermanent()).addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target nonland permanent?"));

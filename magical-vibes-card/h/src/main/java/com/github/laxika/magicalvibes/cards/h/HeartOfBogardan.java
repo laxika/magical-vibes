@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class HeartOfBogardan extends Card {
         // where X is twice the number of age counters on this enchantment minus 2". The unpaid
         // branch sacrifices the enchantment first, so the age-relative amount is snapshotted while
         // it is still on the battlefield (CR 608.2h).
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, CumulativeUpkeepEffect.withUnpaidEffects("{2}",
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), CumulativeUpkeepEffect.withUnpaidEffects("{2}",
                 List.of(new DealDamageToTargetAndTheirCreaturesEffect(
                         new Sum(new Scaled(new CountersOnSource(CounterType.AGE), 2), new Fixed(-2))))));
     }

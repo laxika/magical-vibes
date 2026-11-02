@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "388")
 @CardRegistration(set = "4ED", collectorNumber = "334")
@@ -34,13 +35,13 @@ public class ManaVault extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayPayManaEffect(
                 "{4}",
                 new UntapPermanentsEffect(TapUntapScope.SELF),
                 "Pay {4} to untap Mana Vault?"));
 
         // At the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.
-        addEffect(EffectSlot.DRAW_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceIsTapped(),
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)));
 

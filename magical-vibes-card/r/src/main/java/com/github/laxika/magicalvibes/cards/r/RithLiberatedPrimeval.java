@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class RithLiberatedPrimeval extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.OWN_CREATURES, dragon));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new OpponentPermanentDealtExcessDamageThisTurn(),
                 new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,
                         List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())));

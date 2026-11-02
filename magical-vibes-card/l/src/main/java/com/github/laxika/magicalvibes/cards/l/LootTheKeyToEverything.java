@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BIG", collectorNumber = "21")
 public class LootTheKeyToEverything extends Card {
 
     public LootTheKeyToEverything() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardMayPlayThisTurnEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ExileTopCardMayPlayThisTurnEffect(
                 new CardTypesAmongControlledPermanents(
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         CountScope.CONTROLLER,

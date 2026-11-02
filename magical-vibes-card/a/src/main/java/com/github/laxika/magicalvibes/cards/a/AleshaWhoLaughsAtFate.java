@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class AleshaWhoLaughsAtFate extends Card {
 
     public AleshaWhoLaughsAtFate() {
         addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSourceEffect(1, 1, 1));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new Raid(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(

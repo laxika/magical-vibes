@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -42,7 +43,7 @@ public class CommodoreGuff extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another planeswalker you control"
-        )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        )).addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new PutCounterOnTargetPermanentEffect(CounterType.LOYALTY));
 
         // +1: Create a 1/1 red Wizard creature token with "{T}: Add {R}. Spend this mana only to

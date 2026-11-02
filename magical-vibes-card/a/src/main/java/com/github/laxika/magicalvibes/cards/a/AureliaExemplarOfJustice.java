@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,12 +37,12 @@ public class AureliaExemplarOfJustice extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         GrantKeywordEffect.toTargetIf(Keyword.TRAMPLE,
                                 new PermanentColorInPredicate(Set.of(CardColor.RED))))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         GrantKeywordEffect.toTargetIf(Keyword.VIGILANCE,
                                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
     }

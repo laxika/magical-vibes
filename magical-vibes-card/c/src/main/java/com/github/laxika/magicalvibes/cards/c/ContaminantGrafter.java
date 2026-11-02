@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONC", collectorNumber = "17")
 @CardRegistration(set = "ONC", collectorNumber = "55")
@@ -22,7 +24,7 @@ public class ContaminantGrafter extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null, new ProliferateEffect(), false, true));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new OpponentPoisoned(3),
                         SequenceEffect.of(

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -69,7 +69,7 @@ public class BlacksmithsTalent extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                         new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL))),
                         new AttachTargetEquipmentToTargetCreatureEffect()));
         target(TargetFilters.creatureYouControl(), 0, 1);

@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "183")
 @CardRegistration(set = "GK2", collectorNumber = "41")
@@ -21,7 +22,7 @@ public class OneThousandLashes extends Card {
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // that player loses 1 life.
-                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+                .addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                         new EnchantedCreatureControllerLosesLifeEffect(1));
     }
 }

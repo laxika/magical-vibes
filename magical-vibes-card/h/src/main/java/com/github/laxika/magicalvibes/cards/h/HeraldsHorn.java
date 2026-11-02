@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "228")
 @CardRegistration(set = "40K", collectorNumber = "241")
@@ -22,7 +23,7 @@ public class HeraldsHorn extends Card {
     public HeraldsHorn() {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new ReduceCastCostForChosenSubtypeSpellsEffect(1));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new LookAtTopCardMayRevealMatchingToHandEffect(
                         new CardHasSourceChosenSubtypePredicate(), false));
     }

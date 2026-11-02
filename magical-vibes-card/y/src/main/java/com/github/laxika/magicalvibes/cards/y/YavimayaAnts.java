@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALL", collectorNumber = "105")
 @CardRegistration(set = "DKM", collectorNumber = "32")
@@ -12,6 +13,6 @@ public class YavimayaAnts extends Card {
 
     public YavimayaAnts() {
         // Trample and haste are keywords loaded from Scryfall.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{G}{G}"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{G}{G}"));
     }
 }

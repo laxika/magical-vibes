@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * shown.
  *
  * <p>Pushed by a trigger slot that bakes the affected player into the stack entry — e.g.
- * {@code OPPONENT_UPKEEP_TRIGGERED}, whose {@code targetId} is the active player.
+ * {@code Triggers.upkeep(ActivePlayer.OPPONENT)}, whose {@code targetId} is the active player.
  *
  * @param damage         damage dealt when the player declines or cannot pay
  * @param counterType    counter kind that scales the payment (e.g. {@link CounterType#VORTEX})

@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +20,7 @@ public class ParasiticImplant extends Card {
         target(TargetFilters.creature())
                 // At the beginning of your upkeep, enchanted creature's controller sacrifices it
                 // and you create a 1/1 colorless Phyrexian Myr artifact creature token.
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeEnchantedCreatureAndCreateTokenEffect(
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeEnchantedCreatureAndCreateTokenEffect(
                 new CreateTokenEffect(
                         "Phyrexian Myr",
                         1, 1,

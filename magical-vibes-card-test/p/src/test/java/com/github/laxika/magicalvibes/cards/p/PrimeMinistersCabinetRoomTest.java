@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -42,7 +43,7 @@ class PrimeMinistersCabinetRoomTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, player1.getId()));
+                gd, source, Triggers.beginningOfCombat(ActivePlayer.YOU), player1.getId()));
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.handlePermanentChosen(player1, opposingCreature.getId());
@@ -58,7 +59,7 @@ class PrimeMinistersCabinetRoomTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         harness.inMutationScope(() -> planar.trigger(
-                gd, source, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, player1.getId()));
+                gd, source, Triggers.beginningOfCombat(ActivePlayer.YOU), player1.getId()));
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.handlePermanentChosen(player1, opposingCreature.getId());

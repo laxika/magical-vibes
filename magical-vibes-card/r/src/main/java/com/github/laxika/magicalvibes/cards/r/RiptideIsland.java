@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class RiptideIsland extends Card {
                 2, "Sliver", 1, 1, null,
                 List.of(CardSubtype.SLIVER), Set.of(), Set.of());
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, slivers);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, slivers);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), slivers);
 
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
         PermanentCount sliverCount = new PermanentCount(sliver, CountScope.CONTROLLER);

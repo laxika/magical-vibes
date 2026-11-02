@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DescentsThisTurn;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class TheMycotyrant extends Card {
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FUNGUS, CardSubtype.SAPROLING)))),
                 CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(fungiAndSaprolings, fungiAndSaprolings));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new CreateTokenEffect(
                 CardType.CREATURE,
                 new DescentsThisTurn(),
                 "Fungus",

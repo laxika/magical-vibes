@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndReturnA
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleCreaturesEnteringFromExileEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "569")
 public class BadWolfBay extends Card {
 
     public BadWolfBay() {
-        target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ExileTargetCreatureAndReturnAtNextEndStepEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new PlaneswalkEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new ShuffleCreaturesEnteringFromExileEffect());

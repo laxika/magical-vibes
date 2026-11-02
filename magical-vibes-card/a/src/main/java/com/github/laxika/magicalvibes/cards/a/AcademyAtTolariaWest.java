@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "1")
 @CardRegistration(set = "OPCA", collectorNumber = "9")
 public class AcademyAtTolariaWest extends Card {
 
     public AcademyAtTolariaWest() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new ControllerHandEmpty(), new DrawCardEffect(7)));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new DiscardHandEffect());
     }

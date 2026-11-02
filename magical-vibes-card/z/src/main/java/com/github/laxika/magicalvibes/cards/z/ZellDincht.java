@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "170")
 @CardRegistration(set = "FIN", collectorNumber = "468")
@@ -24,7 +25,7 @@ public class ZellDincht extends Card {
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new BoostSelfEffect(landsYouControl, new Fixed(0)));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ReturnPermanentControlledByPlayerToHandEffect(new PermanentIsLandPredicate(), "land"));
     }
 }

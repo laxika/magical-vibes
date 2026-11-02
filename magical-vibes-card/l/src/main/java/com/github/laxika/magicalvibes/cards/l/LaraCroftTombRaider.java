@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class LaraCroftTombRaider extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect(
                         legendaryArtifactOrLand));
-        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.endOfCombat(),
                 new ConditionalEffect(new Raid(), CreateTokenEffect.ofTreasureToken(1)));
     }
 }

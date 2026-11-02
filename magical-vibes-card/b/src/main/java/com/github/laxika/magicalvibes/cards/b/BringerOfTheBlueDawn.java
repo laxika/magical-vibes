@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,6 +20,6 @@ public class BringerOfTheBlueDawn extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}{U}{B}{R}{G}"))));
 
         // At the beginning of your upkeep, you may draw two cards.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(new DrawCardEffect(2), "Draw two cards?"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(new DrawCardEffect(2), "Draw two cards?"));
     }
 }

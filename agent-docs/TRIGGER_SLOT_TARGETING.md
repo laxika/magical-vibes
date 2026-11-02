@@ -134,7 +134,7 @@ combat damage step is processed.
 | `Triggers.transforms(null, ObjectRelation.YOU_CONTROL)` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) | Death |
 | `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
-| `POSTCOMBAT_MAIN_TRIGGERED` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
+| `Triggers.postcombatMainPhase(ActivePlayer.YOU)` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`; non-may effects are batched; `DyingCreatureCountersAwareEffect` implementations receive the dying permanent's concrete counter snapshot before stacking) | Death |
 | `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting wrapper) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` | Spell target |
 | `Triggers.dies(ObjectRelation.ENCHANTED)` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
@@ -178,11 +178,11 @@ combat damage step is processed.
 | `ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (one trigger per other permanent, opponent-only; targeted permanent stored as non-targeting `triggeringPermanentId`) | Becomes-target |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`; `TriggeringAbilityFromNamedLandConditionalEffect` can retain its wrapped effect only for an ability from a named land controlled by the watcher and targeting another creature) | Becomes-target |
 | `ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (targeted permanent's controller's battlefield; only permanent targets qualify, and the opposing controller is checked before queuing) | Becomes-target |
-| `UPKEEP_TRIGGERED` (any-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepAnyTargetTrigger` (queued when an effect targets both — `targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon's 5-damage) | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
-| `UPKEEP_TRIGGERED` (permanent-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepPermanentTargetTrigger` (queued when a non–any-target, non–player-target effect's `targetSpec()` includes permanents, e.g. Weed-Pruner Poplar's "target creature other than this creature gets -1/-1"). Honours the card's `PermanentPredicateTargetFilter`; use `PermanentNotPredicate(PermanentIsSourceCardPredicate)` for "other than this creature". | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
-| `SUSPENDED_EACH_UPKEEP_TRIGGERED` | `StepTriggerService` scans suspended cards in exile on every player's upkeep; an active-player `MayEffect` preserves that player as the choice and effect context | Non-targeting; source card must remain suspended at resolution |
-| `EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED` | `StepTriggerService` scans cards in exile during their owners' upkeeps while they have positive scream-counter entries | Non-targeting; the counter-removal handler rechecks the card's exile and counter state |
-| `EXILED_UPKEEP_TRIGGERED` | `StepTriggerService` scans cards in exile during their owners' upkeeps | Non-targeting; the effect should recheck `SourceCardInExile` when resolution depends on the card remaining exiled |
+| `Triggers.upkeep(ActivePlayer.YOU)` (any-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepAnyTargetTrigger` (queued when an effect targets both — `targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon's 5-damage) | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
+| `Triggers.upkeep(ActivePlayer.YOU)` (permanent-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepPermanentTargetTrigger` (queued when a non–any-target, non–player-target effect's `targetSpec()` includes permanents, e.g. Weed-Pruner Poplar's "target creature other than this creature gets -1/-1"). Honours the card's `PermanentPredicateTargetFilter`; use `PermanentNotPredicate(PermanentIsSourceCardPredicate)` for "other than this creature". | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
+| `Triggers.upkeep(ActivePlayer.ANY) from the exile` | `StepTriggerService` scans suspended cards in exile on every player's upkeep; an active-player `MayEffect` preserves that player as the choice and effect context | Non-targeting; source card must remain suspended at resolution |
+| `Triggers.upkeep(ActivePlayer.YOU) from the exile` | `StepTriggerService` scans cards in exile during their owners' upkeeps while they have positive scream-counter entries | Non-targeting; the counter-removal handler rechecks the card's exile and counter state |
+| `Triggers.upkeep(ActivePlayer.YOU) from the exile` | `StepTriggerService` scans cards in exile during their owners' upkeeps | Non-targeting; the effect should recheck `SourceCardInExile` when resolution depends on the card remaining exiled |
 | `ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE` | `TriggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers` dispatches the slot when the source card loses a time counter in exile; targeted effects use the shared self-trigger target queue | Non-targeting unless an effect declares a player/permanent target; source card is the suspended exiled card; Benalish Commander (`PLC`), Roiling Horror (`PLC`) |
 | `ON_SELF_TIME_COUNTERS_REMOVED` | `TriggerCollectionService.checkLoyaltyCounterRemovalTriggers` dispatches the slot after a permanent's tracked time-counter removals are drained | Non-targeting; source permanent is carried on the triggered stack entry; Regenerations Restored (`WHO`) |
 | `Triggers.phasesIn(null, ObjectRelation.THIS)` (permanent-target effects) | `TriggerCollectionService.enqueuePhasingTriggers` → `PhasesInTriggerTarget` (queued during the untap-step phasing action when `targetSpec()` includes permanents, e.g. Shimmering Efreet's "target creature phases out"); drained at upkeep start via `StepTriggerService.processNextPhasesInTriggerTarget` (also AutoPass). Honours the card's `PermanentPredicateTargetFilter`. | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
@@ -190,9 +190,9 @@ combat damage step is processed.
 | `Triggers.exiledFrom(Set.of(), Triggers.NONTOKEN, ObjectRelation.ANY)` | `GameData`'s non-token card-exile listener dispatches `TriggerCollectionService.checkAnyCardExiledTriggers` after a card enters exile, regardless of its previous zone. | Non-targeting |
 | `Triggers.exiledFrom(Set.of(Zone.HAND), null, ObjectRelation.YOU_OWN)` | Hand-exile paths dispatch `TriggerCollectionService.checkControllerCardsExiledFromHandTriggers` after one or more cards leave the controller's hand for exile. | Non-targeting |
 | `Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null, ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU)` | `PermanentRemovalService` dispatches `TriggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers` after a battlefield permanent is exiled by the resolving controller's spell or ability. | Non-targeting |
-| `END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (non-kicked / morbid / default) | End step |
-| `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default; multi-target groups reuse `ETBTokenMultiTargetTrigger`) | End step |
-| `OPPONENT_END_STEP_TRIGGERED` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
+| `Triggers.endStep(ActivePlayer.ANY)` | `StepTriggerService.handleEndOfTurnTriggers` (non-kicked / morbid / default) | End step |
+| `Triggers.endStep(ActivePlayer.YOU)` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default; multi-target groups reuse `ETBTokenMultiTargetTrigger`) | End step |
+| `Triggers.endStep(ActivePlayer.OPPONENT)` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
 | `Triggers.leavesBattlefield(THIS)` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfTriggeredAbilityTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or admits a graveyard card — `admits(Kind.GRAVEYARD_CARD)`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfTriggeredAbilityTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
 | `Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
 | `Triggers.leavesBattlefieldWithoutDying(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureLeavesBattlefieldWithoutDyingTriggers` (and the leave-batch variant, which enqueues one trigger per other creature leaving together); per-creature counterpart of `Triggers.leavesBattlefieldWithoutDying(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL)` ("one or more"). Used by Imperial Cosmographer | Non-targeting effects push directly to the stack |
@@ -263,14 +263,14 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 The controller-draw slots are an exception when an effect declares a target: any-target effects use
 `DrawTriggerAnyTarget`, and permanent-target effects use `DrawTriggerPermanentTarget` as described above.
 `ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS`, `ON_BLOCK` (only the non-targeting "that creature" flavour; the targeting variant is routed through the Attack pipeline — see the mapping table above),
-`GRAVEYARD_UPKEEP_TRIGGERED`, `EACH_UPKEEP_TRIGGERED`, `SUSPENDED_EACH_UPKEEP_TRIGGERED`, `EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED`, `EXILED_UPKEEP_TRIGGERED`, `OPPONENT_UPKEEP_TRIGGERED`,
+`Triggers.upkeep(ActivePlayer.YOU) from the graveyard`, `Triggers.upkeep(ActivePlayer.ANY)`, `Triggers.upkeep(ActivePlayer.ANY) from the exile`, `Triggers.upkeep(ActivePlayer.YOU) from the exile`, `Triggers.upkeep(ActivePlayer.YOU) from the exile`, `Triggers.upkeep(ActivePlayer.OPPONENT)`,
 `Triggers.creatureDies(ANY)`,
 `Triggers.nontokenCreatureDies(YOU_CONTROL)`, `Triggers.nontokenCreatureDies(ANY)`, `Triggers.creatureDies(OPPONENT_CONTROLS)`,
 `ON_COMBAT_DAMAGE_TO_PLAYER` (when no target is declared), `ON_COMBAT_DAMAGE_TO_CREATURE`, `ON_DAMAGE_TO_PLAYER`,
 `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE`, `ON_EQUIPMENT_ATTACHED_TO_CREATURE`,
 `ON_SELF_DEALS_DAMAGE`, `ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE`, `ON_BECOMES_BLOCKED` (only the non-targeting flavour; a
 permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the mapping table above),
-`DRAW_TRIGGERED`, `EACH_DRAW_TRIGGERED`,
+`Triggers.drawStep(ActivePlayer.YOU)`, `Triggers.drawStep(ActivePlayer.ANY)`,
 `ON_CONTROLLER_DRAWS` (only the non–any-target flavour; the any-target variant is routed through the
 `DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS` (only the
 non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget` pipeline),
@@ -378,7 +378,7 @@ through — plus the empty-library / no-match early returns of `performLibrarySe
 too. Only a player searching **their own** library counts (`params.targetPlayerId()` unset); a search
 prevented by Leonin Arbiter never happens and does not fire. Non-targeting, but the searching player is
 baked in as the trigger's `targetId`, so `TARGET_PLAYER`-scoped effects act on them),
-`ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED`, `ENCHANTED_PLAYER_UPKEEP_TRIGGERED`,
+`Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)`, `Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER)`,
 `Triggers.enters(Triggers.EQUIPMENT, ObjectRelation.ANOTHER_YOU_CONTROL)`,
 `Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL)` (Trial of Solidarity; "Whenever an enchantment enters under
 your control" — checked in `TriggerCollectionService.checkAllyEnchantmentEntersTriggers` from
@@ -410,8 +410,8 @@ Effects implementing `LeavingPermanentCountersAwareEffect` can bind the leaving 
 counters before queuing; targeted effects are routed through the trigger-target interaction flow.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
-`Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
-`EACH_BEGINNING_OF_COMBAT_TRIGGERED`, `OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED`,
+`Triggers.milled(THIS)`, `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, THIS)`, `STATE_TRIGGERED`, `Triggers.beginningOfCombat(ActivePlayer.YOU)`,
+`Triggers.beginningOfCombat(ActivePlayer.ANY)`, `Triggers.beginningOfCombat(ActivePlayer.OPPONENT)`,
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
@@ -573,7 +573,7 @@ create a stack entry.
 **Graveyard-targeting upkeep triggers** ("At the beginning of your upkeep, you may return target
 enchantment card from your graveyard to the battlefield" - Starfield of Nyx) use the same
 `SpellGraveyardTargetTrigger` flow. `StepTriggerService.handleUpkeepTriggers` pulls every
-`UPKEEP_TRIGGERED` effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` out of the per-effect loop
+`Triggers.upkeep(ActivePlayer.YOU)` effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` out of the per-effect loop
 and queues them as one interaction, drained at the end of the same method; no matching card in the
 graveyard means the trigger is never put on the stack (CR 603.3c). As above, the "you may" needs no
 `MayEffect` wrapper - the up-to-one pick can be left empty.
@@ -745,15 +745,15 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 
 | Oracle text pattern | Trigger slot | Fires when | Example |
 |---|---|---|---|
-| "At the beginning of your upkeep, ..." | `UPKEEP_TRIGGERED` | Aura controller's upkeep (aura is on their battlefield) | Call to the Kindred |
-| "At the beginning of enchanted creature's controller's upkeep, ..." | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Enchanted creature's controller is the active player | Necrotic Plague, Soul Bleed, Numbing Dose, Erosion (enchanted land) |
-| "At the beginning of your upkeep, enchanted permanent's controller ..." | `ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED` | Aura controller is the active player; enchanted permanent's controller baked in as `targetId` (`TARGET_PLAYER` recipients) | Strangling Grasp |
-| "At the beginning of enchanted player's upkeep, ..." | `ENCHANTED_PLAYER_UPKEEP_TRIGGERED` | Enchanted player is the active player (curses) | Curse of Oblivion, Curse of the Bloody Tome |
-| "At the beginning of enchanted player's draw step, ..." | `ENCHANTED_PLAYER_DRAW_TRIGGERED` | Enchanted player is the active player (curses) | Curse of Obsession (`MIC`) |
+| "At the beginning of your upkeep, ..." | `Triggers.upkeep(ActivePlayer.YOU)` | Aura controller's upkeep (aura is on their battlefield) | Call to the Kindred |
+| "At the beginning of enchanted creature's controller's upkeep, ..." | `Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)` | Enchanted creature's controller is the active player | Necrotic Plague, Soul Bleed, Numbing Dose, Erosion (enchanted land) |
+| "At the beginning of your upkeep, enchanted permanent's controller ..." | `Triggers.upkeep(ActivePlayer.YOU)` | Aura controller is the active player; enchanted permanent's controller baked in as `targetId` (`TARGET_PLAYER` recipients) | Strangling Grasp |
+| "At the beginning of enchanted player's upkeep, ..." | `Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER)` | Enchanted player is the active player (curses) | Curse of Oblivion, Curse of the Bloody Tome |
+| "At the beginning of enchanted player's draw step, ..." | `Triggers.drawStep(ActivePlayer.ENCHANTED_PLAYER)` | Enchanted player is the active player (curses) | Curse of Obsession (`MIC`) |
 | "Whenever enchanted opponent draws a card, ..." | `ON_ENCHANTED_PLAYER_DRAWS` | The player attached to this player Aura draws a card | Psychic Possession (`DIS`) |
-| "At the beginning of each upkeep, ..." | `EACH_UPKEEP_TRIGGERED` | Every player's upkeep; targeted permanents are chosen by the source controller as the trigger is put on the stack | — |
-| "At the beginning of each player's upkeep, if this card is suspended, ..." | `SUSPENDED_EACH_UPKEEP_TRIGGERED` | Every player's upkeep while the card is exiled with a positive time-counter entry | Curse of the Cabal (`TSP`) |
-| "At the beginning of your upkeep, if this card is exiled with a scream counter on it, remove a scream counter from it. If there are no more scream counters on it, put it into your graveyard and each player returns all creature cards from their graveyard to the battlefield." | `EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED` | The card owner's upkeep while it is exiled with a positive scream-counter entry; the last-counter handler moves it to its owner's graveyard and inserts the existing mass-reanimation effect | All Hallow's Eve (`LEG`) |
+| "At the beginning of each upkeep, ..." | `Triggers.upkeep(ActivePlayer.ANY)` | Every player's upkeep; targeted permanents are chosen by the source controller as the trigger is put on the stack | — |
+| "At the beginning of each player's upkeep, if this card is suspended, ..." | `Triggers.upkeep(ActivePlayer.ANY) from the exile` | Every player's upkeep while the card is exiled with a positive time-counter entry | Curse of the Cabal (`TSP`) |
+| "At the beginning of your upkeep, if this card is exiled with a scream counter on it, remove a scream counter from it. If there are no more scream counters on it, put it into your graveyard and each player returns all creature cards from their graveyard to the battlefield." | `Triggers.upkeep(ActivePlayer.YOU) from the exile` | The card owner's upkeep while it is exiled with a positive scream-counter entry; the last-counter handler moves it to its owner's graveyard and inserts the existing mass-reanimation effect | All Hallow's Eve (`LEG`) |
 | "When enchanted creature dies, ..." | `Triggers.dies(ObjectRelation.ENCHANTED)` | Enchanted creature goes to graveyard | Necrotic Plague (return effect), Banewasp Affliction (life loss = toughness), Creature Bond (damage = toughness), Death Watch (lose life = power + gain life = toughness) |
 | "Whenever enchanted creature is dealt damage, ..." | `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | Enchanted creature is dealt damage (combat or non-combat) | Spiteful Shadows |
 | "Whenever enchanted creature deals damage to a creature, ..." | `ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE` | Enchanted creature deals damage to another creature (combat or non-combat); the damaged creature is captured as a non-targeting `targetId` | Venomous Fangs |
@@ -778,11 +778,11 @@ suppress a trigger that legitimately fired. `checkCreatureDamageToYouOrYourPerma
 (Mangara's Equity) is deliberately **outside** the gate: it also covers damage to the player, and the
 effect's own `damagedPermanentFilter` does the narrowing in `DamageTriggerCollectorService`.
 
-**Key distinction**: "your upkeep" on an aura means the **aura controller's** upkeep → use `UPKEEP_TRIGGERED`. "Enchanted creature's controller's upkeep" means the **enchanted permanent's controller's** upkeep → use `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED`. These are different when the aura enchants an opponent's creature.
+**Key distinction**: "your upkeep" on an aura means the **aura controller's** upkeep → use `Triggers.upkeep(ActivePlayer.YOU)`. "Enchanted creature's controller's upkeep" means the **enchanted permanent's controller's** upkeep → use `Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)`. These are different when the aura enchants an opponent's creature.
 
-**How `UPKEEP_TRIGGERED` works for auras**: The aura permanent sits on the controller's battlefield. `StepTriggerService` iterates the active player's battlefield looking for permanents with `UPKEEP_TRIGGERED` effects. Since the aura is on the controller's battlefield, the trigger fires during the controller's upkeep. The `sourcePermanentId` on the stack entry is set to the aura permanent's ID (`perm.getId()`), so the resolution handler can find the enchanted creature via `auraPerm.getAttachedTo()`.
+**How `Triggers.upkeep(ActivePlayer.YOU)` works for auras**: The aura permanent sits on the controller's battlefield. `StepTriggerService` iterates the active player's battlefield looking for permanents with `Triggers.upkeep(ActivePlayer.YOU)` effects. Since the aura is on the controller's battlefield, the trigger fires during the controller's upkeep. The `sourcePermanentId` on the stack entry is set to the aura permanent's ID (`perm.getId()`), so the resolution handler can find the enchanted creature via `auraPerm.getAttachedTo()`.
 
-**How `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` works**: `StepTriggerService` iterates ALL permanents on ALL battlefields, checks if each has this effect slot and is attached, then finds the enchanted permanent's controller. It only fires when that controller is the active player.
+**How `Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)` works**: `StepTriggerService` iterates ALL permanents on ALL battlefields, checks if each has this effect slot and is attached, then finds the enchanted permanent's controller. It only fires when that controller is the active player.
 
 **Targeted graveyard-return death triggers** use `ReturnCardFromGraveyardEffect` with
 `targetGraveyard(true)` in the `Triggers.dies(THIS)` ability. The death-trigger queue applies the effect's card

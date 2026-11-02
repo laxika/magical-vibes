@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -40,7 +40,7 @@ public class CaseOfTheStashedSkeleton extends Card {
         var suspectedSkeleton = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.SKELETON),
                 new PermanentIsSuspectedPredicate()));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new AllOf(List.of(
                                 new ControlsPermanentCountAtMost(0, suspectedSkeleton),

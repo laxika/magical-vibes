@@ -3,18 +3,19 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ArchmageAscensionDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZEN", collectorNumber = "42")
 public class ArchmageAscension extends Card {
 
     public ArchmageAscension() {
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Archmage Ascension?")));

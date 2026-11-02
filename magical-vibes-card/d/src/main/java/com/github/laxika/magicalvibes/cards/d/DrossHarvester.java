@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class DrossHarvester extends Card {
 
     public DrossHarvester() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new LoseLifeEffect(4));
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new LoseLifeEffect(4));
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new GainLifeEffect(2));
     }
 }

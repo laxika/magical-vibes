@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class ReaverDrone extends Card {
 
     public ReaverDrone() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.unless(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
                 new NotCondition(new ControlsAnotherPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsColorlessPredicate()

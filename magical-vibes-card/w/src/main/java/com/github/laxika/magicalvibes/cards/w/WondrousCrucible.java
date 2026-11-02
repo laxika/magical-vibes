@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BRC", collectorNumber = "20")
 @CardRegistration(set = "BRC", collectorNumber = "67")
@@ -25,7 +27,7 @@ public class WondrousCrucible extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.OWN_PERMANENTS));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(2, MillRecipient.CONTROLLER),
                 new ExileRandomCardFromGraveyardAndMayCastCopyEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));

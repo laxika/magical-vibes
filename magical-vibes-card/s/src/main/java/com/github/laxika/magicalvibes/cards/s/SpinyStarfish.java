@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ public class SpinyStarfish extends Card {
     public SpinyStarfish() {
         // At the beginning of each end step, if this creature regenerated this turn, create a 0/1 blue
         // Starfish creature token for each time it regenerated this turn.
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new SourceRegeneratedThisTurn(),
                 new CreateTokenEffect(
                         new TimesSourceRegeneratedThisTurn(),

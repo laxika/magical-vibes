@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "26")
 @CardRegistration(set = "OPCA", collectorNumber = "56")
 public class Nephalia extends Card {
 
     public Nephalia() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(7, MillRecipient.CONTROLLER),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

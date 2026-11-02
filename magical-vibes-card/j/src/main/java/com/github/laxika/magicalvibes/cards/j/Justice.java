@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +19,7 @@ public class Justice extends Card {
 
     public Justice() {
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {W}{W}.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{W}{W}"),
                         List.of(new SacrificeSelfEffect()),

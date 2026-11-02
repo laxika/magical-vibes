@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "9ED", collectorNumber = "152")
 @CardRegistration(set = "8ED", collectorNumber = "152")
@@ -27,6 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class PhyrexianArena extends Card {
 
     public PhyrexianArena() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
     }
 }

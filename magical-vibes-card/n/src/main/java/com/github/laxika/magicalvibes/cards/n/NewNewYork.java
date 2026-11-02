@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +40,7 @@ public class NewNewYork extends Card {
                 null,
                 List.of(new CrewCost(1), AnimatePermanentsEffect.crew()),
                 "Crew 1");
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new GrantActivatedAbilityEffect(crewOne, GrantScope.OWN_PERMANENTS,
                         noncreatureArtifact, EffectDuration.UNTIL_END_OF_TURN),
                 new AnimatePermanentsEffect(

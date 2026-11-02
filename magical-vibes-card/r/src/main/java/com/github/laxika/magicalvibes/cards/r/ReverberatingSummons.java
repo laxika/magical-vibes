@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +22,7 @@ import java.util.Set;
 public class ReverberatingSummons extends Card {
 
     public ReverberatingSummons() {
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 new ConditionalEffect(
                         new ControllerCastTwoOrMoreSpellsThisTurn(new CardTruePredicate()),
                         new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.MONK), Set.of(Keyword.HASTE))));

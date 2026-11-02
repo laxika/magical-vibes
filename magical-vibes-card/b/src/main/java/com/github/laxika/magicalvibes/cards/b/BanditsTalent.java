@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsTwoUnlessNonlandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -50,11 +50,11 @@ public class BanditsTalent extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "This Class must be level 2."));
 
-        addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new ConditionalEffect(
                 new AllOf(List.of(new SourceCounterThreshold(1, CounterType.LEVEL),
                         new ActivePlayerHandAtMost(1))),
                 new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new DrawCardEffect(new PlayersWithCardsInHandAtMost(CountScope.OPPONENTS, 1))));
     }

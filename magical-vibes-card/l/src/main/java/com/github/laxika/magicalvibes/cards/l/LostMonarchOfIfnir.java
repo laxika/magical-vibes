@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DRC", collectorNumber = "11")
 @CardRegistration(set = "DRC", collectorNumber = "27")
@@ -34,7 +36,7 @@ public class LostMonarchOfIfnir extends Card {
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new ConditionalEffect(
                 new AnyPlayerDealtCombatDamageBySubtypeThisTurn(CardSubtype.ZOMBIE),
                 SequenceEffect.of(
                         new MillEffect(3, MillRecipient.CONTROLLER),

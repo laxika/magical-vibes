@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ public class IllustriousWanderglyph extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate())))));
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new CreateTokenEffect(
                 "Gnome", 1, 1, null,
                 List.of(CardSubtype.GNOME), Set.of(), Set.of(CardType.ARTIFACT)));
     }

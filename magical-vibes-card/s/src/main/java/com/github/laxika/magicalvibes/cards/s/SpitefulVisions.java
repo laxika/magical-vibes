@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SHM", collectorNumber = "198")
 @CardRegistration(set = "C13", collectorNumber = "233")
@@ -15,7 +17,7 @@ public class SpitefulVisions extends Card {
 
     public SpitefulVisions() {
         // At the beginning of each player's draw step, that player draws an additional card.
-        addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new DrawCardForTargetPlayerEffect(1));
+        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1));
 
         // Whenever a player draws a card, this enchantment deals 1 damage to that player.
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));

@@ -67,7 +67,7 @@ class CardEffectTargetingConsistencyTest {
             // resolves or chooses a target itself.
             "TargetGroupMarkerEffect",
             // Pre-resolved: the draw-step player's UUID is baked into the stack entry when the
-            // EACH_DRAW_TRIGGERED trigger is pushed in StepTriggerService (Maralen of the Mornsong);
+            // Triggers.drawStep(ActivePlayer.ANY) trigger is pushed in StepTriggerService (Maralen of the Mornsong);
             // it never enters the shared target-collection pipeline.
             "TargetPlayerLosesLifeAndSearchesLibraryToHandEffect",
             // Piggyback: rides on a counterspell's existing target (e.g. Frightful Delusion,
@@ -108,7 +108,7 @@ class CardEffectTargetingConsistencyTest {
             // (Starke of Rath) — reads that permanent's controller from entry.getTargetId() to hand
             // them the source; never contributes a target of its own.
             "TargetPermanentControllerGainsControlOfSourceEffect",
-            // Pre-resolved: EACH_UPKEEP_TRIGGERED carries Emberwilde Djinn's active player on the
+            // Pre-resolved: Triggers.upkeep(ActivePlayer.ANY) carries Emberwilde Djinn's active player on the
             // stack entry, so this effect never asks the shared pipeline to choose a player.
             "TargetPlayerMayPayManaOrLifeEffect",
             // Piggyback: Shuriken's effect reads the creature target already chosen for the

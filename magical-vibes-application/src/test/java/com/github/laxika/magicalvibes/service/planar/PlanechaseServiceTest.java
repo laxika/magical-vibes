@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.cards.v.Voidslime;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.planar.*;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.*;
@@ -43,6 +46,12 @@ class PlanechaseServiceTest extends BaseCardTest {
     private Card fixture(String name, CardType type, EffectSlot slot, CardEffect effect) {
         Card card = fixture(name, type);
         card.addEffect(slot, effect);
+        return card;
+    }
+
+    private Card fixture(String name, CardType type, Trigger trigger, CardEffect effect) {
+        Card card = fixture(name, type);
+        card.addTrigger(trigger, effect);
         return card;
     }
 
@@ -329,8 +338,8 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void upkeepAndEndStepAbilitiesUseTheCurrentPlanarController() {
-        Card plane = fixture("Test plane", CardType.PLANE, EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(1));
-        plane.addEffect(EffectSlot.END_STEP_TRIGGERED, new DrawCardEffect(1));
+        Card plane = fixture("Test plane", CardType.PLANE, Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1));
+        plane.addTrigger(Triggers.endStep(ActivePlayer.ANY), new DrawCardEffect(1));
         faceUp(plane);
         var steps = GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.turn.StepTriggerService.class);
         int firstBefore = gd.playerHands.get(player1.getId()).size();

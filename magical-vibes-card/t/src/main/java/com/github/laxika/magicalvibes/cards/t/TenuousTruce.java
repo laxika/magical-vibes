@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "87")
 @CardRegistration(set = "NCC", collectorNumber = "95")
@@ -25,7 +27,7 @@ public class TenuousTruce extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
 
-        addEffect(EffectSlot.ENCHANTED_PLAYER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.ENCHANTED_PLAYER),
                 new ConditionalEffect(new TargetPlayerIsActive(), SequenceEffect.of(
                         new DrawCardEffect(),
                         new DrawCardForTargetPlayerEffect(1))));

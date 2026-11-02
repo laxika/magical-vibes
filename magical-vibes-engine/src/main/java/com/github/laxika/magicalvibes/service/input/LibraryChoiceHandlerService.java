@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder;
 import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler;
 import com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
@@ -657,8 +659,8 @@ public class LibraryChoiceHandlerService {
                     }
                     if (returnToHandAtEndStep) {
                         if (librarySearch.returnToHandAtControllerEndStepId() != null) {
-                            perm.addPersistentTriggeredEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                                    com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self());
+                            perm.addPersistentAbility(new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                                    com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()));
                         } else {
                             // The delayed trigger belongs to the ability that searched (e.g. Nahiri, the
                             // Harbinger's -8), not to the fetched permanent, even after control changes.

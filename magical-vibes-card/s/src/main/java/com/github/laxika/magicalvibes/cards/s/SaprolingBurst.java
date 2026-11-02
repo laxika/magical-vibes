@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithSourceCounterPTEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourc
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class SaprolingBurst extends Card {
 
     public SaprolingBurst() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(7)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));
 
         CreateTokenEffect saproling = new CreateTokenEffect(

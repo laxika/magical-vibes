@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -22,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class GogoMysteriousMime extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 anotherCreature,
                 "Target must be another creature you control"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 new ConditionalEffect(new SourceIsOnBattlefield(), SequenceEffect.of(
                         new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                                 "Gogo, Mysterious Mime", Set.of()),

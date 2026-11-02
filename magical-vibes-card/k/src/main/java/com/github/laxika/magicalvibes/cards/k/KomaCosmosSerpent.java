@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +35,7 @@ public class KomaCosmosSerpent extends Card {
         addStaticEffect(new CantBeCounteredEffect());
 
         // At the beginning of each upkeep, create a 3/3 blue Serpent creature token named Koma's Coil.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new CreateTokenEffect(
                 "Koma's Coil", 3, 3, CardColor.BLUE,
                 List.of(CardSubtype.SERPENT), Set.of(), Set.of()));
 

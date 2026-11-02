@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class BudokaPupil extends Card {
                 List.of(new MayEffect(new PutCountersOnSelfEffect(CounterType.KI),
                         "Put a ki counter on Budoka Pupil?"))));
 
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.KI),
                 new MayEffect(new TransformToBackFaceEffect(true), "Flip Budoka Pupil?")));
     }

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -41,7 +42,7 @@ public class OverlordOfTheMistmoors extends Card {
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(4))));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new AllOf(List.of(
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),

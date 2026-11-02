@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ public class ShadowOfTheGoblin extends Card {
 
     public ShadowOfTheGoblin() {
         // At the beginning of your first main phase, discard a card. If you do, draw a card.
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new DiscardAndDrawCardEffect());
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new DiscardAndDrawCardEffect());
 
         // Whenever you play a land or cast a spell from anywhere other than your hand, this
         // enchantment deals 1 damage to each opponent.

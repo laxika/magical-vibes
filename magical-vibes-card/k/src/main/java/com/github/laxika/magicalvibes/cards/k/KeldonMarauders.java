@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class KeldonMarauders extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"))
                 .addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(2)))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))

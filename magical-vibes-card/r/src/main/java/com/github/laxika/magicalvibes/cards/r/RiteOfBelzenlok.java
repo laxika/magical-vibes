@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -47,7 +49,8 @@ public class RiteOfBelzenlok extends Card {
                 1, "Demon", 6, 6, CardColor.BLACK,
                 List.of(CardSubtype.DEMON),
                 Set.of(Keyword.FLYING, Keyword.TRAMPLE), Set.of(),
-                List.of(LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, new SacrificeOtherCreatureOrDamageEffect(6)))
+                List.of(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                        new SacrificeOtherCreatureOrDamageEffect(6)))
         ));
     }
 }

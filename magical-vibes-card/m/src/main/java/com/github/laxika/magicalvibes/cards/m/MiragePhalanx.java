@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,10 +32,10 @@ public class MiragePhalanx extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                        new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         CreateTokenCopyOfSourceEffect.withoutSourceEffects(
                                 Set.of(MayEffect.class, SoulbondPairWithEnteringEffect.class),
-                                Set.of(Keyword.SOULBOND), true, true),
+                                Set.of(Keyword.SOULBOND), true, true)),
                         GrantScope.SELF_AND_PAIRED)));
     }
 }

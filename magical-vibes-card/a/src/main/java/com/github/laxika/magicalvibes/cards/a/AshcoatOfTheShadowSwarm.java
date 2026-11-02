@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -40,7 +42,7 @@ public class AshcoatOfTheShadowSwarm extends Card {
         var ratCreatureCard = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
                 new CardSubtypePredicate(CardSubtype.RAT)));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
                         new MillEffect(4, MillRecipient.CONTROLLER),
                         new ReturnCardsFromControllerGraveyardToHandEffect(ratCreatureCard, new Fixed(2))

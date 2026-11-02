@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,7 +37,7 @@ public class AangAirbendingMaster extends Card {
         addTrigger(Triggers.leavesBattlefieldWithoutDying(Triggers.CREATURE, ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new ExperienceCountersEffect(1));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenEffect(
                 new ControllerExperienceCounters(), "Ally", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.ALLY), Set.of(), Set.of()));
     }

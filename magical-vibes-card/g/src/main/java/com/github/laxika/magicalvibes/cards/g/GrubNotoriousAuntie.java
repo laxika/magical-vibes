@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class GrubNotoriousAuntie extends Card {
 
@@ -15,7 +17,7 @@ public class GrubNotoriousAuntie extends Card {
                 new BlightEffect(1, new CreateTokenCopyOfTargetPermanentEffect(false, false, true, true)),
                 "Blight 1 to create a tapped and attacking token copy of that creature?"));
 
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new MayPayManaEffect("{B}", new TransformSelfEffect(),
                         "Pay {B} to transform Grub?"));
     }

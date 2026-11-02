@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -118,6 +120,11 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -316,10 +323,10 @@ class StepTriggerServiceTest {
         lenient().when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class)))
                 .thenReturn(new com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator()
                         .toStaticBonus(0, 0, false));
-        lenient().when(gameQueryService.getEffectiveGraveyardEffects(
-                        eq(gd), any(Card.class), any(EffectSlot.class)))
+        lenient().when(gameQueryService.getEffectiveGraveyardTriggerEffects(
+                        eq(gd), any(Card.class), any(Trigger.class)))
                 .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
-                        .getEffects(invocation.getArgument(2)));
+                        .getTriggerEffects(invocation.getArgument(2), Zone.GRAVEYARD));
     }
 
     @Nested
@@ -376,11 +383,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("DRAW_TRIGGERED effect on active player's permanent pushes trigger onto stack")
+        @DisplayName("Triggers.drawStep(ActivePlayer.YOU) effect on active player's permanent pushes trigger onto stack")
         void drawTriggeredEffectPushesToStack() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Temple Bell");
-            card.addEffect(EffectSlot.DRAW_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.drawStep(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleDrawStep(gd);
@@ -390,11 +397,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("DRAW_TRIGGERED MayEffect is queued onto the stack via queueMayAbility")
+        @DisplayName("Triggers.drawStep(ActivePlayer.YOU) MayEffect is queued onto the stack via queueMayAbility")
         void drawTriggeredMayEffectQueuedOntoStack() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Mystic Card");
-            card.addEffect(EffectSlot.DRAW_TRIGGERED, new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
+            card.addTrigger(Triggers.drawStep(ActivePlayer.YOU), new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleDrawStep(gd);
@@ -405,11 +412,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_DRAW_TRIGGERED fires for all players' draw steps")
+        @DisplayName("Triggers.drawStep(ActivePlayer.ANY) fires for all players' draw steps")
         void eachDrawTriggeredFiresForAllPlayers() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Howling Mine");
-            card.addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new DrawCardForTargetPlayerEffect(1));
+            card.addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleDrawStep(gd);
@@ -419,11 +426,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_DRAW_TRIGGERED skips when source requires untapped and is tapped")
+        @DisplayName("Triggers.drawStep(ActivePlayer.ANY) skips when source requires untapped and is tapped")
         void eachDrawTriggeredSkipsWhenSourceTapped() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Howling Mine");
-            card.addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new DrawCardForTargetPlayerEffect(1, true));
+            card.addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1, true));
             Permanent perm = new Permanent(card);
             perm.tap();
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -530,7 +537,7 @@ class StepTriggerServiceTest {
         void permanentWithUpkeepEffectPushesTrigger() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Venser's Journal");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -542,7 +549,7 @@ class StepTriggerServiceTest {
         @Test
         void permanentWithNoAbilitiesDoesNotTriggerAtUpkeep() {
             Card card = createCardWithName("Upkeep creature");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GainLifeEffect(1));
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
             when(gameQueryService.hasLostAllAbilities(gd, permanent)).thenReturn(true);
@@ -556,7 +563,7 @@ class StepTriggerServiceTest {
         void optionalMultipleUpkeepTargetsUseGroupSelection() {
             Card card = createCardWithName("Artifact animator");
             CardEffect effect = new BoostTargetCreatureEffect(1, 1);
-            card.target(0, 3).addEffect(EffectSlot.UPKEEP_TRIGGERED, effect);
+            card.target(0, 3).addTrigger(Triggers.upkeep(ActivePlayer.YOU), effect);
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
             when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
@@ -649,7 +656,7 @@ class StepTriggerServiceTest {
         @DisplayName("Unique creature-count leader lets an intervening-if upkeep ability trigger")
         void uniqueCreatureCountLeaderTriggers() {
             Card card = createCardWithName("Wild Mammoth");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                     new APlayerControlsMoreCreaturesThanEachOtherPlayer(),
                     new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
@@ -666,7 +673,7 @@ class StepTriggerServiceTest {
         @DisplayName("Global permanent-count intervening-if upkeep ability triggers at its threshold")
         void globalPermanentCountTriggersAtThreshold() {
             Card card = createCardWithName("Planar Collapse");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                     new AnyPlayerControlsPermanentCount(4, new PermanentIsCreaturePredicate()),
                     new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
@@ -690,7 +697,7 @@ class StepTriggerServiceTest {
         @DisplayName("Tied creature counts suppress an intervening-if upkeep ability")
         void tiedCreatureCountsDoNotTrigger() {
             Card card = createCardWithName("Wild Mammoth");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                     new APlayerControlsMoreCreaturesThanEachOtherPlayer(),
                     new PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
@@ -744,7 +751,7 @@ class StepTriggerServiceTest {
         void opponentUpkeepTriggeredDoesNotFireForActivePlayer() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Venser's Journal");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -757,7 +764,7 @@ class StepTriggerServiceTest {
         void mayEffectQueuesMayAbility() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Optional Card");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -772,7 +779,7 @@ class StepTriggerServiceTest {
         void playerTargetingEffectTriggersTargetSelection() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Bloodgift Demon");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardForTargetPlayerEffect(1, false, true));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardForTargetPlayerEffect(1, false, true));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -786,7 +793,7 @@ class StepTriggerServiceTest {
         void enchantedCreatureControllerChoosesControlChangeOpponent() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Custody Battle");
-            card.addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                     new ForcedCostOrElseEffect(
                             new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
                             List.of(new TargetPlayerGainsControlOfEnchantedPermanentEffect()), true));
@@ -817,7 +824,7 @@ class StepTriggerServiceTest {
         void playerTargetingInterveningIfSkipsWhenConditionFails() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Brink of Madness");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                     new ActivePlayerHandEmpty(), new DrawCardForTargetPlayerEffect(1, false, true)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerHands.get(player1Id).add(createCardWithName("Card in hand"));
@@ -833,7 +840,7 @@ class StepTriggerServiceTest {
         void copyEffectTriggersCopyTargetSelection() {
             gd.turnNumber = 2;
             Card sourceCard = createCardWithName("Clone Shell");
-            sourceCard.addEffect(EffectSlot.UPKEEP_TRIGGERED, new BecomeCopyOfTargetCreatureEffect());
+            sourceCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new BecomeCopyOfTargetCreatureEffect());
             Permanent sourcePerm = new Permanent(sourceCard);
             gd.playerBattlefields.get(player1Id).add(sourcePerm);
 
@@ -857,7 +864,7 @@ class StepTriggerServiceTest {
         void copyEffectSkippedWhenNoTargets() {
             gd.turnNumber = 2;
             Card sourceCard = createCardWithName("Clone Shell");
-            sourceCard.addEffect(EffectSlot.UPKEEP_TRIGGERED, new BecomeCopyOfTargetCreatureEffect());
+            sourceCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new BecomeCopyOfTargetCreatureEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
             // No other permanents on any battlefield — source is skipped, so isCreature is never called
 
@@ -872,7 +879,7 @@ class StepTriggerServiceTest {
         void destroyAtRandomTriggersOwnTargetSelection() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Capricious Efreet");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new DestroyOneOfTargetsAtRandomEffect());
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyOneOfTargetsAtRandomEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -886,7 +893,8 @@ class StepTriggerServiceTest {
         void noOtherSubtypeTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Tribal Card");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                    new ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             // Only one permanent — no other permanents to match, so condition is met
@@ -902,7 +910,8 @@ class StepTriggerServiceTest {
         void noOtherSubtypeDoesNotTriggerWhenOtherExists() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Tribal Card");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GainLifeEffect(1)));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                    new ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -927,7 +936,7 @@ class StepTriggerServiceTest {
         void winGameTriggersWhenThresholdMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Mortal Combat");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, mortalCombatEffect());
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), mortalCombatEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             // Add 20 creature cards to graveyard
@@ -946,7 +955,7 @@ class StepTriggerServiceTest {
         void winGameDoesNotTriggerWhenThresholdNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Mortal Combat");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, mortalCombatEffect());
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), mortalCombatEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             // Add only 5 creatures
@@ -964,7 +973,7 @@ class StepTriggerServiceTest {
         void eachPlayerLifeTriggersWhenAllAtOrBelow() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Cryptolith Fragment");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                     new ConditionalEffect(new EachPlayerLifeAtMost(10), new TransformSelfEffect()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerLifeTotals.put(player1Id, 10);
@@ -981,7 +990,7 @@ class StepTriggerServiceTest {
         void eachPlayerLifeDoesNotTriggerWhenOneAbove() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Cryptolith Fragment");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                     new ConditionalEffect(new EachPlayerLifeAtMost(10), new TransformSelfEffect()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerLifeTotals.put(player1Id, 10);
@@ -997,7 +1006,7 @@ class StepTriggerServiceTest {
         void controllerLifeAtLeastTriggersAtThreshold() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Felidar Sovereign");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                     new ConditionalEffect(new ControllerLifeAtLeast(40), new WinGameEffect()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerLifeTotals.put(player1Id, 40);
@@ -1013,7 +1022,7 @@ class StepTriggerServiceTest {
         void controllerLifeAtLeastSuppressesBelowThreshold() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Felidar Sovereign");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                     new ConditionalEffect(new ControllerLifeAtLeast(40), new WinGameEffect()));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerLifeTotals.put(player1Id, 39);
@@ -1039,11 +1048,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED pushes trigger from graveyard card")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard pushes trigger from graveyard card")
         void graveyardUpkeepTriggeredPushesToStack() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Graveyard Card");
-            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT, new GainLifeEffect(1));
             gd.playerGraveyards.get(player1Id).add(card);
 
             sut.handleUpkeepTriggers(gd);
@@ -1053,11 +1063,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with MayPayManaEffect queues onto stack")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with MayPayManaEffect queues onto stack")
         void graveyardUpkeepMayPayQueuesOntoStack() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Graveyard May Card");
-            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT,
                     new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay {2} to gain life?"));
             gd.playerGraveyards.get(player1Id).add(card);
 
@@ -1069,11 +1080,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with targeted MayPayManaEffect queues graveyard target selection")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with targeted MayPayManaEffect queues graveyard target selection")
         void graveyardUpkeepTargetedMayPayQueuesGraveyardTargetSelection() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Graveyard Target Card");
-            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT,
                     new MayPayManaEffect("{2}{G}",
                             ReturnCardFromGraveyardEffect.builder()
                                     .destination(GraveyardChoiceDestination.HAND)
@@ -1091,11 +1103,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with MayEffect queues may ability")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with MayEffect queues may ability")
         void graveyardUpkeepMayEffectQueuesAbility() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Graveyard May Card");
-            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT,
                     new MayEffect(new GainLifeEffect(1), "Gain life?"));
             gd.playerGraveyards.get(player1Id).add(card);
 
@@ -1105,11 +1118,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with ConditionalEffect skips when metalcraft not met")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with ConditionalEffect skips when metalcraft not met")
         void graveyardMetalcraftSkipsWhenNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
-            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT,
                     new ConditionalEffect(new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?")));
             gd.playerGraveyards.get(player1Id).add(card);
 
@@ -1122,13 +1136,14 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with ConditionalEffect triggers when metalcraft met")
+        @DisplayName("Triggers.upkeep(ActivePlayer.YOU) from the graveyard with ConditionalEffect triggers when metalcraft met")
         void graveyardMetalcraftTriggersWhenMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
             ConditionalEffect effect = new ConditionalEffect(
                     new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?"));
-            card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED, effect);
+            card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT, effect);
             gd.playerGraveyards.get(player1Id).add(card);
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -1141,11 +1156,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED fires for all players' permanents")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ANY) fires for all players' permanents")
         void eachUpkeepTriggeredFiresForAllPlayers() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Each Upkeep Card");
-            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -1155,12 +1170,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED any-target effect queues target choice for its controller")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ANY) any-target effect queues target choice for its controller")
         void eachUpkeepAnyTargetQueuesTargetChoiceForItsController() {
             gd.turnNumber = 2;
             gd.activePlayerId = player2Id;
             Card card = createCardWithName("Each Upkeep Damage Card");
-            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new DealDamageToAnyTargetEffect(3));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY), new DealDamageToAnyTargetEffect(3));
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
 
@@ -1176,11 +1191,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect triggers when no spells cast")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ANY) with ConditionalEffect triggers when no spells cast")
         void noSpellsCastTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf");
-            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                     new ConditionalEffect(new NoSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -1192,11 +1207,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect skips when spells were cast")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ANY) with ConditionalEffect skips when spells were cast")
         void noSpellsCastSkipsWhenSpellsWereCast() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf");
-            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                     new ConditionalEffect(new NoSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -1208,11 +1223,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect triggers when condition met")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ANY) with ConditionalEffect triggers when condition met")
         void twoOrMoreSpellsTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf Reverse");
-            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                     new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -1224,11 +1239,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect skips when no one cast two")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ANY) with ConditionalEffect skips when no one cast two")
         void twoOrMoreSpellsSkipsWhenNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf Reverse");
-            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                     new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -1241,11 +1256,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with OpponentLostLifeLastTurn only counts opponents")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ANY) with OpponentLostLifeLastTurn only counts opponents")
         void opponentLostLifeLastTurnOnlyCountsOpponents() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Feast on the Fallen");
-            card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+            card.addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                     new ConditionalEffect(new OpponentLostLifeLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -1259,11 +1274,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("OPPONENT_UPKEEP_TRIGGERED fires for opponent's permanents during active player's upkeep")
+        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) fires for opponent's permanents during active player's upkeep")
         void opponentUpkeepTriggeredFiresDuringActivePlayersUpkeep() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Opponent Trigger Card");
-            card.addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -1273,11 +1288,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("OPPONENT_UPKEEP_TRIGGERED does not fire for active player's own permanents")
+        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) does not fire for active player's own permanents")
         void opponentUpkeepTriggeredDoesNotFireForOwnPermanents() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Opponent Trigger Card");
-            card.addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleUpkeepTriggers(gd);
@@ -1286,11 +1301,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("OPPONENT_UPKEEP_TRIGGERED with DealDamageIfFewCardsInHandEffect triggers when hand size meets condition")
+        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) with DealDamageIfFewCardsInHandEffect triggers when hand size meets condition")
         void opponentUpkeepFewCardsTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Punisher Card");
-            card.addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new DealDamageIfFewCardsInHandEffect(3, 2));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new DealDamageIfFewCardsInHandEffect(3, 2));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 2 cards in hand (≤ 3)
@@ -1303,11 +1318,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("OPPONENT_UPKEEP_TRIGGERED with DealDamageIfFewCardsInHandEffect skips when hand too large")
+        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) with DealDamageIfFewCardsInHandEffect skips when hand too large")
         void opponentUpkeepFewCardsSkipsWhenHandTooLarge() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Punisher Card");
-            card.addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new DealDamageIfFewCardsInHandEffect(3, 2));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new DealDamageIfFewCardsInHandEffect(3, 2));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 5 cards in hand (> 3)
@@ -1321,7 +1336,7 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED fires when enchanted permanent's controller is active")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER) fires when enchanted permanent's controller is active")
         void enchantedPermanentControllerUpkeepFires() {
             gd.turnNumber = 2;
             // Create the enchanted permanent (controlled by active player)
@@ -1331,7 +1346,7 @@ class StepTriggerServiceTest {
 
             // Create the aura with the trigger (owned by player2)
             Card auraCard = createCardWithName("Numbing Dose");
-            auraCard.addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+            auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                     new EnchantedCreatureControllerLosesLifeEffect(1, null));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
@@ -1346,7 +1361,7 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED bakes the enchanted permanent's controller as the stack target")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER) bakes the enchanted permanent's controller as the stack target")
         void enchantedPermanentControllerUpkeepBakesControllerAsTarget() {
             gd.turnNumber = 2;
             Card targetCard = createCardWithName("Enchanted Enchantment");
@@ -1354,7 +1369,7 @@ class StepTriggerServiceTest {
             gd.playerBattlefields.get(player1Id).add(targetPerm);
 
             Card auraCard = createCardWithName("Feedback");
-            auraCard.addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+            auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                     new DealDamageToPlayersEffect(1, DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
@@ -1369,7 +1384,7 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED does not fire when enchanted permanent's controller is not active")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER) does not fire when enchanted permanent's controller is not active")
         void enchantedPermanentControllerUpkeepDoesNotFireWhenNotActive() {
             gd.turnNumber = 2;
             // Enchanted permanent controlled by player2 (not active)
@@ -1378,7 +1393,7 @@ class StepTriggerServiceTest {
             gd.playerBattlefields.get(player2Id).add(targetPerm);
 
             Card auraCard = createCardWithName("Numbing Dose");
-            auraCard.addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+            auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                     new EnchantedCreatureControllerLosesLifeEffect(1, null));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
@@ -1392,11 +1407,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED fires when enchanted player is active")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER) fires when enchanted player is active")
         void enchantedPlayerUpkeepFires() {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of Oblivion");
-            curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
+            curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
                     new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN, null, null));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id); // Attached to active player
@@ -1409,11 +1424,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED does not fire when enchanted player is not active")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER) does not fire when enchanted player is not active")
         void enchantedPlayerUpkeepDoesNotFireWhenNotActive() {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of Oblivion");
-            curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
+            curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
                     new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN, null, null));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player2Id); // Attached to non-active player
@@ -1425,11 +1440,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED pushes damage effect with the enchanted player as targetId")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER) pushes damage effect with the enchanted player as targetId")
         void enchantedPlayerUpkeepPushesDamageEffect() {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of the Bloody Tome");
-            curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
+            curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
                     new DealDamageToPlayersEffect(2, DamageRecipient.ENCHANTED_PLAYER));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
@@ -1445,12 +1460,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED preserves the attached-count predicate")
+        @DisplayName("Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER) preserves the attached-count predicate")
         void enchantedPlayerUpkeepPreservesAttachedCountPredicate() {
             gd.turnNumber = 2;
             PermanentPredicate predicate = new PermanentHasSubtypePredicate(CardSubtype.CURSE);
             Card curseCard = createCardWithName("Curse of Thirst");
-            curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
+            curseCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
                     DealDamageToPlayersEffect.enchantedAttachedCount(predicate));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
@@ -1490,7 +1505,7 @@ class StepTriggerServiceTest {
         void mayRevealSubtypeQueuesWhenSubtypeInHand() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
-            priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+            priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                     new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
@@ -1511,7 +1526,7 @@ class StepTriggerServiceTest {
         void mayRevealSubtypeTriggersWhenNoSubtypeInHand() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
-            priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+            priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                     new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
@@ -1533,7 +1548,7 @@ class StepTriggerServiceTest {
         void mayRevealSubtypeTriggersWhenHandEmpty() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
-            priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
+            priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                     new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
@@ -1551,14 +1566,14 @@ class StepTriggerServiceTest {
     class HandleBeginningOfCombatTriggers {
 
         @Test
-        @DisplayName("BEGINNING_OF_COMBAT_TRIGGERED fires only for active player's permanents")
+        @DisplayName("Triggers.beginningOfCombat(ActivePlayer.YOU) fires only for active player's permanents")
         void beginningOfCombatFiresForActivePlayerOnly() {
             Card activeCard = createCardWithName("Active Combat Card");
-            activeCard.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            activeCard.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(activeCard));
 
             Card opponentCard = createCardWithName("Opponent Combat Card");
-            opponentCard.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            opponentCard.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(opponentCard));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -1573,8 +1588,8 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Granted Combat Card");
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gd, permanent, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED))
+            when(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gd, permanent, Triggers.beginningOfCombat(ActivePlayer.YOU)))
                     .thenReturn(List.of(new GainLifeEffect(1)));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -1584,10 +1599,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("BEGINNING_OF_COMBAT_TRIGGERED does not fire for non-active player's permanents")
+        @DisplayName("Triggers.beginningOfCombat(ActivePlayer.YOU) does not fire for non-active player's permanents")
         void beginningOfCombatSkipsNonActivePlayer() {
             Card card = createCardWithName("Combat Trigger Card");
-            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -1596,10 +1611,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_BEGINNING_OF_COMBAT_TRIGGERED fires for non-active player's permanents")
+        @DisplayName("Triggers.beginningOfCombat(ActivePlayer.ANY) fires for non-active player's permanents")
         void eachBeginningOfCombatFiresForAllPlayers() {
             Card card = createCardWithName("Each Combat Card");
-            card.addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -1615,7 +1630,7 @@ class StepTriggerServiceTest {
             Card sourceCard = createCardWithName("Battle-Rattle Shaman");
             sourceCard.target(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Target creature"))
-                    .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                    .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                             new MayEffect(new BoostTargetCreatureEffect(2, 0), "Boost target creature?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
 
@@ -1634,7 +1649,7 @@ class StepTriggerServiceTest {
         @DisplayName("Targeted modal beginning-of-combat trigger queues mode selection")
         void targetedModalBeginningOfCombatQueuesModeSelection() {
             Card sourceCard = createCardWithName("Ferocification");
-            sourceCard.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ChooseOneEffect(List.of(
+            sourceCard.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption(
                             "Target creature gets +2/+0",
                             new BoostTargetCreatureEffect(2, 0),
@@ -1651,10 +1666,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED fires for the non-active player's permanents")
+        @DisplayName("Triggers.beginningOfCombat(ActivePlayer.OPPONENT) fires for the non-active player's permanents")
         void opponentBeginningOfCombatFiresForNonActivePlayer() {
             Card card = createCardWithName("Opponent Combat Card");
-            card.addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -1665,10 +1680,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED does not fire on the controller's own turn")
+        @DisplayName("Triggers.beginningOfCombat(ActivePlayer.OPPONENT) does not fire on the controller's own turn")
         void opponentBeginningOfCombatSkipsActivePlayer() {
             Card card = createCardWithName("Opponent Combat Card");
-            card.addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.OPPONENT), new GainLifeEffect(1));
             gd.playerBattlefields.get(gd.activePlayerId).add(new Permanent(card));
 
             sut.handleBeginningOfCombatTriggers(gd);
@@ -1680,7 +1695,7 @@ class StepTriggerServiceTest {
         @DisplayName("AllOf intervening-if skips beginning-of-combat trigger when unmet")
         void allOfInterveningIfSkipsWhenUnmet() {
             Card card = createCardWithName("Graf Rats");
-            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                     new com.github.laxika.magicalvibes.model.condition.AllOf(List.of(
                             new com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount(
                                     1, new PermanentHasSubtypePredicate(CardSubtype.RAT)))),
@@ -1696,7 +1711,7 @@ class StepTriggerServiceTest {
         @DisplayName("Total-power intervening-if skips beginning-of-combat trigger when unmet")
         void controlledCreaturesTotalPowerInterveningIfSkipsWhenUnmet() {
             Card card = createCardWithName("Surrak, the Hunt Caller");
-            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                     new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
@@ -1712,7 +1727,7 @@ class StepTriggerServiceTest {
         @DisplayName("Source-counter intervening-if checks the beginning-of-combat threshold")
         void sourceCounterThresholdInterveningIfChecksThreshold() {
             Card card = createCardWithName("Counter Combat Card");
-            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                     new SourceCounterThreshold(2, CounterType.CHARGE), new GainLifeEffect(1)));
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
@@ -1731,7 +1746,7 @@ class StepTriggerServiceTest {
         @DisplayName("Total-power intervening-if allows beginning-of-combat trigger at threshold")
         void controlledCreaturesTotalPowerInterveningIfAllowsAtThreshold() {
             Card card = createCardWithName("Surrak, the Hunt Caller");
-            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                     new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
@@ -1744,10 +1759,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED fires when its condition is met")
+        @DisplayName("Triggers.beginningOfCombat(ActivePlayer.YOU) from the graveyard fires when its condition is met")
         void graveyardBeginningOfCombatFiresWhenConditionIsMet() {
             Card card = createCardWithName("Graveyard Combat Card");
-            card.addEffect(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
+            card.addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT,
                     new ConditionalEffect(
                             new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
                             new GainLifeEffect(1)));
@@ -1764,10 +1780,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED skips when its condition is unmet")
+        @DisplayName("Triggers.beginningOfCombat(ActivePlayer.YOU) from the graveyard skips when its condition is unmet")
         void graveyardBeginningOfCombatSkipsWhenConditionIsUnmet() {
             Card card = createCardWithName("Graveyard Combat Card");
-            card.addEffect(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
+            card.addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT,
                     new ConditionalEffect(
                             new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
                             new GainLifeEffect(1)));
@@ -1782,7 +1799,7 @@ class StepTriggerServiceTest {
         @DisplayName("Max speed intervening-if skips beginning-of-combat trigger when unmet")
         void maxSpeedInterveningIfSkipsWhenUnmet() {
             Card card = createCardWithName("Max Speed Combat Card");
-            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                     new MaxSpeed(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -1795,7 +1812,7 @@ class StepTriggerServiceTest {
         @DisplayName("Max speed intervening-if allows beginning-of-combat trigger at speed 4")
         void maxSpeedInterveningIfAllowsAtMaxSpeed() {
             Card card = createCardWithName("Max Speed Combat Card");
-            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ConditionalEffect(
                     new MaxSpeed(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playerSpeeds.put(player1Id, 4);
@@ -1835,7 +1852,7 @@ class StepTriggerServiceTest {
         @DisplayName("Permanent with controller end-step effect pushes trigger onto stack")
         void controllerEndStepEffectPushesTrigger() {
             Card card = createCardWithName("Jin-Gitaxias, Core Augur");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
@@ -1851,7 +1868,7 @@ class StepTriggerServiceTest {
             ChooseOneEffect chooseOne = new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1)),
                     new ChooseOneEffect.ChooseOneOption("Gain more life", new GainLifeEffect(2))));
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, chooseOne);
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU), chooseOne);
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
@@ -1866,8 +1883,8 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Granted End Step Card");
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            when(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gd, permanent, EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
+            when(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gd, permanent, Triggers.endStep(ActivePlayer.YOU)))
                     .thenReturn(List.of(new GainLifeEffect(1)));
 
             sut.handleEndStepTriggers(gd);
@@ -1882,7 +1899,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Multi-Target End Step Card");
             UntapPermanentsEffect effect = new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS);
             card.target(null, 0, 4)
-                    .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, effect);
+                    .addTrigger(Triggers.endStep(ActivePlayer.YOU), effect);
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
             when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
@@ -1899,7 +1916,7 @@ class StepTriggerServiceTest {
         void controllerEndStepDoesNotTriggerDuringOpponentEndStep() {
             gd.activePlayerId = player2Id;
             Card card = createCardWithName("Jin-Gitaxias, Core Augur");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
@@ -1914,7 +1931,7 @@ class StepTriggerServiceTest {
             DealDividedDamageEffect effect = DealDividedDamageEffect.xAmongTargetCreaturesAtResolution();
             card.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                     "Target must be a creature."), 0, 99)
-                    .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, effect);
+                    .addTrigger(Triggers.endStep(ActivePlayer.YOU), effect);
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
 
@@ -1936,10 +1953,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED fires for any player's permanents")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) fires for any player's permanents")
         void endStepTriggeredFiresForAnyPlayer() {
             Card card = createCardWithName("End Step Card");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
@@ -1949,10 +1966,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED EndStepPlayerTargetedEffect bakes the end-step player into targetId")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) EndStepPlayerTargetedEffect bakes the end-step player into targetId")
         void endStepPlayerTargetedEffectBakesActivePlayer() {
             Card card = createCardWithName("Monsoon-like Card");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
                     new TapPlayersPermanentsAndDamageEqualToCountEffect(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
@@ -1963,10 +1980,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED with a plain effect gets a null targetId")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) with a plain effect gets a null targetId")
         void endStepPlainEffectHasNoTargetId() {
             Card card = createCardWithName("Plain End Step Card");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
@@ -1976,10 +1993,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED NotControllerTurn fires on an opponent's end step")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) NotControllerTurn fires on an opponent's end step")
         void endStepNotControllerTurnFiresOnOpponentTurn() {
             Card card = createCardWithName("Opponent Turn Card");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
                     new ConditionalEffect(new NotControllerTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
@@ -1990,10 +2007,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED NotControllerTurn is skipped on the controller's own end step")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) NotControllerTurn is skipped on the controller's own end step")
         void endStepNotControllerTurnSkippedOnOwnTurn() {
             Card card = createCardWithName("Own Turn Card");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
                     new ConditionalEffect(new NotControllerTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(gd.activePlayerId).add(new Permanent(card));
 
@@ -2003,10 +2020,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED with MayEffect queues may ability")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) with MayEffect queues may ability")
         void endStepMayEffectQueuesMayAbility() {
             Card card = createCardWithName("Optional End Step Card");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new MayEffect(new GainLifeEffect(1), "Gain life?"));
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY), new MayEffect(new GainLifeEffect(1), "Gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
@@ -2016,10 +2033,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED fires during the card owner's end step")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) from the graveyard fires during the card owner's end step")
         void graveyardControllerEndStepTriggeredFiresOnOwnersEndStep() {
             Card card = createCardWithName("Silversmote Ghoul");
-            card.addEffect(EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT, new GainLifeEffect(1));
             gd.playerGraveyards.get(player1Id).add(card);
 
             sut.handleEndStepTriggers(gd);
@@ -2029,11 +2047,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED skips an opponent's end step")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) from the graveyard skips an opponent's end step")
         void graveyardControllerEndStepTriggeredSkipsOpponentsEndStep() {
             gd.activePlayerId = player2Id;
             Card card = createCardWithName("Silversmote Ghoul");
-            card.addEffect(EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                    TriggerOptions.DEFAULT, new GainLifeEffect(1));
             gd.playerGraveyards.get(player1Id).add(card);
 
             sut.handleEndStepTriggers(gd);
@@ -2045,10 +2064,10 @@ class StepTriggerServiceTest {
         void groupedControllerEndStepEffectsQueueOneTargetSelection() {
             Card card = createCardWithName("Grouped End Step");
             card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1)
-                    .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                             com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget());
             card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1)
-                    .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                    .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                             com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget());
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -2061,10 +2080,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED ConditionalEffect wrapping MayEffect triggers when an opponent lost enough life")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) ConditionalEffect wrapping MayEffect triggers when an opponent lost enough life")
         void endStepConditionalMayTriggersWhenOpponentLostLife() {
             Card card = createCardWithName("River Cutthroat");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                     new OpponentLostLifeThisTurn(3), new MayEffect(new GainLifeEffect(1), "Draw?")));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.lifeLostThisTurn.put(player2Id, 3);
@@ -2076,10 +2095,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("END_STEP_TRIGGERED ConditionalEffect wrapping MayEffect skips when no opponent lost enough life")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) ConditionalEffect wrapping MayEffect skips when no opponent lost enough life")
         void endStepConditionalMaySkipsWhenThresholdNotMet() {
             Card card = createCardWithName("River Cutthroat");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                     new OpponentLostLifeThisTurn(3), new MayEffect(new GainLifeEffect(1), "Draw?")));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.lifeLostThisTurn.put(player2Id, 2);
@@ -2090,10 +2109,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with MayEffect queues may ability")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with MayEffect queues may ability")
         void controllerEndStepMayEffectQueuesMayAbility() {
             Card card = createCardWithName("Controller May Card");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new MayEffect(new GainLifeEffect(1), "Gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
@@ -2103,10 +2122,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with reflexive MayPayManaEffect queues may ability")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with reflexive MayPayManaEffect queues may ability")
         void controllerEndStepReflexiveMayPayManaEffectQueuesMayAbility() {
             Card card = createCardWithName("Controller Reflexive May Pay Card");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new MayPayManaEffect("{1}", new QueueReflexiveAbilityEffect(new GainLifeEffect(1)),
                             "Pay {1} to gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
@@ -2120,7 +2139,7 @@ class StepTriggerServiceTest {
         @DisplayName("ConditionalEffect triggers when creature did not attack this turn")
         void didntAttackTriggersWhenNotAttacked() {
             Card card = createCardWithName("Vigilant Creature");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new ConditionalEffect(new DidntAttack(), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             // Did not attack this turn (default)
@@ -2136,7 +2155,7 @@ class StepTriggerServiceTest {
         @DisplayName("ConditionalEffect skips when creature attacked this turn")
         void didntAttackSkipsWhenAttacked() {
             Card card = createCardWithName("Vigilant Creature");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new ConditionalEffect(new DidntAttack(), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             perm.setAttackedThisTurn(true);
@@ -2148,10 +2167,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping MayEffect queues may ability when raid met")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with ConditionalEffect wrapping MayEffect queues may ability when raid met")
         void raidConditionalEndStepMayEffectQueuedWhenRaidMet() {
             Card card = createCardWithName("Raiding Looter");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new ConditionalEffect(new Raid(), new MayEffect(new GainLifeEffect(1), "Gain life?")));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
@@ -2162,10 +2181,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect skips when raid not met")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with ConditionalEffect skips when raid not met")
         void raidConditionalEndStepSkipsWhenRaidNotMet() {
             Card card = createCardWithName("Raiding Looter");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new ConditionalEffect(new Raid(), new MayEffect(new GainLifeEffect(1), "Gain life?")));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             // Do NOT add player1Id to playersDeclaredAttackersThisTurn
@@ -2176,10 +2195,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping non-MayEffect pushes to stack when raid met")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with ConditionalEffect wrapping non-MayEffect pushes to stack when raid met")
         void raidConditionalEndStepNonMayPushesToStackWhenRaidMet() {
             Card card = createCardWithName("Raiding Creature");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new ConditionalEffect(new Raid(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
@@ -2191,10 +2210,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping targeting effect queues for target selection when raid met")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with ConditionalEffect wrapping targeting effect queues for target selection when raid met")
         void raidConditionalEndStepTargetingEffectQueuesWhenRaidMet() {
             Card card = createCardWithName("Navigator's Ruin");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new ConditionalEffect(new Raid(), new MillEffect(4, MillRecipient.TARGET_PLAYER)));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
@@ -2212,10 +2231,10 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping targeting effect skips when raid not met")
+        @DisplayName("Triggers.endStep(ActivePlayer.YOU) with ConditionalEffect wrapping targeting effect skips when raid not met")
         void raidConditionalEndStepTargetingEffectSkipsWhenRaidNotMet() {
             Card card = createCardWithName("Navigator's Ruin");
-            card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
                     new ConditionalEffect(new Raid(), new MillEffect(4, MillRecipient.TARGET_PLAYER)));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
@@ -2252,7 +2271,7 @@ class StepTriggerServiceTest {
         @DisplayName("ConditionalEffect triggers when permanent was not kicked")
         void notKickedTriggersWhenNotKicked() {
             Card card = createCardWithName("Unkicked Elemental");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
                     new ConditionalEffect(new NotKicked(), new SacrificeSelfEffect()));
             Permanent perm = new Permanent(card);
             // Not kicked (default)
@@ -2268,7 +2287,7 @@ class StepTriggerServiceTest {
         @DisplayName("ConditionalEffect skips when permanent was kicked")
         void notKickedSkipsWhenKicked() {
             Card card = createCardWithName("Kicked Elemental");
-            card.addEffect(EffectSlot.END_STEP_TRIGGERED,
+            card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
                     new ConditionalEffect(new NotKicked(), new SacrificeSelfEffect()));
             Permanent perm = new Permanent(card);
             perm.setKicked(true);
@@ -2700,7 +2719,7 @@ class StepTriggerServiceTest {
         @DisplayName("Queues a graveyard target choice for a precombat main trigger")
         void queuesGraveyardTargetChoice() {
             Card source = createCardWithName("Klothys, God of Destiny");
-            source.addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+            source.addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                     new ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
                             new CardTypePredicate(CardType.LAND),
                             new GainLifeEffect(1),
@@ -2722,10 +2741,10 @@ class StepTriggerServiceTest {
     class HandlePostcombatMainTriggers {
 
         @Test
-        @DisplayName("Pushes POSTCOMBAT_MAIN_TRIGGERED effects for the active player")
+        @DisplayName("Pushes Triggers.postcombatMainPhase(ActivePlayer.YOU) effects for the active player")
         void firesTriggerForActivePlayer() {
             Card card = createCardWithName("Neheb, the Eternal");
-            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new GainLifeEffect(1));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -2740,7 +2759,7 @@ class StepTriggerServiceTest {
         @DisplayName("Does not fire for permanents the non-active player controls")
         void doesNotFireForNonActivePlayer() {
             Card card = createCardWithName("Neheb, the Eternal");
-            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new GainLifeEffect(1));
+            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             sut.handlePostcombatMainTriggers(gd);
@@ -2754,7 +2773,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Scheming Silvertongue");
             ConditionalEffect effect = new ConditionalEffect(
                     new GainedLifeThisTurn(2), new BecomePreparedEffect());
-            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, effect);
+            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), effect);
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             gd.lifeGainedThisTurn.put(player1Id, 1);
@@ -2770,7 +2789,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Scheming Silvertongue");
             ConditionalEffect effect = new ConditionalEffect(
                     new GainedLifeThisTurn(2), new BecomePreparedEffect());
-            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, effect);
+            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), effect);
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             gd.lifeGainedThisTurn.put(player1Id, 2);
@@ -2785,7 +2804,7 @@ class StepTriggerServiceTest {
         @DisplayName("Survival wrappers are evaluated only once for the same permanent")
         void survivalWrapperIsEvaluatedOnlyOnce() {
             Card card = createCardWithName("Acrobatic Cheerleader");
-            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                     new SurvivalTriggerEffect(new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             perm.tap();
@@ -2809,7 +2828,7 @@ class StepTriggerServiceTest {
                     .filter(new CardTypePredicate(CardType.CREATURE))
                     .targetGraveyard(true)
                     .build();
-            card.addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+            card.addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                     new SurvivalTriggerEffect(new ConditionalEffect(new SourceIsTapped(), returnEffect)));
             Permanent perm = new Permanent(card);
             perm.tap();
@@ -2826,8 +2845,7 @@ class StepTriggerServiceTest {
         @DisplayName("Queues permanent-targeted postcombat main triggers for target selection")
         void queuesPermanentTargetedTrigger() {
             Card card = createCardWithName("Rootwise Survivor");
-            card.target(TargetFilters.landYouControl(), 0, 1).addEffect(
-                    EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+            card.target(TargetFilters.landYouControl(), 0, 1).addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                     new SurvivalTriggerEffect(new ConditionalEffect(
                             new SourceIsTapped(), new EarthbendTargetLandEffect(3))));
             Permanent source = new Permanent(card);
@@ -2864,7 +2882,7 @@ class StepTriggerServiceTest {
     private static Card createScheme(String name) {
         Card card = createCardWithName(name);
         card.setType(CardType.SCHEME);
-        card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(1));
+        card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GainLifeEffect(1));
         return card;
     }
 

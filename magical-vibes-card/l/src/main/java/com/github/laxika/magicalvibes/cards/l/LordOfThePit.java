@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "154")
 @CardRegistration(set = "DVD", collectorNumber = "30")
@@ -22,6 +23,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LordOfThePit extends Card {
 
     public LordOfThePit() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeOtherCreatureOrDamageEffect(7));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeOtherCreatureOrDamageEffect(7));
     }
 }

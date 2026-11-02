@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +23,7 @@ public class SacredMesa extends Card {
 
     public SacredMesa() {
         // At the beginning of your upkeep, sacrifice this enchantment unless you sacrifice a Pegasus.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessSacrificeOwnPermanentEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessSacrificeOwnPermanentEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.PEGASUS), "a Pegasus"));
 
         // {1}{W}: Create a 1/1 white Pegasus creature token with flying.

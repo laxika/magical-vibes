@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToL
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ import java.util.List;
 public class WarlockClass extends Card {
 
     public WarlockClass() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new Morbid(), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
 
         addActivatedAbility(new ActivatedAbility(
@@ -48,7 +49,7 @@ public class WarlockClass extends Card {
                 new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceCounterThreshold(2, CounterType.LEVEL),
                         new EachOpponentLosesLifeEqualToLifeLostThisTurn()));
     }

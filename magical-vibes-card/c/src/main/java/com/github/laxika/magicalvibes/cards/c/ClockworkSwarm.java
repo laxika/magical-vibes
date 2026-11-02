@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCappedCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +33,7 @@ public class ClockworkSwarm extends Card {
 
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+0 counter
         // from it.
-        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.endOfCombat(),
                 new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
                         new RemoveCounterFromSourceAtEndOfCombatEffect(CounterType.PLUS_ONE_PLUS_ZERO)));
 

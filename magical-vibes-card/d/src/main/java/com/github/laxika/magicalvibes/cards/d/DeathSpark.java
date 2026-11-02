@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALL", collectorNumber = "70")
 @CardRegistration(set = "DKM", collectorNumber = "11")
@@ -25,7 +29,8 @@ public class DeathSpark extends Card {
         // At the beginning of your upkeep, if this card is in your graveyard with a creature card
         // directly above it, you may pay {1}. If you do, return this card to your hand.
         // Intervening-if on the ordered graveyard is checked at trigger time.
-        addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
                 new ConditionalEffect(
                         new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE)),
                         new MayPayManaEffect("{1}",

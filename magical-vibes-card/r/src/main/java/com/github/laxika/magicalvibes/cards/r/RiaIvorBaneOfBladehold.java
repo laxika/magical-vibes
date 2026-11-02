@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextCombatDamageByTargetCreatureAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +22,7 @@ import java.util.Set;
 public class RiaIvorBaneOfBladehold extends Card {
 
     public RiaIvorBaneOfBladehold() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(TargetFilters.creature()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new PreventNextCombatDamageByTargetCreatureAndCreateTokensEffect(phyrexianMite()));
     }
 

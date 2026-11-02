@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOS", collectorNumber = "102")
 @CardRegistration(set = "SOS", collectorNumber = "293")
@@ -22,7 +24,7 @@ public class TragedyFeaster extends Card {
 
         // Infusion — At the beginning of your end step, sacrifice a permanent unless you gained
         // life this turn. The sacrifice only happens at resolution if you didn't gain life.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ConditionalEffect.unless(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), ConditionalEffect.unless(
                 new DidntGainLifeThisTurn(),
                 new SacrificePermanentThenEffect(new PermanentTruePredicate(), null, "a permanent")));
     }

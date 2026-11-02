@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -36,7 +36,7 @@ public class ManifoldMouse extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.MOUSE),
                         new PermanentControlledBySourceControllerPredicate())),
                 "Target must be a Mouse you control"))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ChooseOneForTargetCreatureEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption("Double strike",
                                         new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)),

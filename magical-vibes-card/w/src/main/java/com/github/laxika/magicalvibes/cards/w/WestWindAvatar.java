@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +32,7 @@ public class WestWindAvatar extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeForLife);
         addEffect(EffectSlot.ON_ATTACK, sacrificeForLife);
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new PermanentLeftBattlefieldUnderYourControlThisTurn(),
                         new DrawCardEffect()));
     }

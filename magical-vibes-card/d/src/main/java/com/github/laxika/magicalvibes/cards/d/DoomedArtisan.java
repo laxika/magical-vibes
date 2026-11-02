@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class DoomedArtisan extends Card {
 
         // At the beginning of your end step, create a Sculpture whose P/T equal the number of
         // Sculptures you control.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Sculpture", 0, 0, null, null,
                 List.of(CardSubtype.SCULPTURE), Set.of(), Set.of(CardType.ARTIFACT), false, false,
                 List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(sculpturesYouControl, sculpturesYouControl))),

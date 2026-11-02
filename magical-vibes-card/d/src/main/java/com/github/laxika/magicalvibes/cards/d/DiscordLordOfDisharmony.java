@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscordCopyCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "798")
 public class DiscordLordOfDisharmony extends Card {
 
     public DiscordLordOfDisharmony() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DiscordRandomCardCopyEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new DiscordRandomCardCopyEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new DiscordCopyCastTriggerEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +29,7 @@ public class IdrisSoulOfTheTARDIS extends Card {
 
     public IdrisSoulOfTheTARDIS() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         PermanentPredicate artifactYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentControlledBySourceControllerPredicate()));

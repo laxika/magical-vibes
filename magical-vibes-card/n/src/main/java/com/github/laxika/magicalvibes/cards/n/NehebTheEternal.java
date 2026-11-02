@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOU", collectorNumber = "104")
 @CardRegistration(set = "AKR", collectorNumber = "167")
@@ -25,7 +27,7 @@ public class NehebTheEternal extends Card {
 
         // At the beginning of each of your postcombat main phases, add {R} for each 1 life
         // your opponents have lost this turn (damage counts as life loss).
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU),
                 new AwardManaEffect(ManaColor.RED, new LifeLostThisTurn(CountScope.OPPONENTS)));
     }
 }

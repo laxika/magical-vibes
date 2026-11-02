@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GuildFeudEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RTR", collectorNumber = "97")
 public class GuildFeud extends Card {
@@ -19,6 +20,6 @@ public class GuildFeud extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new GuildFeudEffect());
+        )).addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GuildFeudEffect());
     }
 }

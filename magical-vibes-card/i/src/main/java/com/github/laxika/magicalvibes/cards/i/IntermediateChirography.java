@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -58,7 +59,7 @@ public class IntermediateChirography extends Card {
                 new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new ModifiedCreatureDiedUnderYourControlThisTurn())),

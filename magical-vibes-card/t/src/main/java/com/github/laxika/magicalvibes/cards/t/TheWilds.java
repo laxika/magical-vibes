@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesCreatur
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "71")
 public class TheWilds extends Card {
@@ -15,7 +17,7 @@ public class TheWilds extends Card {
     public TheWilds() {
         CreateTokenEffect food = CreateTokenEffect.ofFoodToken(1);
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, food);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, food);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), food);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))

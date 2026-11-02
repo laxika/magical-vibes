@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class TheDiningCar extends Card {
     public TheDiningCar() {
         CreateTokenEffect food = CreateTokenEffect.ofFoodToken(1);
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, new EachPlayerCreatesTokenEffect(food));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new SacrificeCreatureWithLeastToughnessEffect(),
                 CreateTokenEffect.ofClueToken(1)));
 

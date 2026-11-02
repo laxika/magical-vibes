@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1582")
 public class TheCelestialToymaker extends Card {
@@ -17,7 +19,7 @@ public class TheCelestialToymaker extends Card {
         addEffect(EffectSlot.ON_ATTACK, new RevealTopCardsAndSeparateEffect(
                 3, CardPileDisposition.HAND_AND_EXILE_WITH_FACE_DOWN_PILE,
                 true, false, true, true));
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new LoseLifeEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new LoseLifeEffect(
                 new Scaled(new PileGroupingOrGuessCountThisTurn(), 2),
                 LoseLifeRecipient.EACH_OPPONENT));
     }

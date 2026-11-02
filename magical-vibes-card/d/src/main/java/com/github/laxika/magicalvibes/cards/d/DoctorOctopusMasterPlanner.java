@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "128")
 @CardRegistration(set = "SPM", collectorNumber = "228")
@@ -27,7 +28,7 @@ public class DoctorOctopusMasterPlanner extends Card {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.VILLAIN)));
         addStaticEffect(new SetControllerMaximumHandSizeEffect(8));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new CardsInHandAtMost(7),
                 new DrawCardEffect(new Max(
                         new Fixed(0),

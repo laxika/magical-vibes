@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +19,7 @@ import java.util.List;
 public class LairOfTheAshenIdol extends Card {
 
     public LairOfTheAshenIdol() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ForcedCostOrElseEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                 new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "a creature"),
                 List.of(new PlaneswalkEffect())));
         target(0, 99).addEffect(EffectSlot.CHAOS_TRIGGERED,

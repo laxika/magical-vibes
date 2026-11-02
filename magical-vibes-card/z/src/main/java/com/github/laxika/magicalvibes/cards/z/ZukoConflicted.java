@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
@@ -12,13 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnUnderOpponentControlEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "253")
 public class ZukoConflicted extends Card {
 
     public ZukoConflicted() {
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new ChooseModeNotYetChosenEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Draw a card",
                         List.of(new DrawCardEffect(), new LoseLifeEffect(2))),
                 new ChooseOneEffect.ChooseOneOption("Put a +1/+1 counter on Zuko",

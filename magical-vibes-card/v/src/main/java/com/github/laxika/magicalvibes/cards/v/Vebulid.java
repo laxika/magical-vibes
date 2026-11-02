@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndOfCombatEffec
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "USG", collectorNumber = "165")
 public class Vebulid extends Card {
@@ -18,7 +20,7 @@ public class Vebulid extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
         // At the beginning of your upkeep, you may put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 "Put a +1/+1 counter on Vebulid?"));
 

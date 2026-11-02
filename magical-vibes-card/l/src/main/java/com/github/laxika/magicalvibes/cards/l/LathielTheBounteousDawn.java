@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class LathielTheBounteousDawn extends Card {
 
         targetUpTo(new LifeGainedThisTurn(CountScope.CONTROLLER),
                 new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), Integer.MAX_VALUE)
-                .addEffect(EffectSlot.END_STEP_TRIGGERED,
+                .addTrigger(Triggers.endStep(ActivePlayer.ANY),
                         new ConditionalEffect(new GainedLifeThisTurn(), distribution));
     }
 }

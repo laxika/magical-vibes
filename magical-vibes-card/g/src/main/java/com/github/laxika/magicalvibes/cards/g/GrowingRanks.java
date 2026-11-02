@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RTR", collectorNumber = "217")
 @CardRegistration(set = "GK1", collectorNumber = "113")
@@ -13,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 public class GrowingRanks extends Card {
 
     public GrowingRanks() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PopulateEffect());
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PopulateEffect());
     }
 }

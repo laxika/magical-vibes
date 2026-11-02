@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class Mycoloth extends Card {
 
         // At the beginning of your upkeep, create a 1/1 green Saproling creature token
         // for each +1/+1 counter on this creature.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenEffect(
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                 "Saproling",
                 1,

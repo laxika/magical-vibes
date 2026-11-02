@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfEnergyToCreateT
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +43,7 @@ public class PiaNalaarChiefMechanic extends Card {
                         List.of(new CrewCost(2), AnimatePermanentsEffect.crew()),
                         "Crew 2")), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new PayAnyAmountOfEnergyToCreateTokenEffect(aetherjet));
     }
 }

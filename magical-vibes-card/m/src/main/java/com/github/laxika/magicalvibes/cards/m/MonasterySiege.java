@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class MonasterySiege extends Card {
     public MonasterySiege() {
         addStaticEffect(new ChooseModeOnEnterEffect(List.of(KHANS, DRAGONS)));
 
-        addEffect(EffectSlot.DRAW_TRIGGERED,
+        addTrigger(Triggers.drawStep(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceHasChosenMode(KHANS),
                         SequenceEffect.of(
                                 new DrawCardEffect(1),

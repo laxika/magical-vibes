@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.ControllerCycledAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,7 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -35,7 +38,8 @@ public class SpellpyrePhoenix extends Card {
                 .targetGraveyard(true)
                 .build(), "Return the targeted card to your hand?"));
 
-        addEffect(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(new TriggerCondition(Triggers.endStep(ActivePlayer.ANY), AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT, new ConditionalEffect(
                 new ControllerCycledAtLeastCardsThisTurn(2),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

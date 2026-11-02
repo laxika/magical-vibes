@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EXO", collectorNumber = "90")
 public class OathOfMages extends Card {
@@ -20,7 +21,7 @@ public class OathOfMages extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerHasMoreLifeThanControllerPredicate(true),
                 "Target player must be an opponent who has more life than you"
-        )).addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new MayEffect(
+        )).addTrigger(Triggers.upkeep(ActivePlayer.ANY), new MayEffect(
                 new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER),
                 "Have Oath of Mages deal 1 damage to that player?",
                 null,

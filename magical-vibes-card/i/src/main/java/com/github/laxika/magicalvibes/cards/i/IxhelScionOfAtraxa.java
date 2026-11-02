@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONC", collectorNumber = "1")
 @CardRegistration(set = "ONC", collectorNumber = "29")
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachOpponentLib
 public class IxhelScionOfAtraxa extends Card {
 
     public IxhelScionOfAtraxa() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ExileTopCardOfEachOpponentLibraryAndGrantPlayPermissionEffect(3));
     }
 }

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForMonarchEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "18")
 @CardRegistration(set = "LTC", collectorNumber = "101")
@@ -22,6 +24,6 @@ public class ArchivistOfGondor extends Card {
         addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT, commanderDamage);
         addEffect(EffectSlot.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OWNER, commanderDamage);
 
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new DrawCardForMonarchEndStepEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new DrawCardForMonarchEndStepEffect());
     }
 }

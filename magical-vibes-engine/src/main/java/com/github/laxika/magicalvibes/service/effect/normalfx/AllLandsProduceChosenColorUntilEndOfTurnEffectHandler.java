@@ -13,7 +13,7 @@ import java.util.UUID;
 /**
  * Resolves {@link AllLandsProduceChosenColorUntilEndOfTurnEffect} (Hall of Gemstone): pauses to let
  * the player whose upkeep it is choose a color. That player is the stack entry's {@code targetId}
- * (the active player for an {@code EACH_UPKEEP_TRIGGERED} trigger), not the source's controller.
+ * (the active player for an {@code Triggers.upkeep(ActivePlayer.ANY)} trigger), not the source's controller.
  * Recording the color runs in {@code ChoiceHandlerService.handleAllLandsProduceChosenColorChoice}.
  */
 @Component

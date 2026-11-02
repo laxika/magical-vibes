@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class BowieBaseOne extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureControlledByPlayerToLeft,
                 "Target must be a creature controlled by the player to your left"))
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new GoadTargetCreatureUntilNextTurnEffect(creatureControlledByPlayerToLeft));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.CHAOS_TRIGGERED,

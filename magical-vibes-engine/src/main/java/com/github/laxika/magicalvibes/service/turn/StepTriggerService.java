@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllMireCountersFromChos
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveScreamCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardAttachedToPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
@@ -134,7 +135,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.epic.EpicService;
@@ -332,8 +335,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * specific turn steps: upkeep, draw, precombat main, and end step.
  *
  * <p>Extracted from {@code TurnProgressionService} to isolate the trigger-
- * scanning logic.  For each step the service iterates the relevant
- * {@link EffectSlot}s on permanents (and graveyards, for upkeep triggers),
+ * scanning logic.  For each step the service reads the abilities whose {@link StepTrigger} is that
+ * step's beginning (CR 603.2b) on permanents and in the other zones they function from,
  * pushes {@link StackEntry}s onto the stack, and queues
  * {@link MayEffect}/{@link MayPayManaEffect} choices as needed.
  *
@@ -346,6 +349,32 @@ public class StepTriggerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+
+    private static final StepTrigger YOUR_UPKEEP = Triggers.upkeep(ActivePlayer.YOU);
+    private static final StepTrigger EACH_UPKEEP = Triggers.upkeep(ActivePlayer.ANY);
+    private static final StepTrigger OPPONENT_UPKEEP = Triggers.upkeep(ActivePlayer.OPPONENT);
+    private static final StepTrigger ENCHANTED_PLAYER_UPKEEP = Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER);
+    private static final StepTrigger ENCHANTED_CONTROLLER_UPKEEP =
+            Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER);
+    private static final StepTrigger YOUR_DRAW_STEP = Triggers.drawStep(ActivePlayer.YOU);
+    private static final StepTrigger EACH_DRAW_STEP = Triggers.drawStep(ActivePlayer.ANY);
+    private static final StepTrigger ENCHANTED_PLAYER_DRAW_STEP = Triggers.drawStep(ActivePlayer.ENCHANTED_PLAYER);
+    private static final StepTrigger ENCHANTED_CONTROLLER_DRAW_STEP =
+            Triggers.drawStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER);
+    private static final StepTrigger YOUR_PRECOMBAT_MAIN_PHASE = Triggers.precombatMainPhase(ActivePlayer.YOU);
+    private static final StepTrigger EACH_PRECOMBAT_MAIN_PHASE = Triggers.precombatMainPhase(ActivePlayer.ANY);
+    private static final StepTrigger YOUR_BEGINNING_OF_COMBAT = Triggers.beginningOfCombat(ActivePlayer.YOU);
+    private static final StepTrigger EACH_BEGINNING_OF_COMBAT = Triggers.beginningOfCombat(ActivePlayer.ANY);
+    private static final StepTrigger OPPONENT_BEGINNING_OF_COMBAT = Triggers.beginningOfCombat(ActivePlayer.OPPONENT);
+    private static final StepTrigger END_OF_COMBAT = Triggers.endOfCombat();
+    private static final StepTrigger YOUR_POSTCOMBAT_MAIN_PHASE = Triggers.postcombatMainPhase(ActivePlayer.YOU);
+    private static final StepTrigger YOUR_SECOND_MAIN_PHASE = Triggers.secondMainPhase(ActivePlayer.YOU);
+    private static final StepTrigger EACH_END_STEP = Triggers.endStep(ActivePlayer.ANY);
+    private static final StepTrigger YOUR_END_STEP = Triggers.endStep(ActivePlayer.YOU);
+    private static final StepTrigger OPPONENT_END_STEP = Triggers.endStep(ActivePlayer.OPPONENT);
+    private static final StepTrigger ENCHANTED_PLAYER_END_STEP = Triggers.endStep(ActivePlayer.ENCHANTED_PLAYER);
+    private static final StepTrigger ENCHANTED_CONTROLLER_END_STEP =
+            Triggers.endStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER);
 
 
 
@@ -437,11 +466,9 @@ public class StepTriggerService {
      * Scans battlefields and graveyards for upkeep-triggered
      * abilities and pushes them onto the stack or queues may-ability prompts.
      *
-     * <p>Handles slots: {@code UPKEEP_TRIGGERED}, {@code COMMAND_ZONE_UPKEEP_TRIGGERED},
-     * {@code GRAVEYARD_UPKEEP_TRIGGERED},
-     * {@code EACH_UPKEEP_TRIGGERED}, {@code OPPONENT_UPKEEP_TRIGGERED},
-     * {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED},
-     * and {@code COMMAND_ZONE_UPKEEP_TRIGGERED}.
+     * <p>Handles every {@code Triggers.upkeep(…)} ability: "your upkeep" from the battlefield, the command zone,
+     * the graveyard and exile, "each upkeep" from the battlefield and exile (suspended cards), "each opponent's
+     * upkeep", and the enchanted player's and the enchanted permanent's controller's upkeep.
      *
      * @param gameData the current game state to modify
      */
@@ -503,9 +530,27 @@ public class StepTriggerService {
         }
     }
 
+    /**
+     * Whether {@code effect}, an "at the beginning of your upkeep" effect of {@code perm}, acts on the controller of
+     * the permanent {@code perm} enchants: "At the beginning of your upkeep, enchanted permanent's controller
+     * sacrifices …" (Strangling Grasp). The Aura binds the effect to its enchant target, and the player the effect
+     * names is that permanent's controller rather than a target.
+     */
+    private boolean affectsEnchantedPermanentController(GameData gameData, Permanent perm, CardEffect effect) {
+        return perm.isAttached() && !gameData.playerIds.contains(perm.getAttachedTo())
+                && perm.getCard().isAura()
+                && perm.getCard().isEffectBoundToTargetGroup(effect, 0)
+                && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
+    }
+
+    /** Whether {@code perm} is a Curse, an Aura attached to a player. */
+    private static boolean enchantsPlayer(GameData gameData, Permanent perm) {
+        return perm.isAttached() && gameData.playerIds.contains(perm.getAttachedTo());
+    }
+
     public void handleUpkeepTriggers(GameData gameData) {
         if (gameData.planechase != null) planechaseService.step(gameData,
-                EffectSlot.UPKEEP_TRIGGERED, EffectSlot.EACH_UPKEEP_TRIGGERED);
+                YOUR_UPKEEP, EACH_UPKEEP);
         // "… until your next upkeep" (Cycle of Life): the floating layer-7b effect ends as the
         // upkeep begins, before the delayed trigger below puts its counter on the creature.
         gameData.expireFloatingEffectsAtUpkeep(gameData.activePlayerId);
@@ -1013,10 +1058,12 @@ public class StepTriggerService {
             List<CardEffect> upkeepEffects = new ArrayList<>();
             if (!gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                 if (!perm.isFaceDown()) {
-                    upkeepEffects.addAll(perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED));
+                    perm.getCard().getTriggerEffects(YOUR_UPKEEP, Zone.BATTLEFIELD).stream()
+                            .filter(effect -> !affectsEnchantedPermanentController(gameData, perm, effect))
+                            .forEach(upkeepEffects::add);
                 }
-                upkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
-                upkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+                upkeepEffects.addAll(perm.getTemporaryTriggerEffects(YOUR_UPKEEP));
+                upkeepEffects.addAll(perm.getPersistentTriggerEffects(YOUR_UPKEEP));
             }
             if (upkeepEffects.stream().anyMatch(SoulEchoUpkeepEffect.class::isInstance)) {
                 perm.setEchoDamageRedirectionActive(false);
@@ -1598,11 +1645,11 @@ public class StepTriggerService {
         List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
         if (commandZone != null) {
             for (Card card : new ArrayList<>(commandZone)) {
-                List<CardEffect> commandZoneUpkeepEffects = new ArrayList<>(card.getEffects(
-                        EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED));
+                List<CardEffect> commandZoneUpkeepEffects = new ArrayList<>(card.getTriggerEffects(
+                        YOUR_UPKEEP, Zone.COMMAND));
                 // CR 314.4: a face-up scheme's "at the beginning of your upkeep" abilities trigger.
                 if (gameData.isFaceUpScheme(card)) {
-                    commandZoneUpkeepEffects.addAll(card.getEffects(EffectSlot.UPKEEP_TRIGGERED));
+                    commandZoneUpkeepEffects.addAll(card.getTriggerEffects(YOUR_UPKEEP, Zone.BATTLEFIELD));
                 }
                 if (commandZoneUpkeepEffects.isEmpty()) continue;
 
@@ -1645,8 +1692,8 @@ public class StepTriggerService {
         List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> upkeepEffects = gameQueryService.getEffectiveGraveyardEffects(
-                        gameData, card, EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED);
+                List<CardEffect> upkeepEffects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                        gameData, card, YOUR_UPKEEP);
                 if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : upkeepEffects) {
@@ -1701,13 +1748,13 @@ public class StepTriggerService {
             }
         }
 
-        // Check all battlefields and face-up schemes (CR 314.4) for EACH_UPKEEP_TRIGGERED effects
+        // Check all battlefields and face-up schemes (CR 314.4) for Triggers.upkeep(ActivePlayer.ANY) effects
         BiConsumer<UUID, Permanent> eachUpkeep = (playerId, perm) -> {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
             List<CardEffect> eachUpkeepEffects = new ArrayList<>(
-                    perm.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
-            eachUpkeepEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
-            eachUpkeepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
+                    perm.getCard().getTriggerEffects(EACH_UPKEEP, Zone.BATTLEFIELD));
+            eachUpkeepEffects.addAll(perm.getTemporaryTriggerEffects(EACH_UPKEEP));
+            eachUpkeepEffects.addAll(perm.getPersistentTriggerEffects(EACH_UPKEEP));
             grantedUpkeepEffectSupport.appendGrantedEachUpkeepEffects(gameData, perm, eachUpkeepEffects);
             if (eachUpkeepEffects == null || eachUpkeepEffects.isEmpty()) return;
 
@@ -1784,11 +1831,13 @@ public class StepTriggerService {
         gameData.forEachPermanent(eachUpkeep);
         gameData.forEachFaceUpSchemeSource(eachUpkeep);
 
-        // Check all battlefields for OPPONENT_UPKEEP_TRIGGERED effects (only opponents of the active player)
+        // Check all battlefields for Triggers.upkeep(ActivePlayer.OPPONENT) effects (only opponents of the active
+        // player)
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                List<CardEffect> opponentUpkeepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED);
+                List<CardEffect> opponentUpkeepEffects =
+                        perm.getCard().getTriggerEffects(OPPONENT_UPKEEP, Zone.BATTLEFIELD);
                 if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
 
                 boolean hasChosenPlayer = perm.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
@@ -1862,18 +1911,20 @@ public class StepTriggerService {
             }
         });
 
-        // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED effects
-        // These fire during the enchanted permanent's controller's upkeep (e.g. Numbing Dose)
-        // and, for "At the beginning of your upkeep, enchanted permanent's controller ..." (Strangling
-        // Grasp), ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED fires during the Aura
-        // controller's upkeep with the enchanted permanent's controller baked in as the affected player.
+        // Check all battlefields for auras with "at the beginning of the upkeep of enchanted permanent's
+        // controller" abilities (e.g. Numbing Dose) and, for "At the beginning of your upkeep, enchanted
+        // permanent's controller ..." (Strangling Grasp), "your upkeep" abilities that act on that player:
+        // they fire during the Aura controller's upkeep with the enchanted permanent's controller baked in
+        // as the affected player.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
-            boolean auraControllersUpkeep = !perm.getCard()
-                    .getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED).isEmpty();
-            List<CardEffect> enchantedControllerUpkeepEffects = perm.getCard().getEffects(
-                    auraControllersUpkeep
-                            ? EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED
-                            : EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED);
+            List<CardEffect> affectingUpkeepEffects = perm.getCard().getTriggerEffects(YOUR_UPKEEP, Zone.BATTLEFIELD)
+                    .stream()
+                    .filter(effect -> affectsEnchantedPermanentController(gameData, perm, effect))
+                    .toList();
+            boolean auraControllersUpkeep = !affectingUpkeepEffects.isEmpty();
+            List<CardEffect> enchantedControllerUpkeepEffects = auraControllersUpkeep
+                    ? affectingUpkeepEffects
+                    : perm.getCard().getTriggerEffects(ENCHANTED_CONTROLLER_UPKEEP, Zone.BATTLEFIELD);
             if (enchantedControllerUpkeepEffects == null || enchantedControllerUpkeepEffects.isEmpty()) return;
             if (!perm.isAttached()) return;
 
@@ -1957,10 +2008,11 @@ public class StepTriggerService {
             }
         });
 
-        // Check all battlefields for curses with ENCHANTED_PLAYER_UPKEEP_TRIGGERED effects
+        // Check all battlefields for curses with "at the beginning of enchanted player's upkeep" abilities
         // These fire during the enchanted player's upkeep (e.g. Curse of Oblivion, Curse of the Bloody Tome)
         gameData.forEachPermanent((auraOwnerId, perm) -> {
-            List<CardEffect> enchantedPlayerUpkeepEffects = perm.getCard().getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED);
+            List<CardEffect> enchantedPlayerUpkeepEffects =
+                    perm.getCard().getTriggerEffects(ENCHANTED_PLAYER_UPKEEP, Zone.BATTLEFIELD);
             if (enchantedPlayerUpkeepEffects == null || enchantedPlayerUpkeepEffects.isEmpty()) return;
             if (!perm.isAttached()) return;
 
@@ -2019,7 +2071,7 @@ public class StepTriggerService {
                 for (Card card : new ArrayList<>(exiledCards)) {
                     Integer eggCounters = gameData.exiledCardEggCounters.get(card.getId());
                     if (eggCounters != null && eggCounters > 0
-                            && card.getEffects(EffectSlot.EXILED_UPKEEP_TRIGGERED).stream()
+                            && card.getTriggerEffects(YOUR_UPKEEP, Zone.EXILE).stream()
                             .noneMatch(RemoveEggCounterFromExileAndReturnEffect.class::isInstance)) {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -2087,9 +2139,10 @@ public class StepTriggerService {
                 continue;
             }
             Card card = exiledEntry.card();
-            List<CardEffect> upkeepEffects = new ArrayList<>(
-                    card.getEffects(EffectSlot.EXILED_UPKEEP_TRIGGERED));
-            upkeepEffects.addAll(gameData.perpetualAbilityEffects(card.getId(), EffectSlot.EXILED_UPKEEP_TRIGGERED));
+            List<CardEffect> upkeepEffects = new ArrayList<>(card.getTriggerEffects(YOUR_UPKEEP, Zone.EXILE));
+            upkeepEffects.addAll(gameData.perpetualTriggerEffects(card.getId(), YOUR_UPKEEP, Zone.EXILE));
+            // The scream counter ability triggers only while the card has a scream counter, below.
+            upkeepEffects.removeIf(RemoveScreamCounterFromExiledCardEffect.class::isInstance);
 
             for (CardEffect effect : upkeepEffects) {
                 if (effect instanceof ConditionalEffect conditional
@@ -2127,7 +2180,10 @@ public class StepTriggerService {
                 continue;
             }
 
-            for (CardEffect effect : card.getEffects(EffectSlot.EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED)) {
+            for (CardEffect effect : card.getTriggerEffects(YOUR_UPKEEP, Zone.EXILE)) {
+                if (!(effect instanceof RemoveScreamCounterFromExiledCardEffect)) {
+                    continue;
+                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -2156,7 +2212,7 @@ public class StepTriggerService {
                 continue;
             }
 
-            for (CardEffect effect : card.getEffects(EffectSlot.SUSPENDED_EACH_UPKEEP_TRIGGERED)) {
+            for (CardEffect effect : card.getTriggerEffects(EACH_UPKEEP, Zone.EXILE)) {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(card, exiledEntry.ownerId(), may, activePlayerId, null,
                             activePlayerId, null);
@@ -3034,7 +3090,7 @@ public class StepTriggerService {
     /**
      * Executes the draw step: the active player draws a card (rule 504.1),
      * unless it is turn 1 for the starting player (rule 103.7a).
-     * Then scans for {@code DRAW_TRIGGERED} and {@code EACH_DRAW_TRIGGERED}
+     * Then scans for {@code Triggers.drawStep(ActivePlayer.YOU)} and {@code Triggers.drawStep(ActivePlayer.ANY)}
      * abilities.
      *
      * @param gameData the current game state to modify
@@ -3220,13 +3276,14 @@ public class StepTriggerService {
 
         if (gameData.planechase != null) planechaseService.drawStep(gameData);
 
-        // Check active player's battlefield for DRAW_TRIGGERED effects (controller's own draw step only)
+        // Check active player's battlefield for Triggers.drawStep(ActivePlayer.YOU) effects (controller's own draw
+        // step only)
         List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
         if (activeBattlefield != null) {
             for (Permanent perm : activeBattlefield) {
                 List<CardEffect> drawEffects = perm.isFaceDown()
                         || gameQueryService.hasLostPrintedAbilities(gameData, perm)
-                        ? List.of() : perm.getCard().getEffects(EffectSlot.DRAW_TRIGGERED);
+                        ? List.of() : perm.getCard().getTriggerEffects(YOUR_DRAW_STEP, Zone.BATTLEFIELD);
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect effect : drawEffects) {
@@ -3274,7 +3331,7 @@ public class StepTriggerService {
         // follows that player's draw steps even if the Oyster changes control.
         gameData.forEachPermanent((sourceControllerId, perm) -> {
             if (perm.isFaceDown()) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.DRAW_TRIGGERED)) {
+            for (CardEffect effect : perm.getCard().getTriggerEffects(YOUR_DRAW_STEP, Zone.BATTLEFIELD)) {
                 if (!(effect instanceof PutCountersOnUntapLockedPermanentsEffect)) continue;
                 UUID activatorId = gameData.untapLockActivatorBySource.getOrDefault(perm.getId(), sourceControllerId);
                 if (!activePlayerId.equals(activatorId)) continue;
@@ -3300,11 +3357,12 @@ public class StepTriggerService {
             }
         });
 
-        // Auras: ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED fires on the enchanted permanent's
+        // Auras: "at the beginning of the draw step of enchanted permanent's controller" fires on the enchanted
+        // permanent's
         // controller's draw step (e.g. Righteous Authority), baking that player as targetId.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedControllerDrawEffects =
-                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED);
+                    perm.getCard().getTriggerEffects(ENCHANTED_CONTROLLER_DRAW_STEP, Zone.BATTLEFIELD);
             if (enchantedControllerDrawEffects == null || enchantedControllerDrawEffects.isEmpty()) return;
             if (!perm.isAttached()) return;
 
@@ -3330,11 +3388,11 @@ public class StepTriggerService {
             }
         });
 
-        // Check all battlefields for player-enchanting Curses with ENCHANTED_PLAYER_DRAW_TRIGGERED
+        // Check all battlefields for player-enchanting Curses with Triggers.drawStep(ActivePlayer.ENCHANTED_PLAYER)
         // effects. These fire during the enchanted player's draw step and act on that player.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedPlayerDrawEffects =
-                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PLAYER_DRAW_TRIGGERED);
+                    perm.getCard().getTriggerEffects(ENCHANTED_PLAYER_DRAW_STEP, Zone.BATTLEFIELD);
             if (enchantedPlayerDrawEffects == null || enchantedPlayerDrawEffects.isEmpty()) return;
             if (!perm.isAttached()) return;
 
@@ -3358,9 +3416,9 @@ public class StepTriggerService {
             }
         });
 
-        // Check all battlefields for EACH_DRAW_TRIGGERED effects (all players' draw steps)
+        // Check all battlefields for "at the beginning of each draw step" abilities (all players' draw steps)
         gameData.forEachPermanent((playerId, perm) -> {
-            List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.EACH_DRAW_TRIGGERED);
+            List<CardEffect> drawEffects = perm.getCard().getTriggerEffects(EACH_DRAW_STEP, Zone.BATTLEFIELD);
             if (drawEffects == null || drawEffects.isEmpty()) return;
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
 
@@ -3413,10 +3471,10 @@ public class StepTriggerService {
     public void handlePrecombatMainTriggers(GameData gameData) {
         gameData.mainPhasesBegunThisTurn++;
         if (gameData.mainPhasesBegunThisTurn == 2) {
-            handleMainPhaseTriggers(gameData, EffectSlot.SECOND_MAIN_PHASE_TRIGGERED);
+            handleMainPhaseTriggers(gameData, YOUR_SECOND_MAIN_PHASE);
         }
         if (gameData.planechase != null) planechaseService.step(gameData,
-                EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
+                YOUR_PRECOMBAT_MAIN_PHASE);
 
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.PRECOMBAT_MAIN);
         handleRadCounterTrigger(gameData);
@@ -3577,7 +3635,7 @@ public class StepTriggerService {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                 continue;
             }
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
+            List<CardEffect> effects = perm.getCard().getTriggerEffects(YOUR_PRECOMBAT_MAIN_PHASE, Zone.BATTLEFIELD);
             if (effects == null || effects.isEmpty()) {
                 continue;
             }
@@ -3646,7 +3704,8 @@ public class StepTriggerService {
                     .toList();
             List<List<CardEffect>> nonTargetAbilityGroups = new ArrayList<>();
             List<CardEffect> combinedEffects = new ArrayList<>();
-            for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.PRECOMBAT_MAIN_TRIGGERED)) {
+            for (var registration : perm.getCard()
+                    .getTriggerEffectRegistrations(YOUR_PRECOMBAT_MAIN_PHASE, Zone.BATTLEFIELD)) {
                 if (!nonTargetEffects.contains(registration.effect())) continue;
                 if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
                     nonTargetAbilityGroups.add(List.of(registration.effect()));
@@ -3693,8 +3752,8 @@ public class StepTriggerService {
         }
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_PRECOMBAT_MAIN_TRIGGERED);
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card, YOUR_PRECOMBAT_MAIN_PHASE);
             if (effects == null || effects.isEmpty()) {
                 continue;
             }
@@ -3735,7 +3794,7 @@ public class StepTriggerService {
     private void handleEachPrecombatMainTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
         gameData.forEachPermanent((playerId, perm) -> {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.EACH_PRECOMBAT_MAIN_TRIGGERED);
+            List<CardEffect> effects = perm.getCard().getTriggerEffects(EACH_PRECOMBAT_MAIN_PHASE, Zone.BATTLEFIELD);
             if (effects == null || effects.isEmpty()) {
                 return;
             }
@@ -3775,16 +3834,16 @@ public class StepTriggerService {
     public void handlePostcombatMainTriggers(GameData gameData) {
         gameData.mainPhasesBegunThisTurn++;
         gameData.postcombatMainPhasesBegunThisTurn++;
-        handleMainPhaseTriggers(gameData, EffectSlot.POSTCOMBAT_MAIN_TRIGGERED);
+        handleMainPhaseTriggers(gameData, YOUR_POSTCOMBAT_MAIN_PHASE);
         if (gameData.mainPhasesBegunThisTurn == 2) {
-            handleMainPhaseTriggers(gameData, EffectSlot.SECOND_MAIN_PHASE_TRIGGERED);
+            handleMainPhaseTriggers(gameData, YOUR_SECOND_MAIN_PHASE);
         }
         if (gameData.planechase != null) {
-            planechaseService.step(gameData, EffectSlot.POSTCOMBAT_MAIN_TRIGGERED);
+            planechaseService.step(gameData, YOUR_POSTCOMBAT_MAIN_PHASE);
         }
     }
 
-    private void handleMainPhaseTriggers(GameData gameData, EffectSlot slot) {
+    private void handleMainPhaseTriggers(GameData gameData, StepTrigger trigger) {
         UUID activePlayerId = gameData.activePlayerId;
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) {
@@ -3795,7 +3854,7 @@ public class StepTriggerService {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
                 continue;
             }
-            List<CardEffect> effects = perm.getCard().getEffects(slot);
+            List<CardEffect> effects = perm.getCard().getTriggerEffects(trigger, Zone.BATTLEFIELD);
             if (effects == null || effects.isEmpty()) {
                 continue;
             }
@@ -3940,7 +3999,7 @@ public class StepTriggerService {
     }
 
     /**
-     * Scans every battlefield for {@code END_OF_COMBAT_TRIGGERED} abilities and pushes them onto
+     * Scans every battlefield for {@code Triggers.endOfCombat()} abilities and pushes them onto
      * the stack as the end of combat step begins (CR 511.2). Unlike the postcombat-main scan this
      * runs on all players' permanents, because "at end of combat" is not restricted to the
      * controller's own turn. Also collects emblems that trigger at the end of their controller's
@@ -3951,7 +4010,7 @@ public class StepTriggerService {
     public void handleEndOfCombatTriggers(GameData gameData) {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_OF_FIRST_COMBAT);
         if (gameData.planechase != null) {
-            planechaseService.step(gameData, EffectSlot.END_OF_COMBAT_TRIGGERED);
+            planechaseService.step(gameData, END_OF_COMBAT);
         }
 
         List<DelayedEndOfCombatTrigger> delayedTriggers =
@@ -3977,7 +4036,7 @@ public class StepTriggerService {
         }
 
         gameData.forEachPermanent((playerId, perm) -> {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.END_OF_COMBAT_TRIGGERED);
+            List<CardEffect> effects = perm.getCard().getTriggerEffects(END_OF_COMBAT, Zone.BATTLEFIELD);
             if (effects == null || effects.isEmpty()) {
                 return;
             }
@@ -4547,7 +4606,7 @@ public class StepTriggerService {
     /**
      * Processes end-step triggers: exiles pending tokens (e.g. Mimic Vat),
      * then scans battlefields for
-     * {@code END_STEP_TRIGGERED} and {@code CONTROLLER_END_STEP_TRIGGERED}
+     * {@code Triggers.endStep(ActivePlayer.ANY)} and {@code Triggers.endStep(ActivePlayer.YOU)}
      * abilities.
      *
      * @param gameData the current game state to modify
@@ -4661,7 +4720,7 @@ public class StepTriggerService {
             gameData.enqueueTrigger(monarchDraw);
         }
         if (gameData.planechase != null) planechaseService.step(gameData,
-                EffectSlot.END_STEP_TRIGGERED, EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
+                EACH_END_STEP, YOUR_END_STEP);
         expireNextEndStepTemporaryCopies(gameData);
         handleBedtimeStoryLoreCounters(gameData);
         for (var delayed : gameData.drainDelayedActions(
@@ -5837,7 +5896,7 @@ public class StepTriggerService {
 
         UUID activePlayerId = gameData.activePlayerId;
 
-        // COMMAND_ZONE_END_STEP_TRIGGERED: "at the beginning of your end step" from a card
+        // "At the beginning of your end step" from a card
         // that remains in its owner's command zone (secret missions and similar cards).
         List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
         if (commandZone != null) {
@@ -5845,7 +5904,7 @@ public class StepTriggerService {
                 if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
                     continue;
                 }
-                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_END_STEP_TRIGGERED)) {
+                for (CardEffect effect : card.getTriggerEffects(YOUR_END_STEP, Zone.COMMAND)) {
                     if (effect instanceof ConditionalEffect conditional
                             && conditional.interveningIf()
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -5878,11 +5937,11 @@ public class StepTriggerService {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> endStepEffects = new ArrayList<>();
-                List<CardEffect> printedEndStepEffects = perm.getCard().getEffects(EffectSlot.END_STEP_TRIGGERED);
-                if (printedEndStepEffects != null) {
-                    endStepEffects.addAll(printedEndStepEffects);
+                // A Curse's "each end step" ability acts on the enchanted player; the curse loop below collects it.
+                if (!enchantsPlayer(gameData, perm)) {
+                    endStepEffects.addAll(perm.getCard().getTriggerEffects(EACH_END_STEP, Zone.BATTLEFIELD));
                 }
-                endStepEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.END_STEP_TRIGGERED));
+                endStepEffects.addAll(perm.getPersistentTriggerEffects(EACH_END_STEP));
                 if (endStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : endStepEffects) {
@@ -6299,7 +6358,7 @@ public class StepTriggerService {
             }
         }
 
-        // COMMAND_ZONE_EACH_END_STEP_TRIGGERED: "At the beginning of each end step" from a face-up
+        // Triggers.endStep(ActivePlayer.ANY) from the command zone: "At the beginning of each end step" from a face-up
         // card in any player's command zone — fires at every end step, in APNAP order.
         for (UUID playerId : triggerOrder) {
             List<Card> playerCommandZone = gameData.playerCommandZones.get(playerId);
@@ -6309,7 +6368,7 @@ public class StepTriggerService {
                 if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
                     continue;
                 }
-                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_EACH_END_STEP_TRIGGERED)) {
+                for (CardEffect effect : card.getTriggerEffects(EACH_END_STEP, Zone.COMMAND)) {
                     if (effect instanceof ConditionalEffect conditional
                             && conditional.interveningIf()
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -6330,20 +6389,20 @@ public class StepTriggerService {
             }
         }
 
-        // GRAVEYARD_END_STEP_TRIGGERED: "At the beginning of the end step, if this card is in your
-        // graveyard …" — fires at every end step, from any player's graveyard, in APNAP order.
+        // Triggers.endStep(ActivePlayer.ANY) from the graveyard: "At the beginning of the end step, if this card is in
+        // your graveyard …" — fires at every end step, from any player's graveyard, in APNAP order.
         for (UUID playerId : triggerOrder) {
             List<Card> playerGraveyard = gameData.playerGraveyards.get(playerId);
             if (playerGraveyard == null) continue;
 
             for (Card card : new ArrayList<>(playerGraveyard)) {
                 List<CardEffect> graveyardEndStepEffects = new ArrayList<>(
-                        gameQueryService.getEffectiveGraveyardEffects(
-                                gameData, card, EffectSlot.GRAVEYARD_END_STEP_TRIGGERED));
+                        gameQueryService.getEffectiveGraveyardTriggerEffects(
+                                gameData, card, EACH_END_STEP));
                 if (playerId.equals(activePlayerId)) {
                     graveyardEndStepEffects.addAll(
-                            gameQueryService.getEffectiveGraveyardEffects(
-                                    gameData, card, EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED));
+                            gameQueryService.getEffectiveGraveyardTriggerEffects(
+                                    gameData, card, YOUR_END_STEP));
                 }
                 if (graveyardEndStepEffects == null || graveyardEndStepEffects.isEmpty()) continue;
 
@@ -6411,7 +6470,7 @@ public class StepTriggerService {
             gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
 
-        // CONTROLLER_END_STEP_TRIGGERED: only fires for the active player's permanents and face-up schemes
+        // "At the beginning of your end step": only fires for the active player's permanents and face-up schemes
         List<Permanent> activeBattlefield = gameData.permanentsAndFaceUpSchemes(activePlayerId);
         if (activeBattlefield != null) {
             for (Permanent perm : activeBattlefield) {
@@ -6419,15 +6478,13 @@ public class StepTriggerService {
                 if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     if (!perm.isFaceDown()) {
                         controllerEndStepEffects.addAll(
-                                perm.getCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                                perm.getCard().getTriggerEffects(YOUR_END_STEP, Zone.BATTLEFIELD));
                     }
-                    controllerEndStepEffects.addAll(
-                            perm.getTemporaryTriggeredEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
-                    controllerEndStepEffects.addAll(
-                            perm.getPersistentTriggeredEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                    controllerEndStepEffects.addAll(perm.getTemporaryTriggerEffects(YOUR_END_STEP));
+                    controllerEndStepEffects.addAll(perm.getPersistentTriggerEffects(YOUR_END_STEP));
                 }
-                controllerEndStepEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, EffectSlot.CONTROLLER_END_STEP_TRIGGERED));
+                controllerEndStepEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, perm, YOUR_END_STEP));
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
                 if (controllerEndStepEffects.size() > 1
                         && perm.getCard().getTargetGroups().size() > 1
@@ -6806,7 +6863,7 @@ public class StepTriggerService {
             }
         }
 
-        // OPPONENT_END_STEP_TRIGGERED: "At the beginning of each opponent's end step, ..." Fires only
+        // Triggers.endStep(ActivePlayer.OPPONENT): "At the beginning of each opponent's end step, ..." Fires only
         // during the end step of a player who is an opponent of the permanent's controller (never the
         // controller's own end step). The end-step player is baked into the stack entry's targetId so
         // an intervening-if ConditionalEffect can gate on "that player" — checked here (CR 603.4) and
@@ -6815,7 +6872,8 @@ public class StepTriggerService {
             if (playerId.equals(activePlayerId)) return; // the controller's own end step is not an opponent's
 
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
-                List<CardEffect> opponentEndStepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_END_STEP_TRIGGERED);
+                List<CardEffect> opponentEndStepEffects =
+                        perm.getCard().getTriggerEffects(OPPONENT_END_STEP, Zone.BATTLEFIELD);
                 if (opponentEndStepEffects == null || opponentEndStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : opponentEndStepEffects) {
@@ -6847,13 +6905,13 @@ public class StepTriggerService {
             }
         });
 
-        // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED
+        // Check all battlefields for auras with Triggers.endStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)
         // effects. These fire during the enchanted permanent's controller's end step (e.g. Nettlevine
         // Blight). An ability the Aura grants is controlled by the enchanted permanent's controller
         // (CR 113.8); the Aura's own abilities (e.g. Aggression) are controlled by the Aura's controller.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedControllerEndStepEffects =
-                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED);
+                    perm.getCard().getTriggerEffects(ENCHANTED_CONTROLLER_END_STEP, Zone.BATTLEFIELD);
             if (enchantedControllerEndStepEffects == null || enchantedControllerEndStepEffects.isEmpty()) return;
             if (!perm.isAttached()) return;
 
@@ -6897,17 +6955,20 @@ public class StepTriggerService {
             }
         });
 
-        // Check all battlefields for curses with ENCHANTED_PLAYER_END_STEP_TRIGGERED effects. Unlike
-        // the upkeep variant, these fire at EACH end step (any player's turn) and act on the enchanted
-        // player, whose id is baked as the (non-targeting) targetId (e.g. Fraying Sanity's mill).
+        // Check all battlefields for curses with "at the beginning of each end step" abilities (e.g. Fraying
+        // Sanity's mill) and "at the beginning of enchanted player's end step" ones. They act on the enchanted
+        // player, whose id is baked as the (non-targeting) targetId.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
-            List<CardEffect> enchantedPlayerEndStepEffects =
-                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PLAYER_END_STEP_TRIGGERED);
-            if (enchantedPlayerEndStepEffects == null || enchantedPlayerEndStepEffects.isEmpty()) return;
-            if (!perm.isAttached()) return;
+            if (!enchantsPlayer(gameData, perm)) return;
 
             // For curses, attachedTo is the enchanted player's UUID.
             UUID enchantedPlayerId = perm.getAttachedTo();
+            List<CardEffect> enchantedPlayerEndStepEffects = new ArrayList<>(
+                    perm.getCard().getTriggerEffects(EACH_END_STEP, Zone.BATTLEFIELD));
+            if (enchantedPlayerId.equals(activePlayerId)) {
+                enchantedPlayerEndStepEffects.addAll(
+                        perm.getCard().getTriggerEffects(ENCHANTED_PLAYER_END_STEP, Zone.BATTLEFIELD));
+            }
 
             for (CardEffect effect : enchantedPlayerEndStepEffects) {
                 if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
@@ -7140,18 +7201,18 @@ public class StepTriggerService {
     /**
      * Scans the active player's battlefield, command zone, and graveyard for beginning-of-combat triggered
      * abilities and pushes them onto the stack.
-     * {@code BEGINNING_OF_COMBAT_TRIGGERED} fires only for the active player's permanents
+     * {@code Triggers.beginningOfCombat(ActivePlayer.YOU)} fires only for the active player's permanents
      * (CR 507.1: "At the beginning of combat on your turn").
-     * {@code EACH_BEGINNING_OF_COMBAT_TRIGGERED} fires for every permanent on every
+     * {@code Triggers.beginningOfCombat(ActivePlayer.ANY)} fires for every permanent on every
      * battlefield (e.g. Majestic Myriarch / Odric, Lunarch Marshal).
-     * {@code OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED} fires only for permanents controlled by a
+     * {@code Triggers.beginningOfCombat(ActivePlayer.OPPONENT)} fires only for permanents controlled by a
      * player other than the active player (Sentinel of the Eternal Watch).
      *
      * @param gameData the current game state to modify
      */
     public void handleBeginningOfCombatTriggers(GameData gameData) {
         if (gameData.planechase != null) {
-            planechaseService.step(gameData, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED);
+            planechaseService.step(gameData, YOUR_BEGINNING_OF_COMBAT);
         }
         queueDelayedBeginningOfCombatTriggers(gameData);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.BEGINNING_OF_COMBAT);
@@ -7163,9 +7224,9 @@ public class StepTriggerService {
                 List<CardEffect> combatEffects = new ArrayList<>(
                         perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)
                                 ? List.of()
-                                : perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
-                combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
+                                : perm.getCard().getTriggerEffects(YOUR_BEGINNING_OF_COMBAT, Zone.BATTLEFIELD));
+                combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, perm, YOUR_BEGINNING_OF_COMBAT));
                 queueBeginningOfCombatTriggers(gameData, activePlayerId, perm,
                         combatEffects);
             }
@@ -7178,7 +7239,7 @@ public class StepTriggerService {
                     continue;
                 }
                 List<CardEffect> combatEffects = new ArrayList<>(
-                        card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
+                        card.getTriggerEffects(YOUR_BEGINNING_OF_COMBAT, Zone.BATTLEFIELD));
                 if (!combatEffects.isEmpty()) {
                     queueBeginningOfCombatTriggers(gameData, activePlayerId, new Permanent(card),
                             combatEffects);
@@ -7190,16 +7251,16 @@ public class StepTriggerService {
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
                 queueGraveyardBeginningOfCombatTriggers(gameData, activePlayerId, card,
-                        gameQueryService.getEffectiveGraveyardEffects(
-                                gameData, card, EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED));
+                        gameQueryService.getEffectiveGraveyardTriggerEffects(
+                                gameData, card, YOUR_BEGINNING_OF_COMBAT));
             }
         }
 
         BiConsumer<UUID, Permanent> eachCombat = (playerId, perm) -> {
             List<CardEffect> combatEffects = new ArrayList<>(
-                    perm.getCard().getEffects(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED));
-            combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, perm, EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED));
+                    perm.getCard().getTriggerEffects(EACH_BEGINNING_OF_COMBAT, Zone.BATTLEFIELD));
+            combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, perm, EACH_BEGINNING_OF_COMBAT));
             queueBeginningOfCombatTriggers(gameData, playerId, perm, combatEffects);
         };
         gameData.forEachPermanent(eachCombat);
@@ -7208,9 +7269,9 @@ public class StepTriggerService {
         BiConsumer<UUID, Permanent> opponentCombat = (playerId, perm) -> {
             if (!playerId.equals(activePlayerId)) {
                 List<CardEffect> combatEffects = new ArrayList<>(
-                        perm.getCard().getEffects(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED));
-                combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED));
+                        perm.getCard().getTriggerEffects(OPPONENT_BEGINNING_OF_COMBAT, Zone.BATTLEFIELD));
+                combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                        gameData, perm, OPPONENT_BEGINNING_OF_COMBAT));
                 queueBeginningOfCombatTriggers(gameData, playerId, perm,
                         combatEffects);
             }

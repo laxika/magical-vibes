@@ -23,7 +23,7 @@ public enum MayPayPayer {
 
     /**
      * The enchanted permanent's controller — the player carried on the stack entry's
-     * {@code targetId} by an {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} trigger
+     * {@code targetId} by an {@code Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)} trigger
      * ("that player may pay {X}", Paralyze).
      */
     ENCHANTED_CONTROLLER,

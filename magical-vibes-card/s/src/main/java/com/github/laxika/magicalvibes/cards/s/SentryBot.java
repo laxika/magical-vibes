@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -36,7 +36,7 @@ public class SentryBot extends Card {
                 new PermanentCount(attackingCreatures, CountScope.ANY_PLAYER)));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new EnergyCountersEffect(new PermanentCount(attackingCreatures, CountScope.ANY_PLAYER)));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(3),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-3),

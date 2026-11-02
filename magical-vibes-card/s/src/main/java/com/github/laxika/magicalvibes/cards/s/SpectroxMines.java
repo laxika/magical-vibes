@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ public class SpectroxMines extends Card {
                 new LoseLifeEffect(3),
                 CreateTokenEffect.ofTreasureToken(1));
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, arrivalAndUpkeep);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, arrivalAndUpkeep);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), arrivalAndUpkeep);
 
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 CreateTokenEffect.ofFoodToken(1),

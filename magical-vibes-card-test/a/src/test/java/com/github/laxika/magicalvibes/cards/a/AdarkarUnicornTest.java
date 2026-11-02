@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.m.MysticRemora;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
@@ -38,8 +39,8 @@ class AdarkarUnicornTest extends BaseCardTest {
 
     private Permanent permanentWithCumulativeUpkeep(Player controller, String costPerAge) {
         Permanent permanent = harness.addToBattlefieldAndReturn(controller, new BalduvianBears());
-        TestCards.mutableCard(permanent).addEffect(
-                EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect(costPerAge));
+        TestCards.mutableCard(permanent).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                new CumulativeUpkeepEffect(costPerAge));
         return permanent;
     }
 

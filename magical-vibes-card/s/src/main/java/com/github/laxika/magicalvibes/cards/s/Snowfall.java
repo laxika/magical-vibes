@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ICE", collectorNumber = "101")
 public class Snowfall extends Card {
 
     public Snowfall() {
         // Cumulative upkeep {U}
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{U}"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{U}"));
 
         // Whenever an Island is tapped for mana, its controller may add an additional {U}.
         // If that Island is snow, its controller may add an additional {U}{U} instead.

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -44,7 +44,7 @@ public class HotPursuit extends Card {
         AtLeastPlayersLostGame condition = new AtLeastPlayersLostGame(2);
         // "Untap them. They gain haste" refers to the creatures gained this way, which are no longer
         // goaded once you control them.
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConditionalEffect(condition,
                         new GainControlOfAllPermanentsMatchingEffect(
                                 goadedOrSuspectedCreature,

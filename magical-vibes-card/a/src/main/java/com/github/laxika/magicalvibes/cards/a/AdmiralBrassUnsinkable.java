@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +31,7 @@ public class AdmiralBrassUnsinkable extends Card {
 
     public AdmiralBrassUnsinkable() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(4, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new com.github.laxika.magicalvibes.model.effect.MayEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(

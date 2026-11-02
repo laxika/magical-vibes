@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +29,7 @@ import java.util.Set;
 public class AplanMortarium extends Card {
 
     public AplanMortarium() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.EXPOSURE),
                 new LoseLifeEffect(new CountersOnSource(CounterType.EXPOSURE), LoseLifeRecipient.CONTROLLER)));
 

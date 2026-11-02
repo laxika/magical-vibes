@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "18")
 @CardRegistration(set = "OPCA", collectorNumber = "34")
@@ -20,7 +22,7 @@ public class GroveOfTheDreampods extends Card {
                 new RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffect(
                         new Fixed(1), new CardTypePredicate(CardType.CREATURE), false, true);
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, revealCreature);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, revealCreature);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), revealCreature);
 
         addEffect(EffectSlot.CHAOS_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

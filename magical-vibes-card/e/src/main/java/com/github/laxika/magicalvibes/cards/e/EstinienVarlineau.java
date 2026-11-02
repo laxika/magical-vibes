@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class EstinienVarlineau extends Card {
 
         var qualifyingCombatDamage = new OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn(
                 "Estinien Varlineau", CardSubtype.DRAGON);
-        addEffect(EffectSlot.SECOND_MAIN_PHASE_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU), SequenceEffect.of(
                 new DrawCardEffect(qualifyingCombatDamage),
                 new LoseLifeEffect(qualifyingCombatDamage, LoseLifeRecipient.CONTROLLER)
         ));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class Topplegeist extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
+                .addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                         new ConditionalEffect(new Delirium(), new TapPermanentsEffect(
                                 TapUntapScope.TARGET,
                                 new PermanentAllOfPredicate(List.of(

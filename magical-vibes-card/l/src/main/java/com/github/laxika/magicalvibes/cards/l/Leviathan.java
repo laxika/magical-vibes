@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessSacrificeEffect;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "98")
 @CardRegistration(set = "4ED", collectorNumber = "80")
@@ -35,7 +36,7 @@ public class Leviathan extends Card {
         addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may sacrifice two Islands. If you do, untap Leviathan.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new ConditionalEffect(new ControlsPermanentCount(2, islands), new SequenceEffect(List.of(
                         new SacrificePermanentsEffect(2, islands, SacrificeRecipient.CONTROLLER)
                                 .withRecordedSacrificeCount(),

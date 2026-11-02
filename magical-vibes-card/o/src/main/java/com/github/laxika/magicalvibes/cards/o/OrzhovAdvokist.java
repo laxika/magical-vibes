@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C21", collectorNumber = "99")
 @CardRegistration(set = "NCC", collectorNumber = "207")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCre
 public class OrzhovAdvokist extends Card {
 
     public OrzhovAdvokist() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

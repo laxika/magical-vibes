@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -126,18 +127,18 @@ class GameDataDeepCopyTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
         origPerm.addTemporaryTriggeredEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new DrawCardEffect(1));
-        origPerm.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(2));
+        origPerm.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(2)));
         origPerm.addUntilNextUpkeepTriggeredEffect(player1.getId(), EffectSlot.ON_ATTACK, new DrawCardEffect(3));
 
         GameData copy = gd.simulationCopy();
         Permanent copyPerm = copy.playerBattlefields.get(player1.getId()).getFirst();
-        copyPerm.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(4));
+        copyPerm.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(4)));
         copyPerm.clearUntilNextUpkeepTriggeredEffects(player1.getId());
 
         assertThat(copyPerm.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)).containsExactly(new DrawCardEffect(1));
-        assertThat(copyPerm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
+        assertThat(copyPerm.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU)))
                 .containsExactly(new DrawCardEffect(2), new DrawCardEffect(4));
-        assertThat(origPerm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
+        assertThat(origPerm.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU)))
                 .containsExactly(new DrawCardEffect(2));
         assertThat(origPerm.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK)).containsExactly(new DrawCardEffect(3));
     }

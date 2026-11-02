@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "191")
 @CardRegistration(set = "LCI", collectorNumber = "327")
@@ -14,6 +16,6 @@ public class HulkingRaptor extends Card {
 
     public HulkingRaptor() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new AwardManaEffect(ManaColor.GREEN, 2));
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new AwardManaEffect(ManaColor.GREEN, 2));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
@@ -28,7 +27,7 @@ import java.util.List;
 public class RoseCutthroatRaider extends Card {
 
     public RoseCutthroatRaider() {
-        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.endOfCombat(),
                 new ConditionalEffect(new Raid(), junkToken(new OpponentsAttackedThisTurn())));
 
         addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),

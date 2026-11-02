@@ -18,8 +18,8 @@ import java.util.List;
  *
  * <p>When {@code payerIsEnchantedController} is true, the prompt goes to the player on the stack
  * entry's {@code targetId} instead of the source's controller. That covers both the enchanted
- * permanent's controller under {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} (Mind Whip:
- * "that player may pay {3}") and the active player under {@code EACH_UPKEEP_TRIGGERED} (Pillar
+ * permanent's controller under {@code Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)} (Mind Whip:
+ * "that player may pay {3}") and the active player under {@code Triggers.upkeep(ActivePlayer.ANY)} (Pillar
  * Tombs of Aku: "that player may sacrifice a creature"). Mutually exclusive with
  * {@code anyPlayerMayPay}.
  *

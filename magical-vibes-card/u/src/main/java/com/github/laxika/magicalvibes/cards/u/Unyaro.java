@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutCreaturesUntilPlanesw
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +23,7 @@ import java.util.Set;
 public class Unyaro extends Card {
 
     public Unyaro() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new PlaneswalkedToPlaneThisTurn("Unyaro"),
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES),

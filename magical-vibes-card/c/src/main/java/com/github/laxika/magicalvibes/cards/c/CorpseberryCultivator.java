@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLB", collectorNumber = "210")
 public class CorpseberryCultivator extends Card {
 
     public CorpseberryCultivator() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new MayEffect(new ForageEffect(), "Forage?"));
         addEffect(EffectSlot.ON_CONTROLLER_FORAGES,
                 new PutCountersOnSourceEffect(1, 1, 1));

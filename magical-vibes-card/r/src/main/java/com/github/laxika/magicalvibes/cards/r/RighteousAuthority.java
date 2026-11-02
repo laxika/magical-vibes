@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RTR", collectorNumber = "189")
 @CardRegistration(set = "C18", collectorNumber = "188")
@@ -23,7 +24,7 @@ public class RighteousAuthority extends Card {
                         hand, hand, GrantScope.ENCHANTED_CREATURE))
                 // At the beginning of the draw step of enchanted creature's controller, that player
                 // draws an additional card. Slot bakes that player as targetId.
-                .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED,
+                .addTrigger(Triggers.drawStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
                         new DrawCardForTargetPlayerEffect(1));
     }
 }

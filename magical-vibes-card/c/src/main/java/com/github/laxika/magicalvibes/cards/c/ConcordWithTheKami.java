@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class ConcordWithTheKami extends Card {
         var spiritToken = new CreateTokenEffect(
                 "Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of());
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ChooseOneAtTriggerTimeEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ChooseOneAtTriggerTimeEffect(
                 ChooseOneEffect.oneOrMore(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on target creature with a counter on it.",

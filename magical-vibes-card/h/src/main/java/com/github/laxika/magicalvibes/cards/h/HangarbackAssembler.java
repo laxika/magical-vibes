@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,7 +38,7 @@ public class HangarbackAssembler extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new MaxSpeed(),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreatureOrVehicle)));

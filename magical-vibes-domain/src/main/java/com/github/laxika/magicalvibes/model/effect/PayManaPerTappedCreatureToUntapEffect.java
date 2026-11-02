@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * [matching] creatures they control and pay {@code manaCost} for each creature chosen
  * this way. If the player does, untap those creatures." (Magnetic Mountain, Thelon's Curse.)
  *
- * <p>Placed in {@code EffectSlot.EACH_UPKEEP_TRIGGERED}; the acting player ("that player") is the
+ * <p>An "at the beginning of each upkeep" ({@code Triggers.upkeep(ActivePlayer.ANY)}) effect; the acting player
+ * ("that player") is the
  * stack entry's target — the player whose upkeep it is, not the source's controller. On resolution
  * the acting player is offered a multi-permanent choice, capped by how many creatures they can
  * afford from their mana pool; the {@code manaCost} cost per chosen creature is paid and the

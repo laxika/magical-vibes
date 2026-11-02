@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -450,7 +452,8 @@ public class Permanent {
     @Getter(AccessLevel.NONE)
     private final List<Ability> combatAbilities = new ArrayList<>();
     /** Abilities granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting an
-     *  {@code UPKEEP_TRIGGERED} ability with CumulativeUpkeepEffect). Survives {@link #resetModifiers()}. */
+     *  {@code Triggers.upkeep(ActivePlayer.YOU)} ability with CumulativeUpkeepEffect). Survives
+     *  {@link #resetModifiers()}. */
     @Getter(AccessLevel.NONE)
     private final List<Ability> persistentAbilities = new ArrayList<>();
     /** "When this creature dies" delayed triggers created by a resolving ability (CR 603.7). Unlike
@@ -2120,6 +2123,29 @@ public class Permanent {
     }
 
     /**
+     * The effects of the triggered abilities with {@code trigger} granted until end of turn, end of combat or next
+     * upkeep, in that order.
+     */
+    public List<CardEffect> getTemporaryTriggerEffects(Trigger trigger) {
+        return effectsWithTrigger(getTemporaryTriggeredAbilities(), trigger);
+    }
+
+    /** The effects of the triggered abilities with {@code trigger} granted until it leaves the battlefield. */
+    public List<CardEffect> getPersistentTriggerEffects(Trigger trigger) {
+        return effectsWithTrigger(getPersistentTriggeredAbilities(), trigger);
+    }
+
+    private static List<CardEffect> effectsWithTrigger(List<TriggeredAbility> abilities, Trigger trigger) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (TriggeredAbility ability : abilities) {
+            if (ability.hasTrigger(trigger)) {
+                ability.effects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
+        return effects;
+    }
+
+    /**
      * The effects of the static abilities granted until end of turn, end of combat or next upkeep, in
      * that order.
      */
@@ -2236,9 +2262,10 @@ public class Permanent {
      * cumulative upkeep".
      */
     public boolean hasCumulativeUpkeep() {
-        return hasCumulativeUpkeepIn(card.getEffects(EffectSlot.UPKEEP_TRIGGERED))
-                || hasCumulativeUpkeepIn(getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
-                || hasCumulativeUpkeepIn(getTemporaryTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED));
+        Trigger yourUpkeep = Triggers.upkeep(ActivePlayer.YOU);
+        return hasCumulativeUpkeepIn(card.getTriggerEffects(yourUpkeep, Zone.BATTLEFIELD))
+                || hasCumulativeUpkeepIn(getPersistentTriggerEffects(yourUpkeep))
+                || hasCumulativeUpkeepIn(getTemporaryTriggerEffects(yourUpkeep));
     }
 
     private static boolean hasCumulativeUpkeepIn(List<CardEffect> effects) {

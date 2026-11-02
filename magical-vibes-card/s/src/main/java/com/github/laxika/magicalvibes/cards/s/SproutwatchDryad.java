@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class SproutwatchDryad extends Card {
     );
 
     public SproutwatchDryad() {
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new SequenceEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), new SequenceEffect(
                 SHARED_KEYWORDS.stream()
                         .map(keyword -> (CardEffect) new ConditionalEffect(
                                 shares(keyword),

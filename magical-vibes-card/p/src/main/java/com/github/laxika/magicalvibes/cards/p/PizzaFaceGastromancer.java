@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -49,7 +49,7 @@ public class PizzaFaceGastromancer extends Card {
         target(new PermanentPredicateTargetFilter(
                 otherArtifactOrCreature,
                 "Target must be another artifact or creature"), 0, 1)
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new ConditionalEffect(
                                 new PermanentLeftBattlefieldUnderYourControlThisTurn(),
                                 SequenceEffect.of(

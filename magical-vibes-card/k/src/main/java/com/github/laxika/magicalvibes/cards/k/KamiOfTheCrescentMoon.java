@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOK", collectorNumber = "42")
 @CardRegistration(set = "SLD", collectorNumber = "260")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 public class KamiOfTheCrescentMoon extends Card {
 
     public KamiOfTheCrescentMoon() {
-        addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new DrawCardForTargetPlayerEffect(1));
+        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1));
     }
 }

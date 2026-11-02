@@ -332,4 +332,44 @@ public final class Triggers {
     public static PermanentChangeTrigger turnedFaceUp(PermanentPredicate filter, ObjectRelation relation) {
         return new PermanentChangeTrigger(relation, filter, Set.of(PermanentChange.TURNED_FACE_UP));
     }
+
+    /** "At the beginning of [player's] upkeep": {@code upkeep(ActivePlayer.YOU)} for "your upkeep". */
+    public static StepTrigger upkeep(ActivePlayer player) {
+        return new StepTrigger(StepTrigger.Moment.UPKEEP, player);
+    }
+
+    /** "At the beginning of [player's] draw step". */
+    public static StepTrigger drawStep(ActivePlayer player) {
+        return new StepTrigger(StepTrigger.Moment.DRAW_STEP, player);
+    }
+
+    /** "At the beginning of [player's] precombat main phase", the first main phase of the turn. */
+    public static StepTrigger precombatMainPhase(ActivePlayer player) {
+        return new StepTrigger(StepTrigger.Moment.PRECOMBAT_MAIN_PHASE, player);
+    }
+
+    /** "At the beginning of combat on [player's] turn". */
+    public static StepTrigger beginningOfCombat(ActivePlayer player) {
+        return new StepTrigger(StepTrigger.Moment.BEGINNING_OF_COMBAT, player);
+    }
+
+    /** "At end of combat", on any player's turn. */
+    public static StepTrigger endOfCombat() {
+        return new StepTrigger(StepTrigger.Moment.END_OF_COMBAT, ActivePlayer.ANY);
+    }
+
+    /** "At the beginning of [player's] postcombat main phase", every one of them. */
+    public static StepTrigger postcombatMainPhase(ActivePlayer player) {
+        return new StepTrigger(StepTrigger.Moment.POSTCOMBAT_MAIN_PHASE, player);
+    }
+
+    /** "At the beginning of [player's] second main phase", the turn's second main phase only. */
+    public static StepTrigger secondMainPhase(ActivePlayer player) {
+        return new StepTrigger(StepTrigger.Moment.SECOND_MAIN_PHASE, player);
+    }
+
+    /** "At the beginning of [player's] end step": {@code endStep(ActivePlayer.ANY)} for "each end step". */
+    public static StepTrigger endStep(ActivePlayer player) {
+        return new StepTrigger(StepTrigger.Moment.END_STEP, player);
+    }
 }

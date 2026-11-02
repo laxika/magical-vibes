@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "122")
 @CardRegistration(set = "SPM", collectorNumber = "268")
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class WebOfLifeAndDestiny extends Card {
 
     public WebOfLifeAndDestiny() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(
                         5, new CardTypePredicate(CardType.CREATURE)));
     }

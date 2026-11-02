@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
@@ -23,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ import java.util.List;
 public class GyomeMasterChef extends Card {
 
     public GyomeMasterChef() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, foodTokensForNontokenCreaturesEnteredThisTurn());
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), foodTokensForNontokenCreaturesEnteredThisTurn());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

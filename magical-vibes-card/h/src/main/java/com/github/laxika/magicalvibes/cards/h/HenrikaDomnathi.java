@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class HenrikaDomnathi extends Card {
     public HenrikaDomnathi() {
         setBackFaceCard(new HenrikaInfernalSeer());
 
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ChooseModeNotYetChosenEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),

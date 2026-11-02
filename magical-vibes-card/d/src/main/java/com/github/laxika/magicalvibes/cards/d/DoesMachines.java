@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -71,10 +72,10 @@ public class DoesMachines extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact you control"))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ConditionalEffect(new SourceClassLevelAtLeast(3),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ConditionalEffect(
                                 new AllOf(List.of(new SourceClassLevelAtLeast(3),
                                         new NotCondition(new TargetPermanentMatches(new PermanentIsCreaturePredicate())))),

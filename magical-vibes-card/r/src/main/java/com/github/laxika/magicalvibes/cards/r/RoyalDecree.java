@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +29,7 @@ public class RoyalDecree extends Card {
 
     public RoyalDecree() {
         // Cumulative upkeep {W}
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{W}"));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{W}"));
 
         // Whenever a Swamp, Mountain, black permanent, or red permanent becomes tapped, this
         // enchantment deals 1 damage to that permanent's controller. Both ally- and opponent-

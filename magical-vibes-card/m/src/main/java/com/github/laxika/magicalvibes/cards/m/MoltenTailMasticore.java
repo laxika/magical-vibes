@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class MoltenTailMasticore extends Card {
 
     public MoltenTailMasticore() {
         // At the beginning of your upkeep, sacrifice Molten-Tail Masticore unless you discard a card.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessDiscardCardTypeEffect(null));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessDiscardCardTypeEffect(null));
 
         // {4}, Exile a creature card from your graveyard: Molten-Tail Masticore deals 4 damage to any target.
         addActivatedAbility(new ActivatedAbility(

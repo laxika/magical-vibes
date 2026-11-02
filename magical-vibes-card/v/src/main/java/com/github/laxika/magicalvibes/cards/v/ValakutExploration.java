@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class ValakutExploration extends Card {
                 new ExileTopCardsToSourceEffect(1, false, false));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                         false, null, false, false, 0, null, false, false, false, true));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new SourceExiledCardsThreshold(1),
                         SequenceEffect.of(

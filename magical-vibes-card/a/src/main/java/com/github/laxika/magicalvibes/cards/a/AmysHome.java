@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileNonlandCardFromHandWithManaValueTimeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "566")
 public class AmysHome extends Card {
@@ -14,7 +16,7 @@ public class AmysHome extends Card {
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, new MayEffect(
                 new ExileNonlandCardFromHandWithManaValueTimeCountersEffect(),
                 "Exile a nonland card from your hand?"));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new ExileNonlandCardFromHandWithManaValueTimeCountersEffect(),
                 "Exile a nonland card from your hand?"));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new TimeTravelEffect(1));

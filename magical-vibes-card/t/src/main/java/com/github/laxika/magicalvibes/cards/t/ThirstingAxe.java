@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "202")
 public class ThirstingAxe extends Card {
@@ -21,7 +22,7 @@ public class ThirstingAxe extends Card {
         addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
         // You can only sacrifice a permanent you control (CR 701.21a), so an opponent's equipped
         // creature is left alone.
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new AllConditions(List.of(
                         new EquippedCreatureDidntDealCombatDamageToCreatureThisTurn(),
                         new EnchantedPermanentMatches(new PermanentControlledBySourceControllerPredicate(),

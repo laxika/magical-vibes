@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class MastersGuidance extends Card {
                                 new MinimumMatchingAttackers(2, legendaryCreature),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

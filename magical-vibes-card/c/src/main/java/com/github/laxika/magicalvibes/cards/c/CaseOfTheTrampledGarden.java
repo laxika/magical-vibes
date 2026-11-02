@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +32,7 @@ public class CaseOfTheTrampledGarden extends Card {
                         DistributeCountersAmongTargetsEffect.evenlyAmongTargets(
                                 CounterType.PLUS_ONE_PLUS_ONE, 2));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(new AllOf(List.of(
                         new ControlledCreaturesTotalPowerAtLeast(8),
                         new NotCondition(new SourceIsSolved())

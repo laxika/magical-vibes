@@ -13,12 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BIG", collectorNumber = "11")
 public class GenerousPlunderer extends Card {
 
     public GenerousPlunderer() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                 new CreateTokenThenEffect(
                         CreateTokenEffect.ofTreasureToken(1),
                         new CreateTokenForTargetPlayerEffect(

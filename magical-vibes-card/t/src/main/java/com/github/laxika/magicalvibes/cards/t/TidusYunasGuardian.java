@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "5")
 @CardRegistration(set = "FIC", collectorNumber = "187")
@@ -23,7 +25,7 @@ public class TidusYunasGuardian extends Card {
 
     public TidusYunasGuardian() {
         target(TargetFilters.creatureYouControl(), 0, 2)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new MayEffect(
                                 new MoveCounterFromTargetCreatureToTargetCreatureEffect(),
                                 "Move a counter?"));

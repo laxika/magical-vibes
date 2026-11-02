@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.target;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -4522,7 +4523,7 @@ public class TargetLegalityService {
         // Only abilities that ask the active player to choose (the Oaths, for example)
         // evaluate "opponent" relative to that player. A block trigger still uses its controller.
         if (entry.getActivePlayerId() != null && entry.getCard() != null) {
-            for (CardEffect effect : entry.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)) {
+            for (CardEffect effect : entry.getCard().getTriggerEffects(Triggers.upkeep(ActivePlayer.ANY))) {
                 if (effect instanceof MayEffect may
                         && may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER
                         && (entry.getEffectsToResolve().contains(may)

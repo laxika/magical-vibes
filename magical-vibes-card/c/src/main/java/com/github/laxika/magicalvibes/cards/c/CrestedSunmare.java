@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class CrestedSunmare extends Card {
                 GrantScope.OWN_CREATURES, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.HORSE))));
 
         // At the beginning of each end step, if you gained life this turn, create a 5/5 white Horse creature token.
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new GainedLifeThisTurn(),
                 new CreateTokenEffect("Horse", 5, 5, CardColor.WHITE,
                         List.of(CardSubtype.HORSE), Set.of(), Set.of())));

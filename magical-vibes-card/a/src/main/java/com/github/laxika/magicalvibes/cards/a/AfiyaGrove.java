@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class AfiyaGrove extends Card {
 
         // "At the beginning of your upkeep, move a +1/+1 counter from this enchantment onto target creature."
         target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED,
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         new MoveCounterFromSourceToTargetCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // "When this enchantment has no +1/+1 counters on it, sacrifice it." — state-triggered ability.

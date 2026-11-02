@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -46,7 +48,7 @@ public class BrimazBlightOfOreskos extends Card {
 
         // At the beginning of each end step, if a Phyrexian died under your control this turn,
         // proliferate.
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new ConditionalEffect(
                 new CreatureSubtypeDiedUnderYourControlThisTurn(CardSubtype.PHYREXIAN),
                 new ProliferateEffect()));
     }

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,10 +28,10 @@ public class FireNationTurret extends Card {
         // At the beginning of combat on your turn, up to one target creature gets +2/+0 and
         // gains firebending 2 until end of turn.
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 0))
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.TARGET))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 EffectSlot.ON_ATTACK,
                                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2)));

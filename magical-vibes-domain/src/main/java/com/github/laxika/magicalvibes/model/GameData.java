@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -11596,6 +11597,20 @@ public class GameData {
     /** The effects in {@code slot} of the perpetual grants of the card {@code cardId}, in grant order. */
     public List<CardEffect> perpetualAbilityEffects(UUID cardId, EffectSlot slot) {
         return LegacySlots.effectsIn(perpetualAbilities(cardId), slot);
+    }
+
+    /**
+     * The effects of the triggered abilities perpetually granted to the card {@code cardId} that have {@code trigger}
+     * as a trigger condition functioning in {@code zone}, in grant order.
+     */
+    public List<CardEffect> perpetualTriggerEffects(UUID cardId, Trigger trigger, Zone zone) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (Ability ability : perpetualAbilities(cardId)) {
+            if (ability instanceof TriggeredAbility triggered && triggered.hasTrigger(trigger, zone)) {
+                triggered.effects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
+        return effects;
     }
 
     /** The effects of the static abilities perpetually granted to the card {@code cardId}, in grant order. */

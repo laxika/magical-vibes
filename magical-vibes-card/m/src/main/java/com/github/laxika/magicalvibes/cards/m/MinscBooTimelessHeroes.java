@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -25,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -46,7 +46,7 @@ public class MinscBooTimelessHeroes extends Card {
     public MinscBooTimelessHeroes() {
         MayEffect createBoo = new MayEffect(BOO_TOKEN, "Create Boo?");
         addTrigger(Triggers.enters(ObjectRelation.THIS), createBoo);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, createBoo);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), createBoo);
 
         PermanentPredicate creatureWithTrampleOrHaste = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

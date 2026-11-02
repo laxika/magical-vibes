@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
@@ -15,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,11 +34,11 @@ public class VeiledApparition extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsCreature(),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.UPKEEP_TRIGGERED,
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                         new ForcedCostOrElseEffect(
                                 new PayManaCost("{1}{U}"),
                                 List.of(new SacrificeSelfEffect()),
-                                true),
+                                true)),
                         GrantScope.SELF)));
     }
 }

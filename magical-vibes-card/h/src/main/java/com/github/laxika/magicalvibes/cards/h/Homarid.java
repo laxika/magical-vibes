@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class Homarid extends Card {
 
     public Homarid() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIDE, new Fixed(1)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.TIDE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.TIDE));
 
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(

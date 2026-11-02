@@ -11,7 +11,7 @@ import java.util.List;
  * a creature type with the source creature (Changeling counts as every creature type), the
  * controller is offered a "you may reveal" choice; on reveal, {@code revealEffects} resolve against
  * the source permanent. The card stays on top of the library either way. Placed in the
- * {@code UPKEEP_TRIGGERED} slot.</p>
+ * {@code Triggers.upkeep(ActivePlayer.YOU)} slot.</p>
  *
  * <p>When {@code mayLook} is set, the controller is first asked whether to look at the top card at
  * all ("you may look"); {@code lookStep} marks that pending look prompt and is never set on a card.</p>

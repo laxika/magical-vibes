@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class ThopterSpyNetwork extends Card {
     public ThopterSpyNetwork() {
         // "if you control an artifact" is an intervening-if (CR 603.4): checked as the upkeep
         // trigger would go on the stack and again on resolution.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanentCount(1, new PermanentIsArtifactPredicate()),
                 new CreateTokenEffect("Thopter", 1, 1,
                         null, List.of(CardSubtype.THOPTER),

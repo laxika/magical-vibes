@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class VentifactBottle extends Card {
         // tap it and remove all charge counters from it. Add {C} for each charge counter removed
         // this way. One SequenceEffect so the three steps share a stack entry: the removal
         // snapshots the removed count as the entry's event value, which the mana award reads back.
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new ConditionalEffect(new SourceCounterThreshold(1, CounterType.CHARGE),
                         SequenceEffect.of(
                                 new TapPermanentsEffect(TapUntapScope.SELF),

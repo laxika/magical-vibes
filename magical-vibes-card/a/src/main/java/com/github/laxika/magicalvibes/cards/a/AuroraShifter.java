@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,13 +39,13 @@ public class AuroraShifter extends Card {
         target(new PermanentPredicateTargetFilter(
                 anotherCreatureYouControl,
                 "Target must be another creature you control"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(2),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-2),
                                 new QueueReflexiveAbilityEffect(new BecomeCopyOfTargetCreaturePermanentlyEffect(
                                         null,
-                                        EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                                        Triggers.beginningOfCombat(ActivePlayer.YOU),
                                         anotherCreatureYouControl,
                                         List.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))))),
                 "Pay {E}{E} to have Aurora Shifter become a copy of another creature you control?"));

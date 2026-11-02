@@ -47,8 +47,6 @@ enum LegacySlotGrouping {
             EffectSlot.SAGA_CHAPTER_IV,
             EffectSlot.SAGA_CHAPTER_V,
             EffectSlot.SAGA_CHAPTER_VI,
-            EffectSlot.END_OF_COMBAT_TRIGGERED,
-            EffectSlot.EACH_PRECOMBAT_MAIN_TRIGGERED,
             EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL,
             EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE,
             EffectSlot.EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,

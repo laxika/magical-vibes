@@ -552,7 +552,7 @@ the merged class: `MiscTriggerCollectorService:238` (`ON_ENCHANTED_PERMANENT_TAP
 and `DeathTriggerCollectorService:1149` (`Triggers.creatureDies(ANY)`, Sadistic Glee). Both stay
 slot-scoped, and no card puts a `TRIGGERING` reference in either slot, so the re-key is inert; had it
 been missed, both cards' triggers would have silently stopped firing. Neither trigger-collection
-lookup nor `UPKEEP_TRIGGERED` (which is generic) needed anything else.
+lookup nor `Triggers.upkeep(ActivePlayer.YOU)` (which is generic) needed anything else.
 
 **Other call sites updated**
 - `DestructionSupport:520` matched `elseEffect instanceof PhaseOutSelfEffect` for the "unless you pay
@@ -984,7 +984,7 @@ there). Widening any of these means wiring the consumer at the same time.
   are still one-liners and every caller is untouched.
 - `TargetPolarityClassifier` (magical-vibes-ai) re-keys its single name entry from
   `GrantChosenKeywordToTargetEffect` to `GrantChosenKeywordEffect`. No `instanceof` branch was needed:
-  the SELF form appears only in an activated ability and an `UPKEEP_TRIGGERED` slot, never in
+  the SELF form appears only in an activated ability and an `Triggers.upkeep(ActivePlayer.YOU)` slot, never in
   SPELL / Triggers.enters(ObjectRelation.THIS), and the sibling `GrantProtectionChoiceUntilEndOfTurnEffect` entry has
   already been name-keyed across its own scopes since Step 8. `TargetPolarityGuardTest` passes.
 - **Nothing else.** Unlike Steps 8 and 9, no `@CollectsTrigger` collector is keyed on any of these

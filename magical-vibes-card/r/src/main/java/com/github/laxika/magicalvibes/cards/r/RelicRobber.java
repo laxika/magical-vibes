@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,8 @@ public class RelicRobber extends Card {
                         Set.of(CardType.ARTIFACT),
                         List.of(
                                 StaticAbility.of(new CantBlockEffect()),
-                                LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)))
+                                new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)))
                 )));
     }
 }

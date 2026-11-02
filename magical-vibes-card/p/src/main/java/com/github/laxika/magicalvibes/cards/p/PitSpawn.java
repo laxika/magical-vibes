@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,7 +16,7 @@ import java.util.List;
 public class PitSpawn extends Card {
 
     public PitSpawn() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{B}{B}"),
                         List.of(new SacrificeSelfEffect()),

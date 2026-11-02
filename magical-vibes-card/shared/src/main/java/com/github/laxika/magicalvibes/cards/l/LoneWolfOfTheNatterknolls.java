@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +17,7 @@ public class LoneWolfOfTheNatterknolls extends Card {
     public LoneWolfOfTheNatterknolls() {
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                 SpellCastTriggerEffect.duringYourTurn(null, List.of(new DrawCardEffect(2))));
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 }

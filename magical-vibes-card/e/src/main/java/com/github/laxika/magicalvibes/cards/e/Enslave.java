@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NPH", collectorNumber = "58")
 @CardRegistration(set = "PLC", collectorNumber = "70")
@@ -17,6 +18,6 @@ public class Enslave extends Card {
     public Enslave() {
         target(TargetFilters.creature())
                 .addStaticEffect(new ControlEnchantedCreatureEffect())
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new EnchantedCreatureDealsDamageToItsOwnerEffect(1));
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new EnchantedCreatureDealsDamageToItsOwnerEffect(1));
     }
 }

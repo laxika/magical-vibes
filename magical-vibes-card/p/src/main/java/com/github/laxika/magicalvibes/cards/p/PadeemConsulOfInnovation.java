@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KLD", collectorNumber = "59")
 @CardRegistration(set = "KLR", collectorNumber = "60")
@@ -22,7 +23,7 @@ public class PadeemConsulOfInnovation extends Card {
     public PadeemConsulOfInnovation() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS, new PermanentIsArtifactPredicate()));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasGreatestManaValueAmongAllArtifactsPredicate()),
                 new DrawCardEffect()));
     }

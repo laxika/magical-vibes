@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +26,7 @@ public class MangarasEquity extends Card {
         addStaticEffect(new ChooseColorOnEnterEffect(CardColor.BLACK, CardColor.RED));
 
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {1}{W}.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new PayManaCost("{1}{W}"),
                         List.of(new SacrificeSelfEffect()),

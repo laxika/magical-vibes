@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class DeadpoolTradingCard extends Card {
     public DeadpoolTradingCard() {
         addStaticEffect(new ExchangeTextBoxesEffect());
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new LoseLifeEffect(3));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new LoseLifeEffect(3));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

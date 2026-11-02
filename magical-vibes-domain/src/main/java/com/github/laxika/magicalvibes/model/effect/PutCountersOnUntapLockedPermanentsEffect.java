@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * {@link DoesntUntapEffect#targetWhileSourceTapped()}.
  *
  * <p>Giant Oyster's "at the beginning of each of your draw steps, put a -1/-1 counter on that
- * creature" rider, placed in {@code EffectSlot.DRAW_TRIGGERED}. Because the lock only exists for as
+ * creature" rider, a {@code Triggers.drawStep(ActivePlayer.YOU)} ability. Because the lock only exists for as
  * long as the source stays tapped, the "for as long as this creature remains tapped" clause needs no
  * separate condition — an untapped source holds no locks and the trigger does nothing.
  *

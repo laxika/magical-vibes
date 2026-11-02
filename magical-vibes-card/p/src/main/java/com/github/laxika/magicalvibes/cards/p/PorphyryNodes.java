@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureWithLeastPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ import java.util.List;
 public class PorphyryNodes extends Card {
 
     public PorphyryNodes() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new DestroyCreatureWithLeastPowerEffect(true));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyCreatureWithLeastPowerEffect(true));
 
         addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(
                 0, new PermanentIsCreaturePredicate(),

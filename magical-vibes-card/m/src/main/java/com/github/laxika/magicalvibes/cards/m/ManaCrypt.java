@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ME2", collectorNumber = "214")
 @CardRegistration(set = "EMA", collectorNumber = "225")
@@ -18,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 public class ManaCrypt extends Card {
 
     public ManaCrypt() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new FlipCoinWinEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new FlipCoinWinEffect(
                 null,
                 new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS, 2));

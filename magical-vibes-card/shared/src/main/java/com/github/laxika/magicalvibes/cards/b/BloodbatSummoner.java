@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class BloodbatSummoner extends Card {
                 )),
                 "Target must be a Blood token you control"
         ), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new AnimatePermanentsEffect(
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new AnimatePermanentsEffect(
                         2, 2,
                         List.of(CardSubtype.BAT),
                         Set.of(Keyword.FLYING, Keyword.HASTE),

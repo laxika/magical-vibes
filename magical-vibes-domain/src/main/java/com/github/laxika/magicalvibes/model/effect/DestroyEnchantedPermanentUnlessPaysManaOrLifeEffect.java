@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Punisher effect for auras: "destroy [the enchanted permanent] unless that player pays {manaCost}
- * or {lifeCost} life." Placed in the {@code ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED} slot;
+ * or {lifeCost} life." Placed in the {@code Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)} slot;
  * the paying player is the enchanted permanent's controller (baked onto the trigger's {@code targetId}),
  * and the permanent that is destroyed is the one the source Aura is attached to
  * ({@code sourcePermanentId}). Used by Erosion ({@code ("{1}", 1)}).

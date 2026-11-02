@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,15 +37,15 @@ public class SparkshaperVisionary extends Card {
         );
 
         target(planeswalkerYouControl, 0, 99)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new AnimatePermanentsEffect(
                                 3, 3, List.of(CardSubtype.BIRD),
                                 Set.of(Keyword.FLYING, Keyword.HEXPROOF), CardColor.BLUE,
                                 Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN
                         ))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), GrantScope.TARGET))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new GrantEffectToTargetEffect(
                                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                                 new ScryEffect(1),

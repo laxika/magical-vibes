@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +24,7 @@ public class UltimeciaTimeSorceress extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
         addEffect(EffectSlot.ON_ATTACK, new SurveilEffect(2));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 ConditionalEffect.unless(
                         new GraveyardCardThreshold(8, null),
                         new MayPayManaEffect(

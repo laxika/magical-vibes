@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -58,7 +60,8 @@ public class TendToTheKiln extends Card {
                                                 GrantScope.TOKENS_CREATED_THIS_RESOLUTION,
                                                 GrantDuration.INDEFINITE),
                                         new GrantTriggeredAbilityToCreatedPermanentsEffect(
-                                                EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect(true))
+                                                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                                                        new SacrificeSelfEffect(true)))
                                 )))));
     }
 }

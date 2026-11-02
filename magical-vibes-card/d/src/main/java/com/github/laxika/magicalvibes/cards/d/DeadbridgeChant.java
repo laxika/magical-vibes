@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class DeadbridgeChant extends Card {
 
     public DeadbridgeChant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(10, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .returnAtRandom(true)
                 .battlefieldIfCreatureElseHand(true)

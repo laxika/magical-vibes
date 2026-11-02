@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.cards.d.BrigidDounsMind;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,7 +32,7 @@ public class BrigidClachansHeart extends Card {
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), kithkinToken);
 
         // At the beginning of your first main phase, you may pay {G}. If you do, transform Brigid.
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new MayPayManaEffect("{G}", new TransformSelfEffect(),
                         "Pay {G} to transform Brigid?"));
     }

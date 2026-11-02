@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH2", collectorNumber = "53")
 public class MysticRedaction extends Card {
 
     public MysticRedaction() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ScryEffect(1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ScryEffect(1));
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new MillEffect(2, MillRecipient.EACH_OPPONENT));
     }
 }

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ import java.util.List;
 public class MuerraTrashTactician extends Card {
 
     public MuerraTrashTactician() {
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new AwardManaOfColorsEffect(
                         List.of(ManaColor.RED, ManaColor.GREEN),
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.RACCOON), CountScope.CONTROLLER)));

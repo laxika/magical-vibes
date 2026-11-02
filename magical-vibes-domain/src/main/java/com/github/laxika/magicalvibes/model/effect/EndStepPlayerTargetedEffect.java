@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Marker interface for {@code END_STEP_TRIGGERED} effects that act on the player whose end step
+ * Marker interface for {@code Triggers.endStep(ActivePlayer.ANY)} effects that act on the player whose end step
  * it is ("At the beginning of each player's end step, ... that player ...").
  *
  * <p>{@code StepTriggerService} bakes the end-step player (the active player) into the stack

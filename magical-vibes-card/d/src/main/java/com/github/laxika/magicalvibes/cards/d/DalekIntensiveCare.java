@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class DalekIntensiveCare extends Card {
                 nonDalekCreature, dalekToken);
 
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, intensiveCare);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, intensiveCare);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), intensiveCare);
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

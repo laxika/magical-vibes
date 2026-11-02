@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ import java.util.Set;
 public class OutlawsMerriment extends Card {
 
     public OutlawsMerriment() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenAtRandomEffect(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenAtRandomEffect(List.of(
                 token("Human Warrior", 3, 1, List.of(CardSubtype.HUMAN, CardSubtype.WARRIOR),
                         Set.of(Keyword.TRAMPLE, Keyword.HASTE), List.of()),
                 token("Human Cleric", 2, 1, List.of(CardSubtype.HUMAN, CardSubtype.CLERIC),

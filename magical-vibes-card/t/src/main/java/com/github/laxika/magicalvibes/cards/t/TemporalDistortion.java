@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class TemporalDistortion extends Card {
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentHasCountersPredicate(CounterType.HOURGLASS)));
 
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new RemoveCounterFromEachMatchingPermanentEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new RemoveCounterFromEachMatchingPermanentEffect(
                 CounterType.HOURGLASS,
                 Integer.MAX_VALUE,
                 new PermanentHasCountersPredicate(CounterType.HOURGLASS),

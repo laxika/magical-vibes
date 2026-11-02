@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open |
+| 13 | Remaining event families (repeatable) | open (run 1: family 1 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3142,6 +3142,133 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
   (85 classes, 1,185 tests): 111 failures, exactly the tests that fail at HEAD (same classes run with the change
   stashed): mock wiring and the known architecture/simulation-copy ones.
 - AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 12a.
+- The full suite was not run here.
+
+### Step 13
+
+Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1.
+
+#### Run 1: steps and phases
+
+The 34 step and phase constants are gone: `UPKEEP_TRIGGERED` and its command-zone, graveyard, each, suspended,
+exiled, scream-counter, opponent, enchanted-player and enchanted-permanent-controller forms; `DRAW_TRIGGERED`,
+`EACH_DRAW_TRIGGERED` and the two enchanted draw forms; `END_STEP_TRIGGERED`, `CONTROLLER_END_STEP_TRIGGERED` and their
+graveyard, command-zone, opponent and enchanted forms; the four beginning-of-combat slots; `END_OF_COMBAT_TRIGGERED`;
+the three precombat main slots, `POSTCOMBAT_MAIN_TRIGGERED` and `SECOND_MAIN_PHASE_TRIGGERED`. Family 2 (spells and
+abilities) is next; families 2 to 11 are left.
+
+**Authoring.**
+
+- `model.trigger.StepTrigger(Moment moment, ActivePlayer player)`: "at the beginning of [player's] [step or phase]"
+  (**CR 603.2b**, checked). `Moment` is `UPKEEP`, `DRAW_STEP`, `PRECOMBAT_MAIN_PHASE`, `BEGINNING_OF_COMBAT`,
+  `END_OF_COMBAT`, `POSTCOMBAT_MAIN_PHASE` (every one), `SECOND_MAIN_PHASE` (the turn's second main phase only,
+  **CR 505.1** checked) and `END_STEP`.
+- `model.trigger.ActivePlayer`: `YOU`, `ANY`, `OPPONENT`, `ENCHANTED_PLAYER`, `ENCHANTED_PERMANENT_CONTROLLER`. It is
+  its own enum rather than `trigger.PlayerRelation`, whose simple name clashes with `filter.PlayerRelation`, which
+  many of these cards already import for their target filters.
+- `Triggers.upkeep`, `drawStep`, `precombatMainPhase`, `beginningOfCombat`, `endOfCombat()`, `postcombatMainPhase`,
+  `secondMainPhase`, `endStep`. The zone is the condition's: `addTrigger(new TriggerCondition(Triggers.upkeep(
+  ActivePlayer.YOU), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT, effect)` for the old `GRAVEYARD_`, `EXILED_` and
+  `COMMAND_ZONE_` forms.
+- Readers: `Card.getTriggerEffects(Trigger, Zone)` / `getTriggerEffectRegistrations(Trigger, Zone)` (the abilities
+  with that trigger as a condition that functions in the zone), `TriggeredAbility.hasTrigger(Trigger, Zone)`,
+  `Permanent.getTemporaryTriggerEffects` / `getPersistentTriggerEffects(Trigger)`,
+  `GameData.perpetualTriggerEffects(UUID, Trigger, Zone)`, `GameQueryService.getEffectiveGraveyardTriggerEffects`,
+  `PlanechaseService.step(GameData, StepTrigger...)` and `trigger(…, Trigger, …)`.
+- The copy effects that named a retained slot: `BecomeCopyOfTargetCreaturePermanentlyEffect` and
+  `ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect` take a `Trigger` now (a `LegacySlotTrigger` keeps the old
+  registration path: Sunfrill Imitator's `ON_ATTACK`); `new BecomeCopyOfTargetCreatureEffect()` keeps the ability
+  that holds it (`retainedEffectSlot` `null`), as `retainingItsAbility()` does.
+- `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(Ability)` is new; `GrantEffectToTargetEffectHandler`'s "if
+  it doesn't have that ability" check reads abilities with a real trigger (Musician, Balduvian Shaman).
+
+**No rules event, no index.** A step beginning is not a game action and has no batch, so this run added no
+`RulesEvent` kind and no `TriggerIndex` candidates for it. As 12b did for the source's own enters abilities,
+`StepTriggerService` still collects the abilities where the slot collectors ran, now reading them by trigger and zone,
+with every step's old grouping, target routing, wrapper checks, face-down and ability-loss checks (including the
+inconsistencies the step 1 inventory lists) unchanged. A later run or step 16 decides whether step beginnings become
+rules events once `TriggerContext` goes.
+
+**Where two slots met in one trigger**, the collectors are told apart without a slot:
+
+- All Hallow's Eve (`EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED`) and Tawnos Endures / Darigaaz's conjured card
+  (`EXILED_UPKEEP_TRIGGERED`) are both `upkeep(YOU)` from exile. The scream-counter loop takes the card's
+  `RemoveScreamCounterFromExiledCardEffect` while it has a scream counter; the exile loop skips that effect.
+- Strangling Grasp (`ENCHANTED_PERMANENT_CONTROLLER_AFFECTED_UPKEEP_TRIGGERED`) is "at the beginning of your upkeep",
+  `upkeep(YOU)`. `StepTriggerService.affectsEnchantedPermanentController` routes an Aura's `upkeep(YOU)` effect that is
+  bound to its enchant target and names a player to the Aura loop, which bakes in the enchanted permanent's
+  controller; no other Aura's "your upkeep" effect matches (checked over every Aura with such an ability).
+- `ENCHANTED_PLAYER_END_STEP_TRIGGERED` fired at every end step. Curse of Obsession and Tenuous Truce say "enchanted
+  player's end step" and are `endStep(ENCHANTED_PLAYER)` (their `TargetPlayerIsActive` wrapper is now always true;
+  step 14 drops it). Fraying Sanity says "each end step" and is `endStep(ANY)`: a Curse's `endStep(ANY)` ability is
+  collected by the Curse loop (enchanted player as `targetId`), and the generic end-step loop skips Curses. Fraying
+  Sanity is the only Curse with one.
+
+**Zones kept as they were.** Face-up schemes and planes still author their step abilities with the battlefield
+default; their readers present them as permanents (schemes) or read them zone-agnostically (planes), as before. The
+eminence read of the active player's command zone (`upkeep`/`beginningOfCombat(YOU)` from a non-scheme command-zone
+card) still reads battlefield abilities, the surprise step 1 recorded. Agyrem's death trigger (step 11) already
+functions from `AbilityZones.COMMAND`; the step that moves schemes and planes onto the index should do the same for
+these. Only Oloro (`upkeep(YOU)`) and Dark Wings Bring Your Downfall (`endStep(ANY)`) function from the command zone.
+
+**Cards.** `scripts/step13-step-triggers.py` converted 2,315 card classes, 7 card tests, 4 application tests
+(`StepTriggerServiceTest`, `PlanechaseServiceTest`, `LibraryChoiceHandlerServiceTest`, `GrantedAbilitiesTest`) and one
+AI test (`GameDataDeepCopyTest`): `addEffect` (on the card and on target groups, keeping `INDEPENDENT`), `addSimultaneousEffects`,
+`LegacySlots.triggered`, the grant constructors (`GrantTriggeredAbilityEffect`, `GrantEffectToTargetEffect`,
+`PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect`, `GrantTriggeredAbilityToCreatedPermanentsEffect`,
+`GrantEffectToSourceEffect`), the copy effects' retained slot, comments naming a slot, and in tests the slot getters,
+the planar helpers, `addPersistentTriggeredEffect` and mocked `grantedTriggeredEffects`. One ability per
+registration, so the collectors see the same effects in the same order. `MANUAL`: Vesuvan Doppelganger (its copy keeps
+its ability), Goblin Trapfinder (the seek grant), Fraying Sanity (`endStep(ANY)`). By hand: Sunfrill Imitator, the
+`CliffsideMarketTest` and `PlanechaseServiceTest` helpers, `TargetPolarityGuardTest`, and the arbitrary legacy slots of
+`TriggeredAbilityTest`, `TriggerConditionTest`, `LegacySlotTriggerTest` and `GrantedAbilitiesTest`.
+`LegacySlotTrigger` no longer knows an `EXILED_` prefix (no slot has one). `scripts/step13-docs.py` rewrote agent-docs
+(1,085 lines); the Fraying Sanity and Curse rows, `ARCHITECTURE.md` and the implement-card and review-card skills were
+written by hand. The engine's other readers and writers of the slots (grants, Specialize, conjure, clone,
+cumulative upkeep, the Oath-style target check, the conspiracy marker in `GameSetupService`, …) read or add the trigger.
+
+**For later runs.**
+
+- Step 14: the step bodies still read the wrappers (`ConditionalEffect` intervening "if"s, `OnceOnlyTriggerEffect`,
+  `SurvivalTriggerEffect` for "second main phase" kept on `postcombatMainPhase`, `MonarchEndStepTriggeredEffect`,
+  `OpponentDrawStepOnlyEffect`, `UpkeepPlayerDependentEffect`, …) and the "chosen player" upkeep of
+  `RememberTargetPlayerEffect` / `ChooseOpponentOnEnterEffect` cards.
+- Step 15: Strangling Grasp's and the Curses' "that player" is still baked as `targetId` by the collectors; effects
+  that read the enchanted player or enchanted permanent's controller from the event would retire
+  `affectsEnchantedPermanentController` and the Curse routing.
+- Sagas (family 10) still use `SAGA_CHAPTER_*`, read in `StepTriggerService.handleSagaLoreCounters`.
+
+**Tests changed.**
+
+- New `StepTriggerTest` (`model/trigger/`): default zones, the factories' moments and players, null rejection, a card's
+  abilities of one trigger read by zone (battlefield, graveyard, none from exile, all without a zone), and a perpetual
+  grant read by its zone.
+- `AllHallowsEveTest#doesNotTriggerWhenExiledWithoutScreamCounters` (new): the merged exile-upkeep read doesn't fire
+  its scream-counter ability without a counter.
+- `StepTriggerServiceTest` (mock-wired): its setup stubs `getEffectiveGraveyardTriggerEffects` instead of the slot
+  reader (the eight graveyard step tests failed without it); stubs of `grantedTriggeredEffects` became
+  `grantedTriggerEffects`, and display names name the triggers.
+- By script: the seven card tests and four application tests named above, and `GameDataDeepCopyTest`.
+- `CliffsideMarketTest` has a trigger overload of its life-exchange helper, `PlanechaseServiceTest` a trigger fixture.
+- `TriggeredAbilityTest`, `TriggerConditionTest`, `LegacySlotTriggerTest` and `GrantedAbilitiesTest` used deleted
+  slots as arbitrary graveyard, command-zone, exiled or upkeep slots; they use `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
+  `COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK` and `ON_SELF_BECOMES_UNTAPPED` now (`LegacySlotTriggerTest`'s `EXILED_` row
+  is gone). `LegacySlotTriggerTest` runs 35 fewer cases: it is parameterised over `EffectSlot.values()`.
+- `TargetPolarityGuardTest` grants the ability instead of a slot and an effect.
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that uses one (3,688 classes, 33,455 tests): one
+  failure, `SignatureSpellsTest#seekingBeforeExilingTriggersCardsPutIntoHandFromLibraryAbilities`, which 12b recorded
+  as failing at HEAD (the 12a seek regression).
+- Application: the step, planar, grant, trigger-model, pipeline, copy, freeze, architecture, setup and turn-cleanup
+  test classes (20 classes, 738 tests): 31 failures, the same tests that fail at HEAD (`a8de626acf`, run in a
+  worktree): mock wiring in `StepTriggerServiceTest`, `TurnCleanupServiceTest` and `PlanechaseServiceTest`, and the
+  known ones in the two architecture tests and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 12b; `TargetPolarityGuardTest`'s two also
+  fail at HEAD.
+- `:magical-vibes-webservice:compileTestJava` fails at HEAD too (`CardBrowserServiceTest`'s `CardCatalog` lacks
+  `findLoadedPrintingByName`); unrelated.
 - The full suite was not run here.
 
 ## Prompt

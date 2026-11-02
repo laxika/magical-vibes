@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "38")
 @CardRegistration(set = "MKC", collectorNumber = "348")
@@ -21,7 +23,7 @@ public class InnocuousResearcher extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new ParleyEffect(CreateTokenEffect.ofClueToken(1)));
 
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayEffect(
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED,

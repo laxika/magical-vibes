@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class BrudicladTelchorEngineer extends Card {
     public BrudicladTelchorEngineer() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsTokenPredicate()));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new CreateTokenEffect(
                         1, "Phyrexian Myr", 2, 1, CardColor.BLUE,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOB", collectorNumber = "119")
 @CardRegistration(set = "HOC", collectorNumber = "119")
@@ -25,7 +26,7 @@ public class BeornTheFierce extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.BEAR)));
 
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.TRAMPLE),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.BEAR),
                         new ConditionalEffect(

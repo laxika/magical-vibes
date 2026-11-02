@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class ShrineOfLimitlessPower extends Card {
 
     public ShrineOfLimitlessPower() {
         // At the beginning of your upkeep, put a charge counter on Shrine of Limitless Power.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.CHARGE));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a black spell, put a charge counter on Shrine of Limitless Power.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,

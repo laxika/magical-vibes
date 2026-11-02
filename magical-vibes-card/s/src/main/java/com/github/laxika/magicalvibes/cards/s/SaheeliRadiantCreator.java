@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -31,8 +33,7 @@ public class SaheeliRadiantCreator extends Card {
                         new CardTypePredicate(CardType.ARTIFACT))),
                 List.of(new EnergyCountersEffect(1))));
 
-        target(TargetFilters.permanentYouControl()).addEffect(
-                EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        target(TargetFilters.permanentYouControl()).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(
                         new PayEnergyCost(3),
                         List.of(),

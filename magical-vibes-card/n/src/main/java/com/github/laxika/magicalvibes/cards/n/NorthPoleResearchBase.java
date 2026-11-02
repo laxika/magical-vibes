@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +36,7 @@ public class NorthPoleResearchBase extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
                         new DrawCardForTargetPlayerEffect(1, false, true),
                         new CreateTokenForTargetPlayerEffect(
                                 CreateTokenEffect.ofTreasureToken(1), PlayerRelation.OPPONENT)));

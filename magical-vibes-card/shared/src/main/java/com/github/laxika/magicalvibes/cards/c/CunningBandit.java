@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class CunningBandit extends Card {
         // "At the beginning of the end step, if there are two or more ki counters on this creature,
         // you may flip it." - every end step, not just yours; the counter count is an intervening-if
         // so it is checked both on trigger and on resolution.
-        addEffect(EffectSlot.END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.KI),
                         new MayEffect(new TransformToBackFaceEffect(true), "Flip Cunning Bandit?")));

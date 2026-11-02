@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePermanentlyEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,12 +38,12 @@ public class CourtOfVantress extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsEnchantmentPredicate()));
         var copyEffect = BecomeCopyOfTargetCreaturePermanentlyEffect.forTargetPermanent(
-                EffectSlot.UPKEEP_TRIGGERED, artifactOrEnchantment);
+                Triggers.upkeep(ActivePlayer.YOU), artifactOrEnchantment);
 
         target(new PermanentPredicateTargetFilter(
                         otherArtifactOrEnchantment,
                         "Target must be another artifact or enchantment"), 0, 1)
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
                                 new ConditionalReplacementEffect(
                                         new ControllerIsMonarch(),
                                         copyEffect,

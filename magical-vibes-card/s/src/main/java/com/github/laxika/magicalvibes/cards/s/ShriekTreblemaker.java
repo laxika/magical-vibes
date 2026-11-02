@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ShriekTreblemaker extends Card {
 
     public ShriekTreblemaker() {
-        addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new MayEffect(
                 new DiscardCardThenEffect(
                         null,
                         new CantBlockThisTurnEffect(TapUntapScope.TARGET),

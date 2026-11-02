@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentController
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ import java.util.Set;
 public class EdwardKenway extends Card {
 
     public EdwardKenway() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 CreateTokenEffect.ofTreasureToken(new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsTappedPredicate(),

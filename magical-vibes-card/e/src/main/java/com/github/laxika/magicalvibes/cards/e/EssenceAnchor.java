@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,7 @@ import java.util.Set;
 public class EssenceAnchor extends Card {
 
     public EssenceAnchor() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SurveilEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

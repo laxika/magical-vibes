@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPutMatchingOntoBattlefieldOrBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "23")
 @CardRegistration(set = "OPCA", collectorNumber = "49")
@@ -16,7 +18,7 @@ public class TheMaelstrom extends Card {
         var revealPermanent = new RevealTopCardMayPutMatchingOntoBattlefieldOrBottomEffect(
                 new CardIsPermanentPredicate());
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, revealPermanent);
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, revealPermanent);
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), revealPermanent);
         addEffect(EffectSlot.CHAOS_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsPermanentPredicate())

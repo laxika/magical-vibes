@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YONE", collectorNumber = "21")
 public class GlisteningExtractor extends Card {
@@ -21,7 +22,7 @@ public class GlisteningExtractor extends Card {
     public GlisteningExtractor() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(4)));
 
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.OIL),
                 SequenceEffect.of(
                         new SeekLibraryEffect(

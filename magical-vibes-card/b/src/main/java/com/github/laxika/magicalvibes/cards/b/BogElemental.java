@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessSacrificeOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -15,7 +16,7 @@ public class BogElemental extends Card {
 
     public BogElemental() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessSacrificeOwnPermanentEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessSacrificeOwnPermanentEffect(
                 new PermanentIsLandPredicate(), "a land"));
     }
 }

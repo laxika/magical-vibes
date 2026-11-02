@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ import java.util.List;
 public class HakbalOfTheSurgingSoul extends Card {
 
     public HakbalOfTheSurgingSoul() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ExploreEachControlledCreatureEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ExploreEachControlledCreatureEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)))));

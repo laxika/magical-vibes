@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -43,13 +44,13 @@ public class TownRazerTyrant extends Card {
                         new LosesAllNonManaAbilitiesEffect(GrantScope.SELF)))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantStaticEffectToTargetEffect(new GrantTriggeredAbilityEffect(
-                                EffectSlot.UPKEEP_TRIGGERED,
+                                new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 new ForcedCostOrElseEffect(
                                         new SacrificePermanentCost(
                                                 new PermanentIsSourcePermanentPredicate(),
                                                 "Sacrifice it", false),
                                         List.of(new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER)),
-                                        true),
+                                        true)),
                                 GrantScope.SELF)));
     }
 }

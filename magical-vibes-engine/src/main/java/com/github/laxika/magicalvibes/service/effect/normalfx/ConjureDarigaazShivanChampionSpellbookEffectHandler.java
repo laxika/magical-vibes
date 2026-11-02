@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.cards.s.SkarrganHellkite;
 import com.github.laxika.magicalvibes.cards.s.SkyshipStalker;
 import com.github.laxika.magicalvibes.cards.t.TerrorOfThePeaks;
 import com.github.laxika.magicalvibes.cards.t.ThunderbreakRegent;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,6 +25,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDarigaazShivanChampionSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -129,7 +133,8 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
         card.setKeywords(keywords);
         card.setOwnerId(ownerId);
         card.setConjured(true);
-        card.addEffect(EffectSlot.EXILED_UPKEEP_TRIGGERED,
+        card.addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.EXILE),
+                TriggerOptions.DEFAULT,
                 new RemoveEggCounterFromExileAndReturnEffect(card.getId(), false));
         card.freeze();
         return card;

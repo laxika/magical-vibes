@@ -155,6 +155,22 @@ class AllHallowsEveTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Exiled without a scream counter, it doesn't trigger at its owner's upkeep")
+    void doesNotTriggerWhenExiledWithoutScreamCounters() {
+        AllHallowsEve card = new AllHallowsEve();
+        gd.addToExile(player1.getId(), card);
+        Card creature = new HeadlessHorseman();
+        harness.setGraveyard(player1, List.of(creature));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == card);
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+    }
+
     private AllHallowsEve exileWithScreamCounters(int counters) {
         AllHallowsEve card = new AllHallowsEve();
         gd.addToExile(player1.getId(), card);

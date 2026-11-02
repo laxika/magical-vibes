@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class CanopyGargantuan extends Card {
 
     public CanopyGargantuan() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnEachMatchingPermanentEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new SourceToughness(),
                 new PermanentAllOfPredicate(List.of(

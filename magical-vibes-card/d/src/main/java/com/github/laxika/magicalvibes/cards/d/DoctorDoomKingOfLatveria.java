@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,9 +35,9 @@ public class DoctorDoomKingOfLatveria extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VILLAIN))),
                 "Target must be a Villain you control"))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new DrawDiscardAndConniveEffect(true));
     }
 }

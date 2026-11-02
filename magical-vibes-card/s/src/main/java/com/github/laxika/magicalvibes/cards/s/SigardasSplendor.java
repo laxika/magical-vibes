@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteControllerLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ public class SigardasSplendor extends Card {
 
     public SigardasSplendor() {
         addStaticEffect(new NoteControllerLifeTotalEffect());
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardIfControllerLifeTotalAtLeastNotedEffect());
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardIfControllerLifeTotalAtLeastNotedEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardColorPredicate(CardColor.WHITE), List.of(new GainLifeEffect(1))));
     }

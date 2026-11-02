@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopPlanarCardsAndTriggerChaosEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "30")
 @CardRegistration(set = "OPCA", collectorNumber = "63")
 public class PoolsOfBecoming extends Card {
 
     public PoolsOfBecoming() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new PutHandOnBottomOfLibraryAndDrawEffect());
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), new PutHandOnBottomOfLibraryAndDrawEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new RevealTopPlanarCardsAndTriggerChaosEffect(3));
     }
 }

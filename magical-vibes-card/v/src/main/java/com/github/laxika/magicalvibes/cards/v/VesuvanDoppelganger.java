@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,8 +24,8 @@ public class VesuvanDoppelganger extends Card {
         addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(),
                 List.of(
-                        LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, List.of(
-                        new BecomeCopyOfTargetCreatureEffect(EffectSlot.UPKEEP_TRIGGERED, false, true)))),
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), 
+                        new BecomeCopyOfTargetCreatureEffect(null, false, true))),
                 false
         ));
     }

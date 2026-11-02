@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class CephalidFacetaker extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature"
-        )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
+        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                         null, Set.of(), 1, 4, Set.of(), Set.of(), Set.of(), null,
                         List.of(StaticAbility.of(List.of(new CantBeBlockedEffect())))),

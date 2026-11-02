@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * Greater Werewolf-style "At end of combat, put a -0/-2 counter on each creature blocking or blocked
  * by this creature." With {@code alsoTap=true}, those creatures are also tapped (Dread Wight —
  * paralyzation counters). Put on
- * {@link com.github.laxika.magicalvibes.model.EffectSlot#END_OF_COMBAT_TRIGGERED}: the trigger goes on
+ * {@code Triggers.endOfCombat()}: the trigger goes on
  * the stack as the end of combat step begins and reads the creatures still blocking or blocked by
  * the source as it resolves.
  *

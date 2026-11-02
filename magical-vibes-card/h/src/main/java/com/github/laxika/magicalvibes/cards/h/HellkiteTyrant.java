@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "94")
 @CardRegistration(set = "RVR", collectorNumber = "111")
@@ -22,7 +24,7 @@ public class HellkiteTyrant extends Card {
                 new GainControlOfAllPermanentsTargetPlayerControlsEffect(new PermanentIsArtifactPredicate()));
 
         // At the beginning of your upkeep, if you control twenty or more artifacts, you win the game.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new ConditionalEffect(new ControlsPermanentCount(20, new PermanentIsArtifactPredicate()),
                         new WinGameEffect()));
     }

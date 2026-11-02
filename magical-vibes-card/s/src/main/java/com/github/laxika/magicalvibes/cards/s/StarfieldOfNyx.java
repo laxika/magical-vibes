@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ORI", collectorNumber = "33")
 @CardRegistration(set = "PIO", collectorNumber = "36")
@@ -20,7 +21,7 @@ public class StarfieldOfNyx extends Card {
         // (CR 603.3d), and is required; the "you may" is decided on resolution (CR 603.5), so the
         // return can be declined after the target was chosen. An Aura returned this way chooses
         // what it enchants as it enters.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.ENCHANTMENT))
                 .targetGraveyard(true)

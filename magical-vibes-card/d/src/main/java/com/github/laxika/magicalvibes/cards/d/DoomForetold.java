@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -20,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ import java.util.Set;
 public class DoomForetold extends Card {
 
     public DoomForetold() {
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new SacrificePermanentOrElseEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new SacrificePermanentOrElseEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),

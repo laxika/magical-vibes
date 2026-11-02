@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class RisingWaters extends Card {
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentIsLandPredicate()));
 
         // At the beginning of each player's upkeep, that player untaps a land they control.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new UntapChosenPermanentEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new UntapChosenPermanentEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentControlledByActivePlayerPredicate())),

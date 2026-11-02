@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +30,8 @@ public class AethershieldArtificer extends Card {
                 )),
                 "Target must be an artifact creature you control"
         ))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 2))
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

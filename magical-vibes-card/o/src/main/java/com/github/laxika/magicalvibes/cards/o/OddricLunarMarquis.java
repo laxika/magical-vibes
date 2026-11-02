@@ -29,6 +29,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -95,7 +97,7 @@ public class OddricLunarMarquis extends Card {
                 )
         ).toList();
 
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 new SequenceEffect(sharedEffects));
     }
 

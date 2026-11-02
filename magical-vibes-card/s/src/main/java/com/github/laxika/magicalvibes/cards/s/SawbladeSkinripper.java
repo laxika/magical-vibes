@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class SawbladeSkinripper extends Card {
                 ),
                 "{2}, Sacrifice another creature or enchantment: Put a +1/+1 counter on this creature."
         ));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ConditionalEffect(
                         new ControllerSacrificedPermanentThisTurn(),
                         new DealDamageToAnyTargetEffect(new PermanentsSacrificedThisTurn())));

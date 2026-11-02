@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "4ED", collectorNumber = "216")
 @CardRegistration(set = "SUM", collectorNumber = "170")
@@ -17,10 +18,10 @@ public class PowerSurge extends Card {
 
     public PowerSurge() {
         // At the beginning of each player's upkeep, deal X damage to that player, where X is the
-        // number of untapped lands they controlled at the beginning of this turn. EACH_UPKEEP_TRIGGERED
+        // number of untapped lands they controlled at the beginning of this turn. Triggers.upkeep(ActivePlayer.ANY)
         // sets the active player as target; UntappedLandsAtTurnStart reads the turn-start snapshot so
         // tapping lands in response can't reduce the damage.
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 new DealDamageToPlayersEffect(new UntappedLandsAtTurnStart(), DamageRecipient.ACTIVE_PLAYER));
     }
 }

@@ -14,13 +14,15 @@ import com.github.laxika.magicalvibes.model.effect.GainEnergyEqualToExcessCombat
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M3C", collectorNumber = "58")
 @CardRegistration(set = "M3C", collectorNumber = "110")
 public class OverclockedElectromancer extends Card {
 
     public OverclockedElectromancer() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(3),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-3),

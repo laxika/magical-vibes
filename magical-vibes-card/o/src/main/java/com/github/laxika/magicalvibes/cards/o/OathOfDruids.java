@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EXO", collectorNumber = "115")
 @CardRegistration(set = "TPR", collectorNumber = "184")
@@ -24,7 +25,7 @@ public class OathOfDruids extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerControlsMoreCreaturesThanControllerPredicate(),
                 "Target player must be an opponent who controls more creatures than you"
-        )).addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new MayEffect(
+        )).addTrigger(Triggers.upkeep(ActivePlayer.ANY), new MayEffect(
                 new ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffect(),
                 "Reveal cards from the top of your library until you reveal a creature card?",
                 null,

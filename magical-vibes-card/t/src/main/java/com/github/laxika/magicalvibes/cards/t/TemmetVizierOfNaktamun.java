@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,8 +29,8 @@ public class TemmetVizierOfNaktamun extends Card {
                 )),
                 "Target must be a creature token you control"
         ))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new BoostTargetCreatureEffect(1, 1))
-                .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MakeCreatureUnblockableEffect());
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 1))
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MakeCreatureUnblockableEffect());
 
         // Embalm {3}{W}{U} ({3}{W}{U}, Exile this card from your graveyard: Create a token that's a
         // copy of it, except it's a white Zombie Human Cleric with no mana cost. Embalm only as a

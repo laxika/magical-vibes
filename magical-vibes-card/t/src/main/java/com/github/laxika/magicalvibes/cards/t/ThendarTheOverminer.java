@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.w.Wastes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -51,7 +51,7 @@ public class ThendarTheOverminer extends Card {
                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))));
         target(new PermanentPredicateTargetFilter(
                         nonbasicLandPermanent, "Target must be a nonbasic land"), 0, 1)
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+                .addTrigger(Triggers.endStep(ActivePlayer.YOU),
                         new ConditionalEffect(
                                 new ControlsPermanentCount(2, tappedCreature),
                                 new DestroyTargetPermanentEffect()));

@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayExiledCostCardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureCardIntoGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
 public class ChitinousCrawler extends Card {
 
     public ChitinousCrawler() {
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ConjureDuplicateOfTargetCreatureCardIntoGraveyardEffect());
 
         addActivatedAbility(new ActivatedAbility(

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceWasBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HML", collectorNumber = "89")
 @CardRegistration(set = "ME2", collectorNumber = "169")
@@ -18,7 +19,7 @@ public class JovensFerrets extends Card {
 
         // At end of combat, tap all creatures that blocked this creature this turn. They don't untap
         // during their controller's next untap step.
-        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
+        addTrigger(Triggers.endOfCombat(),
                 new ConditionalEffect(new SourceWasBlockedThisTurn(),
                         new TapCombatOpponentAtEndOfCombatEffect(), false));
     }
