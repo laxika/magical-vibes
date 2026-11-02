@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ import java.util.List;
 public class ImmersturmPredator extends Card {
 
     public ImmersturmPredator() {
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+        addTrigger(Triggers.permanentYouControlBecomesTapped(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(),
                         SequenceEffect.of(

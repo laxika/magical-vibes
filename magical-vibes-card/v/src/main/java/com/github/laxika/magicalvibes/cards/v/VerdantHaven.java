@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -21,6 +20,7 @@ public class VerdantHaven extends Card {
         // Whenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.
         target(TargetFilters.land())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2))
-                .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
+                .addTrigger(Triggers.playerTapsLandForMana(),
+                        new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }
 }

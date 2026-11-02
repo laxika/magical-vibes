@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
+import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureCause;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -3571,7 +3571,7 @@ public class PermanentRemovalService {
                 pendingReturns = remaining.isEmpty() ? null : remaining;
             }
         }
-        boolean leaveReturnsAreTriggered = removedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)
+        boolean leaveReturnsAreTriggered = TapWatch.ON_SELF_BECOMES_UNTAPPED.effectsOf(removedPermanent.getCard())
                 .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect.class::isInstance);
         if (pendingReturns != null && (leaveReturnsAreTriggered
                 || ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD.effectsOf(removedPermanent.getCard())

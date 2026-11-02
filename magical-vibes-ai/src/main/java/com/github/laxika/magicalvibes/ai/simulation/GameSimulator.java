@@ -56,7 +56,6 @@ import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -76,6 +75,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -1755,7 +1755,7 @@ public class GameSimulator {
      * to one of the AI's own lands; enchanting the opponent's land would ramp the opponent.
      */
     private static boolean isControllerBeneficialLandAura(Card card) {
-        return card.isAura() && card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+        return card.isAura() && TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(card).stream()
                 .anyMatch(AddManaOnEnchantedLandTapEffect.class::isInstance);
     }
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -37,8 +36,8 @@ public class MineLayer extends Card {
                 "{1}{R}, {T}: Put a mine counter on target land.",
                 TargetFilters.land()));
 
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, DESTROY_MINED_LAND);
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED, DESTROY_MINED_LAND);
+        addTrigger(Triggers.permanentYouControlBecomesTapped(), DESTROY_MINED_LAND);
+        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), DESTROY_MINED_LAND);
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveAllCountersFromMatchingPermanentsEffect(
                         CounterType.MINE, new PermanentIsLandPredicate()));

@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "5ED", collectorNumber = "342")
 @CardRegistration(set = "3ED", collectorNumber = "230")
@@ -32,6 +32,7 @@ public class WildGrowth extends Card {
 
     public WildGrowth() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 1)));
+                .addTrigger(Triggers.playerTapsLandForMana(),
+                        new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 1)));
     }
 }

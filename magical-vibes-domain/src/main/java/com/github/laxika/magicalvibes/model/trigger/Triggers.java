@@ -103,6 +103,10 @@ public final class Triggers {
             new PermanentIsCreaturePredicate(),
             new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HYDRA))));
 
+    /** An artifact token. */
+    public static final PermanentPredicate ARTIFACT_TOKEN = new PermanentAllOfPredicate(List.of(
+            new PermanentIsArtifactPredicate(), new PermanentIsTokenPredicate()));
+
     /** Every zone but the battlefield and the graveyard: "from anywhere other than the battlefield". */
     private static final Set<Zone> NOT_BATTLEFIELD = EnumSet.complementOf(EnumSet.of(Zone.BATTLEFIELD, Zone.GRAVEYARD));
 
@@ -1418,5 +1422,85 @@ public final class Triggers {
     public static LibraryTrigger spellOrAbilityCausesItsControllerToShuffle() {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.SPELL_OR_ABILITY_CAUSES_ITS_CONTROLLER_TO_SHUFFLE,
                 PlayerRelation.ANY);
+    }
+
+    /** "Whenever you tap this permanent for mana" */
+    public static TapTrigger tappedForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a player taps a land for mana"; the effect narrows the player and the land */
+    public static TapTrigger playerTapsLandForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.ANY, LAND);
+    }
+
+    /** "Whenever a player taps a permanent for mana" */
+    public static TapTrigger playerTapsPermanentForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.ANY);
+    }
+
+    /** "Whenever you tap a creature for mana" */
+    public static TapTrigger youTapCreatureForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever you tap a nonland permanent for mana" */
+    public static TapTrigger youTapNonlandPermanentForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.YOU_CONTROL, NONLAND);
+    }
+
+    /** "Whenever you tap an artifact token for mana" */
+    public static TapTrigger youTapArtifactTokenForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.YOU_CONTROL, ARTIFACT_TOKEN);
+    }
+
+    /** "Whenever enchanted permanent becomes tapped", also equipped or fortified */
+    public static TapTrigger enchantedPermanentBecomesTapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED, ObjectRelation.ENCHANTED);
+    }
+
+    /** "Whenever a permanent you control becomes tapped" */
+    public static TapTrigger permanentYouControlBecomesTapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a permanent an opponent controls becomes tapped" */
+    public static TapTrigger permanentOpponentControlsBecomesTapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED, ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever a creature becomes tapped" */
+    public static TapTrigger creatureBecomesTapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_TAPPED, ObjectRelation.ANY, CREATURE);
+    }
+
+    /** "Whenever you tap a permanent an opponent controls" */
+    public static TapTrigger youTapPermanentOpponentControls() {
+        return new TapTrigger(TapTrigger.TapEvent.YOU_TAP, ObjectRelation.OPPONENT_CONTROLS);
+    }
+
+    /** "Whenever this creature becomes tapped to pay a teamwork cost" */
+    public static TapTrigger tappedToPayTeamworkCost() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_TO_PAY_TEAMWORK_COST, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this permanent becomes untapped" */
+    public static TapTrigger becomesUntapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_UNTAPPED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a permanent you control becomes untapped" */
+    public static TapTrigger permanentYouControlBecomesUntapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_UNTAPPED, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a permanent becomes untapped" */
+    public static TapTrigger permanentBecomesUntapped() {
+        return new TapTrigger(TapTrigger.TapEvent.BECOMES_UNTAPPED, ObjectRelation.ANY);
+    }
+
+    /** "Whenever you untap one or more permanents during your untap step" */
+    public static TapTrigger youUntapPermanentsDuringUntapStep() {
+        return new TapTrigger(TapTrigger.TapEvent.YOU_UNTAP_DURING_UNTAP_STEP, ObjectRelation.YOU_CONTROL);
     }
 }

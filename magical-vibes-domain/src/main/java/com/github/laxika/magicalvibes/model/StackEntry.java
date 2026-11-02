@@ -572,7 +572,8 @@ public class StackEntry {
     /**
      * Id of the permanent whose event produced this triggered ability, when an effect needs to act on
      * "it" rather than a chosen target — e.g. the permanent that became tapped for Freyalise's Winds'
-     * {@code ON_ALLY_PERMANENT_BECOMES_TAPPED} / {@code ON_OPPONENT_PERMANENT_BECOMES_TAPPED} counter.
+     * {@code Triggers.permanentYouControlBecomesTapped()} / {@code Triggers.permanentOpponentControlsBecomesTapped()}
+     * counter.
      * Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringPermanentId;

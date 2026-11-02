@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +24,7 @@ public class WolfwillowHaven extends Card {
 
     public WolfwillowHaven() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+                .addTrigger(Triggers.playerTapsLandForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN)));
 
         addActivatedAbility(new ActivatedAbility(

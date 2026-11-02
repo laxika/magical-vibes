@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class HyldaOfTheIcyCrown extends Card {
 
     public HyldaOfTheIcyCrown() {
-        addEffect(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT,
+        addTrigger(Triggers.youTapPermanentOpponentControls(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new MayPayManaEffect("{1}", new QueueReflexiveAbilityEffect(new ChooseOneEffect(List.of(

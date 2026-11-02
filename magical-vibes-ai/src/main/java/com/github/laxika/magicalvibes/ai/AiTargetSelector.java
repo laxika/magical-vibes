@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -68,6 +67,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
+import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -309,7 +309,7 @@ class AiTargetSelector {
      * to one of the AI's own lands; enchanting the opponent's land would ramp the opponent.
      */
     private static boolean isControllerBeneficialLandAura(Card card) {
-        return card.isAura() && card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+        return card.isAura() && TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(card).stream()
                 .anyMatch(AddManaOnEnchantedLandTapEffect.class::isInstance);
     }
 

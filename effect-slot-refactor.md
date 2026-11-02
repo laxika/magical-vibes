@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 7: families 1 to 7 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 8: families 1 to 8 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3147,7 +3147,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 ### Step 13
 
 Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
-run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7.
+run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7, run 8 family 8.
 
 #### Run 1: steps and phases
 
@@ -3931,6 +3931,113 @@ factory; engine comments, log lines and the collector tests' display names keep 
   additional-trigger copy), and the known ones in `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and
   `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 6 (the modal-mode, kicker and Reign of
+  Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
+- The full suite was not run here.
+
+#### Run 8: tap and untap
+
+The 16 tap and untap constants are gone: `ON_SELF_TAPPED_FOR_MANA`, `ON_ANY_PLAYER_TAPS_LAND`,
+`ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA`, the three "you tap a creature / nonland permanent / artifact token for mana"
+slots; `ON_ENCHANTED_PERMANENT_TAPPED`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`,
+`ON_ANY_CREATURE_BECOMES_TAPPED` and `ON_CONTROLLER_TAPS_OPPONENT_PERMANENT`; `ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST`;
+`ON_SELF_BECOMES_UNTAPPED`, `ON_ALLY_PERMANENT_BECOMES_UNTAPPED`, `ON_ANY_PERMANENT_BECOMES_UNTAPPED` and
+`ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP`. Family 9 (life) is next; families 9 to 11 are left.
+
+**Authoring.**
+
+- `model.trigger.TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredicate filter)`: a permanent is tapped
+  (**CR 701.26a**, checked) or untapped (**CR 701.26b**, checked); "becomes tapped / untapped" only on a change of
+  state (**CR 603.2e**, checked). `TapEvent` is `TAPPED_FOR_MANA`, `BECOMES_TAPPED`, `YOU_TAP`,
+  `TAPPED_TO_PAY_TEAMWORK_COST` (**CR 702.194a**, checked), `BECOMES_UNTAPPED` and `YOU_UNTAP_DURING_UNTAP_STEP`
+  (**CR 502.3**, checked); the relation names the tapped or untapped permanent (`THIS`, `YOU_CONTROL`,
+  `OPPONENT_CONTROLS`, `ANY`, `ENCHANTED`); the filter is its type (`Triggers.LAND`, `CREATURE`, `NONLAND` and the new
+  `ARTIFACT_TOKEN`), which the collectors check in code as before. Every event functions from the battlefield.
+- One named `Triggers` factory per slot (16): `tappedForMana()`, `playerTapsLandForMana()`,
+  `playerTapsPermanentForMana()`, `youTapCreatureForMana()`, `youTapNonlandPermanentForMana()`,
+  `youTapArtifactTokenForMana()`, `enchantedPermanentBecomesTapped()`, `permanentYouControlBecomesTapped()`,
+  `permanentOpponentControlsBecomesTapped()`, `creatureBecomesTapped()`, `youTapPermanentOpponentControls()`,
+  `tappedToPayTeamworkCost()`, `becomesUntapped()`, `permanentYouControlBecomesUntapped()`, `permanentBecomesUntapped()`,
+  `youUntapPermanentsDuringUntapStep()` (`scripts/step13-tap-slots.tsv` maps each slot to its factory, event and
+  relation).
+- **Kept as the slots were:** `playerTapsLandForMana()` holds every land-tap wording (any player, you, an opponent,
+  enchanted land, this land, a land of a type); the effect class still narrows it, and "an opponent" still means the
+  tapping player. `enchantedPermanentBecomesTapped()` is read on every permanent attached to the tapped one, so
+  Darksteel Garrison's "fortified land" uses it. `youTapPermanentOpponentControls()` still only sees taps made while a
+  spell or ability resolves (the tapping player is the resolving controller), so costs and attacks never trigger it.
+  The step 1 inventory's surprises are unchanged: effect-driven mass taps through `TapUntapSupport#tapPermanent` are
+  unbatched, so a `TriggerMode.ONCE_PER_BATCH` registration (Deeproot Pilgrimage, Rewrite History, Sharae of Numbing
+  Depths) fires once per permanent there; the opponent-tap collector has no permanent or player target step; about 9
+  direct `Permanent.untap()` calls (untap-symbol costs, `MultiplePermanentUntapCostHandler`) bypass the untap
+  collectors; the any-player-taps-permanent collector re-finds the tapped permanent and skips one sacrificed in the
+  cost (Treasure); the ability-loss checks differ per collector.
+- `LegacySlotGrouping.ALL` lost `ON_SELF_TAPPED_FOR_MANA`; `LegacySlots.slotOf` knows `TapTrigger`.
+- `RegisterGlobalTriggeredAbilityUntilNextTurnEffect` (Don't Move) and the perpetual land grants
+  (`PerpetuallyGiveLandExtraManaEffectHandler`, `PerpetuallyGrantTapDrawToRandomLandInLibraryEffectHandler`) hold or
+  add the ability with its trigger; the temporary global watchers are matched with `ability().hasTrigger(…)`.
+
+**No rules event, no index.** As in runs 1 to 7, the tap, untap and tap-for-mana collectors in
+`TriggerCollectionService` still run at their call sites (the ~34 tap call sites, `TapUntapSupport#untapPermanent`,
+`UntapStepService`, the two mana-ability paths, the teamwork cost). `service/trigger/TapWatch` (a `TriggerWatch`) has
+one constant per old slot, naming its trigger and the zone the collector reads. The 44 handler registrations of
+`LandTapTriggerCollectorService`, `ManaTapTriggerCollectorService` and `MiscTriggerCollectorService` moved from
+`@CollectsTrigger(slot = …)` to `@CollectsTapTrigger(watch = …)` (`scripts/step13-tap-rekey.py`), scanned by
+`TriggerCollectorRegistry` and `GameEngineConfig`. The readers in the engine and AI (`PredicateEvaluationService`,
+`PotentialManaService`, `PermanentRemovalService`, `AiManaManager`, `AiTargetSelector`, `GameSimulator`) and the
+collector tests were converted by `scripts/step13-tap-readers.py` (run 7's reader script on this family's TSV); by hand:
+`checkNonlandPermanentTapForManaTriggers` loops over `TapWatch`es instead of a `List<EffectSlot>`. Grouping, target
+routing, wrapper checks, face-down and ability-loss checks are unchanged, so the run makes no rules change. Shadow mode
+was not run, for run 1's reason.
+
+**Cards.** `scripts/step13-tap-triggers.py` (run 7's script reading the tap TSV) converted 207 card classes (the step 1
+inventory's count), the two perpetual-grant handlers and `AiManaManagerTest`, one ability per registration in the old
+order, any `TriggerMode` kept (3 `ONCE_PER_BATCH`). No card test named a tap slot. Nothing needed `MANUAL`. The domain
+Javadoc that named a slot names its factory; engine comments and the collector tests' display names keep the slot
+name, which is the `TapWatch` constant's. `scripts/step13-tap-docs.py` rewrote agent-docs (162 lines); by hand: three
+lines that still said "slot" or showed the old `RegisterGlobalTriggeredAbilityUntilNextTurnEffect(EffectSlot, …)`
+signature, the skills and `ARCHITECTURE.md`. `effect-slot-inventory.md` was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the tap collectors still read their wrappers: `TriggeringPermanentConditionalEffect` (the tapped or
+  untapped permanent's type, "this creature" for a permanent-you-control trigger), `OncePerTurnTriggerEffect`,
+  `OncePerTurnPerCreatureTriggerEffect` (global, "first time that creature has become tapped this turn"), the
+  intervening-if `ConditionalEffect`s, `ChooseOneAtTriggerTimeEffect`, and `TriggerMode.ONCE_PER_BATCH` with
+  `begin/endPermanentTapTriggerBatch`.
+- Step 15: the tapped or untapped permanent (`triggeringPermanentId`), its controller (baked `targetId` for
+  `TRIGGERING_PERMANENT_CONTROLLER` damage, `eventPlayerIds`), the land-tap context (tapping player, produced colors)
+  and the untap-step count (`eventValue`) are still bound by the collectors.
+- The many tap and untap call sites are the obvious choke points for a tap rules event when the collectors go.
+- Tests that used `ON_SELF_BECOMES_UNTAPPED` as an arbitrary legacy slot use `ON_SELF_LOSES_CONTROL` (family 11) now.
+
+**Tests changed.**
+
+- New `TapTriggerTest` (`model/trigger/`): every factory functions from the battlefield and names its own trigger,
+  the events, relations and filters, null rejection, abilities read by trigger and zone, and a registration keeping
+  `TriggerMode.ONCE_PER_BATCH`.
+- New `TapWatchTest`: every tap, library, target, counter, damage, combat and spell-and-ability watch has its own
+  (trigger, zone) pair, every tap watch reads a `TapTrigger` on the battlefield, and a watch reads only its trigger's
+  abilities.
+- `LandTapTriggerCollectorServiceTest`, `MiscTriggerCollectorServiceTest` and `TriggerCollectorRegistryTest` dispatch
+  to the watches (by the reader script); `AiManaManagerTest` adds the triggers (by the card script).
+- `TriggeredAbilityTest`, `TriggerConditionTest`, `CardAbilitiesTest`, `GrantedAbilitiesTest`, `LegacySlotTriggerTest`
+  and `GameDataDeepCopyTest` used `ON_SELF_BECOMES_UNTAPPED` as an arbitrary battlefield, each-grouped legacy slot:
+  they use `ON_SELF_LOSES_CONTROL`. `LegacySlotTriggerTest`'s per-slot case runs 16 fewer times (it is parameterised
+  over `EffectSlot.values()`).
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that references one (388 classes, 3,518 tests): all
+  passing.
+- Application: the trigger-model, watch, registry, land-tap and misc collector, card-ability, granted-ability,
+  activation, activated-ability execution, untap step, permanent removal, spell casting, tap-cost, step, turn-cleanup,
+  freeze, architecture, simulation-copy, targeting-consistency, pipeline and legacy-binding classes (25 classes; 929
+  tests, 936 at HEAD: 16 deleted cases, 9 new): 138 failures, exactly the tests that fail at HEAD (`4d70229c9e`, same
+  classes run in a worktree with the main tree's `card-data-cache`): mock wiring in `AbilityActivationServiceTest`,
+  `ActivatedAbilityExecutionServiceTest`, `PermanentRemovalServiceTest`, `SpellCastingServiceTest`,
+  `LandTapTriggerCollectorServiceTest` (2), `StepTriggerServiceTest`, `TurnCleanupServiceTest` and
+  `UntapStepServiceTest`, and the known ones in `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and
+  `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 7 (the modal-mode, kicker and Reign of
   Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
 - The full suite was not run here.
 

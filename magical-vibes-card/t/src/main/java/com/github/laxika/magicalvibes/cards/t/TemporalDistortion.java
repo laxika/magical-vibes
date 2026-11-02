@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
@@ -29,9 +28,9 @@ public class TemporalDistortion extends Card {
     public TemporalDistortion() {
         var hourglassCounter = new PutCounterOnReferencedPermanentEffect(
                 PermanentReference.TRIGGERING, CounterType.HOURGLASS);
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+        addTrigger(Triggers.permanentYouControlBecomesTapped(),
                 new TriggeringPermanentConditionalEffect(CREATURE_OR_LAND, hourglassCounter));
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
+        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(),
                 new TriggeringPermanentConditionalEffect(CREATURE_OR_LAND, hourglassCounter));
 
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(

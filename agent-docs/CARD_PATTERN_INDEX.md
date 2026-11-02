@@ -584,7 +584,7 @@ When implementing a card, use these as the **best** test file to read for each c
 | Equipment with per-player life-loss counter trigger | `r/ReapersScythe.java` | `Triggers.endStep(ActivePlayer.YOU)` puts one soul counter per distinct player who lost life; `AttachedBoostEffect` scales the equipped creature and `GrantSubtypeEffect` adds Assassin |
 | Lord/anthem | `GloriousAnthemTest.java` | Covers static boost + removal |
 | Vanilla creature | (no test needed) | Empty body, no engine logic |
-| Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `Triggers.enters(ObjectRelation.THIS)`, and put the dynamic mana rider in `ON_SELF_TAPPED_FOR_MANA` |
+| Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `Triggers.enters(ObjectRelation.THIS)`, and put the dynamic mana rider in `Triggers.tappedForMana()` |
 | ETB creates an Equipment token and attaches it to the source | `u/USAgentJohnWalker.java` | Use `CreateTokenAndAttachToSourceEffect(CreateTokenEffect.ofArtifactToken(...).withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(...)))))`; put the token's `EquipActivatedAbility` in its token ability list |
 | Equipment swap ability | `a/ArcanumThings.java` | Add the equipped-creature static effect, `EquipActivatedAbility`, and an activated ability with `EquipmentSwapEffect()` |
 

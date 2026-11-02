@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -26,10 +25,9 @@ public class SharaeOfNumbingDepths extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
-        addEffect(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT,
+        addTrigger(Triggers.youTapPermanentOpponentControls(), TriggerMode.ONCE_PER_BATCH,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
-                        new OncePerTurnTriggerEffect(new DrawCardEffect(1))),
-                TriggerMode.ONCE_PER_BATCH);
+                        new OncePerTurnTriggerEffect(new DrawCardEffect(1))));
     }
 }

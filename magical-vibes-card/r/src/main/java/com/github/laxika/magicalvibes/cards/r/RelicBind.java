@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,6 +28,6 @@ public class RelicBind extends Card {
         // Whenever enchanted artifact becomes tapped, choose one —
         //  • This Aura deals 1 damage to target player or planeswalker.
         //  • Target player gains 1 life.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new RelicBindTapEffect());
+        addTrigger(Triggers.enchantedPermanentBecomesTapped(), new RelicBindTapEffect());
     }
 }

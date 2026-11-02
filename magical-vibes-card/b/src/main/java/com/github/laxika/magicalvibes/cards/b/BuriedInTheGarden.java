@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -23,7 +22,7 @@ public class BuriedInTheGarden extends Card {
 
     public BuriedInTheGarden() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+                .addTrigger(Triggers.playerTapsLandForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * ON_ANY_PLAYER_TAPS_LAND trigger: "Whenever a player taps a land for mana, this deals {damage}
+ * {@code Triggers.playerTapsLandForMana()} trigger: "Whenever a player taps a land for mana, this deals {damage}
  * damage to that player." Symmetric — every player's land taps trigger it.
  *
  * <p>{@code landFilter} optionally narrows which tapped lands trigger it (evaluated against the

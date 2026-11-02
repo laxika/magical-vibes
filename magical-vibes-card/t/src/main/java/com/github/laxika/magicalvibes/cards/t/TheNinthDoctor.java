@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.DuringYourUntapStep;
 import com.github.laxika.magicalvibes.model.effect.AdditionalUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "148")
 @CardRegistration(set = "WHO", collectorNumber = "432")
@@ -18,7 +18,7 @@ public class TheNinthDoctor extends Card {
     public TheNinthDoctor() {
         // Into the TARDIS — Whenever The Ninth Doctor becomes untapped during your untap step, you get
         // an additional upkeep step after this step.
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.becomesUntapped(), ConditionalEffect.atTriggerTime(
                 new DuringYourUntapStep(), new AdditionalUpkeepStepEffect()));
     }
 }

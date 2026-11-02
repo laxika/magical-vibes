@@ -97,7 +97,7 @@ public class LandTapTriggerCollectorService {
     private final ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
     private final ObjectProvider<TriggerCollectionService> triggerCollectionServiceProvider;
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = SequenceEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleManaAbilitySequence(TriggerMatchContext match,
             SequenceEffect sequence, TriggerContext ctx) {
         if (sequence.steps().size() == 2
@@ -166,7 +166,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = ConditionalEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleConditionalManaAbilitySequence(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
         if (match.permanent() == null
@@ -181,7 +181,7 @@ public class LandTapTriggerCollectorService {
         return handleManaAbilitySequence(match, sequence, ctx);
     }
 
-    @CollectsTrigger(value = RemoveCounterFromSourceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = RemoveCounterFromSourceEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleControllerTapsLandRemoveCounter(TriggerMatchContext match,
             RemoveCounterFromSourceEffect effect, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -205,7 +205,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = DealDamageOnLandTapEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
             DealDamageOnLandTapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -267,7 +267,7 @@ public class LandTapTriggerCollectorService {
         return entry;
     }
 
-    @CollectsTrigger(value = GainLifeWhenOpponentTapsLandOfSubtypeEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = GainLifeWhenOpponentTapsLandOfSubtypeEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleGainLifeWhenOpponentTapsSubtypeLand(TriggerMatchContext match,
             GainLifeWhenOpponentTapsLandOfSubtypeEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -290,7 +290,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaOnEnchantedLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddManaOnEnchantedLandTapEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddManaOnEnchantedLandTap(TriggerMatchContext match,
             AddManaOnEnchantedLandTapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -384,8 +384,8 @@ public class LandTapTriggerCollectorService {
         return false;
     }
 
-    @CollectsTrigger(value = PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleCampLandTap(TriggerMatchContext match,
             PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect trigger,
             TriggerContext ctx) {
@@ -452,7 +452,7 @@ public class LandTapTriggerCollectorService {
         }
     }
 
-    @CollectsTrigger(value = AddExtraManaOfChosenColorOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddExtraManaOfChosenColorOnLandTapEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddExtraManaOfChosenColor(TriggerMatchContext match,
             AddExtraManaOfChosenColorOnLandTapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -487,7 +487,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddOneOfEachManaTypeProducedByLandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddOneOfEachManaTypeProducedByLandEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddOneOfEachManaType(TriggerMatchContext match,
             AddOneOfEachManaTypeProducedByLandEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -562,8 +562,8 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaForEachOtherLandWithSameNameEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddManaForEachOtherLandWithSameNameEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddManaForEachOtherLandWithSameName(TriggerMatchContext match,
             AddManaForEachOtherLandWithSameNameEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -630,7 +630,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddProducedManaWhenLandOfSubtypeTappedEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddProducedManaWhenLandOfSubtypeTappedEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddProducedManaWhenSubtypeLandTapped(TriggerMatchContext match,
             AddProducedManaWhenLandOfSubtypeTappedEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -659,7 +659,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddProducedManaWhenSnowLandTappedEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddProducedManaWhenSnowLandTappedEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddProducedManaWhenSnowLandTapped(TriggerMatchContext match,
             AddProducedManaWhenSnowLandTappedEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -700,8 +700,8 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddManaOfTypeProducedByLand(TriggerMatchContext match,
             AddManaOfTypeProducedByTappedPermanentEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -734,7 +734,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TappedSnowLandDoesntUntapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = TappedSnowLandDoesntUntapEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleTappedSnowLandDoesntUntap(TriggerMatchContext match,
             TappedSnowLandDoesntUntapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -750,7 +750,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaWhenLandOfSubtypeTappedForManaEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddManaWhenLandOfSubtypeTappedForManaEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddManaWhenSubtypeLandTapped(TriggerMatchContext match,
             AddManaWhenLandOfSubtypeTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -772,8 +772,8 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaWhenLandTappedForManaEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddManaWhenLandTappedForManaEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddManaWhenLandTapped(TriggerMatchContext match,
             AddManaWhenLandTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -791,8 +791,8 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaWhenLandOfColorTappedForManaEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddManaWhenLandOfColorTappedForManaEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddManaWhenColorLandTapped(TriggerMatchContext match,
             AddManaWhenLandOfColorTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -829,8 +829,8 @@ public class LandTapTriggerCollectorService {
                 .anyMatch(mana -> mana.estimatedManaColor() == color);
     }
 
-    @CollectsTrigger(value = AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleAddRestrictedManaWhenSubtypeLandTapped(TriggerMatchContext match,
             AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -855,7 +855,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ReturnTappedLandToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = ReturnTappedLandToHandEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleReturnTappedLandToHand(TriggerMatchContext match,
             ReturnTappedLandToHandEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -878,8 +878,8 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = DestroyReferencedPermanentEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleLandTapDestroy(TriggerMatchContext match,
             DestroyReferencedPermanentEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -909,7 +909,7 @@ public class LandTapTriggerCollectorService {
      * source land's own taps by its own controller count, and the tokens go to that controller's
      * opponent — the sole legal target for the "target opponent" clause in a two-player game.
      */
-    @CollectsTrigger(value = CreateTokenForTargetPlayerEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = CreateTokenForTargetPlayerEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleCreateTokenForOpponentOnSelfTapped(TriggerMatchContext match,
             CreateTokenForTargetPlayerEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -932,8 +932,8 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RegisterDelayedChooseOpponentGainsControlOfSourceEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = RegisterDelayedChooseOpponentGainsControlOfSourceEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleDelayedControlChangeOnSelfTapped(TriggerMatchContext match,
             RegisterDelayedChooseOpponentGainsControlOfSourceEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -946,7 +946,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = OpponentTappedLandDoesntUntapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = OpponentTappedLandDoesntUntapEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleOpponentLandDoesntUntap(TriggerMatchContext match,
             OpponentTappedLandDoesntUntapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -972,7 +972,7 @@ public class LandTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TapPermanentsEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = TapPermanentsEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleTapOpponentLands(TriggerMatchContext match,
             TapPermanentsEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
@@ -1007,8 +1007,8 @@ public class LandTapTriggerCollectorService {
      * reference, while the tapped land is stored as the triggering permanent so both are available
      * when the ability resolves after players have had priority.
      */
-    @CollectsTrigger(value = TapLandsThatCouldProduceSameManaAsTappedLandEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    @CollectsTapTrigger(value = TapLandsThatCouldProduceSameManaAsTappedLandEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleManaWeb(TriggerMatchContext match,
             TapLandsThatCouldProduceSameManaAsTappedLandEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;

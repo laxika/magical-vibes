@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPutMatchingOntoBattlefieldWithCounterAndTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class ArbiterOfTheIdeal extends Card {
 
     public ArbiterOfTheIdeal() {
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
+        addTrigger(Triggers.becomesUntapped(),
                 new RevealTopCardMayPutMatchingOntoBattlefieldWithCounterAndTypeEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),

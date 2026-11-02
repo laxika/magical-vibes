@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
@@ -47,6 +46,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -220,7 +220,7 @@ class AiManaManagerTest {
         Card auraCard = new Card();
         auraCard.setName("Mana Aura");
         auraCard.setType(CardType.ENCHANTMENT);
-        auraCard.addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        auraCard.addTrigger(Triggers.playerTapsLandForMana(),
                 new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
         Permanent aura = new Permanent(auraCard);
         aura.setAttachedTo(land.getId());
@@ -2099,7 +2099,7 @@ class AiManaManagerTest {
             Card auraCard = new Card();
             auraCard.setName("Blight");
             auraCard.setType(CardType.ENCHANTMENT);
-            auraCard.addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+            auraCard.addTrigger(Triggers.enchantedPermanentBecomesTapped(),
                     new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
             Permanent aura = new Permanent(auraCard);
             aura.setAttachedTo(plains.getId());

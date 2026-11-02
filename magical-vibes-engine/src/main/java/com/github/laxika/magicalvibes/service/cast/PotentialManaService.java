@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,6 +33,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -362,7 +362,7 @@ public class PotentialManaService {
                     || !manaSource.getId().equals(attachment.getAttachedTo())) {
                 return;
             }
-            found[0] = attachment.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+            found[0] = TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(attachment.getCard()).stream()
                     .filter(AddManaOnEnchantedLandTapEffect.class::isInstance)
                     .map(AddManaOnEnchantedLandTapEffect.class::cast)
                     .map(AddManaOnEnchantedLandTapEffect::mana)

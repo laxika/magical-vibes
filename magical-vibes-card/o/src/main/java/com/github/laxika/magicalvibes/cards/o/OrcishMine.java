@@ -31,7 +31,7 @@ public class OrcishMine extends Card {
         // At the beginning of your upkeep and whenever enchanted land becomes tapped, remove an ore
         // counter from this Aura.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
+        addTrigger(Triggers.enchantedPermanentBecomesTapped(), new RemoveCounterFromSourceEffect(CounterType.ORE, 1));
         // When the last ore counter is removed, destroy enchanted land and this Aura deals 2 damage to
         // that land's controller. A state trigger, so it fires however the last counter was removed.
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(

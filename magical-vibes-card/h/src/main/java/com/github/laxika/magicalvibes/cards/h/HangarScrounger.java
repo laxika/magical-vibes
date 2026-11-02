@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -37,14 +37,14 @@ public class HangarScrounger extends Card {
                 new PermanentIsSourceCardPredicate(),
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
 
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, rummage);
+        addTrigger(Triggers.permanentYouControlBecomesTapped(), rummage);
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
-                                EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
-                                rummage))
+                                new TriggeredAbility(Triggers.permanentYouControlBecomesTapped(),
+                                rummage)))
         ));
     }
 }

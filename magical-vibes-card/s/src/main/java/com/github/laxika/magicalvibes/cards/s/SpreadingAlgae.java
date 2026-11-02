@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -25,7 +24,8 @@ public class SpreadingAlgae extends Card {
                 "Target must be a Swamp"
         ));
         // When enchanted land becomes tapped, destroy it.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
+        addTrigger(Triggers.enchantedPermanentBecomesTapped(),
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
         // When this Aura is put into a graveyard from the battlefield, return it to its owner's hand.
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
                 ReturnCardFromGraveyardEffect.builder()

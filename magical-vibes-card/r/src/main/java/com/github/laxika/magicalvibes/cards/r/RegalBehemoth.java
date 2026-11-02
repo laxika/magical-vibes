@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,7 +18,7 @@ public class RegalBehemoth extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
 
         // Whenever you tap a land for mana while you're the monarch, add an additional one mana of any color.
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        addTrigger(Triggers.playerTapsLandForMana(),
                 AddOneOfEachManaTypeProducedByLandEffect.anyColor(true, null, true));
     }
 }

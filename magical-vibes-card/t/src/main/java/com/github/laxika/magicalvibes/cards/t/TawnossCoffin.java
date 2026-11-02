@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAurasUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class TawnossCoffin extends Card {
                 "{3}, {T}: Exile target creature and all Auras attached to it.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature")));
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
+        addTrigger(Triggers.becomesUntapped(),
                 new ReturnCardsExiledWithSourceOnUntapEffect());
     }
 }

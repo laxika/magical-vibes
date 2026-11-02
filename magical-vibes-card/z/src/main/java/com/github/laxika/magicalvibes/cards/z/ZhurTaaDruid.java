@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * {@code {T}: Add {G}.} plus "Whenever you tap this creature for mana, it deals 1 damage to each
@@ -21,7 +21,7 @@ public class ZhurTaaDruid extends Card {
 
     public ZhurTaaDruid() {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
-        addEffect(EffectSlot.ON_SELF_TAPPED_FOR_MANA,
+        addTrigger(Triggers.tappedForMana(),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }
 }

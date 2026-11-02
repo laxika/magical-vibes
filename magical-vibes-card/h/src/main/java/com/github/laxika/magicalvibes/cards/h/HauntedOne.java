@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,10 +29,10 @@ public class HauntedOne extends Card {
                 new PermanentOwnedBySourceControllerPredicate()));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+                new TriggeredAbility(Triggers.permanentYouControlBecomesTapped(),
                 new TriggeringPermanentConditionalEffect(new PermanentIsSourceCardPredicate(),
                         new BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect(
-                                2, 0, Set.of(Keyword.UNDYING))),
+                                2, 0, Set.of(Keyword.UNDYING)))),
                 GrantScope.ALL_CREATURES,
                 commanderCreatureYouOwn));
     }

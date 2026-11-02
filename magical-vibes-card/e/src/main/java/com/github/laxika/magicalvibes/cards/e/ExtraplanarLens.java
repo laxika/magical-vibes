@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -21,7 +20,7 @@ public class ExtraplanarLens extends Card {
         target(TargetFilters.landYouControl()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExileTargetPermanentAndImprintEffect(),
                         "Exile target land you control?"));
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        addTrigger(Triggers.playerTapsLandForMana(),
                 new AddOneOfEachManaTypeProducedByLandEffect(false, true));
     }
 }

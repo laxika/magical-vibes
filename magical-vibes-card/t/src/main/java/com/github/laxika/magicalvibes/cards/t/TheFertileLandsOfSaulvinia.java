@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealPlanarCardsUntilPlaneAndTriggerChaosEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOC", collectorNumber = "50")
 public class TheFertileLandsOfSaulvinia extends Card {
 
     public TheFertileLandsOfSaulvinia() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        addTrigger(Triggers.playerTapsLandForMana(),
                 new AddOneOfEachManaTypeProducedByLandEffect(false));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new RevealPlanarCardsUntilPlaneAndTriggerChaosEffect());

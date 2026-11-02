@@ -36,8 +36,8 @@ public class ManaTapTriggerCollectorService {
     private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
-    @CollectsTrigger(value = GainControlOfTargetEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)
+    @CollectsTapTrigger(value = GainControlOfTargetEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)
     private boolean handleGainControlOfOpponentArtifact(TriggerMatchContext match,
                                                          GainControlOfTargetEffect effect,
                                                          TriggerContext ctx) {
@@ -68,8 +68,8 @@ public class ManaTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaWhenCreatureTappedForManaEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA)
+    @CollectsTapTrigger(value = AddManaWhenCreatureTappedForManaEffect.class,
+            watch = TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA)
     private boolean handleAddManaWhenCreatureTappedForMana(TriggerMatchContext match,
             AddManaWhenCreatureTappedForManaEffect trigger, TriggerContext ctx) {
         TriggerContext.CreatureTapForMana creatureTap = (TriggerContext.CreatureTapForMana) ctx;
@@ -82,16 +82,16 @@ public class ManaTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA)
+    @CollectsTapTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
+            watch = TapWatch.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA)
     private boolean handleAddManaOfTypeProducedByArtifactToken(TriggerMatchContext match,
                                                                AddManaOfTypeProducedByTappedPermanentEffect trigger,
                                                                TriggerContext ctx) {
         return handleAddManaOfTypeProducedByNonlandPermanent(match, trigger, ctx);
     }
 
-    @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA)
+    @CollectsTapTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
+            watch = TapWatch.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA)
     private boolean handleAddManaOfTypeProducedByNonlandPermanent(TriggerMatchContext match,
                                                                   AddManaOfTypeProducedByTappedPermanentEffect trigger,
                                                                   TriggerContext ctx) {
@@ -156,8 +156,8 @@ public class ManaTapTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
-            slot = EffectSlot.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)
+    @CollectsTapTrigger(value = AddManaOfTypeProducedByTappedPermanentEffect.class,
+            watch = TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)
     private boolean handleAddManaOfTypeProducedByAnyPermanent(TriggerMatchContext match,
                                                                AddManaOfTypeProducedByTappedPermanentEffect trigger,
                                                                TriggerContext ctx) {

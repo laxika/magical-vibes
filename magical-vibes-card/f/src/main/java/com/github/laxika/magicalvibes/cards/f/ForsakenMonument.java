@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
@@ -23,9 +22,9 @@ public class ForsakenMonument extends Card {
     public ForsakenMonument() {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsColorlessPredicate()));
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        addTrigger(Triggers.playerTapsLandForMana(),
                 new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));
-        addEffect(EffectSlot.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
+        addTrigger(Triggers.youTapNonlandPermanentForMana(),
                 new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));
         addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardIsColorlessPredicate(), List.of(new GainLifeEffect(2))));

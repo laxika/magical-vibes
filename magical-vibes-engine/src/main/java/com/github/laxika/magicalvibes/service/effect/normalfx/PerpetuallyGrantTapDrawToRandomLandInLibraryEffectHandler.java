@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTapDrawToRandomLandInLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,7 +45,7 @@ public class PerpetuallyGrantTapDrawToRandomLandInLibraryEffectHandler implement
 
         Card selected = landCards.get(ThreadLocalRandom.current().nextInt(landCards.size()));
         Card modified = selected.createRuntimeCopy();
-        modified.addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+        modified.addTrigger(Triggers.permanentYouControlBecomesTapped(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(), new DrawCardEffect()));
         String cardText = modified.getCardText();

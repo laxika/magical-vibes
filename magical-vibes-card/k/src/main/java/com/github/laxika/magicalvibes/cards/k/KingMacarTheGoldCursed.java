@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ import java.util.List;
 public class KingMacarTheGoldCursed extends Card {
 
     public KingMacarTheGoldCursed() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
+        target(TargetFilters.creature()).addTrigger(Triggers.becomesUntapped(),
                 new MayEffect(new ExileTargetPermanentThenEffect(
                         CreateTokenEffect.ofArtifactToken(1, "Gold", List.of(CardSubtype.GOLD), List.of(new ActivatedAbility(
                                 false, null,

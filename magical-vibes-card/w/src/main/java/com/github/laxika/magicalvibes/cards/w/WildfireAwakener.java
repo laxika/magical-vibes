@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -26,7 +25,8 @@ public class WildfireAwakener extends Card {
 
     public WildfireAwakener() {
         List<Ability> elementalTokenEffects = List.of(
-                LegacySlots.triggered(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, new TriggeringPermanentConditionalEffect(
+                new TriggeredAbility(Triggers.permanentYouControlBecomesTapped(),
+                        new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(),
                         new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER))));
 

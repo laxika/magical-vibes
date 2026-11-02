@@ -18,7 +18,6 @@ enum LegacySlotGrouping {
     ALL;
 
     private static final Set<EffectSlot> ALL_SLOTS = EnumSet.of(
-            EffectSlot.ON_SELF_TAPPED_FOR_MANA,
             EffectSlot.SAGA_CHAPTER_I,
             EffectSlot.SAGA_CHAPTER_II,
             EffectSlot.SAGA_CHAPTER_III,

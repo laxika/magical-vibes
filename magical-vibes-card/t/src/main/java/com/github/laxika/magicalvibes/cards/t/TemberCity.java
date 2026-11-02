@@ -8,12 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPCA", collectorNumber = "79")
 public class TemberCity extends Card {
 
     public TemberCity() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new DealDamageOnLandTapEffect(1));
+        addTrigger(Triggers.playerTapsLandForMana(), new DealDamageOnLandTapEffect(1));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new SacrificePermanentsEffect(
                 1, new PermanentNotPredicate(new PermanentIsLandPredicate()), SacrificeRecipient.EACH_OPPONENT));
     }

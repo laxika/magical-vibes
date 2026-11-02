@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -17,7 +16,7 @@ public class ArtifactPossession extends Card {
 
     public ArtifactPossession() {
         target(TargetFilters.artifact());
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+        addTrigger(Triggers.enchantedPermanentBecomesTapped(),
                 new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
 
         CardEffect activationTrigger = new TriggeringNonTapAbilityConditionalEffect(

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,13 +22,12 @@ import java.util.Set;
 public class DeeprootPilgrimage extends Card {
 
     public DeeprootPilgrimage() {
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+        addTrigger(Triggers.permanentYouControlBecomesTapped(), TriggerMode.ONCE_PER_BATCH,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
-                                List.of(CardSubtype.MERFOLK), Set.of(Keyword.HEXPROOF), Set.of())),
-                TriggerMode.ONCE_PER_BATCH);
+                                List.of(CardSubtype.MERFOLK), Set.of(Keyword.HEXPROOF), Set.of())));
     }
 }

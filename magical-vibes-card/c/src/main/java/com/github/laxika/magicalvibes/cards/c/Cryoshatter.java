@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -16,7 +15,7 @@ public class Cryoshatter extends Card {
     public Cryoshatter() {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(-5, 0, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+                .addTrigger(Triggers.enchantedPermanentBecomesTapped(),
                         new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED))
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
                         new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));

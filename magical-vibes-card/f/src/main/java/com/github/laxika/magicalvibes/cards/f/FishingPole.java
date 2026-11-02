@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.TapGrantingEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +38,7 @@ public class FishingPole extends Card {
                 GrantScope.EQUIPPED_CREATURE
         ));
 
-        addEffect(EffectSlot.ON_ANY_PERMANENT_BECOMES_UNTAPPED,
+        addTrigger(Triggers.permanentBecomesUntapped(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsHostOfSourceAuraPredicate(),
                         new ConditionalEffect(

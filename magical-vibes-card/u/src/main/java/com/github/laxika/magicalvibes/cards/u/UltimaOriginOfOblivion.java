@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
@@ -35,7 +34,7 @@ public class UltimaOriginOfOblivion extends Card {
                                 ManaAbilities.tapFor(ManaColor.COLORLESS), GrantScope.ALL_LANDS)),
                         true));
 
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        addTrigger(Triggers.playerTapsLandForMana(),
                 new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS));
     }
 }

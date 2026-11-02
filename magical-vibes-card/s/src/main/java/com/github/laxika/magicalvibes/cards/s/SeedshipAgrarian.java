@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -39,7 +38,7 @@ public class SeedshipAgrarian extends Card {
     );
 
     public SeedshipAgrarian() {
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+        addTrigger(Triggers.permanentYouControlBecomesTapped(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(), LANDER));
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),

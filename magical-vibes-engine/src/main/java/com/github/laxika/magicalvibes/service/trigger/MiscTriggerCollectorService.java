@@ -203,11 +203,11 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_UNTAPPED)
+    @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_SELF_BECOMES_UNTAPPED)
     private boolean handleSelfBecomesUntapped(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesUntapped su = (TriggerContext.SelfBecomesUntapped) ctx;
         Card card = match.permanent().getCard();
-        List<CardEffect> cardEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
+        List<CardEffect> cardEffects = TapWatch.ON_SELF_BECOMES_UNTAPPED.effectsOf(card);
         if (cardEffects.isEmpty() || cardEffects.getFirst() != effect) {
             return true;
         }
@@ -334,7 +334,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP)
+    @CollectsTapTrigger(value = PutCountersOnSelfEffect.class, watch = TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP)
     private boolean handleUntapStepPutCountersOnSelf(TriggerMatchContext match,
                                                        PutCountersOnSelfEffect effect, TriggerContext ctx) {
         TriggerContext.UntapStep untapStep = (TriggerContext.UntapStep) ctx;
@@ -872,7 +872,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = GivePoisonCountersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = GivePoisonCountersEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapPoison(TriggerMatchContext match,
             GivePoisonCountersEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
@@ -898,7 +898,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DestroyReferencedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = DestroyReferencedPermanentEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDestroy(TriggerMatchContext match,
             DestroyReferencedPermanentEffect e, TriggerContext ctx) {
         StackEntry trigger = new StackEntry(
@@ -919,8 +919,8 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RemoveCounterFromSourceEffect.class,
-            slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = RemoveCounterFromSourceEffect.class,
+            watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRemoveCounter(TriggerMatchContext match,
             RemoveCounterFromSourceEffect e, TriggerContext ctx) {
         // The removal acts on the source Aura, so the trigger only needs to carry the Aura as its source permanent.
@@ -939,7 +939,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = PutCounterOnReferencedPermanentEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapCounter(TriggerMatchContext match,
             PutCounterOnReferencedPermanentEffect e, TriggerContext ctx) {
         // The tapped creature is recorded as the triggering permanent, so a referenced counter
@@ -962,7 +962,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = DealDamageToPlayersEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDamage(TriggerMatchContext match,
             DealDamageToPlayersEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
@@ -984,7 +984,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ForcedCostOrElseEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = ForcedCostOrElseEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapForcedCost(TriggerMatchContext match,
             ForcedCostOrElseEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
@@ -1007,7 +1007,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = LoseLifeEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapLoseLife(TriggerMatchContext match,
             LoseLifeEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
@@ -1033,7 +1033,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MillEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = MillEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapMill(TriggerMatchContext match,
             MillEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
@@ -1056,7 +1056,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = RelicBindTapEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = RelicBindTapEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRelicBind(TriggerMatchContext match,
             RelicBindTapEffect e, TriggerContext ctx) {
         var choice = new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
@@ -1074,7 +1074,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = DrawCardEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDraw(TriggerMatchContext match,
             DrawCardEffect e, TriggerContext ctx) {
         // Betrayal: controller draws. DrawCardEffect resolves for the stack entry's controller.
@@ -1093,7 +1093,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostTargetCreatureEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = BoostTargetCreatureEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapBoostTarget(TriggerMatchContext match,
             BoostTargetCreatureEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
@@ -1784,7 +1784,7 @@ public class MiscTriggerCollectorService {
         return handleProliferateDefault(match, effect, ctx);
     }
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTapTrigger(value = SequenceEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapSequence(TriggerMatchContext match,
             SequenceEffect sequence, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;

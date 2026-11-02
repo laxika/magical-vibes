@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -32,9 +31,8 @@ public class RewriteHistory extends Card {
                 new DrawCardEffect(),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER),
                 new PutCountersOnSelfEffect(CounterType.PLAN));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
-                new TriggeringPermanentConditionalEffect(new PermanentIsCreaturePredicate(), loot),
-                TriggerMode.ONCE_PER_BATCH);
+        addTrigger(Triggers.permanentYouControlBecomesTapped(), TriggerMode.ONCE_PER_BATCH,
+                new TriggeringPermanentConditionalEffect(new PermanentIsCreaturePredicate(), loot));
 
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

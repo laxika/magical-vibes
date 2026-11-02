@@ -2,16 +2,16 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.TappedSnowLandDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALL", collectorNumber = "114")
 @CardRegistration(set = "ME2", collectorNumber = "200")
 public class WintersNight extends Card {
 
     public WintersNight() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddProducedManaWhenSnowLandTappedEffect());
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new TappedSnowLandDoesntUntapEffect());
+        addTrigger(Triggers.playerTapsLandForMana(), new AddProducedManaWhenSnowLandTappedEffect());
+        addTrigger(Triggers.playerTapsLandForMana(), new TappedSnowLandDoesntUntapEffect());
     }
 }

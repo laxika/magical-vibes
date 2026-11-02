@@ -276,9 +276,9 @@ permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the 
 non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget` pipeline),
 `Triggers.enchantedPlayerDrawsCard()`, `Triggers.opponentDiscardsCard()`,
 `Triggers.enters(Triggers.LAND, ObjectRelation.ENCHANTED_PLAYER_CONTROLS)`,
-`ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
+`Triggers.playerTapsLandForMana()`, `Triggers.permanentYouControlBecomesTapped()`, `Triggers.permanentOpponentControlsBecomesTapped()`, `ON_CREWS_VEHICLE`,
 `Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)`, `Triggers.sacrificed(null, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificing player as a non-targeting player reference), `Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS)` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `Triggers.youAttack()`,
-`ON_ANY_PLAYER_TAPS_LAND`, `ON_CREWS_VEHICLE`,
+`Triggers.playerTapsLandForMana()`, `ON_CREWS_VEHICLE`,
 `Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)`, `Triggers.youAttack()`,
 `Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN)` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
 `Triggers.dies(Triggers.NONTOKEN, ObjectRelation.ANY)` (Liability; fires for nontoken permanents entering any player's graveyard and bakes the graveyard owner as the trigger's target),
@@ -330,25 +330,25 @@ permanent the graveyard owner controls whenever a non-token artifact card enters
 non-battlefield zone),
 `Triggers.putIntoGraveyardFromAnywhere(Triggers.BLACK_CARD, ObjectRelation.OPPONENT_OWNS)` (Compost; fires on every permanent controlled by
 an opponent of the graveyard owner whenever a black card enters that graveyard from any zone — checked in
-`GraveyardService.addCardToGraveyard`), `ON_ENCHANTED_PERMANENT_TAPPED`,
-`ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, and
-`ON_CONTROLLER_TAPS_OPPONENT_PERMANENT` (non-targeting effects use the direct
+`GraveyardService.addCardToGraveyard`), `Triggers.enchantedPermanentBecomesTapped()`,
+`Triggers.permanentYouControlBecomesTapped()`, `Triggers.permanentOpponentControlsBecomesTapped()`, and
+`Triggers.youTapPermanentOpponentControls()` (non-targeting effects use the direct
 stack path; graveyard-card targets use the shared `SpellGraveyardTargetTrigger` flow). The tap collector
 also supports global per-creature first-event wrappers: it checks the tapped creature's controller against
 the active player, records its turn-wide tap count, and preserves the event permanent in
 `StackEntry.triggeringPermanentId` for effects such as `UntapPermanentsEffect(TapUntapScope.TRIGGERING)`;
 the effect rechecks the first-event condition when it resolves.
-`ON_SELF_BECOMES_UNTAPPED` (Hollowsage; fires when the permanent transitions tapped→untapped, from
+`Triggers.becomesUntapped()` (Hollowsage; fires when the permanent transitions tapped→untapped, from
 the untap step or any untap effect, via `TriggerCollectionService.checkBecomesUntappedTriggers` — driven
 from `UntapStepService` and `TapUntapSupport.untapPermanent`. Targeted effects choose targets as the ability
 is put on the stack; a "you may have target player …" is expressed as a `MayEffect`-wrapped targeting effect
 whose "may" and target are resolved on the stack via the pending-may-ability flow),
-`ON_ALLY_PERMANENT_BECOMES_UNTAPPED` (Wake Thrasher; the untapped-ally counterpart of
-`ON_ALLY_PERMANENT_BECOMES_TAPPED` — fires once per untapped permanent on every permanent with the slot on
+`Triggers.permanentYouControlBecomesUntapped()` (Wake Thrasher; the untapped-ally counterpart of
+`Triggers.permanentYouControlBecomesTapped()` — fires once per untapped permanent on every permanent with the ability on
 the untapped permanent's controller's battlefield, including the source untapping itself; same
 `checkBecomesUntappedTriggers` call sites. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
 untapped permanent),
-`ON_ANY_PERMANENT_BECOMES_UNTAPPED` (Mesmeric Orb; fires once for every permanent that transitions
+`Triggers.permanentBecomesUntapped()` (Mesmeric Orb; fires once for every permanent that transitions
 tapped→untapped on any battlefield. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
 untapped permanent. The untapped permanent and its controller are recorded on the non-targeting
 triggered entry so an effect can use that controller even if the permanent leaves before resolution),

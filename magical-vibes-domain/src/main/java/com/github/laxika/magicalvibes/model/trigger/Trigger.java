@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
  */
 public sealed interface Trigger permits AbilityTrigger, CombatTrigger, CounterTrigger, DamageTrigger,
         LandPlayTrigger, LegacySlotTrigger, LibraryTrigger, PermanentChangeTrigger, SpellTrigger, StepTrigger,
-        TargetTrigger, ZoneChangeTrigger {
+        TapTrigger, TargetTrigger, ZoneChangeTrigger {
 
     /**
      * The zones a trigger condition on this trigger functions from when the card doesn't say

@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DIS", collectorNumber = "99")
 @CardRegistration(set = "A25", collectorNumber = "192")
@@ -24,7 +24,7 @@ public class UtopiaSprawl extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                 "Target must be a Forest"
-        )).addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        )).addTrigger(Triggers.playerTapsLandForMana(),
                 new AddManaOnEnchantedLandTapEffect(new AwardChosenColorManaEffect()));
     }
 }

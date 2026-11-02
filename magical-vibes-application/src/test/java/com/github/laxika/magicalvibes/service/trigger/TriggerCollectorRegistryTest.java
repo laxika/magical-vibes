@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -34,7 +33,7 @@ class TriggerCollectorRegistryTest {
             var effect = new DealDamageOnLandTapEffect(1);
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
-            boolean result = registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+            boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -43,14 +42,14 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Dispatches to exact match handler")
         void dispatchesToExactMatch() {
             boolean[] called = {false};
-            registry.register(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, DealDamageOnLandTapEffect.class,
+            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DealDamageOnLandTapEffect.class,
                     (match, inner, context) -> { called[0] = true; return true; });
 
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), null);
             var effect = new DealDamageOnLandTapEffect(1);
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
-            boolean result = registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+            boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(called[0]).isTrue();
@@ -117,7 +116,7 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Does not dispatch to handler in wrong slot")
         void doesNotDispatchToWrongSlot() {
             boolean[] called = {false};
-            registry.register(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, DealDamageOnLandTapEffect.class,
+            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DealDamageOnLandTapEffect.class,
                     (match, inner, context) -> { called[0] = true; return true; });
 
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), null);

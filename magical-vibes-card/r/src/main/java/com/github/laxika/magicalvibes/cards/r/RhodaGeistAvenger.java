@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -31,7 +30,7 @@ public class RhodaGeistAvenger extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
 
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
+        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class DontMove extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate()))));
         addSpellEffect(new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(
-                EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED,
-                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING)));
+                new TriggeredAbility(Triggers.creatureBecomesTapped(),
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING))));
     }
 }

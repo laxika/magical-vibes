@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
@@ -43,7 +42,7 @@ public class RoxanneStarfallSavant extends Card {
     public RoxanneStarfallSavant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), METEORITE);
         addTrigger(Triggers.attacks(), METEORITE);
-        addEffect(EffectSlot.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA,
+        addTrigger(Triggers.youTapArtifactTokenForMana(),
                 new AddManaOfTypeProducedByTappedPermanentEffect());
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,6 +27,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -983,8 +983,7 @@ public class AiManaManager {
         gameData.forEachPermanent((controllerId, attachment) -> {
             if (attachment.isAttached()
                     && permanent.getId().equals(attachment.getAttachedTo())
-                    && !attachment.getCard()
-                            .getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED).isEmpty()) {
+                    && !TapWatch.ON_ENCHANTED_PERMANENT_TAPPED.effectsOf(attachment.getCard()).isEmpty()) {
                 cost[0] = ATTACHED_TAP_TRIGGER_COST;
             }
         });

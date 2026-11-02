@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -22,7 +21,7 @@ public class BlightedBurgeoning extends Card {
     public BlightedBurgeoning() {
         target(TargetFilters.land())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), incubator(2))
-                .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+                .addTrigger(Triggers.playerTapsLandForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }
 

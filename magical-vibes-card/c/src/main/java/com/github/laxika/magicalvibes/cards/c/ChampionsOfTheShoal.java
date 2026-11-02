@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +29,7 @@ public class ChampionsOfTheShoal extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN))
-                .addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+                .addTrigger(Triggers.permanentYouControlBecomesTapped(),
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentIsSourceCardPredicate(),
                                 tapAndStun));

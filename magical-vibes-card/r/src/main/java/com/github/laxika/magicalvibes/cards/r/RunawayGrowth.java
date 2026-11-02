@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffe
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YNEO", collectorNumber = "28")
 public class RunawayGrowth extends Card {
@@ -21,7 +21,7 @@ public class RunawayGrowth extends Card {
 
         // Whenever enchanted land is tapped for mana, its controller adds green mana equal to this
         // enchantment's intensity. Then this enchantment intensifies by 1.
-        target(TargetFilters.land()).addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, SequenceEffect.of(
+        target(TargetFilters.land()).addTrigger(Triggers.playerTapsLandForMana(), SequenceEffect.of(
                 new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, new SourceIntensity())),
                 new IntensifySourceCardEffect(1)));
     }

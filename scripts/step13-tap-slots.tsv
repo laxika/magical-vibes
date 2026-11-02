@@ -1,0 +1,17 @@
+# slot	factory	zone (- for the trigger's default)	event	relation	javadoc
+ON_SELF_TAPPED_FOR_MANA	tappedForMana	-	TAPPED_FOR_MANA	THIS	"Whenever you tap this permanent for mana", from the mana-ability tap path only.
+ON_ANY_PLAYER_TAPS_LAND	playerTapsLandForMana	-	TAPPED_FOR_MANA	ANY	"Whenever a player taps a land for mana"; the effect class narrows the player and the land.
+ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA	playerTapsPermanentForMana	-	TAPPED_FOR_MANA	ANY	"Whenever a player taps a permanent for mana".
+ON_CONTROLLER_TAPS_CREATURE_FOR_MANA	youTapCreatureForMana	-	TAPPED_FOR_MANA	YOU_CONTROL	"Whenever you tap a creature for mana".
+ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA	youTapNonlandPermanentForMana	-	TAPPED_FOR_MANA	YOU_CONTROL	"Whenever you tap a nonland permanent for mana".
+ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA	youTapArtifactTokenForMana	-	TAPPED_FOR_MANA	YOU_CONTROL	"Whenever you tap an artifact token for mana".
+ON_ENCHANTED_PERMANENT_TAPPED	enchantedPermanentBecomesTapped	-	BECOMES_TAPPED	ENCHANTED	"Whenever enchanted permanent becomes tapped", read on every permanent attached to the tapped one.
+ON_ALLY_PERMANENT_BECOMES_TAPPED	permanentYouControlBecomesTapped	-	BECOMES_TAPPED	YOU_CONTROL	"Whenever a permanent you control becomes tapped".
+ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST	tappedToPayTeamworkCost	-	TAPPED_TO_PAY_TEAMWORK_COST	THIS	"Whenever this creature becomes tapped to pay a teamwork cost".
+ON_SELF_BECOMES_UNTAPPED	becomesUntapped	-	BECOMES_UNTAPPED	THIS	"Whenever this permanent becomes untapped".
+ON_ALLY_PERMANENT_BECOMES_UNTAPPED	permanentYouControlBecomesUntapped	-	BECOMES_UNTAPPED	YOU_CONTROL	"Whenever a permanent you control becomes untapped".
+ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP	youUntapPermanentsDuringUntapStep	-	YOU_UNTAP_DURING_UNTAP_STEP	YOU_CONTROL	"Whenever you untap one or more permanents during your untap step", once for each untap step.
+ON_ANY_PERMANENT_BECOMES_UNTAPPED	permanentBecomesUntapped	-	BECOMES_UNTAPPED	ANY	"Whenever a permanent becomes untapped".
+ON_OPPONENT_PERMANENT_BECOMES_TAPPED	permanentOpponentControlsBecomesTapped	-	BECOMES_TAPPED	OPPONENT_CONTROLS	"Whenever a permanent an opponent controls becomes tapped".
+ON_CONTROLLER_TAPS_OPPONENT_PERMANENT	youTapPermanentOpponentControls	-	YOU_TAP	OPPONENT_CONTROLS	"Whenever you tap a permanent an opponent controls".
+ON_ANY_CREATURE_BECOMES_TAPPED	creatureBecomesTapped	-	BECOMES_TAPPED	ANY	"Whenever a creature becomes tapped".

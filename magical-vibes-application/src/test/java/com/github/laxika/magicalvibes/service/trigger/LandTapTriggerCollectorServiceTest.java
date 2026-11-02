@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -82,7 +81,7 @@ class LandTapTriggerCollectorServiceTest {
         gd.interaction.beginInteraction(originalChoice);
         var effect = new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect());
 
-        assertThat(registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        assertThat(registry.dispatch(match(aura, player1Id, effect), TapWatch.ON_ANY_PLAYER_TAPS_LAND,
                 effect, new TriggerContext.LandTap(player1Id, forest.getId()))).isTrue();
 
         assertThat(gd.interaction.activeInteraction()).isSameAs(originalChoice);
@@ -99,7 +98,7 @@ class LandTapTriggerCollectorServiceTest {
         when(gameQueryService.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).thenReturn(true);
         when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player2Id);
 
-        registry.dispatch(match(source, player1Id, effect), EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        registry.dispatch(match(source, player1Id, effect), TapWatch.ON_ANY_PLAYER_TAPS_LAND,
                 effect, new TriggerContext.LandTap(player1Id, forest.getId()));
 
         assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isZero();
@@ -115,7 +114,7 @@ class LandTapTriggerCollectorServiceTest {
         when(gameQueryService.findPermanentById(gd, mountain.getId())).thenReturn(mountain);
         when(gameQueryService.effectiveBasicLandTypes(gd, mountain)).thenReturn(Set.of(CardSubtype.MOUNTAIN));
 
-        registry.dispatch(match(source, player1Id, effect), EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+        registry.dispatch(match(source, player1Id, effect), TapWatch.ON_ANY_PLAYER_TAPS_LAND,
                 effect, new TriggerContext.LandTap(player2Id, mountain.getId()));
 
         assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
@@ -219,7 +218,7 @@ class LandTapTriggerCollectorServiceTest {
         var effect = new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         boolean result = registry.dispatch(match(source, player1Id, effect),
-                EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
+                TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -233,7 +232,7 @@ class LandTapTriggerCollectorServiceTest {
         var effect = new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         boolean result = registry.dispatch(match(source, player1Id, effect),
-                EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, new TriggerContext.LandTap(player2Id, UUID.randomUUID()));
+                TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, new TriggerContext.LandTap(player2Id, UUID.randomUUID()));
 
         assertThat(result).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -246,7 +245,7 @@ class LandTapTriggerCollectorServiceTest {
         var effect = new RegisterDelayedChooseOpponentGainsControlOfSourceEffect();
 
         boolean result = registry.dispatch(match(source, player1Id, effect),
-                EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                 new TriggerContext.LandTap(player1Id, source.getId()));
 
         assertThat(result).isTrue();
@@ -263,7 +262,7 @@ class LandTapTriggerCollectorServiceTest {
         var effect = new RegisterDelayedChooseOpponentGainsControlOfSourceEffect();
 
         boolean result = registry.dispatch(match(source, player1Id, effect),
-                EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                 new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
 
         assertThat(result).isFalse();
@@ -282,7 +281,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                     new TriggerContext.LandTap(player2Id, UUID.randomUUID()));
 
             assertThat(result).isTrue();
@@ -306,7 +305,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(manabarbs, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                     new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
 
             assertThat(result).isTrue();
@@ -326,7 +325,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(burningEarth, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                     new TriggerContext.LandTap(player2Id, tappedLand.getId()));
 
             assertThat(result).isFalse();
@@ -354,7 +353,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(overgrowth, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 2);
@@ -375,7 +374,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(overgrowth, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore);
@@ -391,7 +390,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(overgrowth, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -409,7 +408,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(fertileGround, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             verify(interactionHandlerRegistry).begin(eq(gd),
@@ -431,7 +430,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(dawnsReflection, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             verify(interactionHandlerRegistry).begin(eq(gd),
@@ -461,7 +460,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
@@ -479,7 +478,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -495,7 +494,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -513,7 +512,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -531,7 +530,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -552,7 +551,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
@@ -573,7 +572,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
@@ -596,7 +595,7 @@ class LandTapTriggerCollectorServiceTest {
                     player2Id, null, null, null, List.of("RED"), "Choose mana."));
 
             boolean result = registry.dispatch(match(source, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                     new TriggerContext.LandTap(player2Id, land.getId()));
 
             assertThat(result).isTrue();
@@ -620,7 +619,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
@@ -647,7 +646,7 @@ class LandTapTriggerCollectorServiceTest {
             when(dealDamageHandlerProvider.getObject()).thenReturn(dealDamageHandler);
 
             boolean result = registry.dispatch(match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
@@ -669,7 +668,7 @@ class LandTapTriggerCollectorServiceTest {
             when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                     new TriggerContext.LandTap(player2Id, forest.getId()));
 
             assertThat(result).isFalse();
@@ -691,7 +690,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
@@ -708,7 +707,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -727,7 +726,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
@@ -745,7 +744,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -762,7 +761,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -788,7 +787,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.BLACK)).isEqualTo(1);
@@ -810,7 +809,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.BLACK)).isZero();
@@ -833,7 +832,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.BLACK)).isEqualTo(1);
@@ -856,7 +855,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.COLORLESS)).isOne();
@@ -872,7 +871,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.COLORLESS)).isZero();
@@ -899,7 +898,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(forest.getSkipUntapCount()).isEqualTo(1);
@@ -916,7 +915,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -933,7 +932,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -956,7 +955,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(orchard, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             verify(permanentControlSupport).applyCreateToken(eq(gd), eq(player2Id), eq(effect.tokenEffect()), any());
@@ -971,7 +970,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(orchard, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -984,7 +983,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(orchard, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
         }
@@ -1003,7 +1002,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isOne();
@@ -1018,7 +1017,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
@@ -1032,7 +1031,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(sourceLand, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                     new TriggerContext.LandTap(player1Id, sourceLand.getId()));
 
             assertThat(result).isTrue();
@@ -1047,7 +1046,7 @@ class LandTapTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(sourceLand, player1Id, effect),
-                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
                     new TriggerContext.LandTap(player1Id, UUID.randomUUID()));
 
             assertThat(result).isFalse();

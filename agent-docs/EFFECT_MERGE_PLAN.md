@@ -548,7 +548,7 @@ in, hence `PutCounterOnReferencedPermanentEffect`.
 
 **What the audit missed — `@CollectsTrigger` is class-keyed.** `TriggerCollectorRegistry` keys on
 the exact `(EffectSlot, effect.getClass())` pair, so two collector annotations had to be re-keyed to
-the merged class: `MiscTriggerCollectorService:238` (`ON_ENCHANTED_PERMANENT_TAPPED`, Spirit Shackle)
+the merged class: `MiscTriggerCollectorService:238` (`Triggers.enchantedPermanentBecomesTapped()`, Spirit Shackle)
 and `DeathTriggerCollectorService:1149` (`Triggers.creatureDies(ANY)`, Sadistic Glee). Both stay
 slot-scoped, and no card puts a `TRIGGERING` reference in either slot, so the re-key is inert; had it
 been missed, both cards' triggers would have silently stopped firing. Neither trigger-collection
@@ -616,7 +616,7 @@ dead code.
 
 **What the audit missed — `@CollectsTrigger` is class-keyed, three times.** As in Step 8, the
 collector annotations key on the exact `(EffectSlot, effect.getClass())` pair, so three had to be
-re-keyed to the merged class: `MiscTriggerCollectorService:199` (`ON_ENCHANTED_PERMANENT_TAPPED`),
+re-keyed to the merged class: `MiscTriggerCollectorService:199` (`Triggers.enchantedPermanentBecomesTapped()`),
 `DeathTriggerCollectorService:1133` (`Triggers.creatureDies(ANY)`) and `DamageTriggerCollectorService:295`
 (`Triggers.enchantedCreatureDealtDamage()`). Two of those slots now hold **two** merged-class collectors
 each — Step 8's `PutCounterOnReferencedPermanentEffect` and this one — which is fine because the
@@ -1537,7 +1537,7 @@ Four corrections:
   `CONTROLLER`/`EACH_PLAYER` cards are unaffected.
 - The `@CollectsTrigger` / `@ValidatesTarget` class-keying worry does not bite: **no** collector or
   validator is keyed on any of these three classes, despite Grimoire Thief
-  (`ON_ALLY_PERMANENT_BECOMES_TAPPED`), Nightveil Specter (`Triggers.dealsCombatDamageToPlayer()`) and three
+  (`Triggers.permanentYouControlBecomesTapped()`), Nightveil Specter (`Triggers.dealsCombatDamageToPlayer()`) and three
   ETB cards using trigger slots.
 - The fizzle log is **not** shared: the opponent handler said *"opponent-exile fizzles"*. Unified on
   *"exile-top-cards fizzles"* (`log.info` only, not player-visible). The opponent handler also

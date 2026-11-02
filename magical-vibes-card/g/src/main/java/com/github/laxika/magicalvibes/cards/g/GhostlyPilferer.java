@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,7 +23,7 @@ import java.util.List;
 public class GhostlyPilferer extends Card {
 
     public GhostlyPilferer() {
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
+        addTrigger(Triggers.becomesUntapped(),
                 new MayPayManaEffect("{2}", new DrawCardEffect(), "Pay {2} to draw a card?"));
 
         addTrigger(Triggers.opponentCastsSpell(), new SpellCastTriggerEffect(

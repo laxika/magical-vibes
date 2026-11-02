@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -38,7 +37,7 @@ public class RoyalDecree extends Card {
         var damage = new TriggeringPermanentConditionalEffect(
                 SWAMP_MOUNTAIN_BLACK_OR_RED,
                 new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, damage);
-        addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED, damage);
+        addTrigger(Triggers.permanentYouControlBecomesTapped(), damage);
+        addTrigger(Triggers.permanentOpponentControlsBecomesTapped(), damage);
     }
 }

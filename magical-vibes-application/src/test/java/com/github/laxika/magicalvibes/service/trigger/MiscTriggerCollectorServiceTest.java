@@ -148,7 +148,7 @@ class MiscTriggerCollectorServiceTest {
         Permanent land = createPermanent("Tapped land");
         var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
 
-        registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+        registry.dispatch(match(aura, player1Id, effect), TapWatch.ON_ENCHANTED_PERMANENT_TAPPED,
                 effect, new TriggerContext.EnchantedPermanentTap(land, player2Id));
 
         assertThat(gd.stack).hasSize(1);
@@ -179,7 +179,7 @@ class MiscTriggerCollectorServiceTest {
         Permanent tapped = createPermanent("Artifact");
         var effect = new com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect();
 
-        registry.dispatch(match(aura, player1Id, effect), EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
+        registry.dispatch(match(aura, player1Id, effect), TapWatch.ON_ENCHANTED_PERMANENT_TAPPED,
                 effect, new TriggerContext.EnchantedPermanentTap(tapped, player2Id));
 
         assertThat(gd.stack).isEmpty();
@@ -837,7 +837,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -858,7 +858,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             StackEntry entry = gd.stack.getLast();
             var resolved = (GivePoisonCountersEffect) entry.getEffectsToResolve().getFirst();
@@ -878,7 +878,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -902,7 +902,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -931,7 +931,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -960,7 +960,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -990,7 +990,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1015,7 +1015,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(aura, player1Id, effect),
-                    EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }

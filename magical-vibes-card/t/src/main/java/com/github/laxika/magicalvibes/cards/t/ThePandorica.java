@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseInLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentWhileSourceTappedEffect;
@@ -50,7 +49,7 @@ public class ThePandorica extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new PhaseInLinkedPermanentEffect());
+        addTrigger(Triggers.becomesUntapped(), new PhaseInLinkedPermanentEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new PhaseInLinkedPermanentEffect());
     }
 }

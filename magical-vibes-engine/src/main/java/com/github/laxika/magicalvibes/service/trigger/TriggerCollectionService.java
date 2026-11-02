@@ -4630,7 +4630,7 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Handles {@link EffectSlot#ON_SELF_TAPPED_FOR_MANA} — "Whenever you tap this permanent for
+     * Handles {@link TapWatch#ON_SELF_TAPPED_FOR_MANA} — "Whenever you tap this permanent for
      * mana, …" (Zhur-Taa Druid). Only the tapped permanent's own card is scanned, and only the
      * mana-ability tap path calls this, so tapping to attack or an opponent's forced tap never
      * triggers it. The caller defers the queued trigger like every other mana-ability trigger
@@ -4642,9 +4642,9 @@ public class TriggerCollectionService {
      */
     public void checkSelfTappedForManaTriggers(GameData gameData, Permanent tappedPermanent, UUID controllerId) {
         List<CardEffect> effects = new ArrayList<>(
-                tappedPermanent.getCard().getEffects(EffectSlot.ON_SELF_TAPPED_FOR_MANA));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, tappedPermanent, EffectSlot.ON_SELF_TAPPED_FOR_MANA));
+                TapWatch.ON_SELF_TAPPED_FOR_MANA.effectsOf(tappedPermanent.getCard()));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, tappedPermanent, TapWatch.ON_SELF_TAPPED_FOR_MANA.trigger()));
         if (effects.isEmpty()) return;
 
         StackEntry entry = new StackEntry(
@@ -4699,9 +4699,9 @@ public class TriggerCollectionService {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
+                for (CardEffect effect : TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(perm.getCard())) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                    if (dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
+                    if (dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
                         anyTriggered[0] = true;
                     }
                 }
@@ -4711,10 +4711,10 @@ public class TriggerCollectionService {
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
             UUID planarControllerId = gameData.planechase.controllerId;
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : object.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
+                for (CardEffect effect : TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(object.getCard())) {
                     var match = new TriggerMatchContext(gameData, null, planarControllerId, effect,
                             object.getCard(), object.copy());
-                    if (registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
+                    if (registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
                         anyTriggered[0] = true;
                     }
                 }
@@ -4729,7 +4729,7 @@ public class TriggerCollectionService {
                 }
                 TriggerMatchContext match = new TriggerMatchContext(
                         gameData, null, floating.affectedPlayerId(), effect);
-                if (registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
+                if (registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
                     anyTriggered[0] = true;
                 }
             }
@@ -8277,10 +8277,9 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.CreatureTapForMana(tappingPlayerId, tappedCreatureId);
         for (Permanent perm : List.copyOf(battlefield)) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(
-                    EffectSlot.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA)) {
+            for (CardEffect effect : TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA.effectsOf(perm.getCard())) {
                 var match = new TriggerMatchContext(gameData, perm, tappingPlayerId, effect);
-                registry.dispatch(match, EffectSlot.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA, effect, ctx);
+                registry.dispatch(match, TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA, effect, ctx);
             }
         }
     }
@@ -8307,16 +8306,16 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.NonlandPermanentTapForMana(
                 tappingPlayerId, tappedPermanentId, producedManaTypes);
-        List<EffectSlot> slots = tappedPermanent.getCard().isToken() && tappedPermanent.getCard().hasType(CardType.ARTIFACT)
-                ? List.of(EffectSlot.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
-                        EffectSlot.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA)
-                : List.of(EffectSlot.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA);
-        for (EffectSlot slot : slots) {
+        List<TapWatch> watches = tappedPermanent.getCard().isToken() && tappedPermanent.getCard().hasType(CardType.ARTIFACT)
+                ? List.of(TapWatch.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
+                        TapWatch.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA)
+                : List.of(TapWatch.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA);
+        for (TapWatch watch : watches) {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(slot)) {
+                for (CardEffect effect : watch.effectsOf(perm.getCard())) {
                     var match = new TriggerMatchContext(gameData, perm, tappingPlayerId, effect);
-                    registry.dispatch(match, slot, effect, ctx);
+                    registry.dispatch(match, watch, effect, ctx);
                 }
             }
         }
@@ -8340,19 +8339,18 @@ public class TriggerCollectionService {
         var context = new TriggerContext.PermanentTapForMana(
                 tappingPlayerId, tappedPermanentId, producedManaTypes);
         gameData.forEachPermanent((controllerId, permanent) ->
-                dispatchSlot(gameData, permanent, controllerId,
-                        EffectSlot.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA, context));
+                dispatchWatch(gameData, permanent, controllerId,
+                        TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA, context));
 
         if (gameData.planechase == null || gameData.planechase.controllerId == null) {
             return;
         }
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getEffects(
-                    EffectSlot.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)) {
+            for (CardEffect effect : TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA.effectsOf(object.getCard())) {
                 registry.dispatch(new TriggerMatchContext(gameData, null,
                                 gameData.planechase.controllerId, effect,
                                 object.getCard(), object.copy()),
-                        EffectSlot.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA, effect, context);
+                        TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA, effect, context);
             }
         }
     }
@@ -9663,19 +9661,19 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            if (slot == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
+            if (slot == TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED
                     && (targetControllerId == null || !watcher.controllerId().equals(targetControllerId))) {
                 continue;
             }
-            if (slot == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED
+            if (slot == TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED
                     && (targetControllerId == null || watcher.controllerId().equals(targetControllerId))) {
                 continue;
             }
 
             CardEffect resolvedEffect = watcher.effect();
             if (targetId != null && (slot == CombatWatch.ON_ANY_CREATURE_BLOCKS
-                    || slot == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
-                    || slot == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)
+                    || slot == TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED
+                    || slot == TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)
                     && resolvedEffect instanceof TriggeringPermanentConditionalEffect conditional) {
                 Permanent triggeringPermanent = gameQueryService.findPermanentById(gameData, targetId);
                 if (triggeringPermanent == null
@@ -9720,12 +9718,12 @@ public class TriggerCollectionService {
                 new ArrayList<>(List.of(effect)));
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
-        if (watcher.slot() == EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED) {
+        if (watcher.ability().hasTrigger(TapWatch.ON_ANY_CREATURE_BECOMES_TAPPED.trigger())) {
             entry.setTriggeringPermanentId(targetId);
         }
         entry.setNonTargeting(true);
-        if (watcher.slot() == EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED
-                || watcher.slot() == EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED) {
+        if (watcher.ability().hasTrigger(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger())
+                || watcher.ability().hasTrigger(TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED.trigger())) {
             entry.setTriggeringPermanentId(targetId);
         }
         gameData.enqueueTrigger(entry);
@@ -9793,7 +9791,7 @@ public class TriggerCollectionService {
                 : 0;
 
         if (creatureTapCount > 0) {
-            collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_CREATURE_BECOMES_TAPPED,
+            collectTemporaryGlobalTriggers(gameData, TapWatch.ON_ANY_CREATURE_BECOMES_TAPPED,
                     tappedPermanent.getId(), 0);
         }
 
@@ -9805,9 +9803,9 @@ public class TriggerCollectionService {
             if (!perm.isAttached() || !perm.getAttachedTo().equals(tappedPermanent.getId())) {
                 return;
             }
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)) {
+            for (CardEffect effect : TapWatch.ON_ENCHANTED_PERMANENT_TAPPED.effectsOf(perm.getCard())) {
                 var match = new TriggerMatchContext(gameData, perm, auraOwnerId, effect);
-                dispatch(match, EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                dispatch(match, TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
             }
         });
 
@@ -9815,18 +9813,18 @@ public class TriggerCollectionService {
         UUID controllerId = tappedPermanentControllerId;
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            List<EffectRegistration> printed = LayerSystemService.currentCard(gameData, perm)
-                    .getEffectRegistrations(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED);
+            List<EffectRegistration> printed = TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.registrationsOf(
+                    LayerSystemService.currentCard(gameData, perm));
             List<EffectRegistration> registrations = printed.isEmpty()
                     || gameQueryService.hasLostPrintedAbilities(gameData, perm)
                     ? new ArrayList<>()
                     : new ArrayList<>(printed);
-            perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED).stream()
+            perm.getTemporaryTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
-            perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED).stream()
+            perm.getPersistentTriggerEffects(TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
-            grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                            gameData, perm, EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED).stream()
+            grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                            gameData, perm, TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
             for (EffectRegistration registration : registrations) {
                 CardEffect effect = registration.effect();
@@ -9926,7 +9924,8 @@ public class TriggerCollectionService {
         // "Whenever a permanent an opponent controls becomes tapped" triggers (e.g. Thoughtleech).
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(controllerId)) return;
-            for (EffectRegistration registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)) {
+            for (EffectRegistration registration
+                    : TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED.registrationsOf(perm.getCard())) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) break;
                 CardEffect effect = registration.effect();
                 if (shouldSkipBatchedTapTrigger(gameData, perm, registration)) continue;
@@ -9979,9 +9978,9 @@ public class TriggerCollectionService {
             }
         });
 
-        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
+        collectTemporaryGlobalTriggers(gameData, TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED,
                 tappedPermanent.getId(), 0, controllerId);
-        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
+        collectTemporaryGlobalTriggers(gameData, TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
                 tappedPermanent.getId(), 0, controllerId);
 
         // "Whenever you tap an untapped creature an opponent controls" triggers. The tapping
@@ -9994,13 +9993,13 @@ public class TriggerCollectionService {
             if (!ownerId.equals(tappingPlayerId)) return;
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
             List<EffectRegistration> registrations = new ArrayList<>(
-                    perm.getCard().getEffectRegistrations(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT));
-            perm.getTemporaryTriggeredEffects(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT).stream()
+                    TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.registrationsOf(perm.getCard()));
+            perm.getTemporaryTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
-            perm.getPersistentTriggeredEffects(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT).stream()
+            perm.getPersistentTriggerEffects(TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
-            grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                            gameData, perm, EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT).stream()
+            grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                            gameData, perm, TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT.trigger()).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
             for (EffectRegistration registration : registrations) {
                 CardEffect effect = registration.effect();
@@ -10194,10 +10193,10 @@ public class TriggerCollectionService {
         if (controllerId == null || tappedCreature.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
-        List<CardEffect> effects = new ArrayList<>(tappedCreature.getCard().getEffects(
-                EffectSlot.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST));
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, tappedCreature, EffectSlot.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST));
+        List<CardEffect> effects = new ArrayList<>(
+                TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST.effectsOf(tappedCreature.getCard()));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, tappedCreature, TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST.trigger()));
         if (effects.isEmpty()) {
             return;
         }
@@ -10259,7 +10258,7 @@ public class TriggerCollectionService {
         processDelayedDestroyTargetWhenSourceUntaps(gameData, untappedPermanent);
 
         boolean lostPrintedAbilities = gameQueryService.hasLostPrintedAbilities(gameData, untappedPermanent);
-        for (CardEffect effect : untappedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)) {
+        for (CardEffect effect : TapWatch.ON_SELF_BECOMES_UNTAPPED.effectsOf(untappedPermanent.getCard())) {
             if (lostPrintedAbilities) break;
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.PhaseInLinkedPermanentEffect
                     && gameData.phasedOutWhileSourceTapped
@@ -10267,14 +10266,14 @@ public class TriggerCollectionService {
                 continue;
             }
             var match = new TriggerMatchContext(gameData, untappedPermanent, controllerId, effect);
-            dispatch(match, EffectSlot.ON_SELF_BECOMES_UNTAPPED, effect,
+            dispatch(match, TapWatch.ON_SELF_BECOMES_UNTAPPED, effect,
                     new TriggerContext.SelfBecomesUntapped(controllerId));
         }
 
         // Granted "Whenever this creature becomes untapped" abilities (Well Rested) have the enchanted
         // creature as their source and are controlled by its controller.
-        for (CardEffect granted : grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, untappedPermanent, controllerId, EffectSlot.ON_SELF_BECOMES_UNTAPPED)) {
+        for (CardEffect granted : grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, untappedPermanent, controllerId, TapWatch.ON_SELF_BECOMES_UNTAPPED.trigger())) {
             CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, untappedPermanent, granted);
             if (resolved == null) continue;
             StackEntry grantedEntry = new StackEntry(
@@ -10299,7 +10298,7 @@ public class TriggerCollectionService {
         UUID untappedControllerId = controllerId;
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(untappedControllerId)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_UNTAPPED)) {
+            for (CardEffect effect : TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED.effectsOf(perm.getCard())) {
                 CardEffect resolved = effect;
                 if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
                     FilterContext filterContext = FilterContext.of(gameData)
@@ -10327,7 +10326,7 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_BECOMES_UNTAPPED)) {
+            for (CardEffect effect : TapWatch.ON_ANY_PERMANENT_BECOMES_UNTAPPED.effectsOf(perm.getCard())) {
                 CardEffect resolved = effect;
                 if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
                     FilterContext filterContext = FilterContext.of(gameData)
@@ -10374,8 +10373,8 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.UntapStep(untappedPermanentCount);
         for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, controllerId,
-                    EffectSlot.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP, context);
+            dispatchWatch(gameData, permanent, controllerId,
+                    TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP, context);
         }
     }
 

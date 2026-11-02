@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,7 @@ public class FelhideSpiritbinder extends Card {
                 "Target must be another creature"
         );
 
-        target(anotherCreature).addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
+        target(anotherCreature).addTrigger(Triggers.becomesUntapped(),
                 new MayPayManaEffect("{1}{R}",
                         new CreateTokenCopyOfTargetPermanentEffect(
                                 List.of(), Set.of(CardType.ENCHANTMENT), null, null, Map.of(),

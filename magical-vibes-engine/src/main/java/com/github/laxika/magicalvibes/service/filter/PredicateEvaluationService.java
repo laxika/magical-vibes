@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DisturbCast;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
@@ -433,6 +432,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
+import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -5375,7 +5375,7 @@ public class PredicateEvaluationService {
      * on resolution, such as Caged Sun's extra-mana trigger.
      */
     private static boolean hasTriggeredManaAbility(Card card) {
-        return card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+        return TapWatch.ON_ANY_PLAYER_TAPS_LAND.effectsOf(card).stream()
                 .anyMatch(effect -> effect instanceof AddExtraManaOfChosenColorOnLandTapEffect
                         || effect instanceof AddOneOfEachManaTypeProducedByLandEffect
                         || effect instanceof AddProducedManaWhenSnowLandTappedEffect

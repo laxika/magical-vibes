@@ -5,13 +5,6 @@ public enum EffectSlot {
     PLANESWALK_FROM_TRIGGERED,
     CHAOS_TRIGGERED,
     ENCOUNTER_TRIGGERED,
-    /** "Whenever you tap this permanent for mana, …" (Zhur-Taa Druid). Dispatched only from the
-     *  mana-ability tap path in {@code AbilityActivationService}, so unlike
-     *  {@link #ON_ALLY_PERMANENT_BECOMES_TAPPED} it does not fire when the permanent is tapped to
-     *  attack or by an opponent's effect. Being a mana-ability trigger it is deferred into
-     *  {@code GameData.pendingManaAbilityTriggers} until a player would next receive priority
-     *  (CR 603.3). */
-    ON_SELF_TAPPED_FOR_MANA,
     /** Triggers when this permanent changes control to another player. */
     ON_SELF_BECOMES_CONTROLLED,
     /** Triggers when this permanent changes control away from its current controller. */
@@ -53,15 +46,6 @@ public enum EffectSlot {
     ON_CONTROLLER_SEEKS,
     /** Triggers whenever this permanent's controller conjures one or more cards. */
     ON_CONTROLLER_CONJURES,
-    ON_ANY_PLAYER_TAPS_LAND,
-    /** Triggers whenever any player taps any permanent for mana. */
-    ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA,
-    /** "Whenever you tap a creature for mana"; checked on the tapping player's battlefield. */
-    ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
-    /** "Whenever you tap a nonland permanent for mana"; checked on the tapping player's battlefield. */
-    ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
-    /** "Whenever you tap an artifact token for mana"; checked on the tapping player's battlefield. */
-    ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA,
     /** Triggers whenever an opponent gains control of a permanent from this permanent's controller. */
     ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT,
     /** Triggers on a permanent whenever an Aura becomes attached to it — both when an Aura spell
@@ -74,14 +58,6 @@ public enum EffectSlot {
     ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE,
     /** Triggers on an Equipment whenever it becomes attached to a permanent. */
     ON_EQUIPMENT_ATTACHED,
-    ON_ENCHANTED_PERMANENT_TAPPED,
-    /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
-     *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
-     *  effect in {@code TriggeringPermanentConditionalEffect} to filter by the tapped permanent
-     *  (e.g. Judge of Currents — "whenever a Merfolk you control becomes tapped"). Checked in
-     *  {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers}, driven by the same
-     *  tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED}. */
-    ON_ALLY_PERMANENT_BECOMES_TAPPED,
     /** Triggers whenever this creature is tapped to pay the crew cost of a Vehicle. The
      *  triggering Vehicle is stored on the resulting stack entry for effects that refer to it.
      *  Checked from {@code CrewCostHandler}. */
@@ -90,44 +66,6 @@ public enum EffectSlot {
      *  The event context carries both the crewing creature and the Vehicle. Checked from
      *  {@code CrewCostHandler}; the source permanent itself is included. */
     ON_ALLY_CREATURE_CREWS_VEHICLE,
-    /** Triggers whenever this creature is tapped to pay a teamwork cost. */
-    ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST,
-    /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),
-     *  from any source — the untap step, or an untap effect. Fires only on the permanent that
-     *  became untapped. Driven from the untap call sites via
-     *  {@code TriggerCollectionService.checkBecomesUntappedTriggers}
-     *  ({@code UntapStepService} and {@code TapUntapSupport.untapPermanent}). The trigger is queued
-     *  with the untapped permanent as its {@code sourcePermanentId}; targeted abilities choose
-     *  their targets before being put on the stack, including abilities whose effect is optional. */
-    ON_SELF_BECOMES_UNTAPPED,
-    /** Triggers whenever a permanent the controller controls becomes untapped (transitions from
-     *  tapped to untapped), from any source — the untap step or an untap effect. Fires on every
-     *  permanent with this slot on the untapped permanent's controller's battlefield (including the
-     *  untapped permanent itself). Wrap the effect in {@code TriggeringPermanentConditionalEffect}
-     *  to filter by the untapped permanent (e.g. "whenever a Merfolk you control becomes untapped").
-     *  Checked in {@code TriggerCollectionService.checkBecomesUntappedTriggers}, driven from the same
-     *  untap call sites as {@code ON_SELF_BECOMES_UNTAPPED}. Used by Wake Thrasher
-     *  ({@code BoostSelfEffect(1, 1)}). */
-    ON_ALLY_PERMANENT_BECOMES_UNTAPPED,
-    /** Triggers once during the controller's untap step when one or more of their permanents untap. */
-    ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP,
-    /** Triggers whenever any permanent becomes untapped, regardless of its controller. The
-     *  untapped permanent is recorded on the triggered entry as the non-targeting event permanent. */
-    ON_ANY_PERMANENT_BECOMES_UNTAPPED,
-    /** Triggers whenever a permanent an <em>opponent</em> of the controller controls becomes tapped.
-     *  Fires on every permanent with this slot controlled by a player other than the tapped
-     *  permanent's controller. Wrap the effect in {@code TriggeringPermanentConditionalEffect} to
-     *  filter by the tapped permanent (e.g. Thoughtleech — "whenever an Island an opponent controls
-     *  becomes tapped"). Checked in {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers},
-     *  driven by the same tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED} — so it fires
-     *  on any tap (for mana or forced, e.g. Icy Manipulator), not just taps for mana. */
-    ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
-    /** Triggers whenever the controller of this permanent taps an opponent's permanent.
-     *  Wrap the effect in {@code TriggeringPermanentConditionalEffect} to filter by the tapped
-     *  permanent. Checked from {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers}
-     *  with the player who was instructed to tap the permanent, so an opponent tapping their own
-     *  permanent does not trigger this slot. */
-    ON_CONTROLLER_TAPS_OPPONENT_PERMANENT,
     /** Triggers whenever the game changes between day and night. */
     ON_DAY_NIGHT_CHANGE,
     /** Triggers whenever the game changes between day and night while this card is in its controller's graveyard. */
@@ -255,7 +193,5 @@ public enum EffectSlot {
     ON_SELF_BECOMES_CREWED,
     ON_SELF_BECOMES_SADDLED,
     ON_ALLY_CREATURE_MUTATES,
-    ON_SELF_MUTATES,
-    /** Global temporary trigger for any creature becoming tapped. */
-    ON_ANY_CREATURE_BECOMES_TAPPED
+    ON_SELF_MUTATES
 }

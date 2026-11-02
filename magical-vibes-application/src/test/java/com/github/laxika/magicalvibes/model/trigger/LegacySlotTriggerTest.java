@@ -29,7 +29,7 @@ class LegacySlotTriggerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "ON_SELF_BECOMES_UNTAPPED, BATTLEFIELD",
+            "ON_SELF_LOSES_CONTROL, BATTLEFIELD",
             "GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME, GRAVEYARD"
     })
     void functionsFromTheZoneItsNameStartsWith(EffectSlot slot, Zone zone) {

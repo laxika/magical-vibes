@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
@@ -12,13 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JOU", collectorNumber = "148")
 public class DiscipleOfDeceit extends Card {
 
     public DiscipleOfDeceit() {
         var nonlandCard = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
+        addTrigger(Triggers.becomesUntapped(),
                 new MayEffect(DiscardCardThenEffect.continuing(
                         nonlandCard,
                         new SearchLibraryEffect(null, LibrarySearchDestination.HAND,

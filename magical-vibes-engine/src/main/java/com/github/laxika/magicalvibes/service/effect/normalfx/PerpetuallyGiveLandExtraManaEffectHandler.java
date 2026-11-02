@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGiveLandExtraManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public class PerpetuallyGiveLandExtraManaEffectHandler implements NormalEffectHa
             }
 
             Card modifiedCard = card.createRuntimeCopy();
-            modifiedCard.addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
+            modifiedCard.addTrigger(Triggers.playerTapsLandForMana(),
                     new AddManaWhenLandTappedForManaEffect(grant.color(), false, true));
             library.set(i, modifiedCard);
             return;
