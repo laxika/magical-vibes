@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
@@ -43,7 +42,7 @@ public class HenryWuInGenGeneticist extends Card {
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?")),
                 GrantScope.OWN_CREATURES, human));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_EXPLOITS,
+        addTrigger(Triggers.creatureYouControlExploits(),
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)),
                         SequenceEffect.of(

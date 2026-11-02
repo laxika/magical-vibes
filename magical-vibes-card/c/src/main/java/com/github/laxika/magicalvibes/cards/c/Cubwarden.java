@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,7 @@ public class Cubwarden extends Card {
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
                 "Mutate requires a non-Human creature with the spell's owner")));
-        addEffect(EffectSlot.ON_SELF_MUTATES, new CreateTokenEffect(
+        addTrigger(Triggers.mutates(), new CreateTokenEffect(
                 2, "Cat", 1, 1, CardColor.WHITE, List.of(CardSubtype.CAT), Set.of(Keyword.LIFELINK), Set.of()));
     }
 }

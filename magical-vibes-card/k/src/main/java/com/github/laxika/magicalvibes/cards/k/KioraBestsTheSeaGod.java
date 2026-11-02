@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,26 +29,26 @@ import java.util.Set;
 public class KioraBestsTheSeaGod extends Card {
 
     public KioraBestsTheSeaGod() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 "Kraken", 8, 8, CardColor.BLUE, List.of(CardSubtype.KRAKEN),
                 Set.of(Keyword.HEXPROOF), Set.of()));
 
         PermanentPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
+        setSagaChapterTargetFilter(2, Set.of(
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Must target an opponent")));
 
         PermanentPredicate opponentPermanent = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new UntapPermanentsEffect(TapUntapScope.TARGET));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
+        addTrigger(Triggers.chapter(3), new UntapPermanentsEffect(TapUntapScope.TARGET));
+        setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(
                         opponentPermanent, "Must target a permanent an opponent controls")));
     }

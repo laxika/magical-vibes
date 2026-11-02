@@ -22,7 +22,7 @@ class TriggeredAbilityTest {
 
     @Test
     void aSingleTriggerFunctionsFromItsDefaultZones() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME);
+        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE);
 
         TriggeredAbility ability = new TriggeredAbility(trigger, TriggerOptions.DEFAULT, ZOMBIE);
 
@@ -81,7 +81,7 @@ class TriggeredAbilityTest {
     void aLegacySlotTriggerIsTheOnlyConditionOfItsAbility() {
         List<TriggerCondition> twoSlots = List.of(
                 new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_LOSES_CONTROL)),
-                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_CONTROLLER_CLASHES)));
+                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_CONTROLLED)));
 
         assertThatThrownBy(() -> new TriggeredAbility(twoSlots, TriggerOptions.DEFAULT, ZOMBIE))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -89,7 +89,7 @@ class TriggeredAbilityTest {
 
     @Test
     void aLegacySlotTriggerTakesNoTriggerOptions() {
-        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME);
+        LegacySlotTrigger trigger = new LegacySlotTrigger(EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE);
 
         assertThatThrownBy(() -> new TriggeredAbility(trigger,
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()), ZOMBIE))

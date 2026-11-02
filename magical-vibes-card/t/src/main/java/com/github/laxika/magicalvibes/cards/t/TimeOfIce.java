@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,9 +32,9 @@ public class TimeOfIce extends Card {
     public TimeOfIce() {
         // Chapter I: Tap target creature an opponent controls.
         // It doesn't untap during its controller's untap step for as long as you control this Saga.
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, DoesntUntapEffect.targetWhileSourceControlled());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        addTrigger(Triggers.chapter(1), new TapPermanentsEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.chapter(1), DoesntUntapEffect.targetWhileSourceControlled());
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
@@ -42,12 +42,12 @@ public class TimeOfIce extends Card {
                         "Must target a creature an opponent controls"
                 )
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(1);
 
         // Chapter II: Same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, DoesntUntapEffect.targetWhileSourceControlled());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
+        addTrigger(Triggers.chapter(2), new TapPermanentsEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.chapter(2), DoesntUntapEffect.targetWhileSourceControlled());
+        setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
@@ -55,10 +55,10 @@ public class TimeOfIce extends Card {
                         "Must target a creature an opponent controls"
                 )
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+        setSagaChapterTargetRequired(2);
 
         // Chapter III: Return all tapped creatures to their owners' hands.
-        addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnToHandEffect.allPermanentsMatching(
+        addTrigger(Triggers.chapter(3), ReturnToHandEffect.allPermanentsMatching(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate()

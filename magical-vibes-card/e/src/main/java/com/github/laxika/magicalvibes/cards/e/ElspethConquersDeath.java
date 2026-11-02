@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,17 +34,17 @@ public class ElspethConquersDeath extends Card {
                 new PermanentMinManaValuePredicate(3),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new ExileTargetPermanentEffect(chapterOneFilter));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        addTrigger(Triggers.chapter(1), new ExileTargetPermanentEffect(chapterOneFilter));
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(
                         chapterOneFilter,
                         "Target must be a permanent an opponent controls with mana value 3 or greater")));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new IncreaseSpellCostUntilNextTurnEffect(
+        addTrigger(Triggers.chapter(2), new IncreaseSpellCostUntilNextTurnEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 2));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, SequenceEffect.of(
+        addTrigger(Triggers.chapter(3), SequenceEffect.of(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAnyOfPredicate(List.of(

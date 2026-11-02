@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -17,6 +16,6 @@ public class SidisisFaithful extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_EXPLOIT, ReturnToHandEffect.target());
+                .addTrigger(Triggers.exploits(), ReturnToHandEffect.target());
     }
 }

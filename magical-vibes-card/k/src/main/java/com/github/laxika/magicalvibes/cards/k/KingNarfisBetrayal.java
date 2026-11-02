@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,9 +27,9 @@ import java.util.List;
 public class KingNarfisBetrayal extends Card {
 
     public KingNarfisBetrayal() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillEffect(4, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillEffect(4, MillRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1), new MillEffect(4, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(1), new MillEffect(4, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(1),
                 new ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
@@ -37,9 +37,9 @@ public class KingNarfisBetrayal extends Card {
                         ))));
 
         var nonlandCard = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(nonlandCard));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(nonlandCard));
     }
 }

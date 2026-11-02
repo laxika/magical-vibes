@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
@@ -25,7 +24,7 @@ public class OkaunEyeOfChaos extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new FlipUntilLoseEffect(null));
-        addEffect(EffectSlot.ON_ANY_PLAYER_WINS_COIN_FLIP,
+        addTrigger(Triggers.playerWinsCoinFlip(),
                 new DoubleSelfPowerToughnessEffect());
     }
 }

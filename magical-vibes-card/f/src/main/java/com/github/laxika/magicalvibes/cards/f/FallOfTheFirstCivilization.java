@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesPermanentsThenDestroyRestEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,10 +29,10 @@ public class FallOfTheFirstCivilization extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent.");
         target(opponentFilter)
-                .addEffect(EffectSlot.SAGA_CHAPTER_I, SequenceEffect.of(
+                .addTrigger(Triggers.chapter(1), SequenceEffect.of(
                         new DrawCardEffect(2),
                         new DrawCardForTargetPlayerEffect(2, false, true)));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(opponentFilter));
+        setSagaChapterTargetFilter(1, Set.of(opponentFilter));
 
         var opponentArtifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
@@ -41,11 +41,11 @@ public class FallOfTheFirstCivilization extends Card {
                 opponentArtifact,
                 "Target must be an artifact an opponent controls.");
         target(opponentArtifactFilter)
-                .addEffect(EffectSlot.SAGA_CHAPTER_II, new ExileTargetPermanentEffect(opponentArtifact));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(opponentArtifactFilter));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+                .addTrigger(Triggers.chapter(2), new ExileTargetPermanentEffect(opponentArtifact));
+        setSagaChapterTargetFilter(2, Set.of(opponentArtifactFilter));
+        setSagaChapterTargetRequired(2);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new EachPlayerChoosesPermanentsThenDestroyRestEffect(
                         3, new PermanentNotPredicate(new PermanentIsLandPredicate())));
     }

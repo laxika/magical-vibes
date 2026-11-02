@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -32,7 +31,7 @@ public class ColonelAutumn extends Card {
                         GrantScope.OWN_CREATURES,
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_EXPLOITS,
+        addTrigger(Triggers.creatureYouControlExploits(),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
     }

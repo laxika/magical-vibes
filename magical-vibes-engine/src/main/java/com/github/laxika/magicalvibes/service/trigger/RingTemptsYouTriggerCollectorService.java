@@ -22,7 +22,7 @@ public class RingTemptsYouTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_RING_TEMPTS_YOU)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_RING_TEMPTS_YOU)
     private boolean handleRingTemptsYou(TriggerMatchContext match, CardEffect trigger, TriggerContext context) {
         if (!(context instanceof TriggerContext.RingTemptsYou)) {
             return false;

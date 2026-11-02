@@ -187,7 +187,7 @@ public class MiscTriggerCollectorService {
         this.permanentRemovalService = permanentRemovalService;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_GIVES_GIFT)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_GIVES_GIFT)
     private boolean handleControllerGivesGift(
             TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         match.gameData().enqueueTrigger(new StackEntry(
@@ -571,10 +571,10 @@ public class MiscTriggerCollectorService {
     }
 
     /** Queues a watcher for a creature controlled by the player exploiting another creature. */
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_EXPLOITS)
-    @CollectsTrigger(value = CardEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE)
+    @CollectsActionTrigger(value = CardEffect.class,
+            watch = ActionWatch.ON_ALLY_CREATURE_EXPLOITS)
+    @CollectsActionTrigger(value = CardEffect.class,
+            watch = ActionWatch.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE)
     private boolean handleAllyCreatureExploit(TriggerMatchContext match, CardEffect effect,
                                                TriggerContext ctx) {
         TriggerContext.CreatureExploit exploit = (TriggerContext.CreatureExploit) ctx;
@@ -1346,7 +1346,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_PAYS_TAX)
+    @CollectsActionTrigger(value = CreateTokenEffect.class, watch = ActionWatch.ON_OPPONENT_PAYS_TAX)
     private boolean handleOpponentTaxPayment(TriggerMatchContext match,
             CreateTokenEffect effect, TriggerContext ctx) {
         TriggerContext.TaxPayment taxPayment = (TriggerContext.TaxPayment) ctx;
@@ -1804,7 +1804,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_WINS_COIN_FLIP)
     private boolean handleCoinFlipWonDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1816,7 +1816,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_PLAYER_WINS_COIN_FLIP)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_ANY_PLAYER_WINS_COIN_FLIP)
     private boolean handleAnyPlayerCoinFlipWonDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -1829,7 +1829,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_COIN_FLIP)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_LOSES_COIN_FLIP)
     private boolean handleCoinFlipLostDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -2884,7 +2884,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_FORETELLS)
+    @CollectsActionTrigger(value = BoostSelfEffect.class, watch = ActionWatch.ON_CONTROLLER_FORETELLS)
     private boolean handleForetellBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
@@ -3040,7 +3040,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_MUTATES)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_SELF_MUTATES)
     private boolean handleSelfMutatesDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
@@ -3051,7 +3051,7 @@ public class MiscTriggerCollectorService {
         List<CardEffect> effects = new ArrayList<>(List.of(effect));
         int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
         if (targetGroupIndex >= 0) {
-            List<CardEffect> groupedEffects = sourceCard.getEffects(EffectSlot.ON_SELF_MUTATES).stream()
+            List<CardEffect> groupedEffects = ActionWatch.ON_SELF_MUTATES.effectsOf(sourceCard).stream()
                     .filter(candidate -> sourceCard.getEffectTargetIndex(candidate) == targetGroupIndex)
                     .toList();
             if (!groupedEffects.isEmpty()) {
@@ -3085,7 +3085,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_CONNIVES)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_ALLY_CREATURE_CONNIVES)
     private boolean handleAllyCreatureConnivesDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureConnives connive = (TriggerContext.CreatureConnives) ctx;
@@ -3111,7 +3111,7 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_MUTATES)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_ALLY_CREATURE_MUTATES)
     private boolean handleAllyCreatureMutatesDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureMutates mutation = (TriggerContext.CreatureMutates) ctx;
@@ -3351,9 +3351,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-        @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_COMMITS_CRIME),
-        @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_COMMITS_CRIME)
+    @CollectsActionTriggers({
+        @CollectsActionTrigger(value = OncePerTurnTriggerEffect.class, watch = ActionWatch.ON_CONTROLLER_COMMITS_CRIME),
+        @CollectsActionTrigger(value = OncePerTurnTriggerEffect.class, watch = ActionWatch.ON_OPPONENT_COMMITS_CRIME)
     })
     private boolean handleCrimeOncePerTurn(TriggerMatchContext match,
             OncePerTurnTriggerEffect effect, TriggerContext ctx) {
@@ -3378,9 +3378,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTriggers({
-        @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_COMMITS_CRIME),
-        @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_COMMITS_CRIME)
+    @CollectsActionTriggers({
+        @CollectsActionTrigger(value = ConditionalEffect.class, watch = ActionWatch.ON_CONTROLLER_COMMITS_CRIME),
+        @CollectsActionTrigger(value = ConditionalEffect.class, watch = ActionWatch.ON_OPPONENT_COMMITS_CRIME)
     })
     private boolean handleCrimeConditional(TriggerMatchContext match, ConditionalEffect conditional,
                                            TriggerContext ctx) {
@@ -3392,9 +3392,9 @@ public class MiscTriggerCollectorService {
         return handleCrimeDefault(match, conditional, ctx);
     }
 
-    @CollectsTriggers({
-        @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_COMMITS_CRIME),
-        @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_COMMITS_CRIME)
+    @CollectsActionTriggers({
+        @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_COMMITS_CRIME),
+        @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_OPPONENT_COMMITS_CRIME)
     })
     private boolean handleCrimeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();

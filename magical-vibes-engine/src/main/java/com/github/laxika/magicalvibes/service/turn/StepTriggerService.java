@@ -136,6 +136,7 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -4112,23 +4113,15 @@ public class StepTriggerService {
             triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, activePlayerId);
 
             // Trigger the appropriate chapter ability
-            EffectSlot chapterSlot = switch (newLoreCount) {
-                case 1 -> EffectSlot.SAGA_CHAPTER_I;
-                case 2 -> EffectSlot.SAGA_CHAPTER_II;
-                case 3 -> EffectSlot.SAGA_CHAPTER_III;
-                case 4 -> EffectSlot.SAGA_CHAPTER_IV;
-                case 5 -> EffectSlot.SAGA_CHAPTER_V;
-                case 6 -> EffectSlot.SAGA_CHAPTER_VI;
-                default -> null;
-            };
-            if (chapterSlot == null) continue;
+            if (newLoreCount < 1) continue;
+            ChapterTrigger chapter = Triggers.chapter(newLoreCount);
 
-            List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
+            List<CardEffect> chapterEffects = card.getTriggerEffects(chapter);
             if (chapterEffects.isEmpty()) continue;
 
             Set<TargetFilter> chapterTargetFilters = new LinkedHashSet<>(
-                    card.getSagaChapterTargetFilters(chapterSlot));
-            List<SagaChapterTargetGroup> chapterTargetGroups = card.getSagaChapterTargetGroups(chapterSlot);
+                    card.getSagaChapterTargetFilters(newLoreCount));
+            List<SagaChapterTargetGroup> chapterTargetGroups = card.getSagaChapterTargetGroups(newLoreCount);
             if (chapterEffects.size() == 1
                     && chapterEffects.getFirst() instanceof ChooseOneAtRandomEffect randomChoice) {
                 ChooseOneEffect.ChooseOneOption selectedOption = chooseRandomOptionAtTriggerTime(
@@ -4143,15 +4136,7 @@ public class StepTriggerService {
                 }
             }
 
-            String chapterName = switch (newLoreCount) {
-                case 1 -> "I";
-                case 2 -> "II";
-                case 3 -> "III";
-                case 4 -> "IV";
-                case 5 -> "V";
-                case 6 -> "VI";
-                default -> String.valueOf(newLoreCount);
-            };
+            String chapterName = chapter.numeral();
 
             if (chapterEffects.size() == 1
                     && chapterEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {

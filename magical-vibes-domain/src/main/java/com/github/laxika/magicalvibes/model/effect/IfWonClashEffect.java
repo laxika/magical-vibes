@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Marks a clash-trigger effect that is only applied when the controller won the clash
  * (MTG rule 701.29c: "If you won, ..."). Consumed by {@code TriggerCollectionService.performClash}
- * when firing {@code EffectSlot.ON_CONTROLLER_CLASHES} triggers — the wrapped effect is included in
+ * when firing {@code Triggers.youClash()} triggers — the wrapped effect is included in
  * the resolved effect list only if the controller won, and dropped otherwise. Since the clash winner
  * is fixed the moment the ability triggers (the clash has already ended), this "if you won" clause is
  * resolved at trigger-creation time rather than by re-checking a condition at resolution.

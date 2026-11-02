@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleAllOwnCreaturesPowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -15,10 +15,10 @@ import java.util.Set;
 public class RoarOfEndlessSong extends Card {
 
     public RoarOfEndlessSong() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 "Elephant", 5, 5, CardColor.GREEN, List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 "Elephant", 5, 5, CardColor.GREEN, List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DoubleAllOwnCreaturesPowerToughnessEffect());
+        addTrigger(Triggers.chapter(3), new DoubleAllOwnCreaturesPowerToughnessEffect());
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,11 +24,11 @@ public class SummonEsperMaduin extends Card {
             new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
     public SummonEsperMaduin() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new RevealTopCardMatchingToHandEffect(new CardIsPermanentPredicate()));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new AwardManaEffect(ManaColor.GREEN, 2));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.GREEN, 2));
+        addTrigger(Triggers.chapter(3), new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES));
+        addTrigger(Triggers.chapter(3),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, OTHER_CREATURES));
     }
 }

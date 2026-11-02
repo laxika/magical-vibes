@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "581")
 public class TheDrumMiningFacility extends Card {
 
     public TheDrumMiningFacility() {
-        addEffect(EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, SequenceEffect.of(
+        addTrigger(Triggers.youRollOneOrMoreDice(), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new EndTurnEffect());

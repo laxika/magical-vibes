@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToActivate;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +30,7 @@ public class MrHousePresidentAndCEO extends Card {
                 "Robot", 3, 3, null,
                 List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT));
 
-        addEffect(EffectSlot.ON_CONTROLLER_ROLLS_DIE,
+        addTrigger(Triggers.youRollDie(),
                 new ConditionalEffect(
                         new EventValueAtLeast(4),
                         SequenceEffect.of(

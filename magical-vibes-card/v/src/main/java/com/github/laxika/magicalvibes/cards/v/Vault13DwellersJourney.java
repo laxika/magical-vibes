@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "PIP", collectorNumber = "26")
@@ -33,15 +33,15 @@ public class Vault13DwellersJourney extends Card {
                 chapterOnePredicate, "Target must be another enchantment or creature.");
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(chapterOneTarget, 0, 99)
-                .addEffect(EffectSlot.SAGA_CHAPTER_I,
+                .addTrigger(Triggers.chapter(1),
                         new ExileTargetPermanentUntilSourceLeavesEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I,
+        setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(2));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new ScryEffect(2));
+        addTrigger(Triggers.chapter(2), new GainLifeEffect(2));
+        addTrigger(Triggers.chapter(2), new ScryEffect(2));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffect());
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -30,7 +29,7 @@ import java.util.Set;
 public class TheGirlInTheFireplace extends Card {
 
     public TheGirlInTheFireplace() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 1, "Human Noble", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN, CardSubtype.NOBLE), Set.of(Keyword.VANISHING), Set.of(),
                 List.of(
@@ -39,7 +38,7 @@ public class TheGirlInTheFireplace extends Card {
                                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)),
                         StaticAbility.of(new PreventAllDamageEffect()))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 1, "Horse", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.HORSE), Set.of(), Set.of(),
                 List.of(
@@ -47,6 +46,6 @@ public class TheGirlInTheFireplace extends Card {
                         Keyword.HORSEMANSHIP, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.DOCTOR))))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new RegisterDelayedCombatDamageEffect(new TimeTravelEffect(1)));
+        addTrigger(Triggers.chapter(3), new RegisterDelayedCombatDamageEffect(new TimeTravelEffect(1)));
     }
 }

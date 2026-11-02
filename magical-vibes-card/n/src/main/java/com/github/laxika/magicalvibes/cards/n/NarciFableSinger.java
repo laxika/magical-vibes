@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -23,7 +22,7 @@ public class NarciFableSinger extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsEnchantmentPredicate(),
                         new DrawCardEffect(1)));
-        addEffect(EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES,
+        addTrigger(Triggers.finalChapterAbilityResolves(),
                 SequenceEffect.of(
                         new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT),
                         new GainLifeEffect(new EventValue())));

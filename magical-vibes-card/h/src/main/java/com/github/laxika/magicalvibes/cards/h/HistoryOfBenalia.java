@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,21 +26,21 @@ public class HistoryOfBenalia extends Card {
 
     public HistoryOfBenalia() {
         // Chapter I: Create a 2/2 white Knight creature token with vigilance
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 1, "Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT),
                 Set.of(Keyword.VIGILANCE), Set.of()
         ));
 
         // Chapter II: Same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 1, "Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT),
                 Set.of(Keyword.VIGILANCE), Set.of()
         ));
 
         // Chapter III: Knights you control get +2/+1 until end of turn
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostAllOwnCreaturesEffect(
+        addTrigger(Triggers.chapter(3), new BoostAllOwnCreaturesEffect(
                 2, 1, new PermanentHasSubtypePredicate(CardSubtype.KNIGHT)
         ));
     }

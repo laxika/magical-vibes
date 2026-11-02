@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerC
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -1524,9 +1525,8 @@ public class Card {
      * {@link SpellAbility}, and {@link #addStaticEffect} adds a {@link StaticAbility} for each effect.
      * Until each other family leaves {@link EffectSlot}, the rest are built from slot registrations by
      * {@link #addEffect(EffectSlot, CardEffect, TriggerMode)} and {@link #addSimultaneousEffects}: a
-     * slot's effects form {@link TriggeredAbility}s with a {@link LegacySlotTrigger}, grouped as that
-     * slot's collectors group them ({@link LegacySlotGrouping}). The collectors still read the slot
-     * views, so the grouping changes nothing yet.
+     * slot's effects form {@link TriggeredAbility}s with a {@link LegacySlotTrigger}, one for each
+     * registration or group of simultaneous registrations. The collectors still read the slot views.
      */
     public List<Ability> getAbilities() {
         return Collections.unmodifiableList(abilities);
@@ -1863,7 +1863,10 @@ public class Card {
 
     /**
      * Adds {@code ability} as it is, for an ability with several trigger conditions or simultaneous effects.
-     * An ability with a {@link LegacySlotTrigger} is added the way its slot groups registrations instead.
+     * An ability with a {@link LegacySlotTrigger} is added the way its slot groups registrations instead. A Saga's
+     * chapter ability ({@link ChapterTrigger}) joins the card's ability of the same chapter when it has one, since a
+     * Saga has one chapter ability per chapter number (CR 714.2b): its effects follow that ability's, and the chapter
+     * keeps its targets, or takes {@code ability}'s when it has none.
      */
     public void addTriggeredAbility(TriggeredAbility ability) {
         assertMutable();
@@ -1871,7 +1874,22 @@ public class Card {
             addAbility(ability);
             return;
         }
-        abilities.add(ability);
+        int chapterIndex = ability.conditions().size() == 1
+                && ability.conditions().getFirst().trigger() instanceof ChapterTrigger chapter
+                ? indexOfChapterAbility(chapter) : -1;
+        if (chapterIndex >= 0) {
+            // A Saga has one chapter ability per chapter number (CR 714.2b), so a chapter's effects join it.
+            // Copy code re-adds a chapter ability whole or one effect at a time, each piece holding the chapter's
+            // targets: the chapter keeps its own targets, or takes the added ability's when it has none.
+            TriggeredAbility chapterAbility = (TriggeredAbility) abilities.get(chapterIndex);
+            TriggeredAbility merged = chapterAbility.withEffects(concat(chapterAbility.effects(), ability.effects()));
+            if (chapterAbility.chapterTargets().equals(SagaChapterTargets.NONE)) {
+                merged = merged.withChapterTargets(ability.chapterTargets());
+            }
+            abilities.set(chapterIndex, merged);
+        } else {
+            abilities.add(ability);
+        }
         slotIndex = null;
     }
 
@@ -1979,20 +1997,11 @@ public class Card {
     }
 
     /**
-     * Adds {@code group}, one registration or a group of simultaneous ones, to the ability of
-     * {@code slot} that it joins, or as a new ability. A group always stays in one ability.
+     * Adds {@code group}, one registration or a group of simultaneous ones, as a new ability of
+     * {@code slot}. A group always stays in one ability.
      */
     private void addRegistrations(EffectSlot slot, List<EffectRegistration> group) {
-        int index = switch (LegacySlotGrouping.of(slot)) {
-            case EACH -> -1;
-            case ALL -> indexOfFirstAbility(slot);
-        };
-        if (index < 0) {
-            abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
-        } else {
-            TriggeredAbility ability = (TriggeredAbility) abilities.get(index);
-            abilities.set(index, ability.withEffects(concat(ability.effects(), group)));
-        }
+        abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
         slotIndex = null;
     }
 
@@ -2065,14 +2074,6 @@ public class Card {
         }
     }
 
-    private int indexOfFirstAbility(EffectSlot slot) {
-        for (int i = 0; i < abilities.size(); i++) {
-            if (slotOf(abilities.get(i)) == slot) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     private static List<EffectRegistration> concat(List<EffectRegistration> head, List<EffectRegistration> tail) {
         List<EffectRegistration> all = new ArrayList<>(head.size() + tail.size());
@@ -2404,58 +2405,76 @@ public class Card {
     }
 
     /**
-     * Sets the filters of the single target of the Saga chapter ability in {@code slot}. The
-     * chapter's effects must be added first, since the targets are held by its ability.
+     * Sets the filters of the single target of the Saga's chapter ability {@code chapter}. The chapter's effects must
+     * be added first, since the targets are held by its ability.
      */
-    public void setSagaChapterTargetFilter(EffectSlot slot, Set<TargetFilter> filters) {
+    public void setSagaChapterTargetFilter(int chapter, Set<TargetFilter> filters) {
         assertMutable();
-        changeChapterTargets(slot, targets -> targets.withFilters(filters));
+        changeChapterTargets(chapter, targets -> targets.withFilters(filters));
     }
 
-    public Set<TargetFilter> getSagaChapterTargetFilters(EffectSlot slot) {
-        return chapterTargets(slot).filters();
+    public Set<TargetFilter> getSagaChapterTargetFilters(int chapter) {
+        return chapterTargets(chapter).filters();
     }
 
     /**
-     * Marks a Saga chapter's single target as mandatory: it must be chosen whenever a legal one
-     * exists. The chapter's effects must be added first.
+     * Marks the single target of the Saga's chapter ability {@code chapter} as mandatory: it must be chosen whenever a
+     * legal one exists. The chapter's effects must be added first.
      */
-    public void setSagaChapterTargetRequired(EffectSlot slot) {
+    public void setSagaChapterTargetRequired(int chapter) {
         assertMutable();
-        changeChapterTargets(slot, SagaChapterTargets::withRequired);
+        changeChapterTargets(chapter, SagaChapterTargets::withRequired);
     }
 
-    public boolean isSagaChapterTargetRequired(EffectSlot slot) {
-        return chapterTargets(slot).required();
+    public boolean isSagaChapterTargetRequired(int chapter) {
+        return chapterTargets(chapter).required();
     }
 
-    /** Sets the target groups of a Saga chapter with more than one target. The chapter's effects must be added first. */
-    public void setSagaChapterTargetGroups(EffectSlot slot, List<SagaChapterTargetGroup> groups) {
+    /**
+     * Sets the target groups of the Saga's chapter ability {@code chapter} when it has more than one target. The
+     * chapter's effects must be added first.
+     */
+    public void setSagaChapterTargetGroups(int chapter, List<SagaChapterTargetGroup> groups) {
         assertMutable();
-        changeChapterTargets(slot, targets -> targets.withGroups(groups));
+        changeChapterTargets(chapter, targets -> targets.withGroups(groups));
     }
 
-    public List<SagaChapterTargetGroup> getSagaChapterTargetGroups(EffectSlot slot) {
-        return chapterTargets(slot).groups();
+    public List<SagaChapterTargetGroup> getSagaChapterTargetGroups(int chapter) {
+        return chapterTargets(chapter).groups();
     }
 
-    private SagaChapterTargets chapterTargets(EffectSlot slot) {
-        SlotView view = slotIndex().find(slot);
-        return view == null || view.firstTriggeredAbility() == null
-                ? SagaChapterTargets.NONE
-                : view.firstTriggeredAbility().chapterTargets();
-    }
-
-    private void changeChapterTargets(EffectSlot slot, UnaryOperator<SagaChapterTargets> change) {
-        for (int i = 0; i < abilities.size(); i++) {
-            if (abilities.get(i) instanceof TriggeredAbility ability && slotOf(ability) == slot) {
-                abilities.set(i, ability.withChapterTargets(change.apply(ability.chapterTargets())));
-                slotIndex = null;
-                return;
+    private SagaChapterTargets chapterTargets(int chapter) {
+        if (chapter < 1) {
+            return SagaChapterTargets.NONE;
+        }
+        ChapterTrigger trigger = new ChapterTrigger(chapter);
+        for (Ability ability : abilities) {
+            if (ability instanceof TriggeredAbility triggered && triggered.hasTrigger(trigger)) {
+                return triggered.chapterTargets();
             }
         }
-        throw new IllegalStateException("'" + name + "' has no ability in " + slot
-                + " to hold its targets; add the chapter's effects before its targets");
+        return SagaChapterTargets.NONE;
+    }
+
+    private void changeChapterTargets(int chapter, UnaryOperator<SagaChapterTargets> change) {
+        int index = indexOfChapterAbility(new ChapterTrigger(chapter));
+        if (index < 0) {
+            throw new IllegalStateException("'" + name + "' has no chapter " + chapter
+                    + " ability to hold its targets; add the chapter's effects before its targets");
+        }
+        TriggeredAbility ability = (TriggeredAbility) abilities.get(index);
+        abilities.set(index, ability.withChapterTargets(change.apply(ability.chapterTargets())));
+        slotIndex = null;
+    }
+
+    /** The index of this card's chapter ability {@code trigger} in {@link #abilities}, or -1 when it has none. */
+    private int indexOfChapterAbility(ChapterTrigger trigger) {
+        for (int i = 0; i < abilities.size(); i++) {
+            if (abilities.get(i) instanceof TriggeredAbility ability && ability.hasTrigger(trigger)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -2750,17 +2769,21 @@ public class Card {
     }
 
     /**
-     * Returns the final chapter number for a Saga card (e.g. 3 for a three-chapter Saga).
-     * Returns 0 if the card has no chapter abilities.
+     * The Saga's final chapter number: the greatest value among its chapter abilities, or 0 when it has none
+     * (CR 714.2d). 3 for a three-chapter Saga.
      */
     public int getSagaFinalChapter() {
-        if (!getEffects(EffectSlot.SAGA_CHAPTER_VI).isEmpty()) return 6;
-        if (!getEffects(EffectSlot.SAGA_CHAPTER_V).isEmpty()) return 5;
-        if (!getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
-        if (!getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
-        if (!getEffects(EffectSlot.SAGA_CHAPTER_II).isEmpty()) return 2;
-        if (!getEffects(EffectSlot.SAGA_CHAPTER_I).isEmpty()) return 1;
-        return 0;
+        int finalChapter = 0;
+        for (Ability ability : abilities) {
+            if (ability instanceof TriggeredAbility triggered) {
+                for (TriggerCondition condition : triggered.conditions()) {
+                    if (condition.trigger() instanceof ChapterTrigger chapter) {
+                        finalChapter = Math.max(finalChapter, chapter.chapter());
+                    }
+                }
+            }
+        }
+        return finalChapter;
     }
 
     public boolean isEnchantPlayer() {

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -22,14 +22,14 @@ import java.util.Set;
 public class KravensLastHunt extends Card {
 
     public KravensLastHunt() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillControllerThenEffect(5,
+        addTrigger(Triggers.chapter(1), new MillControllerThenEffect(5,
                 new DealDamageToTargetCreatureEffect(new GreatestPowerAmongCardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new BoostTargetCreatureEffect(2, 2));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
+        addTrigger(Triggers.chapter(2), new BoostTargetCreatureEffect(2, 2));
+        setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

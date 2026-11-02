@@ -30,14 +30,14 @@ public class DiceRollTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT)
     private boolean handleControllerRollsHighestNaturalResult(TriggerMatchContext match, CardEffect effect,
                                                               TriggerContext context) {
         return handleControllerRollsDice(match, effect, context);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_DIE)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_ROLLS_DIE)
     private boolean handleControllerRollsDice(TriggerMatchContext match, CardEffect effect,
                                                TriggerContext context) {
         if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()

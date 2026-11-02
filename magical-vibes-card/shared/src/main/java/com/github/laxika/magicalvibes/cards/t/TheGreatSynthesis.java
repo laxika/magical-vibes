@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect;
@@ -19,21 +18,22 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
 public class TheGreatSynthesis extends Card {
 
     public TheGreatSynthesis() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, SequenceEffect.of(
+        addTrigger(Triggers.chapter(1), SequenceEffect.of(
                 new DrawCardEffect(new CardsInHand(CountScope.CONTROLLER)),
                 new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.WHILE_SOURCE_ON_BATTLEFIELD)));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, ReturnToHandEffect.allPermanentsMatching(
+        addTrigger(Triggers.chapter(2), ReturnToHandEffect.allPermanentsMatching(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN))
                 ))));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, SequenceEffect.of(
+        addTrigger(Triggers.chapter(3), SequenceEffect.of(
                 new CastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect(),
                 new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                         false, null, null, 0, false, false)));

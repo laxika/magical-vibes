@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.f.FragmentOfKonda;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,16 +30,16 @@ public class TheFallOfLordKonda extends Card {
                 new PermanentMinManaValuePredicate(4),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new ExileTargetPermanentEffect(chapterOneFilter));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        addTrigger(Triggers.chapter(1), new ExileTargetPermanentEffect(chapterOneFilter));
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         chapterOneFilter,
                         "Target must be a creature an opponent controls with mana value 4 or greater"), 1, 1)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new EachPlayerGainsControlOfOwnedPermanentsMatchingEffect(new PermanentTruePredicate()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
+        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

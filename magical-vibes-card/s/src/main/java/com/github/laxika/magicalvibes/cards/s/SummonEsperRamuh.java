@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -38,20 +38,20 @@ public class SummonEsperRamuh extends Card {
     ));
 
     public SummonEsperRamuh() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToTargetCreatureEffect(
+        addTrigger(Triggers.chapter(1), new DealDamageToTargetCreatureEffect(
                 new CardsInGraveyard(NONCREATURE_NONLAND_CARD, CountScope.CONTROLLER),
                 false,
                 OPPONENT_CREATURE
         ));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(OPPONENT_CREATURE,
                         "Must target a creature an opponent controls")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(1);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new BoostAllOwnCreaturesEffect(1, 0, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new BoostAllOwnCreaturesEffect(1, 0, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
     }
 }

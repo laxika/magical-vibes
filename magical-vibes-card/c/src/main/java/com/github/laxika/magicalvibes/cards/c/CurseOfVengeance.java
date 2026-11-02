@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -28,7 +27,7 @@ public class CurseOfVengeance extends Card {
                 false));
 
         CountersOnSource spiteCounters = new CountersOnSource(CounterType.SPITE);
-        addEffect(EffectSlot.ON_PLAYER_LOSES_GAME, new GainLifeEffect(spiteCounters));
-        addEffect(EffectSlot.ON_PLAYER_LOSES_GAME, new DrawCardEffect(spiteCounters));
+        addTrigger(Triggers.playerLosesGame(), new GainLifeEffect(spiteCounters),
+                new DrawCardEffect(spiteCounters));
     }
 }

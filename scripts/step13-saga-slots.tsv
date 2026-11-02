@@ -1,0 +1,9 @@
+# slot	factory call	zone (- for the trigger's default)	javadoc
+SAGA_CHAPTER_I	chapter(1)	-	Chapter I: the first lore counter is put on the Saga (CR 714.2b).
+SAGA_CHAPTER_II	chapter(2)	-	Chapter II: lore counters put on the Saga make their number reach 2.
+SAGA_CHAPTER_III	chapter(3)	-	Chapter III: lore counters put on the Saga make their number reach 3.
+SAGA_CHAPTER_IV	chapter(4)	-	Chapter IV: lore counters put on the Saga make their number reach 4.
+SAGA_CHAPTER_V	chapter(5)	-	Chapter V: lore counters put on the Saga make their number reach 5.
+SAGA_CHAPTER_VI	chapter(6)	-	Chapter VI: lore counters put on the Saga make their number reach 6.
+ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES	finalChapterAbilityResolves()	-	"Whenever the final chapter ability of a Saga you control resolves".
+ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS	finalChapterAbilityTriggers()	-	"Whenever the final chapter ability of a Saga you control triggers".

@@ -21,7 +21,7 @@ public class ExertTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_EXERTS)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_EXERTS)
     private boolean handleExert(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
         TriggerContext.Exert exert = (TriggerContext.Exert) context;
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)

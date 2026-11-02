@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.ManaValueOfLastCardExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,19 +22,19 @@ import java.util.List;
 public class TheAesirEscapeValhalla extends Card {
 
     public TheAesirEscapeValhalla() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new ExileOwnGraveyardCardThenEffect(
+        addTrigger(Triggers.chapter(1), new ExileOwnGraveyardCardThenEffect(
                 new CardIsPermanentPredicate(),
                 new GainLifeEffect(new ManaValueOfLastCardExiledWithSource()),
                 true,
                 true,
                 true));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new PutCounterOnTargetPermanentEffect(
+        addTrigger(Triggers.chapter(2), new PutCounterOnTargetPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new TotalManaValueOfCardsExiledWithSource()));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II,
+        setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, SequenceEffect.of(
+        addTrigger(Triggers.chapter(3), SequenceEffect.of(
                 ReturnToHandEffect.self(),
                 new PutAllCardsExiledWithSourceIntoOwnersHandsEffect()));
     }

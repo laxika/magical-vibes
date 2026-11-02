@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,24 +21,24 @@ import java.util.Set;
 public class ThreeBlindMice extends Card {
 
     public ThreeBlindMice() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 1, "Mouse", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.MOUSE), Set.of(), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenCopyOfTargetPermanentEffect());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
+        addTrigger(Triggers.chapter(2), new CreateTokenCopyOfTargetPermanentEffect());
+        setSagaChapterTargetFilter(2, Set.of(
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsTokenPredicate(), "Target must be a token you control")));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+        setSagaChapterTargetRequired(2);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenCopyOfTargetPermanentEffect());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
+        addTrigger(Triggers.chapter(3), new CreateTokenCopyOfTargetPermanentEffect());
+        setSagaChapterTargetFilter(3, Set.of(
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsTokenPredicate(), "Target must be a token you control")));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
+        setSagaChapterTargetRequired(3);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new BoostAllOwnCreaturesEffect(1, 1));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV,
+        addTrigger(Triggers.chapter(4), new BoostAllOwnCreaturesEffect(1, 1));
+        addTrigger(Triggers.chapter(4),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
     }
 }

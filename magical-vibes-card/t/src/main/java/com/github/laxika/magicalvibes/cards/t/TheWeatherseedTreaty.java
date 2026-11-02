@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,17 +25,17 @@ public class TheWeatherseedTreaty extends Card {
 
     public TheWeatherseedTreaty() {
         addStaticEffect(new ReadAheadEffect(false));
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 1, "Saproling", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
 
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostTargetCreatureEffect(domain, domain));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3), new BoostTargetCreatureEffect(domain, domain));
+        addTrigger(Triggers.chapter(3),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
     }
 }

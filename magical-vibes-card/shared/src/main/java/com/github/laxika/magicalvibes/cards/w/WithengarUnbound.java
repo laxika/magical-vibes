@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Withengar Unbound — back face of Elbrus, the Binding Blade.
@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class WithengarUnbound extends Card {
 
     public WithengarUnbound() {
-        addEffect(EffectSlot.ON_PLAYER_LOSES_GAME,
+        addTrigger(Triggers.playerLosesGame(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 13));
     }
 }

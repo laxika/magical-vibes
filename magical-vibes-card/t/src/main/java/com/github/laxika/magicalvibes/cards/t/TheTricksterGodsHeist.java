@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,19 +33,19 @@ public class TheTricksterGodsHeist extends Card {
     public TheTricksterGodsHeist() {
         setMultiTargetConstraint(MultiTargetConstraint.SHARE_CARD_TYPE);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MayEffect(
+        addTrigger(Triggers.chapter(1), new MayEffect(
                 new ExchangeControlOfTargetPermanentsEffect(CREATURE, false, false),
                 "Exchange control of the two target creatures?"));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 1, 1),
                 new SagaChapterTargetGroup(TargetFilters.creature(), 1, 1)
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MayEffect(
+        addTrigger(Triggers.chapter(2), new MayEffect(
                 new ExchangeControlOfTargetPermanentsEffect(
                         NONBASIC_NONCREATURE, false, false, false, false, false, false, true, null, false),
                 "Exchange control of the two target nonbasic, noncreature permanents?"));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(
+        setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         NONBASIC_NONCREATURE,
                         "Target must be a nonbasic, noncreature permanent"), 1, 1),
@@ -54,7 +54,7 @@ public class TheTricksterGodsHeist extends Card {
                         "Target must be a nonbasic, noncreature permanent"), 1, 1)
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new GainLifeEffect(3));
+        addTrigger(Triggers.chapter(3), new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.chapter(3), new GainLifeEffect(3));
     }
 }

@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandOntoBattlefieldWithCountersIfManaCostHasXEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -16,14 +16,14 @@ import java.util.Set;
 public class TheFirstTyrannicWar extends Card {
 
     public TheFirstTyrannicWar() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new PutCreatureFromHandOntoBattlefieldWithCountersIfManaCostHasXEffect(
                         new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DoubleCountersOnTargetPermanentEffect());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DoubleCountersOnTargetPermanentEffect());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
+        addTrigger(Triggers.chapter(2), new DoubleCountersOnTargetPermanentEffect());
+        setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(2);
+        addTrigger(Triggers.chapter(3), new DoubleCountersOnTargetPermanentEffect());
+        setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(3);
     }
 }

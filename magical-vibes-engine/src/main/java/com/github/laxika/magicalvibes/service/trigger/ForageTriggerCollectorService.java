@@ -19,7 +19,7 @@ public class ForageTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_FORAGES)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_FORAGES)
     private boolean handleForage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         var source = match.permanent();

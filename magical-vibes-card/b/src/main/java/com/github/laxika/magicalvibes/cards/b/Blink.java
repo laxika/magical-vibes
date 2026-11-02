@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -29,10 +28,10 @@ public class Blink extends Card {
         ShuffleTargetPermanentIntoLibraryEffect shuffleAndInvestigate =
                 new ShuffleTargetPermanentIntoLibraryEffect(
                         CreateTokenEffect.ofClueToken(1), ThenEffectRecipient.TARGET_OWNER);
-        addEffect(EffectSlot.SAGA_CHAPTER_I, shuffleAndInvestigate);
-        addEffect(EffectSlot.SAGA_CHAPTER_III, shuffleAndInvestigate);
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(TargetFilters.creature()));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creature()));
+        addTrigger(Triggers.chapter(1), shuffleAndInvestigate);
+        addTrigger(Triggers.chapter(3), shuffleAndInvestigate);
+        setSagaChapterTargetFilter(1, Set.of(TargetFilters.creature()));
+        setSagaChapterTargetFilter(3, Set.of(TargetFilters.creature()));
 
         CreateTokenEffect alienAngel = new CreateTokenEffect(
                 1,
@@ -48,7 +47,7 @@ public class Blink extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 List.of(new RemoveCardTypeFromTargetPermanentEffect(
                                         CardType.CREATURE, GrantScope.SELF))))));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, alienAngel);
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, alienAngel);
+        addTrigger(Triggers.chapter(2), alienAngel);
+        addTrigger(Triggers.chapter(4), alienAngel);
     }
 }

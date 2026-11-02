@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -33,17 +32,18 @@ public class DownInTheValley extends Card {
             "Elf", 1, 1, CardColor.GREEN, List.of(CardSubtype.ELF), Set.of(), Set.of());
 
     public DownInTheValley() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantEffectToTargetEffect(
+        addTrigger(Triggers.chapter(2), new GrantEffectToTargetEffect(
                 new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ELF_TOKEN),
                 EffectDuration.PERMANENT, false, GrantScope.SELF));
-        addBuffChapter(EffectSlot.SAGA_CHAPTER_III);
-        addBuffChapter(EffectSlot.SAGA_CHAPTER_IV);
+        addBuffChapter(3);
+        addBuffChapter(4);
     }
 
-    private void addBuffChapter(EffectSlot chapter) {
-        addEffect(chapter, new BoostAllOwnCreaturesEffect(1, 0, ELVES));
-        addEffect(chapter, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, ELVES));
+    private void addBuffChapter(int chapter) {
+        addTrigger(Triggers.chapter(chapter), new BoostAllOwnCreaturesEffect(1, 0, ELVES));
+        addTrigger(Triggers.chapter(chapter),
+                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, ELVES));
     }
 }

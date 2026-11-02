@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,16 +24,16 @@ public class BahamutWardenOfLight extends Card {
             new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
     public BahamutWardenOfLight() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new DestroyTargetPermanentEffect(new PermanentTruePredicate()));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect());
     }
 }

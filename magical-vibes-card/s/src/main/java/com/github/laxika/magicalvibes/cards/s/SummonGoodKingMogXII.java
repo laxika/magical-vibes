@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,7 @@ import java.util.Set;
 public class SummonGoodKingMogXII extends Card {
 
     public SummonGoodKingMogXII() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 2, "Moogle", 1, 2, CardColor.WHITE, List.of(CardSubtype.MOOGLE),
                 Set.of(Keyword.LIFELINK), Set.of()));
 
@@ -37,7 +37,7 @@ public class SummonGoodKingMogXII extends Card {
                 new PermanentIsTokenPredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SAGA))
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new RegisterDelayedControllerSpellCastTriggerEffect(
+        addTrigger(Triggers.chapter(2), new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 null,
                 List.of(new CreateTokenCopyOfChosenPermanentYouControlEffect(nonSagaToken)),
@@ -45,7 +45,7 @@ public class SummonGoodKingMogXII extends Card {
                 false,
                 null,
                 false));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new RegisterDelayedControllerSpellCastTriggerEffect(
+        addTrigger(Triggers.chapter(3), new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 null,
                 List.of(new CreateTokenCopyOfChosenPermanentYouControlEffect(nonSagaToken)),
@@ -58,7 +58,7 @@ public class SummonGoodKingMogXII extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.MOOGLE),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV,
+        addTrigger(Triggers.chapter(4),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2, otherMoogle));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,22 +34,22 @@ public class TheHorusHeresy extends Card {
         ));
 
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 GainControlOfTargetEffect.withTargetPredicate(
                         ControlDuration.WHILE_SOURCE_REMAINS, nonlegendaryCreatureOpponent));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(
                         new PermanentPredicateTargetFilter(
                                 nonlegendaryCreatureOpponent,
                                 "Target must be a nonlegendary creature an opponent controls"),
                         0, 99)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DrawCardEffect(new PermanentCount(
+        addTrigger(Triggers.chapter(2), new DrawCardEffect(new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())
                 )), CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new EachPlayerChoosesCreatureToDestroyEffect());
+        addTrigger(Triggers.chapter(3), new EachPlayerChoosesCreatureToDestroyEffect());
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
@@ -16,7 +15,7 @@ public class ShareTheSpoils extends Card {
     public ShareTheSpoils() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER));
-        addEffect(EffectSlot.ON_PLAYER_LOSES_GAME,
+        addTrigger(Triggers.playerLosesGame(),
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER));
         addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.activePlayerOneCardPerTurnWithAnyMana());
 

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -39,20 +38,20 @@ public class TheRevelationsOfEzio extends Card {
                 new PermanentIsTappedPredicate(),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyTargetPermanentEffect(tappedOpponentCreature));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        addTrigger(Triggers.chapter(1), new DestroyTargetPermanentEffect(tappedOpponentCreature));
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(
                         tappedOpponentCreature,
                         "Target must be a tapped creature an opponent controls")));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addTrigger(Triggers.chapter(2), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.creatureAttacks(),
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

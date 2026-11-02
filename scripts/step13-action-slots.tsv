@@ -1,0 +1,46 @@
+# slot	factory	zone (- for the trigger's default)	kind	action	relation	javadoc
+ON_CONTROLLER_SETS_SCHEME_IN_MOTION	youSetSchemeInMotion	-	PLAYER	SETS_SCHEME_IN_MOTION	YOU	"Whenever you set a scheme in motion".
+ON_CONTROLLER_GIVES_GIFT	youGiveGift	-	PLAYER	GIVES_GIFT	YOU	"Whenever you give a gift".
+ON_ALLY_CASE_SOLVES	youSolveCase	-	PLAYER	SOLVES_CASE	YOU	"Whenever you solve a Case".
+ON_CONTROLLER_FORETELLS	youForetell	-	PLAYER	FORETELLS	YOU	"Whenever you foretell a card".
+ON_CONTROLLER_FORAGES	youForage	-	PLAYER	FORAGES	YOU	"Whenever you forage".
+ON_PLAYERS_FINISH_VOTING	playersFinishVoting	-	PLAYER	FINISH_VOTING	ANY	"Whenever players finish voting".
+ON_CONTROLLER_TEMPTS_RING	ringTemptsYouAndYouChooseRingBearer	-	PLAYER	CHOOSES_RING_BEARER	YOU	"Whenever the Ring tempts you", read once you choose your Ring-bearer (TemptTheRingEffect).
+ON_CONTROLLER_INVESTIGATES	youInvestigateFirstTimeEachTurn	-	PLAYER	INVESTIGATES_FIRST_TIME_EACH_TURN	YOU	"Whenever you investigate for the first time each turn".
+ON_CONTROLLER_INVESTIGATES_EACH_TIME	youInvestigate	-	PLAYER	INVESTIGATES	YOU	"Whenever you investigate one or more times".
+ON_CONTROLLER_MANIFESTS_DREAD	youManifestDread	-	PLAYER	MANIFESTS_DREAD	YOU	"Whenever you manifest dread".
+ON_CONTROLLER_COMPLETES_DUNGEON	youCompleteDungeon	-	PLAYER	COMPLETES_DUNGEON	YOU	"Whenever you complete a dungeon".
+GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON	youCompleteDungeon	GRAVEYARD	PLAYER	COMPLETES_DUNGEON	YOU	"Whenever you complete a dungeon", while this card is in your graveyard.
+ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE	youRollOneOrMoreDice	-	PLAYER	ROLLS_ONE_OR_MORE_DICE	YOU	"Whenever you roll one or more dice".
+ON_CONTROLLER_ROLLS_DIE	youRollDie	-	PLAYER	ROLLS_DIE	YOU	"Whenever you roll a die", once for each die, with its result as the event value.
+ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT	youRollHighestNaturalResult	-	PLAYER	ROLLS_HIGHEST_NATURAL_RESULT	YOU	"Whenever you roll a die's highest natural result", once for each such die.
+GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20	youRollNatural20	GRAVEYARD	PLAYER	ROLLS_NATURAL_20	YOU	"Whenever you roll a natural 20", while this card is in your graveyard.
+ON_CONTROLLER_BENDS	youBend	-	PLAYER	BENDS	YOU	"Whenever you waterbend, earthbend, firebend or airbend".
+ON_CONTROLLER_EXERTS	youExertCreature	-	PLAYER	EXERTS	YOU	"Whenever you exert a creature".
+ON_CONTROLLER_COLLECTS_EVIDENCE	youCollectEvidence	-	PLAYER	COLLECTS_EVIDENCE	YOU	"Whenever you collect evidence".
+ON_CONTROLLER_DISCOVERS	youDiscover	-	PLAYER	DISCOVERS	YOU	"Whenever you discover".
+ON_CONTROLLER_SEEKS	youSeek	-	PLAYER	SEEKS	YOU	"Whenever you seek one or more cards".
+ON_CONTROLLER_CONJURES	youConjure	-	PLAYER	CONJURES	YOU	"Whenever you conjure one or more cards".
+GRAVEYARD_ON_CONTROLLER_CONJURES	youConjure	GRAVEYARD	PLAYER	CONJURES	YOU	"Whenever you conjure one or more cards", while this card is in your graveyard.
+ON_CONTROLLER_BECOMES_MONARCH	youBecomeMonarch	-	PLAYER	BECOMES_MONARCH	YOU	"Whenever you become the monarch".
+ON_OPPONENT_BECOMES_MONARCH	opponentBecomesMonarch	-	PLAYER	BECOMES_MONARCH	OPPONENT	"Whenever an opponent becomes the monarch".
+ON_RING_TEMPTS_YOU	ringTemptsYou	-	PLAYER	TEMPTED_BY_RING	YOU	"Whenever the Ring tempts you", read as you are tempted (RingTemptsYouEffect).
+ON_CONTROLLER_WINS_COIN_FLIP	youWinCoinFlip	-	PLAYER	WINS_COIN_FLIP	YOU	"Whenever you win a coin flip".
+ON_ANY_PLAYER_WINS_COIN_FLIP	playerWinsCoinFlip	-	PLAYER	WINS_COIN_FLIP	ANY	"Whenever a player wins a coin flip".
+ON_CONTROLLER_LOSES_COIN_FLIP	youLoseCoinFlip	-	PLAYER	LOSES_COIN_FLIP	YOU	"Whenever you lose a coin flip".
+ON_OPPONENT_PAYS_TAX	opponentPaysTax	-	PLAYER	PAYS_TAX	OPPONENT	"Whenever an opponent pays a mana tax imposed by a spell or permanent you control".
+ON_CONTROLLER_CLASHES	youClash	-	PLAYER	CLASHES	YOU	"Whenever you clash".
+ON_PLAYER_LOSES_GAME	playerLosesGame	-	PLAYER	LOSES_GAME	ANY	"Whenever a player loses the game".
+ON_CONTROLLER_COMMITS_CRIME	youCommitCrime	-	PLAYER	COMMITS_CRIME	YOU	"Whenever you commit a crime".
+ON_OPPONENT_COMMITS_CRIME	opponentCommitsCrime	-	PLAYER	COMMITS_CRIME	OPPONENT	"Whenever an opponent commits a crime".
+GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME	youCommitCrime	GRAVEYARD	PLAYER	COMMITS_CRIME	YOU	"Whenever you commit a crime", while this card is in your graveyard.
+ON_ALLY_CREATURE_FIGHTS	creatureYouControlFights	-	OBJECT	FIGHTS	YOU_CONTROL	"Whenever a creature you control fights".
+ON_ALLY_CREATURE_EXPLORES	creatureYouControlExplores	-	OBJECT	EXPLORES	YOU_CONTROL	"Whenever a creature you control explores".
+ON_ALLY_CREATURE_CONNIVES	creatureYouControlConnives	-	OBJECT	CONNIVES	YOU_CONTROL	"Whenever a creature you control connives".
+ON_EXPLOIT	exploits	-	OBJECT	EXPLOITS	THIS	"When this creature exploits a creature" (CR 702.110b).
+ON_ALLY_CREATURE_EXPLOITS	creatureYouControlExploits	-	OBJECT	EXPLOITS	YOU_CONTROL	"Whenever a creature you control exploits a creature".
+ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE	creatureYouControlExploitsNontokenCreature	-	OBJECT	EXPLOITS_NONTOKEN_CREATURE	YOU_CONTROL	"Whenever a creature you control exploits a nontoken creature".
+ON_CHAMPIONED	championsCreature	-	OBJECT	CHAMPIONS	THIS	"When a creature is championed with this creature".
+ON_SELF_BECOMES_PLOTTED	becomesPlotted	-	OBJECT	BECOMES_PLOTTED	THIS	"When this card becomes plotted"; it functions from exile, where a plotted card is.
+ON_SELF_MUTATES	mutates	-	OBJECT	MUTATES	THIS	"Whenever this creature mutates".
+ON_ALLY_CREATURE_MUTATES	creatureYouControlMutates	-	OBJECT	MUTATES	YOU_CONTROL	"Whenever a creature you control mutates", the mutating creature included.

@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseUpToNMatchingCreaturesThenMayExileRestEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayPlayWhileSourceControlledEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "121")
 @CardRegistration(set = "WHO", collectorNumber = "726")
@@ -18,10 +18,10 @@ public class TheDayOfTheDoctor extends Card {
         ExileUntilCardPredicateMayPlayWhileSourceControlledEffect search =
                 new ExileUntilCardPredicateMayPlayWhileSourceControlledEffect(
                         new CardSupertypePredicate(CardSupertype.LEGENDARY));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, search);
-        addEffect(EffectSlot.SAGA_CHAPTER_II, search);
-        addEffect(EffectSlot.SAGA_CHAPTER_III, search);
-        addEffect(EffectSlot.SAGA_CHAPTER_IV,
+        addTrigger(Triggers.chapter(1), search);
+        addTrigger(Triggers.chapter(2), search);
+        addTrigger(Triggers.chapter(3), search);
+        addTrigger(Triggers.chapter(4),
                 new ChooseUpToNMatchingCreaturesThenMayExileRestEffect(
                         3, new PermanentHasSubtypePredicate(CardSubtype.DOCTOR), "Doctors"));
     }

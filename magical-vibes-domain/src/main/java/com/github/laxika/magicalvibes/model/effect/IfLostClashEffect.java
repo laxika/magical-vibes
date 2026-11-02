@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * Marks a clash-trigger effect that is only applied when the controller did <em>not</em> win the
  * clash — the mirror image of {@link IfWonClashEffect}. Consumed by
  * {@code TriggerCollectionService.fireClashTriggers} when firing
- * {@code EffectSlot.ON_CONTROLLER_CLASHES} triggers: the wrapped effect is included in the resolved
+ * {@code Triggers.youClash()} triggers: the wrapped effect is included in the resolved
  * effect list only when the controller lost (or tied), and dropped on a win.
  *
  * <p>Useful when a clash trigger produces the same base effect regardless of outcome but only a

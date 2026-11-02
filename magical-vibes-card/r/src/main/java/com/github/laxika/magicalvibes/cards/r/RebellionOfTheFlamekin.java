@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.IfLostClashEffect;
 import com.github.laxika.magicalvibes.model.effect.IfWonClashEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,12 +26,12 @@ public class RebellionOfTheFlamekin extends Card {
         // TriggerCollectionService.fireClashTriggers picks exactly one branch: the IfWonClashEffect
         // (haste) variant on a win, the IfLostClashEffect (no haste) variant otherwise. Non-targeting,
         // so it goes straight onto the stack rather than the ClashTriggerTarget interaction.
-        addEffect(EffectSlot.ON_CONTROLLER_CLASHES, new IfWonClashEffect(
+        addTrigger(Triggers.youClash(), new IfWonClashEffect(
                 new MayPayManaEffect("{1}", createTokenEffect(Set.of(Keyword.HASTE)),
-                        "Pay {1} to create a 3/1 red Elemental Shaman with haste?")));
-        addEffect(EffectSlot.ON_CONTROLLER_CLASHES, new IfLostClashEffect(
-                new MayPayManaEffect("{1}", createTokenEffect(Set.of()),
-                        "Pay {1} to create a 3/1 red Elemental Shaman?")));
+                        "Pay {1} to create a 3/1 red Elemental Shaman with haste?")),
+                new IfLostClashEffect(
+                        new MayPayManaEffect("{1}", createTokenEffect(Set.of()),
+                                "Pay {1} to create a 3/1 red Elemental Shaman?")));
     }
 
     private static CreateTokenEffect createTokenEffect(Set<Keyword> grantedKeywordsUntilEndOfTurn) {

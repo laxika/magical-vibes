@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,10 +26,10 @@ import java.util.Set;
 public class GadwicksFirstDuel extends Card {
 
     public GadwicksFirstDuel() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new CreateTokenAttachedToTargetEffect(cursedRoleToken(), PlayerRelation.ANY));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new ScryEffect(2));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new CopyNextSpellCastThisTurnEffect(
+        addTrigger(Triggers.chapter(2), new ScryEffect(2));
+        addTrigger(Triggers.chapter(3), new CopyNextSpellCastThisTurnEffect(
                 new CardAllOfPredicate(List.of(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),

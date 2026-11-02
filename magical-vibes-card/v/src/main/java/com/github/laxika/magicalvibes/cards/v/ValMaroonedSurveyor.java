@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -18,10 +17,10 @@ public class ValMaroonedSurveyor extends Card {
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
                 new GainLifeEffect(2));
 
-        addEffect(EffectSlot.ON_CONTROLLER_DISCOVERS, trigger);
-        addEffect(EffectSlot.ON_CONTROLLER_INVESTIGATES_EACH_TIME, trigger);
+        addTrigger(Triggers.youDiscover(), trigger);
+        addTrigger(Triggers.youInvestigate(), trigger);
         addTrigger(Triggers.youScry(), trigger);
         addTrigger(Triggers.youSurveil(), trigger);
-        addEffect(EffectSlot.ON_CONTROLLER_SEEKS, trigger);
+        addTrigger(Triggers.youSeek(), trigger);
     }
 }

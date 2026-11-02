@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AcademyDrake;
 import com.github.laxika.magicalvibes.cards.l.LightOfSanction;
 import com.github.laxika.magicalvibes.cards.f.FaithsFetters;
+import com.github.laxika.magicalvibes.cards.t.TimeOfIce;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CopyEnchantment.class, LightOfSanction.class, CarvenCaryatid.class, Char.class, FaithsFetters.class})
+@CardUsed({CopyEnchantment.class, LightOfSanction.class, CarvenCaryatid.class, Char.class, FaithsFetters.class,
+        TimeOfIce.class, AcademyDrake.class})
 class CopyEnchantmentTest extends BaseCardTest {
 
     @Test
@@ -81,6 +86,30 @@ class CopyEnchantmentTest extends BaseCardTest {
         assertThat(findCopy(copy).getAttachedTo()).isEqualTo(newRecipient.getId());
         assertThat(aura.getAttachedTo()).isEqualTo(originalRecipient.getId());
         harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("A copied Saga's chapter keeps its target restriction")
+    void copiedSagaChapterKeepsItsTargetRestriction() {
+        harness.addToBattlefield(player2, new TimeOfIce());
+        Permanent ownDrake = harness.addToBattlefieldAndReturn(player1, new AcademyDrake());
+        Permanent opponentDrake = harness.addToBattlefieldAndReturn(player2, new AcademyDrake());
+        CopyEnchantment copy = new CopyEnchantment();
+        castCopyEnchantment(copy);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, findPermanent(player2, "Time of Ice").getId());
+
+        // Its first lore counter, added after the draw step, triggers the copy's chapter I.
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        // The copy's chapter I is "Tap target creature an opponent controls" (CR 707.2).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(opponentDrake.getId())
+                .doesNotContain(ownDrake.getId());
     }
 
     private void castCharAt(Permanent target) {

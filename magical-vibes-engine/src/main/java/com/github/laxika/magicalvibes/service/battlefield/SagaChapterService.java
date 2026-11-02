@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -67,7 +68,7 @@ public class SagaChapterService {
         if (card.isBedtimeStory()) {
             return;
         }
-        int maximumChapter = maximumChapter(card);
+        int maximumChapter = card.getSagaFinalChapter();
         if (maximumChapter > 0 && hasReadAhead(gameData, controllerId, sagaPermanent)) {
             playerInputService.beginNumberChoice(gameData, controllerId, sagaPermanent.getId(), 1, maximumChapter);
             return;
@@ -117,15 +118,6 @@ public class SagaChapterService {
                         .anyMatch(effect -> effect instanceof ReadAheadEffect readAhead
                                 && (readAhead.appliesToAllControlledSagas()
                                 || sagaPermanent != null && source.getId().equals(sagaPermanent.getId()))));
-    }
-
-    private int maximumChapter(Card card) {
-        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_VI).isEmpty()) return 6;
-        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_V).isEmpty()) return 5;
-        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_IV).isEmpty()) return 4;
-        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_III).isEmpty()) return 3;
-        if (!card.getEffects(EffectSlot.SAGA_CHAPTER_II).isEmpty()) return 2;
-        return card.getEffects(EffectSlot.SAGA_CHAPTER_I).isEmpty() ? 0 : 1;
     }
 
     public void addLoreCounterAndTriggerChapter(GameData gameData, Permanent sagaPermanent,
@@ -178,31 +170,15 @@ public class SagaChapterService {
                 && hasReadAhead(gameData, controllerId, sagaPermanent)) {
             return;
         }
-        EffectSlot chapterSlot = switch (loreCount) {
-            case 1 -> EffectSlot.SAGA_CHAPTER_I;
-            case 2 -> EffectSlot.SAGA_CHAPTER_II;
-            case 3 -> EffectSlot.SAGA_CHAPTER_III;
-            case 4 -> EffectSlot.SAGA_CHAPTER_IV;
-            case 5 -> EffectSlot.SAGA_CHAPTER_V;
-            case 6 -> EffectSlot.SAGA_CHAPTER_VI;
-            default -> null;
-        };
-        if (chapterSlot == null) return;
+        if (loreCount < 1) return;
+        ChapterTrigger chapter = Triggers.chapter(loreCount);
 
         UUID sourcePermanentId = sagaPermanent == null ? null : sagaPermanent.getId();
 
-        List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
+        List<CardEffect> chapterEffects = card.getTriggerEffects(chapter);
         if (chapterEffects.isEmpty()) return;
 
-        String chapterName = switch (loreCount) {
-            case 1 -> "I";
-            case 2 -> "II";
-            case 3 -> "III";
-            case 4 -> "IV";
-            case 5 -> "V";
-            case 6 -> "VI";
-            default -> String.valueOf(loreCount);
-        };
+        String chapterName = chapter.numeral();
 
         if (chapterEffects.size() == 1
                 && chapterEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
@@ -212,8 +188,8 @@ public class SagaChapterService {
             return;
         }
 
-        Set<TargetFilter> chapterTargetFilters = new LinkedHashSet<>(card.getSagaChapterTargetFilters(chapterSlot));
-        List<SagaChapterTargetGroup> chapterTargetGroups = card.getSagaChapterTargetGroups(chapterSlot);
+        Set<TargetFilter> chapterTargetFilters = new LinkedHashSet<>(card.getSagaChapterTargetFilters(loreCount));
+        List<SagaChapterTargetGroup> chapterTargetGroups = card.getSagaChapterTargetGroups(loreCount);
         if (chapterEffects.size() == 1 && chapterEffects.getFirst() instanceof ChooseOneAtRandomEffect randomChoice
                 && sagaPermanent != null) {
             // The random mode (and so its targets) is picked as the chapter ability triggers.

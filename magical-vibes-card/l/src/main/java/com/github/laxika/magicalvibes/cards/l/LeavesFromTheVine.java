@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,15 +28,15 @@ import java.util.List;
 public class LeavesFromTheVine extends Card {
 
     public LeavesFromTheVine() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, foodToken());
+        addTrigger(Triggers.chapter(1), new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(1), foodToken());
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(
+        setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 0, 2)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ConditionalEffect(
+        addTrigger(Triggers.chapter(3), new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.LESSON)))),

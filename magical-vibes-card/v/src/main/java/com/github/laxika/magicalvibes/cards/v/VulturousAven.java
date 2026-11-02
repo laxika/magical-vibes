@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -16,7 +15,7 @@ public class VulturousAven extends Card {
     public VulturousAven() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
-        addEffect(EffectSlot.ON_EXPLOIT, new DrawCardEffect(2));
-        addEffect(EffectSlot.ON_EXPLOIT, new LoseLifeEffect(2));
+        addTrigger(Triggers.exploits(), new DrawCardEffect(2),
+                new LoseLifeEffect(2));
     }
 }

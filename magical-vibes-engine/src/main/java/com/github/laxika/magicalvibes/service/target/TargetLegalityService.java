@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -3434,9 +3433,9 @@ public class TargetLegalityService {
         if (card == null || effects == null || effects.isEmpty()) {
             return false;
         }
-        for (EffectSlot slot : EffectSlot.values()) {
-            if (slot.name().startsWith("SAGA_CHAPTER") && card.getEffects(slot).equals(effects)) {
-                return card.getSagaChapterTargetGroups(slot).size() > 1;
+        for (int chapter = 1; chapter <= card.getSagaFinalChapter(); chapter++) {
+            if (card.getTriggerEffects(Triggers.chapter(chapter)).equals(effects)) {
+                return card.getSagaChapterTargetGroups(chapter).size() > 1;
             }
         }
         return false;

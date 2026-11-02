@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 9: families 1 to 9 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 11a: families 1 to 10 and the player and keyword actions of 11 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3147,7 +3147,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 ### Step 13
 
 Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
-run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7, run 8 family 8, run 9 family 9.
+run 4 family 4, run 5 family 5, run 6 family 6, run 7 family 7, run 8 family 8, run 9 family 9, run 10 family 10, run 11a the player and keyword actions of family 11.
 
 #### Run 1: steps and phases
 
@@ -4132,6 +4132,246 @@ re-rendered with `--keep-baseline`.
   `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 8 (the modal-mode, kicker and Reign of
   Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
+- The full suite was not run here.
+
+#### Run 10: sagas
+
+The 8 Saga constants are gone: `SAGA_CHAPTER_I` to `SAGA_CHAPTER_VI`, `ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES` and
+`ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS`. Family 11 (everything else) is next and is the last one left.
+
+**Authoring.**
+
+- `model.trigger.ChapterTrigger(int chapter)`: a chapter ability "{rN}—[Effect]", which triggers when lore counters put
+  on the Saga make their number go from less than N to at least N (**CR 714.2b**, checked); "{rN1}, {rN2}—" is two
+  chapter abilities (**CR 714.2c**, checked). `numeral()` gives the printed Roman numeral (**CR 714.2a**, checked),
+  which the engine's chapter names now use. `Triggers.chapter(n)`.
+- `model.trigger.FinalChapterTrigger(FinalChapterEvent event)`: the final chapter ability (**CR 714.2e**, checked) of a
+  Saga you control `TRIGGERS` or `RESOLVES`. `Triggers.finalChapterAbilityTriggers()` /
+  `finalChapterAbilityResolves()`. "You control" is part of the trigger, as the collector checked it; no card needs
+  another player yet.
+- **One ability per chapter.** The chapter slots were grouped `ALL` (every registration in one ability).
+  `Card.addTriggeredAbility` (so every `addTrigger` / `addSimultaneousTrigger`) now adds an ability whose only
+  condition is a `ChapterTrigger` to the card's ability of that chapter when there is one, so each registration is
+  converted on its own and helpers that add a chapter piece by piece keep working. When merging, the chapter keeps its
+  own targets, or takes the added ability's when it has none (never throws: copy code re-adds a chapter one effect at
+  a time, each piece holding the chapter's targets).
+- The chapter target API takes the chapter number: `setSagaChapterTargetFilter(int, …)`,
+  `setSagaChapterTargetRequired(int)`, `setSagaChapterTargetGroups(int, …)` and their getters. The targets are still
+  held by the chapter's `TriggeredAbility` (`SagaChapterTargets`), so no new `Card` state.
+- `Card.getSagaFinalChapter()` is the greatest chapter among the card's chapter abilities, 0 when it has none
+  (**CR 714.2d**, checked), instead of six presence checks; `SagaChapterService.maximumChapter` (the read-ahead
+  maximum) is gone in its favour. Same values for chapters 1 to 6.
+- `LegacySlotGrouping.ALL` lost the six chapter slots; `LegacySlots.slotOf` knows both new triggers.
+
+**No rules event, no index.** As in runs 1 to 9, the chapter readers still run where the slots were read:
+`SagaChapterService.triggerSagaChapter`, `StepTriggerService.handleSagaLoreCounters`, the
+`PermanentCounterSupport.triggerSagaChapter` fallback, `ExileAndReturnTransformedService.initializeReturnedSaga`
+(chapter I), `TargetLegalityService.sagaChapterIgnoresCardTargetConstraint` (loops over the card's chapters instead of
+slot names starting with `SAGA_CHAPTER`) and `TriggeredAbilityQueueService.sagaChapterTargetRequired`, now reading
+`card.getTriggerEffects(Triggers.chapter(n))` and the chapter's targets by number. Copied chapters read the card
+without a zone, as before. `StackResolutionService.triggerSagaChapter` and its `sagaChapterAnyTargetFilter` were dead
+code (no callers; the step 1 inventory's surprise) and were deleted rather than converted. The final-chapter
+collectors in `TriggerCollectionService` dispatch through `service/trigger/SagaWatch` (a `TriggerWatch`, one constant
+per old slot); `SagaTriggerCollectorService`'s two registrations moved from `@CollectsTrigger(slot = …)` to
+`@CollectsSagaTrigger(watch = …)` (by hand: two lines), scanned by `TriggerCollectorRegistry` and `GameEngineConfig`.
+The step 1 inventory's other Saga surprises are unchanged: the duplicated chapter logic in `StepTriggerService` and
+`SagaChapterService`, `initializeReturnedSaga` pushing chapter I without targeting, `addLoreCounterAndTriggerChapter`
+triggering only the final count, `PermanentCounterSupport` giving the chapter to the effect's controller, proliferate
+adding lore counters without triggering chapters, no ability-loss or face-down check, the final chapter recognised by
+the stack entry's description, and the final-chapter "triggers" check skipped for a modal final chapter. Shadow mode
+was not run, for run 1's reason.
+
+**One rules fix: a copied Saga keeps its chapters' targets.** The chapter targets live only on the chapter's ability,
+and every copy path (token copies, "enter as a copy", full-text copies, mutate) rebuilt chapters through
+`addEffect(slot, …)`, which made a new ability without them: a copy of Time of Ice offered the copier's own creatures
+to its "tap target creature an opponent controls" chapter, and lost "required" flags and multi-target groups. The copy
+paths now re-add the ability whole (`addTriggeredAbility`), so the copy has the chapter as printed (**CR 707.2**,
+checked). Test: `CopyEnchantmentTest#copiedSagaChapterKeepsItsTargetRestriction` (fails at HEAD, `d57650d94c`).
+
+**Cards.** `scripts/step13-saga-triggers.py` (reading `scripts/step13-saga-slots.tsv`) converted 217 card classes:
+768 `addTrigger(Triggers.chapter(n), …)` and 3 `addSimultaneousTrigger` registrations (chained on target groups too),
+150 chapter target calls, and the 3 final-chapter cards (Tom Bombadil; Narci, Fable Singer; Historian's Boon). In
+card classes it also turns a helper parameter or loop variable of type `EffectSlot` holding a chapter into an `int`
+chapter number (`addCopyChapter(int chapter)`, `for (int chapter : List.of(1, 2))`, `new int[]{1, 2, 3}`; 17 cards),
+and its `--polish` pass renames such a parameter named `slot` to `chapter` and joins the loop's numbers on one line (run
+as a post-pass here). Nothing needed `MANUAL`. It also converted the four application tests below.
+`scripts/step13-saga-docs.py` rewrote agent-docs (81 lines; "Triggers.chapter(1)/II" chapter ranges in the pattern
+tables then read "Chapters I/II"); by hand: the Saga section's authoring paragraph in
+`CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md`, the chapter row of `TRIGGER_SLOT_TARGETING.md` (it named the deleted
+`StackResolutionService` reader), the chapter V/VI and final-chapter rows of `ACTIVATED_ABILITY_GUIDE.md`, the skills
+and `ARCHITECTURE.md`. `effect-slot-inventory.md` was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- A Saga that enters as a copy through "enter as a copy" (Copy Enchantment) gets no lore counter and no chapter I:
+  that path doesn't call `SagaChapterService.initializeSaga` (CR 714.3a: a Saga enters with a lore counter). It was so
+  at HEAD; the new test reaches chapter I through the draw-step lore counter instead. Fix it on purpose with a test.
+- Step 14: none of the chapter readers take wrappers off the chapter's effects; the chapter's `ConditionalEffect`s,
+  `MayEffect`s and the lone `ChooseOneAtTriggerTimeEffect` / `ChooseOneAtRandomEffect` handling stay with the readers.
+  The final-chapter watchers still read `OncePerTurnTriggerEffect` (Tom Bombadil).
+- Step 15: the final-chapter watchers' event value (the Saga's mana value) is still bound by
+  `SagaTriggerCollectorService`. Chapter target selection still goes through the Saga-specific
+  `PermanentChoiceContext.SagaChapterTarget` / `SagaChapterPlayerTarget` / `SagaChapterGraveyardTarget` records, which
+  the generalized trigger target collector should absorb, together with `SagaChapterTargets` on `TriggeredAbility`.
+- Chapters become rules events (a lore counter put on a permanent, CR 714.2b's threshold) when the readers go; the
+  lore-counter choke points are the ones listed above.
+
+**Tests changed.**
+
+- New `SagaTriggerTest` (`model/trigger/`): default zones, chapter numbers and numerals, the chapter-number check, the
+  final-chapter events, the effects of one chapter (and simultaneous effects) forming one ability, a chapter re-added
+  effect by effect keeping its targets, a target-less chapter taking an added ability's targets, and the final chapter
+  as the greatest chapter.
+- New `SagaWatchTest`: every Saga, life, tap, library, target, counter, damage, combat and spell-and-ability watch has
+  its own (trigger, zone) pair, every Saga watch reads a `FinalChapterTrigger` on the battlefield, and a watch reads
+  only its trigger's abilities.
+- New `CopyEnchantmentTest#copiedSagaChapterKeepsItsTargetRestriction` (the rules fix above).
+- `CardAbilitiesTest`, `StepTriggerServiceTest`, `StackResolutionServiceTest` and `StateBasedActionServiceTest` add
+  chapters with `addTrigger(Triggers.chapter(n), …)` and set their targets by number (by the card script);
+  `CardAbilitiesTest#chapterTargetsNeedTheChapterEffectsFirst` expects the new message ("no chapter 2 ability") instead
+  of the slot name. `LegacySlotTriggerTest`'s per-slot case runs 8 fewer times (it is parameterised over
+  `EffectSlot.values()`).
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that references one, mentions `CounterType.LORE` or
+  a Saga (302 classes, 3,128 tests): all passing; `CopyEnchantmentTest` (5 tests) passing.
+- Application: the trigger-model (`model.trigger.*`), watch, registry, step-trigger, stack-resolution, state-based
+  action, card-ability, granted-ability, triggered-ability, freeze, architecture, simulation-copy,
+  targeting-consistency, legacy-binding, pipeline and deep-copy classes (566 tests): 32 failures, exactly the tests that
+  fail at HEAD (`d57650d94c`, `StateBasedActionServiceTest` and `StepTriggerServiceTest` rerun in a worktree with the
+  main tree's `card-data-cache`): mock wiring in `StateBasedActionServiceTest` (13) and `StepTriggerServiceTest` (16),
+  and the known ones in `CardImmutabilityArchTest`, `SimulationCopyCompletenessTest` and
+  `CardEffectTargetingConsistencyTest`. After the merge rule changed, the trigger-model, Saga watch, card-ability,
+  freeze and registry classes again (200 tests): all passing.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 9 (the modal-mode, kicker and Reign of
+  Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
+- The full suite was not run here.
+
+#### Run 11a: player and keyword actions
+
+Family 11 is 69 constants of unrelated kinds, so it is split. Run 11a moved the player and keyword actions (the
+table's first bullet), 45 constants: `ON_CONTROLLER_SETS_SCHEME_IN_MOTION`, `ON_CONTROLLER_GIVES_GIFT`,
+`ON_ALLY_CASE_SOLVES`, `ON_CONTROLLER_FORETELLS`, `ON_CONTROLLER_FORAGES`, `ON_PLAYERS_FINISH_VOTING`,
+`ON_CONTROLLER_TEMPTS_RING`, `ON_RING_TEMPTS_YOU`, `ON_CONTROLLER_INVESTIGATES` and `…_INVESTIGATES_EACH_TIME`,
+`ON_CONTROLLER_MANIFESTS_DREAD`, `ON_CONTROLLER_COMPLETES_DUNGEON` (and its graveyard form), the dice slots
+(`ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE`, `…_ROLLS_DIE`, `…_ROLLS_HIGHEST_NATURAL_RESULT`,
+`GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20`), `ON_CONTROLLER_BENDS`, `ON_CONTROLLER_EXERTS`,
+`ON_CONTROLLER_COLLECTS_EVIDENCE`, `ON_CONTROLLER_DISCOVERS`, `ON_CONTROLLER_SEEKS`, `ON_CONTROLLER_CONJURES` (and its
+graveyard form), the two monarch slots, the three coin-flip slots, `ON_OPPONENT_PAYS_TAX`, `ON_CONTROLLER_CLASHES`,
+`ON_PLAYER_LOSES_GAME`, the three crime slots, `ON_ALLY_CREATURE_FIGHTS`, `ON_ALLY_CREATURE_EXPLORES`,
+`ON_ALLY_CREATURE_CONNIVES`, `ON_EXPLOIT`, `ON_ALLY_CREATURE_EXPLOITS` and `…_EXPLOITS_NONTOKEN_CREATURE`,
+`ON_CHAMPIONED`, `ON_SELF_BECOMES_PLOTTED`, `ON_SELF_MUTATES` and `ON_ALLY_CREATURE_MUTATES`.
+
+**Left for the next run (11b), 24 constants:** Planechase (`PLANESWALK_TO_TRIGGERED`, `PLANESWALK_FROM_TRIGGERED`,
+`CHAOS_TRIGGERED`, `ENCOUNTER_TRIGGERED`), control change (`ON_SELF_BECOMES_CONTROLLED`, `ON_SELF_LOSES_CONTROL`,
+`ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT`), attaching (`ON_AURA_ATTACHED_TO_SELF`,
+`ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE`, `ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT`,
+`ON_EQUIPMENT_ATTACHED`, and `ON_EQUIPMENT_ATTACHED_TO_CREATURE`, which nothing uses), crew, saddle and station
+(`ON_CREWS_VEHICLE`, `ON_ALLY_CREATURE_CREWS_VEHICLE`, `ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE`,
+`ON_SELF_BECOMES_STATIONED`, `ON_SELF_BECOMES_CREWED`, `ON_SELF_BECOMES_SADDLED`), day and night
+(`ON_DAY_NIGHT_CHANGE`, `GRAVEYARD_ON_DAY_NIGHT_CHANGE`), Rooms (`ON_ALLY_ROOM_FULLY_UNLOCKED`,
+`GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED`, `ON_SELF_ROOM_DOOR_UNLOCKED`) and state triggers (`STATE_TRIGGERED`, a trigger
+that watches a game state, **CR 603.8**, checked). When the last of them goes, `EffectSlot` has no constant, so the application and
+AI tests that exercise the legacy slot machinery with an arbitrary slot (`ON_SELF_LOSES_CONTROL`,
+`ON_SELF_BECOMES_CONTROLLED`, `GRAVEYARD_ON_DAY_NIGHT_CHANGE`; `TriggeredAbilityTest`, `TriggerConditionTest`,
+`CardAbilitiesTest`, `GrantedAbilitiesTest`, `LegacySlotTriggerTest`, `GameDataDeepCopyTest`) must be rewritten or
+deleted with the machinery they test: run 11b overlaps step 16 there.
+
+**Authoring.**
+
+- `model.trigger.PlayerActionTrigger(PlayerAction action, PlayerRelation player)`: a player takes a keyword or game
+  action, or one happens to them: sets a scheme in motion, gives a gift, solves a Case, foretells, forages, finishes
+  voting, the Ring tempts them (two values, below), investigates (first time each turn, or every time), manifests
+  dread, completes a dungeon, rolls one or more dice, rolls a die, rolls a die's highest natural result, rolls a
+  natural 20, bends, exerts a creature, collects evidence, discovers, seeks, conjures, becomes the monarch, wins or
+  loses a coin flip, pays a mana tax, clashes, loses the game, commits a crime (**CR 700.13**, checked).
+- `model.trigger.ObjectActionTrigger(ObjectAction action, ObjectRelation object)`: a creature fights, explores,
+  connives, exploits a creature (**CR 702.110b**, checked) or a nontoken creature, a creature is championed with this,
+  a card becomes plotted, a creature mutates. "Becomes plotted" functions from exile, where a plotted card is
+  (**CR 702.170a**, checked): it is the trigger's default zone, so its watch reads exile; the reader read the card
+  without a zone, so nothing changes.
+- One named `Triggers` factory per player and action (42; three of the four graveyard forms reuse the battlefield
+  factory with a `TriggerCondition` zone, and the natural-20 one has its own): `youSetSchemeInMotion()`, `youGiveGift()`, `youSolveCase()`, `youForetell()`,
+  `youForage()`, `playersFinishVoting()`, `ringTemptsYouAndYouChooseRingBearer()`, `ringTemptsYou()`,
+  `youInvestigateFirstTimeEachTurn()`, `youInvestigate()`, `youManifestDread()`, `youCompleteDungeon()`,
+  `youRollOneOrMoreDice()`, `youRollDie()`, `youRollHighestNaturalResult()`, `youRollNatural20()`, `youBend()`,
+  `youExertCreature()`, `youCollectEvidence()`, `youDiscover()`, `youSeek()`, `youConjure()`, `youBecomeMonarch()`,
+  `opponentBecomesMonarch()`, `youWinCoinFlip()`, `playerWinsCoinFlip()`, `youLoseCoinFlip()`, `opponentPaysTax()`,
+  `youClash()`, `playerLosesGame()`, `youCommitCrime()`, `opponentCommitsCrime()`, `creatureYouControlFights()`,
+  `creatureYouControlExplores()`, `creatureYouControlConnives()`, `exploits()`, `creatureYouControlExploits()`,
+  `creatureYouControlExploitsNontokenCreature()`, `championsCreature()`, `becomesPlotted()`, `mutates()`,
+  `creatureYouControlMutates()` (`scripts/step13-action-slots.tsv` maps each slot to its factory, zone, kind, action and
+  relation).
+- **Kept as the slots were:** "the Ring tempts you" is two triggers. `TemptTheRingEffect` fires
+  `ringTemptsYouAndYouChooseRingBearer()` once the Ring-bearer is chosen (its handler keeps Gandalf's "a creature other
+  than this" check), and `RingTemptsYouEffect` fires `ringTemptsYou()` (Sauron), so a card of one kind doesn't trigger
+  from the other tempt effect: an existing inconsistency, for a run that fixes it on purpose. "For the first time each
+  turn" investigating is still its own trigger (step 14 makes it an option). The step 1 inventory's surprises are
+  unchanged (the losing-the-game triggers never resolve in a 2-player game, the clash and champion target routing, …).
+- **One ability per registration group.** Six of these slots (`ON_ALLY_CREATURE_EXPLORES`, `ON_EXPLOIT`,
+  `ON_CONTROLLER_CLASHES`, `ON_PLAYER_LOSES_GAME`, `ON_CHAMPIONED`, `ON_SELF_BECOMES_PLOTTED`) were grouped `ALL`. Their
+  multi-effect cards (10, every one with adjacent registrations) now pass all the effects to one `addTrigger` call, so
+  each card's ability is one ability; the collectors read the effects in the same order. No slot left in
+  `EffectSlot` was grouped `ALL`, so `LegacySlotGrouping` and `Card`'s `ALL` branch (`indexOfFirstAbility`) were deleted:
+  `addEffect(slot, …)` always adds an ability.
+- `LegacySlots.slotOf` knows both new triggers.
+
+**No rules event, no index.** As in runs 1 to 10, the collectors still run where the slots were collected:
+`TriggerCollectionService`'s `check…Triggers` methods for each action, `GameOutcomeService` (losing the game) and
+`PermanentChoiceBattlefieldHandlerService` (champion). `service/trigger/ActionWatch` (a `TriggerWatch`) has one
+constant per old slot, naming its trigger and the zone the collector reads (graveyard forms from the graveyard,
+plotted from exile). The 40 handler registrations in `MiscTriggerCollectorService`, `DamageTriggerCollectorService`
+and the small dice, dungeon, Ring, investigate, seek, discover, conjure, forage, exert, scheme, voting, manifest-dread,
+collect-evidence and bending collector services moved from `@CollectsTrigger(slot = …)` to
+`@CollectsActionTrigger(watch = …)` (`scripts/step13-action-rekey.py`), scanned by `TriggerCollectorRegistry` and
+`GameEngineConfig`. The readers were converted by `scripts/step13-action-readers.py` (run 9's reader script on this
+family's TSV); by hand: `dispatchFaceUpSchemes` takes a `TriggerWatch` (its `EffectSlot` overload is gone), the
+monarch collector picks an `ActionWatch`, and the Javadoc that named a slot (domain: the factory; engine: the
+`ActionWatch` constant). Grouping, target routing, wrapper checks and ability-loss checks are unchanged, so the run
+makes no rules change. Shadow mode was not run, for run 1's reason.
+
+**Cards.** `scripts/step13-action-triggers.py` (run 9's card script on this family's TSV, plus a merge of adjacent
+registrations of the six grouped slots) converted 149 card classes (155 action-trigger registrations, 4 of them from
+the graveyard) and `FearOfChangeTest`, which read `ON_CONTROLLER_CONJURES`. Nothing needed `MANUAL`.
+`scripts/step13-action-docs.py` rewrote agent-docs (85 lines); by hand: one "trigger slot" wording, the skills and
+`ARCHITECTURE.md`. `effect-slot-inventory.md` was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the action collectors still read their wrappers: `OncePerTurnTriggerEffect` (crime, investigate),
+  intervening-if `ConditionalEffect`s (monarch, dice), `TriggeringCardConditionalEffect` (explores, Case),
+  `IfWonClashEffect` / `IfLostClashEffect` (clash results, which are event data rather than trigger conditions), and
+  the first-time-each-turn investigate trigger.
+- Step 15: the dice results (`eventValue`), the sought, conjured and discovered cards, the exploited, explored,
+  conniving, fighting and mutating creatures, the tax payer and the losing player are still bound by the collectors.
+- Fix on purpose: the two Ring triggers should be one ("Whenever the Ring tempts you") fired by both tempt effects.
+
+**Tests changed.**
+
+- New `ActionTriggerTest` (`model/trigger/`): default zones (exile for plotted), every factory naming its own
+  trigger, actions and relations, null rejection, and a card's action abilities read by trigger and zone.
+- New `ActionWatchTest`: every action, Saga, life, tap, library, target, counter, damage, combat and
+  spell-and-ability watch has its own (trigger, zone) pair, every action watch reads an action trigger in a zone it
+  functions from, and a watch reads only its trigger's abilities.
+- `FearOfChangeTest` reads `getTriggerEffects(Triggers.youConjure())` (by the card script).
+- `CardAbilitiesTest#aSlotGroupedAllGetsOneAbilityAtThePositionOfItsFirstRegistration` is deleted with the `ALL`
+  grouping. `CardAbilitiesTest`, `GrantedAbilitiesTest`, `TriggeredAbilityTest`, `LegacySlotTriggerTest` and
+  `GameDataDeepCopyTest` used `ON_CONTROLLER_CLASHES` and `GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME` as arbitrary
+  battlefield and graveyard legacy slots: they use `ON_SELF_BECOMES_CONTROLLED` and `GRAVEYARD_ON_DAY_NIGHT_CHANGE`.
+  `LegacySlotTriggerTest`'s per-slot case runs 45 fewer times (it is parameterised over `EffectSlot.values()`).
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that references one (334 classes, 2,664 tests):
+  all passing.
+- Application: the trigger-model (`model.trigger.*`), watch, registry, misc, damage and enter collector,
+  card-ability, granted-ability, triggered-ability, freeze, architecture, simulation-copy, targeting-consistency,
+  legacy-binding, pipeline and step-trigger classes (591 tests): 25 failures, all failing at HEAD: mock wiring in
+  `StepTriggerServiceTest` (16) and `DamageTriggerCollectorServiceTest` (6, rerun at `d57650d94c` in a worktree with
+  the main tree's `card-data-cache`), and the known ones in `CardImmutabilityArchTest`,
+  `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 10.
 - The full suite was not run here.
 
 ## Prompt

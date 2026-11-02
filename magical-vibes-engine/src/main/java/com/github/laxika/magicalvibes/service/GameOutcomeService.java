@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingLossReplacement;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.outcome.LossReplacer;
+import com.github.laxika.magicalvibes.service.trigger.ActionWatch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -207,7 +207,7 @@ public class GameOutcomeService {
     }
 
     /**
-     * Puts {@link EffectSlot#ON_PLAYER_LOSES_GAME} triggers (e.g. Withengar Unbound's
+     * Puts {@link ActionWatch#ON_PLAYER_LOSES_GAME} triggers (e.g. Withengar Unbound's
      * "Whenever a player loses the game, put thirteen +1/+1 counters on it") onto the stack
      * for every permanent on the battlefield that has such a trigger.
      *
@@ -223,7 +223,7 @@ public class GameOutcomeService {
         gameData.forEachPermanent((controllerId, perm) -> {
             // "Whenever a player loses the game, if ..." intervening-if (CR 603.4): the trigger does not
             // go on the stack unless its condition holds when the player loses.
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_PLAYER_LOSES_GAME).stream()
+            List<CardEffect> effects = ActionWatch.ON_PLAYER_LOSES_GAME.effectsOf(perm.getCard()).stream()
                     .filter(effect -> !(effect instanceof WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect win)
                             || gameQueryService.wasPlayerAttackedByControlledSubtypeThisTurn(
                                     gameData, losingPlayerId, controllerId, win.subtype()))

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -33,13 +33,13 @@ public class TheApprenticesFolly extends Card {
     ));
 
     public TheApprenticesFolly() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, copyEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(copyTargetGroup()));
+        addTrigger(Triggers.chapter(1), copyEffect());
+        setSagaChapterTargetGroups(1, List.of(copyTargetGroup()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, copyEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(copyTargetGroup()));
+        addTrigger(Triggers.chapter(2), copyEffect());
+        setSagaChapterTargetGroups(2, List.of(copyTargetGroup()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new SacrificeEachMatchingPermanentEffect(
+        addTrigger(Triggers.chapter(3), new SacrificeEachMatchingPermanentEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.REFLECTION),
                         new PermanentControlledBySourceControllerPredicate()))));

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,18 +25,18 @@ import java.util.Set;
 public class WelcomeToSweettooth extends Card {
 
     public WelcomeToSweettooth() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 "Human", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN), Set.of(), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, foodToken());
+        addTrigger(Triggers.chapter(2), foodToken());
 
         PermanentCount foodsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new PutCounterOnTargetPermanentEffect(
+        addTrigger(Triggers.chapter(3), new PutCounterOnTargetPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Sum(new Fixed(1), foodsYouControl)));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
+        setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(3);
     }
 
     private static CreateTokenEffect foodToken() {

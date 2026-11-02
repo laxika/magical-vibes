@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.a.ArchitectOfRestoration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,11 +26,11 @@ public class TheRestorationOfEiganjo extends Card {
     public TheRestorationOfEiganjo() {
         setBackFaceCard(new ArchitectOfRestoration());
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new SearchLibraryEffect(new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.chapter(1), new SearchLibraryEffect(new CardAllOfPredicate(List.of(
                 new CardSupertypePredicate(CardSupertype.BASIC),
                 new CardSubtypePredicate(CardSubtype.PLAINS)))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MayEffect(
+        addTrigger(Triggers.chapter(2), new MayEffect(
                 new DiscardCardThenEffect(
                         null,
                         ReturnCardFromGraveyardEffect.builder()
@@ -44,7 +44,7 @@ public class TheRestorationOfEiganjo extends Card {
                         "a card"),
                 "Discard a card to return target permanent card with mana value 2 or less from your graveyard to the battlefield tapped?"));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
+        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

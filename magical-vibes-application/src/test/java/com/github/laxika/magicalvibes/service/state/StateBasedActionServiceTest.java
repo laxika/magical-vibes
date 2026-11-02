@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DepartureCause;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -189,10 +189,10 @@ class StateBasedActionServiceTest {
         card.setType(CardType.ENCHANTMENT);
         card.setSubtypes(List.of(CardSubtype.SAGA));
         // Add chapter effects up to finalChapter so getSagaFinalChapter() returns the right value
-        if (finalChapter >= 1) card.addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToAnyTargetEffect(1));
-        if (finalChapter >= 2) card.addEffect(EffectSlot.SAGA_CHAPTER_II, new DealDamageToAnyTargetEffect(1));
-        if (finalChapter >= 3) card.addEffect(EffectSlot.SAGA_CHAPTER_III, new DealDamageToAnyTargetEffect(1));
-        if (finalChapter >= 4) card.addEffect(EffectSlot.SAGA_CHAPTER_IV, new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 1) card.addTrigger(Triggers.chapter(1), new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 2) card.addTrigger(Triggers.chapter(2), new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 3) card.addTrigger(Triggers.chapter(3), new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 4) card.addTrigger(Triggers.chapter(4), new DealDamageToAnyTargetEffect(1));
         return card;
     }
 

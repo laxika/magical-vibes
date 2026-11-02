@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -34,18 +33,18 @@ public class SummonPrimalOdin extends Card {
     ));
 
     public SummonPrimalOdin() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyTargetPermanentEffect(OPPONENT_CREATURE));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        addTrigger(Triggers.chapter(1), new DestroyTargetPermanentEffect(OPPONENT_CREATURE));
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(OPPONENT_CREATURE,
                         "Must target a creature an opponent controls")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(1);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantEffectToTargetEffect(
+        addTrigger(Triggers.chapter(2), new GrantEffectToTargetEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), new TargetPlayerLosesGameEffect(null)),
                 EffectDuration.PERMANENT, false, GrantScope.SELF));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DrawCardEffect(2));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new LoseLifeEffect(2, LoseLifeRecipient.EACH_PLAYER));
+        addTrigger(Triggers.chapter(3), new DrawCardEffect(2));
+        addTrigger(Triggers.chapter(3), new LoseLifeEffect(2, LoseLifeRecipient.EACH_PLAYER));
     }
 }

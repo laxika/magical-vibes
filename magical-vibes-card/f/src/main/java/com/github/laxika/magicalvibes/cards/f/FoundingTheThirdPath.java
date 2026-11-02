@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,15 +32,15 @@ public class FoundingTheThirdPath extends Card {
         // from your hand without paying its mana cost.
         CardPredicate lowManaInstantOrSorcery = new CardAllOfPredicate(List.of(
                 instantOrSorcery, new CardMinManaValuePredicate(1), new CardMaxManaValuePredicate(2)));
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(lowManaInstantOrSorcery));
 
         // Chapter II: Target player mills four cards.
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MillEffect(4, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.chapter(2), new MillEffect(4, MillRecipient.TARGET_PLAYER));
 
         // Chapter III: Exile target instant or sorcery card from your graveyard. Copy it.
         // You may cast the copy.
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
                         instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false));
     }

@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -2585,7 +2584,7 @@ class StepTriggerServiceTest {
         @DisplayName("Saga triggers chapter ability matching new lore counter value")
         void sagaTriggersCorrectChapter() {
             Card saga = createSaga("Test Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(3));
             Permanent perm = new Permanent(saga);
             perm.setCounterCount(CounterType.LORE, 1); // chapter II will trigger when counter goes to 2
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -2602,9 +2601,9 @@ class StepTriggerServiceTest {
         @DisplayName("Saga target groups trigger target selection for optional multi-target chapters")
         void sagaTargetGroupsTriggerSelectionForOptionalChapter() {
             Card saga = createSaga("Targeted Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_I,
+            saga.addTrigger(Triggers.chapter(1),
                     new MayEffect(new GainLifeEffect(1), "Gain life?"));
-            saga.setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+            saga.setSagaChapterTargetGroups(1, List.of(
                     new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                             new PermanentIsCreaturePredicate(), "Target must be a creature"), 1, 1)));
             Permanent sagaPermanent = new Permanent(saga);
@@ -2622,7 +2621,7 @@ class StepTriggerServiceTest {
         @DisplayName("Saga chapter ability has correct source permanent ID")
         void sagaChapterHasSourcePermanentId() {
             Card saga = createSaga("Test Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(3));
             Permanent perm = new Permanent(saga);
             perm.setCounterCount(CounterType.LORE, 1);
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -2636,7 +2635,7 @@ class StepTriggerServiceTest {
         @DisplayName("Non-active player's Saga does not get a lore counter")
         void opponentSagaNotAffected() {
             Card saga = createSaga("Opponent Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(3));
             Permanent perm = new Permanent(saga);
             perm.setCounterCount(CounterType.LORE, 1);
             gd.playerBattlefields.get(player2Id).add(perm);
@@ -2665,12 +2664,12 @@ class StepTriggerServiceTest {
         @DisplayName("Multiple Sagas each get a lore counter")
         void multipleSagasEachGetLoreCounter() {
             Card saga1 = createSaga("Saga A");
-            saga1.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(1));
+            saga1.addTrigger(Triggers.chapter(2), new GainLifeEffect(1));
             Permanent perm1 = new Permanent(saga1);
             perm1.setCounterCount(CounterType.LORE, 1);
 
             Card saga2 = createSaga("Saga B");
-            saga2.addEffect(EffectSlot.SAGA_CHAPTER_III, new GainLifeEffect(2));
+            saga2.addTrigger(Triggers.chapter(3), new GainLifeEffect(2));
             Permanent perm2 = new Permanent(saga2);
             perm2.setCounterCount(CounterType.LORE, 2);
 
@@ -2688,7 +2687,7 @@ class StepTriggerServiceTest {
         @DisplayName("Saga with no effects for the reached chapter doesn't push to stack")
         void sagaNoEffectsForChapterDoesNotTrigger() {
             Card saga = createSaga("Sparse Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(1));
+            saga.addTrigger(Triggers.chapter(1), new GainLifeEffect(1));
             // no chapter II effects
             Permanent perm = new Permanent(saga);
             perm.setCounterCount(CounterType.LORE, 1); // will go to 2, but chapter II has no effects
@@ -2704,7 +2703,7 @@ class StepTriggerServiceTest {
         @DisplayName("Saga lore counter logs are broadcast")
         void sagaLoreCounterLogsBroadcast() {
             Card saga = createSaga("Chainer's Torment");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(2));
+            saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(2));
             Permanent perm = new Permanent(saga);
             perm.setCounterCount(CounterType.LORE, 1);
             gd.playerBattlefields.get(player1Id).add(perm);

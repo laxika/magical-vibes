@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -15,6 +14,6 @@ public class RakshasaGravecaller extends Card {
     public RakshasaGravecaller() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
-        addEffect(EffectSlot.ON_EXPLOIT, CreateTokenEffect.blackZombie(2));
+        addTrigger(Triggers.exploits(), CreateTokenEffect.blackZombie(2));
     }
 }

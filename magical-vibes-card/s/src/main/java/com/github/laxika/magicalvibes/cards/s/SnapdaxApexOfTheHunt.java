@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -39,8 +39,8 @@ public class SnapdaxApexOfTheHunt extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalkerAnOpponentControls,
                 "Target must be a creature or planeswalker an opponent controls"
-        )).addEffect(EffectSlot.ON_SELF_MUTATES,
+        )).addTrigger(Triggers.mutates(),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(4, creatureOrPlaneswalkerAnOpponentControls))
-                .addEffect(EffectSlot.ON_SELF_MUTATES, new GainLifeEffect(4));
+                .addTrigger(Triggers.mutates(), new GainLifeEffect(4));
     }
 }

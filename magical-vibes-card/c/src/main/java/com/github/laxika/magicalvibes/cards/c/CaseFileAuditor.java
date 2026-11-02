@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendAnyManaTypeToCastSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -18,7 +17,7 @@ public class CaseFileAuditor extends Card {
         LookAtTopCardsEffect caseSearch = LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                 6, new CardTypePredicate(CardType.ENCHANTMENT));
         addTrigger(Triggers.enters(ObjectRelation.THIS), caseSearch);
-        addEffect(EffectSlot.ON_ALLY_CASE_SOLVES, caseSearch);
+        addTrigger(Triggers.youSolveCase(), caseSearch);
         addStaticEffect(new SpendAnyManaTypeToCastSubtypeEffect(CardSubtype.CASE));
     }
 }

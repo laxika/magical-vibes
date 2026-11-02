@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -28,7 +27,7 @@ public class GisaTheHellraiser extends Card {
         addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SKELETON, CardSubtype.ZOMBIE))));
 
-        addEffect(EffectSlot.ON_CONTROLLER_COMMITS_CRIME, new OncePerTurnTriggerEffect(
+        addTrigger(Triggers.youCommitCrime(), new OncePerTurnTriggerEffect(
                 new CreateTokenEffect(CardType.CREATURE, 2, "Zombie Rogue", 2, 2,
                         CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.BLACK),
                         List.of(CardSubtype.ZOMBIE, CardSubtype.ROGUE), Set.of(), Set.of(),

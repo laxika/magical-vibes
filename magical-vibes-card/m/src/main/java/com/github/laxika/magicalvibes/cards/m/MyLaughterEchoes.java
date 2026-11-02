@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SchemeSetInMotionTriggerEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class MyLaughterEchoes extends Card {
             new CardNotPredicate(new CardSupertypePredicate(CardSupertype.ONGOING))));
 
     public MyLaughterEchoes() {
-        addEffect(EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION,
+        addTrigger(Triggers.youSetSchemeInMotion(),
                 new SchemeSetInMotionTriggerEffect(NON_ONGOING_SCHEME, List.of(
                         new MayEffect(
                                 new AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect(),

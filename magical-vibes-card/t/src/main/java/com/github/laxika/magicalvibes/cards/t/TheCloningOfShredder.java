@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCreatureWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,7 @@ import java.util.Set;
 public class TheCloningOfShredder extends Card {
 
     public TheCloningOfShredder() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         true,
@@ -31,9 +31,9 @@ public class TheCloningOfShredder extends Card {
         CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect =
                 CreateTokenCopyOfTargetPermanentEffect.nonLegendary(
                         List.of(CardSubtype.MUTANT), Set.of(), null, null, Map.of());
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopyEffect));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopyEffect));
     }
 }

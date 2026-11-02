@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ import java.util.List;
 public class BattleOfFrostAndFire extends Card {
 
     public BattleOfFrostAndFire() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MassDamageEffect(
+        addTrigger(Triggers.chapter(1), new MassDamageEffect(
                 4,
                 false,
                 false,
@@ -31,8 +31,8 @@ public class BattleOfFrostAndFire extends Card {
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),
                         new PermanentIsPlaneswalkerPredicate()))));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new ScryEffect(3));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(2), new ScryEffect(3));
+        addTrigger(Triggers.chapter(3),
                 RegisterDelayedControllerSpellCastTriggerEffect.withStackEntryFilter(
                         new StackEntryNotPredicate(new StackEntryMaxManaValuePredicate(4)),
                         List.of(

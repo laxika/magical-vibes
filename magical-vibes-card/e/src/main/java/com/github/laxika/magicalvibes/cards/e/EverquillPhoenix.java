@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -45,7 +45,7 @@ public class EverquillPhoenix extends Card {
                 "{1}, Sacrifice this token: Return target Phoenix card from your graveyard to the battlefield tapped."
         );
 
-        addEffect(EffectSlot.ON_SELF_MUTATES, new CreateTokenEffect(
+        addTrigger(Triggers.mutates(), new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Feather", 0, 0, CardColor.RED, null,
                 List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(featherAbility),
                 false, false, false, 0, Set.of()));

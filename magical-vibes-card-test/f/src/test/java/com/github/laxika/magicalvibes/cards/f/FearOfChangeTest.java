@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -162,7 +162,7 @@ class FearOfChangeTest extends BaseCardTest {
         assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getCard()).isSameAs(evokers.getCard());
             assertThat(entry.getEffectsToResolve()).containsExactlyElementsOf(
-                    evokers.getCard().getEffects(EffectSlot.ON_CONTROLLER_CONJURES));
+                    evokers.getCard().getTriggerEffects(Triggers.youConjure()));
         });
     }
 }

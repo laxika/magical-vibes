@@ -21,8 +21,8 @@ public class SchemeTriggerCollectorService {
 
     private final PredicateEvaluationService predicateEvaluationService;
 
-    @CollectsTrigger(value = SchemeSetInMotionTriggerEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION)
+    @CollectsActionTrigger(value = SchemeSetInMotionTriggerEffect.class,
+            watch = ActionWatch.ON_CONTROLLER_SETS_SCHEME_IN_MOTION)
     private boolean handleSchemeSetInMotion(TriggerMatchContext match,
                                             SchemeSetInMotionTriggerEffect trigger,
                                             TriggerContext context) {

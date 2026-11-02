@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -26,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.YouPutCounterOnControlledCreatureTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1144,29 +1144,13 @@ public class PermanentCounterSupport {
             return;
         }
 
-        EffectSlot chapterSlot = switch (loreCount) {
-            case 1 -> EffectSlot.SAGA_CHAPTER_I;
-            case 2 -> EffectSlot.SAGA_CHAPTER_II;
-            case 3 -> EffectSlot.SAGA_CHAPTER_III;
-            case 4 -> EffectSlot.SAGA_CHAPTER_IV;
-            case 5 -> EffectSlot.SAGA_CHAPTER_V;
-            case 6 -> EffectSlot.SAGA_CHAPTER_VI;
-            default -> null;
-        };
-        if (chapterSlot == null) return;
+        if (loreCount < 1) return;
+        ChapterTrigger chapter = Triggers.chapter(loreCount);
 
-        List<CardEffect> chapterEffects = card.getEffects(chapterSlot);
+        List<CardEffect> chapterEffects = card.getTriggerEffects(chapter);
         if (chapterEffects.isEmpty()) return;
 
-        String chapterName = switch (loreCount) {
-            case 1 -> "I";
-            case 2 -> "II";
-            case 3 -> "III";
-            case 4 -> "IV";
-            case 5 -> "V";
-            case 6 -> "VI";
-            default -> String.valueOf(loreCount);
-        };
+        String chapterName = chapter.numeral();
 
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

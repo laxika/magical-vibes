@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -29,6 +28,6 @@ public class OverchargedAmalgam extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryHasTargetPredicate(),
                 "Target must be a spell, activated ability, or triggered ability on the stack."
-        )).addEffect(EffectSlot.ON_EXPLOIT, new CounterSpellEffect());
+        )).addTrigger(Triggers.exploits(), new CounterSpellEffect());
     }
 }

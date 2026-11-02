@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,15 +24,15 @@ import java.util.Set;
 public class BirthOfTheImperium extends Card {
 
     public BirthOfTheImperium() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 new Sum(new PlayersInGame(), new Fixed(-1)),
                 "Astartes Warrior", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.ASTARTES, CardSubtype.WARRIOR), Set.of(Keyword.VIGILANCE), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new SacrificePermanentsEffect(
+        addTrigger(Triggers.chapter(2), new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DrawCardEffect(
+        addTrigger(Triggers.chapter(3), new DrawCardEffect(
                 new Scaled(new OpponentsWithFewerCreaturesThanController(), 2)));
     }
 }

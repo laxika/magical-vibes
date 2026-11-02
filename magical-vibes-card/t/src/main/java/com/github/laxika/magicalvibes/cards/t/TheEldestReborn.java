@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ public class TheEldestReborn extends Card {
 
     public TheEldestReborn() {
         // Chapter I: Each opponent sacrifices a creature or planeswalker
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new SacrificePermanentsEffect(
+        addTrigger(Triggers.chapter(1), new SacrificePermanentsEffect(
                 1, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate()
@@ -43,11 +43,11 @@ public class TheEldestReborn extends Card {
         ));
 
         // Chapter II: Each opponent discards a card
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(2), new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
 
         // Chapter III: Put target creature or planeswalker card from a graveyard
         // onto the battlefield under your control
-        addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardAnyOfPredicate(List.of(

@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,15 +25,15 @@ public class ChainersTorment extends Card {
 
     public ChainersTorment() {
         // Chapter I: deal 2 damage to each opponent, gain 2 life
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+        addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
 
         // Chapter II: same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(2));
+        addTrigger(Triggers.chapter(2), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(2), new GainLifeEffect(2));
 
         // Chapter III: create X/X black Nightmare Horror token, it deals X damage to you
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenFromHalfLifeTotalAndDealDamageEffect(
+        addTrigger(Triggers.chapter(3), new CreateTokenFromHalfLifeTotalAndDealDamageEffect(
                 "Nightmare Horror",
                 CardColor.BLACK,
                 List.of(CardSubtype.NIGHTMARE, CardSubtype.HORROR)

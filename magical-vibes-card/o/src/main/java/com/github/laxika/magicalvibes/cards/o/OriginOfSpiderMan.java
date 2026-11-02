@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureE
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,24 +28,24 @@ import java.util.Set;
 public class OriginOfSpiderMan extends Card {
 
     public OriginOfSpiderMan() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 1, "Spider", 2, 1, CardColor.GREEN,
                 List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.SPIDER));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.HERO));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+        setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(2);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
+        setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetRequired(3);
     }
 }

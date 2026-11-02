@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,9 +32,9 @@ import java.util.Set;
 public class SummonTitan extends Card {
 
     public SummonTitan() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillEffect(5, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(1), new MillEffect(5, MillRecipient.CONTROLLER));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.chapter(2), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.LAND))
                 .enterTapped(true)
@@ -47,12 +47,12 @@ public class SummonTitan extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
         PermanentCount yourLands = new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new BoostTargetCreatureEffect(yourLands, yourLands, anotherCreatureYouControl));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
+        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(anotherCreatureYouControl,
                         "Must target another creature you control")));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
+        setSagaChapterTargetRequired(3);
     }
 }

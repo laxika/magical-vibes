@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -37,9 +36,9 @@ public class FugitiveOfTheJudoon extends Card {
                 List.of(CardSubtype.ALIEN, CardSubtype.RHINO), Set.of(), Set.of(), false, false,
                 List.of(), List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I, SequenceEffect.of(humanToken, rhinoToken));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new MayEffect(
+        addTrigger(Triggers.chapter(1), SequenceEffect.of(humanToken, rhinoToken));
+        addTrigger(Triggers.chapter(2), CreateTokenEffect.ofClueToken(1));
+        addTrigger(Triggers.chapter(3), new MayEffect(
                 new ExileTwoPermanentsThenSearchLibraryEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN), "Human",
                         new PermanentIsArtifactPredicate(), "artifact",

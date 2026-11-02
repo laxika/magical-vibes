@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -28,21 +28,22 @@ public class SongOfFreyalise extends Card {
 
     public SongOfFreyalise() {
         // Chapter I: Until your next turn, creatures you control gain "{T}: Add one mana of any color."
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chapter(1), new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
                 GrantScope.ALL_OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
         ));
 
         // Chapter II: Same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chapter(2), new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
                 GrantScope.ALL_OWN_CREATURES, null, EffectDuration.UNTIL_YOUR_NEXT_TURN
         ));
 
         // Chapter III: Put a +1/+1 counter on each creature you control.
         // Those creatures gain vigilance, trample, and indestructible until end of turn.
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(
+        addTrigger(Triggers.chapter(3),
+                new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
+        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
                 GrantScope.OWN_CREATURES
         ));

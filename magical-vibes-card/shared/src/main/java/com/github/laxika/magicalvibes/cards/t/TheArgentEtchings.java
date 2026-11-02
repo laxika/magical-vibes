@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -28,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -52,11 +52,11 @@ public class TheArgentEtchings extends Card {
                 new PermanentControlledBySourceControllerPredicate()
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I, SequenceEffect.of(
+        addTrigger(Triggers.chapter(1), SequenceEffect.of(
                 incubator,
                 new TransformAllEffect(incubatorTokens)
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, SequenceEffect.of(
+        addTrigger(Triggers.chapter(2), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES)
         ));
@@ -69,7 +69,7 @@ public class TheArgentEtchings extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)
                 )))
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, SequenceEffect.of(
+        addTrigger(Triggers.chapter(3), SequenceEffect.of(
                 new DestroyAllPermanentsEffect(otherPermanents),
                 new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                         false, null, null, 0, false, false)

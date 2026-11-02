@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -21,8 +20,8 @@ public class SagaTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES)
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS)
+    @CollectsSagaTrigger(value = CardEffect.class, watch = SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES)
+    @CollectsSagaTrigger(value = CardEffect.class, watch = SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS)
     private boolean handleFinalChapterResolution(TriggerMatchContext match, CardEffect trigger,
                                                   TriggerContext context) {
         if (!(context instanceof TriggerContext.SagaFinalChapterAbilityResolved resolved)

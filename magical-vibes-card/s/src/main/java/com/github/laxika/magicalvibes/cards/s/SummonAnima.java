@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -10,19 +9,20 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "120")
 @CardRegistration(set = "FIN", collectorNumber = "364")
 public class SummonAnima extends Card {
 
     public SummonAnima() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, SequenceEffect.of(
+        addTrigger(Triggers.chapter(4), SequenceEffect.of(
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                         SacrificeRecipient.EACH_OPPONENT),
                 new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT)));

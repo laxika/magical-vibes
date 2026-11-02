@@ -25,7 +25,7 @@ public class DungeonTriggerCollectorService {
     private final GameLogService gameLogService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_COMPLETES_DUNGEON)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_COMPLETES_DUNGEON)
     private boolean handleDungeonCompletion(TriggerMatchContext match, CardEffect effect,
                                             TriggerContext context) {
         Card sourceCard = match.permanent().getCard();

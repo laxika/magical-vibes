@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -41,16 +40,16 @@ public class TheWitchsVanity extends Card {
             new PermanentMaxManaValuePredicate(2)));
 
     public TheWitchsVanity() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyTargetPermanentEffect(CHAPTER_I_TARGET));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(new PermanentPredicateTargetFilter(
+        addTrigger(Triggers.chapter(1), new DestroyTargetPermanentEffect(CHAPTER_I_TARGET));
+        setSagaChapterTargetFilter(1, Set.of(new PermanentPredicateTargetFilter(
                 CHAPTER_I_TARGET,
                 "Target must be a creature an opponent controls with mana value 2 or less")));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, foodToken());
+        addTrigger(Triggers.chapter(2), foodToken());
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
     }
 
     private static CreateTokenEffect foodToken() {

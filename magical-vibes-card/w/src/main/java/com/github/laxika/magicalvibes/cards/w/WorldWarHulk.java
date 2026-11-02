@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetCreaturePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextMatchingSpellEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,19 +25,19 @@ import java.util.Set;
 public class WorldWarHulk extends Card {
 
     public WorldWarHulk() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new GrantFreeCastForNextMatchingSpellEffect(
+        addTrigger(Triggers.chapter(1), new GrantFreeCastForNextMatchingSpellEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardAnyOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.RED),
                                 new CardColorPredicate(CardColor.GREEN)))))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DoubleTargetCreaturePowerToughnessEffect());
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(TargetFilters.creatureYouControl()));
+        addTrigger(Triggers.chapter(3), new DoubleTargetCreaturePowerToughnessEffect());
+        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
     }
 }

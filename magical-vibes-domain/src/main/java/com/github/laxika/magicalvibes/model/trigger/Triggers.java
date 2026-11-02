@@ -1533,4 +1533,235 @@ public final class Triggers {
     public static LifeTrigger youPayLife() {
         return new LifeTrigger(LifeTrigger.LifeEvent.PAYS, PlayerRelation.YOU);
     }
+
+    /**
+     * A Saga's chapter ability "{rN}—": when lore counters put on this Saga make their number reach {@code chapter}
+     * (CR 714.2b). Every effect added with the same chapter joins one ability.
+     */
+    public static ChapterTrigger chapter(int chapter) {
+        return new ChapterTrigger(chapter);
+    }
+
+    /** "Whenever the final chapter ability of a Saga you control triggers" */
+    public static FinalChapterTrigger finalChapterAbilityTriggers() {
+        return new FinalChapterTrigger(FinalChapterTrigger.FinalChapterEvent.TRIGGERS);
+    }
+
+    /** "Whenever the final chapter ability of a Saga you control resolves" */
+    public static FinalChapterTrigger finalChapterAbilityResolves() {
+        return new FinalChapterTrigger(FinalChapterTrigger.FinalChapterEvent.RESOLVES);
+    }
+
+    /** "Whenever you set a scheme in motion" */
+    public static PlayerActionTrigger youSetSchemeInMotion() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.SETS_SCHEME_IN_MOTION, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you give a gift" */
+    public static PlayerActionTrigger youGiveGift() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.GIVES_GIFT, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you solve a Case" */
+    public static PlayerActionTrigger youSolveCase() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.SOLVES_CASE, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you foretell a card" */
+    public static PlayerActionTrigger youForetell() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.FORETELLS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you forage" */
+    public static PlayerActionTrigger youForage() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.FORAGES, PlayerRelation.YOU);
+    }
+
+    /** "Whenever players finish voting" */
+    public static PlayerActionTrigger playersFinishVoting() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.FINISH_VOTING, PlayerRelation.ANY);
+    }
+
+    /** "Whenever the Ring tempts you" */
+    public static PlayerActionTrigger ringTemptsYouAndYouChooseRingBearer() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.CHOOSES_RING_BEARER, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you investigate for the first time each turn" */
+    public static PlayerActionTrigger youInvestigateFirstTimeEachTurn() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.INVESTIGATES_FIRST_TIME_EACH_TURN,
+                PlayerRelation.YOU);
+    }
+
+    /** "Whenever you investigate one or more times" */
+    public static PlayerActionTrigger youInvestigate() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.INVESTIGATES, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you manifest dread" */
+    public static PlayerActionTrigger youManifestDread() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.MANIFESTS_DREAD, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you complete a dungeon" */
+    public static PlayerActionTrigger youCompleteDungeon() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.COMPLETES_DUNGEON, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you roll one or more dice" */
+    public static PlayerActionTrigger youRollOneOrMoreDice() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.ROLLS_ONE_OR_MORE_DICE, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you roll a die", once for each die, with its result as the event value */
+    public static PlayerActionTrigger youRollDie() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.ROLLS_DIE, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you roll a die's highest natural result", once for each such die */
+    public static PlayerActionTrigger youRollHighestNaturalResult() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.ROLLS_HIGHEST_NATURAL_RESULT,
+                PlayerRelation.YOU);
+    }
+
+    /** "Whenever you roll a natural 20" */
+    public static PlayerActionTrigger youRollNatural20() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.ROLLS_NATURAL_20, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you waterbend, earthbend, firebend or airbend" */
+    public static PlayerActionTrigger youBend() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.BENDS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you exert a creature" */
+    public static PlayerActionTrigger youExertCreature() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.EXERTS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you collect evidence" */
+    public static PlayerActionTrigger youCollectEvidence() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.COLLECTS_EVIDENCE, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you discover" */
+    public static PlayerActionTrigger youDiscover() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.DISCOVERS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you seek one or more cards" */
+    public static PlayerActionTrigger youSeek() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.SEEKS, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you conjure one or more cards" */
+    public static PlayerActionTrigger youConjure() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.CONJURES, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you become the monarch" */
+    public static PlayerActionTrigger youBecomeMonarch() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.BECOMES_MONARCH, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent becomes the monarch" */
+    public static PlayerActionTrigger opponentBecomesMonarch() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.BECOMES_MONARCH, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever the Ring tempts you" */
+    public static PlayerActionTrigger ringTemptsYou() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.TEMPTED_BY_RING, PlayerRelation.YOU);
+    }
+
+    /** "Whenever you win a coin flip" */
+    public static PlayerActionTrigger youWinCoinFlip() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.WINS_COIN_FLIP, PlayerRelation.YOU);
+    }
+
+    /** "Whenever a player wins a coin flip" */
+    public static PlayerActionTrigger playerWinsCoinFlip() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.WINS_COIN_FLIP, PlayerRelation.ANY);
+    }
+
+    /** "Whenever you lose a coin flip" */
+    public static PlayerActionTrigger youLoseCoinFlip() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.LOSES_COIN_FLIP, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent pays a mana tax imposed by a spell or permanent you control" */
+    public static PlayerActionTrigger opponentPaysTax() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.PAYS_TAX, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever you clash" */
+    public static PlayerActionTrigger youClash() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.CLASHES, PlayerRelation.YOU);
+    }
+
+    /** "Whenever a player loses the game" */
+    public static PlayerActionTrigger playerLosesGame() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.LOSES_GAME, PlayerRelation.ANY);
+    }
+
+    /** "Whenever you commit a crime" */
+    public static PlayerActionTrigger youCommitCrime() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.COMMITS_CRIME, PlayerRelation.YOU);
+    }
+
+    /** "Whenever an opponent commits a crime" */
+    public static PlayerActionTrigger opponentCommitsCrime() {
+        return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.COMMITS_CRIME, PlayerRelation.OPPONENT);
+    }
+
+    /** "Whenever a creature you control fights" */
+    public static ObjectActionTrigger creatureYouControlFights() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.FIGHTS, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature you control explores" */
+    public static ObjectActionTrigger creatureYouControlExplores() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.EXPLORES, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature you control connives" */
+    public static ObjectActionTrigger creatureYouControlConnives() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.CONNIVES, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "When this creature exploits a creature" (CR 702.110b) */
+    public static ObjectActionTrigger exploits() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.EXPLOITS, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control exploits a creature" */
+    public static ObjectActionTrigger creatureYouControlExploits() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.EXPLOITS, ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a creature you control exploits a nontoken creature" */
+    public static ObjectActionTrigger creatureYouControlExploitsNontokenCreature() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.EXPLOITS_NONTOKEN_CREATURE,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "When a creature is championed with this creature" */
+    public static ObjectActionTrigger championsCreature() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.CHAMPIONS, ObjectRelation.THIS);
+    }
+
+    /** "When this card becomes plotted"; it functions from exile, where a plotted card is */
+    public static ObjectActionTrigger becomesPlotted() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_PLOTTED, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this creature mutates" */
+    public static ObjectActionTrigger mutates() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.MUTATES, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control mutates", the mutating creature included */
+    public static ObjectActionTrigger creatureYouControlMutates() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.MUTATES, ObjectRelation.YOU_CONTROL);
+    }
 }

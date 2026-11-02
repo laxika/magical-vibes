@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,23 +32,23 @@ public class ElspethsNightmare extends Card {
                 new PermanentPowerAtMostPredicate(2),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyTargetPermanentEffect(chapterOneFilter));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        addTrigger(Triggers.chapter(1), new DestroyTargetPermanentEffect(chapterOneFilter));
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(
                         chapterOneFilter,
                         "Target must be a creature an opponent controls with power 2 or less")));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(1);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new ChooseCardsFromTargetHandEffect(
+        addTrigger(Triggers.chapter(2), new ChooseCardsFromTargetHandEffect(
                 1, List.of(CardType.CREATURE, CardType.LAND), HandChoiceDestination.DISCARD));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
+        setSagaChapterTargetFilter(2, Set.of(
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent")));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
+        setSagaChapterTargetFilter(3, Set.of(
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent")));

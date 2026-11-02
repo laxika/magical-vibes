@@ -118,8 +118,8 @@ public class DamageTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
 
-    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class,
-            slot = EffectSlot.ON_ALLY_CREATURE_FIGHTS)
+    @CollectsActionTrigger(value = PutCounterOnTargetPermanentEffect.class,
+            watch = ActionWatch.ON_ALLY_CREATURE_FIGHTS)
     private boolean handleAllyCreatureFightsPutCounters(TriggerMatchContext match,
             PutCounterOnTargetPermanentEffect trigger, TriggerContext ctx) {
         TriggerContext.CreatureFights fights = (TriggerContext.CreatureFights) ctx;

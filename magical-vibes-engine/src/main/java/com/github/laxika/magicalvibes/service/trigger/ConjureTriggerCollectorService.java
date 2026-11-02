@@ -20,7 +20,7 @@ public class ConjureTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CONJURES)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_CONJURES)
     private boolean handleConjure(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
         var gameData = match.gameData();
         var source = match.permanent();

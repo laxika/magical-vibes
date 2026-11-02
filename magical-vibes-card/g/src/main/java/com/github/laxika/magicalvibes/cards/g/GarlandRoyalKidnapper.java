@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhileMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -46,7 +45,7 @@ public class GarlandRoyalKidnapper extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledByMonarchPredicate())),
                         "Target must be a creature controlled by the monarch"))
-                .addEffect(EffectSlot.ON_OPPONENT_BECOMES_MONARCH,
+                .addTrigger(Triggers.opponentBecomesMonarch(),
                         new GainControlOfTargetCreatureWhileMonarchEffect());
     }
 }

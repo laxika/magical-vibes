@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,20 +32,20 @@ public class OfHerbsAndStewedRabbit extends Card {
 
     public OfHerbsAndStewedRabbit() {
         // Chapter I: Put a +1/+1 counter on up to one target creature, then create a Food token.
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, CreateTokenEffect.ofFoodToken(1));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        addTrigger(Triggers.chapter(1), CreateTokenEffect.ofFoodToken(1));
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 
         // Chapter II: Draw a card, then create a Food token.
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DrawCardEffect());
-        addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofFoodToken(1));
+        addTrigger(Triggers.chapter(2), new DrawCardEffect());
+        addTrigger(Triggers.chapter(2), CreateTokenEffect.ofFoodToken(1));
 
         // Chapter III: Create one 1/1 white Halfling for each Food you control.
         PermanentCount foodsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(3), new CreateTokenEffect(
                 foodsYouControl, "Halfling", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HALFLING), Set.of(), Set.of()));
     }

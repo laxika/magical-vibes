@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,21 +26,21 @@ import java.util.Set;
 public class TheFirstIroanGames extends Card {
 
     public TheFirstIroanGames() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 "Human Soldier", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
+        setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ConditionalEffect(
+        addTrigger(Triggers.chapter(3), new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4)))),
                 new DrawCardEffect(2)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, CreateTokenEffect.ofArtifactToken(
+        addTrigger(Triggers.chapter(4), CreateTokenEffect.ofArtifactToken(
                 1, "Gold", List.of(CardSubtype.GOLD), List.of(new ActivatedAbility(
                         false, null,
                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),

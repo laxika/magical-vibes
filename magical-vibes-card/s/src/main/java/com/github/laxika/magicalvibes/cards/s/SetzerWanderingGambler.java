@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -29,7 +28,7 @@ public class SetzerWanderingGambler extends Card {
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
                         new FlipCoinWinEffect(null)));
-        addEffect(EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP, CreateTokenEffect.ofTappedTreasureToken(2));
+        addTrigger(Triggers.youWinCoinFlip(), CreateTokenEffect.ofTappedTreasureToken(2));
     }
 
     private static CreateTokenEffect blackjackToken() {

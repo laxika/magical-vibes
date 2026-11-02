@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 public class BendingTriggerCollectorService {
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_BENDS)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_BENDS)
     private boolean handleBending(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

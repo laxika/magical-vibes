@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopOrBottomEffect;
@@ -21,7 +20,7 @@ public class DiverSkaab extends Card {
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature."))
-                .addEffect(EffectSlot.ON_EXPLOIT,
+                .addTrigger(Triggers.exploits(),
                         new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(
                                 0, new PermanentIsCreaturePredicate()));
     }

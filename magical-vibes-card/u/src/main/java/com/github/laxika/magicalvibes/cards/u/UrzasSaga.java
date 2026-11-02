@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardGenericManaCostAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,14 +33,14 @@ import java.util.Set;
 public class UrzasSaga extends Card {
 
     public UrzasSaga() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chapter(1), new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.COLORLESS),
                 GrantScope.SELF, null, EffectDuration.WHILE_SOURCE_REMAINS
         ));
 
         PermanentCount artifactsYouControl = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chapter(2), new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         "{2}",
@@ -61,7 +61,7 @@ public class UrzasSaga extends Card {
                 GrantScope.SELF, null, EffectDuration.WHILE_SOURCE_REMAINS
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new SearchLibraryEffect(
+        addTrigger(Triggers.chapter(3), new SearchLibraryEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardGenericManaCostAtMostPredicate(1)

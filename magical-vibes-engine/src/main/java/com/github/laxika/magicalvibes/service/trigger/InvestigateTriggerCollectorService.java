@@ -22,13 +22,13 @@ public class InvestigateTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_INVESTIGATES)
+    @CollectsActionTrigger(value = CreateTokenEffect.class, watch = ActionWatch.ON_CONTROLLER_INVESTIGATES)
     private boolean handleClueCreation(TriggerMatchContext match, CreateTokenEffect trigger,
                                        TriggerContext context) {
         return enqueueTrigger(match, trigger);
     }
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_INVESTIGATES_EACH_TIME)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_INVESTIGATES_EACH_TIME)
     private boolean handleEveryInvestigation(TriggerMatchContext match, CardEffect effect,
                                              TriggerContext context) {
         return enqueueTrigger(match, effect);

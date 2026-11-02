@@ -19,7 +19,7 @@ public class DiscoverTriggerCollectorService {
 
     private final com.github.laxika.magicalvibes.service.GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCOVERS)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_DISCOVERS)
     private boolean handleDiscover(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.Discover discover = (TriggerContext.Discover) ctx;
         Card sourceCard = match.permanent().getCard();

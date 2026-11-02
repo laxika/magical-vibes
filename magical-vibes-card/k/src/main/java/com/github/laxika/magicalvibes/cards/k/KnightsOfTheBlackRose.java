@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerWasMonarchAtTurnStart;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,7 +17,7 @@ public class KnightsOfTheBlackRose extends Card {
 
     public KnightsOfTheBlackRose() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
-        addEffect(EffectSlot.ON_OPPONENT_BECOMES_MONARCH,
+        addTrigger(Triggers.opponentBecomesMonarch(),
                 new ConditionalEffect(
                         new ControllerWasMonarchAtTurnStart(),
                         SequenceEffect.of(

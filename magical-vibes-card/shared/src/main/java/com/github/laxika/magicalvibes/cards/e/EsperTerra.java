@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -39,23 +38,23 @@ public class EsperTerra extends Card {
                     new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))));
 
     public EsperTerra() {
-        addCopyChapter(EffectSlot.SAGA_CHAPTER_I);
-        addCopyChapter(EffectSlot.SAGA_CHAPTER_II);
-        addCopyChapter(EffectSlot.SAGA_CHAPTER_III);
+        addCopyChapter(1);
+        addCopyChapter(2);
+        addCopyChapter(3);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new AwardManaEffect(ManaColor.WHITE, 2));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new AwardManaEffect(ManaColor.BLUE, 2));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new AwardManaEffect(ManaColor.BLACK, 2));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new AwardManaEffect(ManaColor.RED, 2));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new AwardManaEffect(ManaColor.GREEN, 2));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new ExileSelfAndReturnTransformedEffect());
+        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.WHITE, 2));
+        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.BLUE, 2));
+        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.BLACK, 2));
+        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.RED, 2));
+        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.GREEN, 2));
+        addTrigger(Triggers.chapter(4), new ExileSelfAndReturnTransformedEffect());
     }
 
-    private void addCopyChapter(EffectSlot chapter) {
-        addEffect(chapter, copyEnchantmentEffect());
-        addEffect(chapter, new ChooseNumberForCreatedPermanentEffect(
+    private void addCopyChapter(int chapter) {
+        addTrigger(Triggers.chapter(chapter), copyEnchantmentEffect());
+        addTrigger(Triggers.chapter(chapter), new ChooseNumberForCreatedPermanentEffect(
                 0, 3, new PermanentHasSubtypePredicate(CardSubtype.SAGA)));
-        addEffect(chapter, new PutCountersOnCreatedPermanentsEffect(
+        addTrigger(Triggers.chapter(chapter), new PutCountersOnCreatedPermanentsEffect(
                 CounterType.LORE, new ChosenNumberOnCreatedPermanent()));
         setSagaChapterTargetGroups(chapter, List.of(new SagaChapterTargetGroup(
                 new PermanentPredicateTargetFilter(

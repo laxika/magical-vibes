@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -19,7 +18,7 @@ public class UltronUnlimited extends Card {
 
     public UltronUnlimited() {
         addTrigger(Triggers.attacks(), new DrawDiscardAndConniveEffect());
-        addEffect(EffectSlot.ON_ALLY_CREATURE_CONNIVES, new MayPayManaEffect(
+        addTrigger(Triggers.creatureYouControlConnives(), new MayPayManaEffect(
                 "{1}",
                 new CreateTokenEffect(
                         "Robot",

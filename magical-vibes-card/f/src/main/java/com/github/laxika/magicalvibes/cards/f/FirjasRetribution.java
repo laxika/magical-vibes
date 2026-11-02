@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,12 +33,12 @@ public class FirjasRetribution extends Card {
     ));
 
     public FirjasRetribution() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 "Angel Warrior", 4, 4, CardColor.WHITE,
                 List.of(CardSubtype.ANGEL, CardSubtype.WARRIOR),
                 Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chapter(2), new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
@@ -54,7 +54,7 @@ public class FirjasRetribution extends Card {
                 EffectDuration.UNTIL_END_OF_TURN
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(
+        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE,
                 GrantScope.ALL_OWN_CREATURES,
                 ANGEL

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounterTotalAtLeast;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -28,7 +28,7 @@ public class TomBombadil extends Card {
                         4, CounterType.LORE, new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
                 new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES,
+        addTrigger(Triggers.finalChapterAbilityResolves(),
                 new OncePerTurnTriggerEffect(new RevealUntilCardPredicateRestOnBottomRandomEffect(
                         new CardSubtypePredicate(CardSubtype.SAGA), LibrarySearchDestination.BATTLEFIELD)));
     }

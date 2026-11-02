@@ -31,6 +31,10 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTrigge
 import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTriggers;
+import com.github.laxika.magicalvibes.service.trigger.CollectsActionTrigger;
+import com.github.laxika.magicalvibes.service.trigger.CollectsActionTriggers;
+import com.github.laxika.magicalvibes.service.trigger.CollectsSagaTrigger;
+import com.github.laxika.magicalvibes.service.trigger.CollectsSagaTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTapTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTapTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
@@ -307,6 +311,34 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
+                CollectsSagaTrigger sagaSingle = method.getAnnotation(CollectsSagaTrigger.class);
+                if (sagaSingle != null) {
+                    registerTriggerHandler(bean, method, sagaSingle.watch(), sagaSingle.value());
+                    count++;
+                }
+
+                CollectsSagaTriggers sagaContainer = method.getAnnotation(CollectsSagaTriggers.class);
+                if (sagaContainer != null) {
+                    for (CollectsSagaTrigger cst : sagaContainer.value()) {
+                        registerTriggerHandler(bean, method, cst.watch(), cst.value());
+                        count++;
+                    }
+                }
+
+                CollectsActionTrigger actionSingle = method.getAnnotation(CollectsActionTrigger.class);
+                if (actionSingle != null) {
+                    registerTriggerHandler(bean, method, actionSingle.watch(), actionSingle.value());
+                    count++;
+                }
+
+                CollectsActionTriggers actionContainer = method.getAnnotation(CollectsActionTriggers.class);
+                if (actionContainer != null) {
+                    for (CollectsActionTrigger cst : actionContainer.value()) {
+                        registerTriggerHandler(bean, method, cst.watch(), cst.value());
+                        count++;
+                    }
+                }
+
                 CollectsEmblemTrigger emblemSingle = method.getAnnotation(CollectsEmblemTrigger.class);
                 if (emblemSingle != null) {
                     registerEmblemTriggerHandler(bean, method, emblemSingle);
@@ -333,7 +365,8 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     /**
      * Registers a handler for {@code key}, an {@code EffectSlot}, a {@code ZoneChangeWatch}, a
      * {@code SpellAbilityWatch}, a {@code CombatWatch}, a {@code DamageWatch}, a {@code CounterWatch}, a
-     * {@code LibraryWatch}, a {@code TapWatch} or a {@code LifeWatch}.
+     * {@code LibraryWatch}, a {@code TapWatch}, a {@code LifeWatch}, a {@code SagaWatch} or an
+     * {@code ActionWatch}.
      */
     @SuppressWarnings("unchecked")
     private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {

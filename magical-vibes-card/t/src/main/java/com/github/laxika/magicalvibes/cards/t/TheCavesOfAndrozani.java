@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfChosenTypeToEachNonSagaPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,9 +23,9 @@ import java.util.List;
 public class TheCavesOfAndrozani extends Card {
 
     public TheCavesOfAndrozani() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN, 2));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(new SagaChapterTargetGroup(
+        setSagaChapterTargetGroups(1, List.of(new SagaChapterTargetGroup(
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
@@ -34,12 +34,12 @@ public class TheCavesOfAndrozani extends Card {
                 0,
                 2)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new AddAnotherCounterOfChosenTypeToEachNonSagaPermanentEffect());
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new AddAnotherCounterOfChosenTypeToEachNonSagaPermanentEffect());
 
-        addEffect(EffectSlot.SAGA_CHAPTER_IV,
+        addTrigger(Triggers.chapter(4),
                 new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DOCTOR),
                         LibrarySearchDestination.HAND));
     }

@@ -3,13 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,11 +21,8 @@ public class SummonMagusSisters extends Card {
         var targetCreature = TargetFilters.creature();
         var opponentCreature = TargetFilters.creatureAnOpponentControls();
 
-        for (EffectSlot chapter : List.of(
-                EffectSlot.SAGA_CHAPTER_I,
-                EffectSlot.SAGA_CHAPTER_II,
-                EffectSlot.SAGA_CHAPTER_III)) {
-            addEffect(chapter, new ChooseOneAtRandomEffect(List.of(
+        for (int chapter : List.of(1, 2, 3)) {
+            addTrigger(Triggers.chapter(chapter), new ChooseOneAtRandomEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption(
                             "Combine Powers! — Put three +1/+1 counters on target creature",
                             new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),

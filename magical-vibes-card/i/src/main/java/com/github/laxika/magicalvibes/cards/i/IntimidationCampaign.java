@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -21,7 +20,7 @@ public class IntimidationCampaign extends Card {
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1),
                 new DrawCardEffect(1)));
-        addEffect(EffectSlot.ON_CONTROLLER_COMMITS_CRIME,
+        addTrigger(Triggers.youCommitCrime(),
                 new MayEffect(ReturnToHandEffect.self(),
                         "Return Intimidation Campaign to its owner's hand?"));
     }

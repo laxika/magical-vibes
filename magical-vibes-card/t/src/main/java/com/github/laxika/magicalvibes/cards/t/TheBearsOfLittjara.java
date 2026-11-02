@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToTargetEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,13 +26,13 @@ import java.util.Set;
 public class TheBearsOfLittjara extends Card {
 
     public TheBearsOfLittjara() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 "Shapeshifter", 2, 2, CardColor.BLUE,
                 List.of(CardSubtype.SHAPESHIFTER), Set.of(Keyword.CHANGELING), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 SetBasePowerToughnessEffect.indefinitely(4, 4));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(
+        setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
@@ -42,12 +42,12 @@ public class TheBearsOfLittjara extends Card {
                         0, Integer.MAX_VALUE)
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 ControlledCreaturesDealPowerDamageToTargetEffect.creatureOrPlaneswalker(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtLeastPredicate(4)))));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_III, List.of(
+        setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

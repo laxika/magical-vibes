@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -31,7 +30,7 @@ public class VarisSilverymoonRanger extends Card {
                                 new CardTypePredicate(CardType.PLANESWALKER))),
                         List.of(new VentureIntoDungeonEffect()))));
 
-        addEffect(EffectSlot.ON_CONTROLLER_COMPLETES_DUNGEON,
+        addTrigger(Triggers.youCompleteDungeon(),
                 new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()));
     }

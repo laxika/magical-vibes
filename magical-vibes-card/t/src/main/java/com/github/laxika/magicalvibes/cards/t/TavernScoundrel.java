@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
 public class TavernScoundrel extends Card {
 
     public TavernScoundrel() {
-        addEffect(EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP, CreateTokenEffect.ofTreasureToken(2));
+        addTrigger(Triggers.youWinCoinFlip(), CreateTokenEffect.ofTreasureToken(2));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",

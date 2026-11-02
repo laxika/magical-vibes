@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -32,8 +31,8 @@ import java.util.List;
 public class HaraldUnitesTheElves extends Card {
 
     public HaraldUnitesTheElves() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MayEffect(
+        addTrigger(Triggers.chapter(1), new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(1), new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAnyOfPredicate(List.of(
@@ -43,7 +42,7 @@ public class HaraldUnitesTheElves extends Card {
                         .build(),
                 "Put an Elf or Tyvar card onto the battlefield?"));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.chapter(2), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1,
                 new PermanentHasSubtypePredicate(CardSubtype.ELF)));
 
@@ -51,7 +50,7 @@ public class HaraldUnitesTheElves extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.creatureAttacks(),
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(

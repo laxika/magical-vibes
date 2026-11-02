@@ -30,7 +30,7 @@ class LegacySlotTriggerTest {
     @ParameterizedTest
     @CsvSource({
             "ON_SELF_LOSES_CONTROL, BATTLEFIELD",
-            "GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME, GRAVEYARD"
+            "GRAVEYARD_ON_DAY_NIGHT_CHANGE, GRAVEYARD"
     })
     void functionsFromTheZoneItsNameStartsWith(EffectSlot slot, Zone zone) {
         assertThat(new LegacySlotTrigger(slot).defaultZones()).isEqualTo(AbilityZones.of(zone));

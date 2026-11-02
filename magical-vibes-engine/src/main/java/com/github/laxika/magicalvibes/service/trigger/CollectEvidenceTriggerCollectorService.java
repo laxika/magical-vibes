@@ -21,7 +21,7 @@ public class CollectEvidenceTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_COLLECTS_EVIDENCE)
+    @CollectsActionTrigger(value = CreateTokenEffect.class, watch = ActionWatch.ON_CONTROLLER_COLLECTS_EVIDENCE)
     private boolean handleTokenCreation(TriggerMatchContext match, CreateTokenEffect trigger,
                                         TriggerContext context) {
         Card sourceCard = match.permanent().getCard();

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -638,7 +639,7 @@ class StackResolutionServiceTest {
         @DisplayName("Saga enters the battlefield with 1 lore counter")
         void sagaEntersWithLoreCounter() {
             Card saga = createSaga("Test Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+            saga.addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
                     PLAYER1_ID, saga.getName(), List.of());
             gd.stack.addLast(entry);
@@ -654,9 +655,9 @@ class StackResolutionServiceTest {
         @DisplayName("Saga ETB pushes chapter I ability onto the stack")
         void sagaEtbTriggersChapterI() {
             Card saga = createSaga("Test Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
+            saga.addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+            saga.addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
+            saga.addTrigger(Triggers.chapter(2), new GainLifeEffect(3));
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
                     PLAYER1_ID, saga.getName(), List.of());
             gd.stack.addLast(entry);
@@ -690,7 +691,7 @@ class StackResolutionServiceTest {
         @DisplayName("Saga ETB logs the lore counter addition")
         void sagaEtbLogsLoreCounter() {
             Card saga = createSaga("Chainer's Torment");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+            saga.addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
                     PLAYER1_ID, saga.getName(), List.of());
             gd.stack.addLast(entry);
@@ -705,7 +706,7 @@ class StackResolutionServiceTest {
         @DisplayName("Saga chapter I ability has correct source permanent ID")
         void sagaChapterHasSourcePermanentId() {
             Card saga = createSaga("Test Saga");
-            saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(2));
+            saga.addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, saga,
                     PLAYER1_ID, saga.getName(), List.of());
             gd.stack.addLast(entry);

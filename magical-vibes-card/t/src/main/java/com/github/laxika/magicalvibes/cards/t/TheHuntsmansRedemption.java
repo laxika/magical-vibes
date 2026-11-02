@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,11 +29,11 @@ import java.util.Set;
 public class TheHuntsmansRedemption extends Card {
 
     public TheHuntsmansRedemption() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 "Beast", 3, 3, CardColor.GREEN,
                 List.of(CardSubtype.BEAST), Set.of(), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MayEffect(
+        addTrigger(Triggers.chapter(2), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentIsCreaturePredicate(),
                         new SearchLibraryEffect(
@@ -44,10 +44,10 @@ public class TheHuntsmansRedemption extends Card {
                         "a creature", false, false),
                 "Sacrifice a creature?"));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostTargetCreatureEffect(2, 2));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3), new BoostTargetCreatureEffect(2, 2));
+        addTrigger(Triggers.chapter(3),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_III, List.of(
+        setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2)));
     }
 }

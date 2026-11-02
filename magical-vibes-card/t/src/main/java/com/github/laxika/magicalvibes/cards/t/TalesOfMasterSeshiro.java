@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.s.SeshirosLivingLegacy;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,15 +34,16 @@ public class TalesOfMasterSeshiro extends Card {
                 ))
         ));
 
-        addChapterEffects(EffectSlot.SAGA_CHAPTER_I, creatureOrVehicleYouControl);
-        addChapterEffects(EffectSlot.SAGA_CHAPTER_II, creatureOrVehicleYouControl);
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
+        addChapterEffects(1, creatureOrVehicleYouControl);
+        addChapterEffects(2, creatureOrVehicleYouControl);
+        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 
-    private void addChapterEffects(EffectSlot chapter, PermanentPredicate targetRestriction) {
-        addEffect(chapter, PutCounterOnTargetPermanentEffect.withTargetRestriction(
+    private void addChapterEffects(int chapter, PermanentPredicate targetRestriction) {
+        addTrigger(Triggers.chapter(chapter), PutCounterOnTargetPermanentEffect.withTargetRestriction(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, targetRestriction));
-        addEffect(chapter, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET, targetRestriction));
+        addTrigger(Triggers.chapter(chapter),
+                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET, targetRestriction));
         setSagaChapterTargetRequired(chapter);
     }
 

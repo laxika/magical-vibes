@@ -4,7 +4,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -23,7 +22,7 @@ public class VizierOfTheTrue extends Card {
                 "Exert Vizier of the True as it attacks?"));
 
         PermanentPredicateTargetFilter creatureAnOpponentControls = TargetFilters.creatureAnOpponentControls();
-        target(creatureAnOpponentControls).addEffect(EffectSlot.ON_CONTROLLER_EXERTS,
+        target(creatureAnOpponentControls).addTrigger(Triggers.youExertCreature(),
                 new TapPermanentsEffect(TapUntapScope.TARGET, creatureAnOpponentControls.predicate()));
     }
 }

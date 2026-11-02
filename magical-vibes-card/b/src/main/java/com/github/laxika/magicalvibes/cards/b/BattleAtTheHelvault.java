@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,15 +34,15 @@ public class BattleAtTheHelvault extends Card {
                 0, 99);
 
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new ExileTargetPermanentUntilSourceLeavesEffect(false, targetPredicate));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(targetGroup));
+        setSagaChapterTargetGroups(1, List.of(targetGroup));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new ExileTargetPermanentUntilSourceLeavesEffect(false, targetPredicate));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(targetGroup));
+        setSagaChapterTargetGroups(2, List.of(targetGroup));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(3), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Avacyn", 8, 8, CardColor.WHITE, null,
                 List.of(CardSubtype.ANGEL),
                 Set.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE), Set.of(),

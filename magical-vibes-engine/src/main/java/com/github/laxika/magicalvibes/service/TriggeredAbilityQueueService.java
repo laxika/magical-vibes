@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -3606,16 +3605,16 @@ public class TriggeredAbilityQueueService {
     }
 
     private boolean sagaChapterTargetRequired(PermanentChoiceContext.SagaChapterTarget pending) {
-        EffectSlot slot = switch (pending.chapterName()) {
-            case "I" -> EffectSlot.SAGA_CHAPTER_I;
-            case "II" -> EffectSlot.SAGA_CHAPTER_II;
-            case "III" -> EffectSlot.SAGA_CHAPTER_III;
-            case "IV" -> EffectSlot.SAGA_CHAPTER_IV;
-            case "V" -> EffectSlot.SAGA_CHAPTER_V;
-            case "VI" -> EffectSlot.SAGA_CHAPTER_VI;
-            default -> null;
+        int chapter = switch (pending.chapterName()) {
+            case "I" -> 1;
+            case "II" -> 2;
+            case "III" -> 3;
+            case "IV" -> 4;
+            case "V" -> 5;
+            case "VI" -> 6;
+            default -> 0;
         };
-        return slot != null && pending.sourceCard().isSagaChapterTargetRequired(slot);
+        return pending.sourceCard().isSagaChapterTargetRequired(chapter);
     }
 
     private boolean sagaChapterTargetsCreaturesOnly(PermanentChoiceContext.SagaChapterTarget pending) {

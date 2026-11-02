@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -30,6 +29,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -49,34 +49,34 @@ public class TheCurseOfFenric extends Card {
             new PermanentNamedPredicate("Fenric")));
 
     public TheCurseOfFenric() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyEachTargetPermanentEffect());
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1), new DestroyEachTargetPermanentEffect());
+        addTrigger(Triggers.chapter(1),
                 new CreateTokenForEachDestroyedPermanentControllerEffect(
                         new CreateTokenEffect("Mutant", 3, 3, CardColor.GREEN,
                                 List.of(CardSubtype.MUTANT),
                                 Set.of(com.github.laxika.magicalvibes.model.Keyword.DEATHTOUCH), Set.of())));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I,
+        setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new SetTargetPermanentNameEffect("Fenric"));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new GrantSubtypeEffect(CardSubtype.HORROR, GrantScope.TARGET, true));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new SetBasePowerToughnessEffect(6, 6, GrantScope.TARGET, EffectDuration.PERMANENT));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II,
+        setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         NONTOKEN_CREATURE, "Target must be a nontoken creature"), 1, 1)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new FightTargetsEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_III, List.of(
+        addTrigger(Triggers.chapter(3), new FightTargetsEffect());
+        setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         MUTANT_CREATURE, "Target must be a Mutant creature"), 1, 1),
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(

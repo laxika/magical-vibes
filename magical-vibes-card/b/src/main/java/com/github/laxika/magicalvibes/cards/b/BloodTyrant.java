@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,7 +21,7 @@ public class BloodTyrant extends Card {
 
         // Whenever a player loses the game, put five +1/+1 counters on this creature. (2-player engine:
         // the game ends before this trigger resolves — see WithengarUnbound.)
-        addEffect(EffectSlot.ON_PLAYER_LOSES_GAME,
+        addTrigger(Triggers.playerLosesGame(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 5));
     }
 }

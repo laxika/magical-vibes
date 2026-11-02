@@ -14,8 +14,8 @@ import java.util.Map;
 
 /**
  * Registry that maps (EffectSlot, {@link ZoneChangeWatch}, {@link SpellAbilityWatch}, {@link CombatWatch},
- * {@link DamageWatch}, {@link CounterWatch}, {@link LibraryWatch}, {@link TapWatch} or {@link LifeWatch}, CardEffect
- * class) pairs to trigger collector handlers.
+ * {@link DamageWatch}, {@link CounterWatch}, {@link LibraryWatch}, {@link TapWatch}, {@link LifeWatch},
+ * {@link SagaWatch} or {@link ActionWatch}, CardEffect class) pairs to trigger collector handlers.
  * <p>
  * Discovered automatically at startup by {@link com.github.laxika.magicalvibes.service.GameEngineConfig}.
  */
@@ -205,6 +205,28 @@ public class TriggerCollectorRegistry {
             if (lifeContainer != null) {
                 for (CollectsLifeTrigger clt : lifeContainer.value()) {
                     registerMethod(bean, method, clt.watch(), clt.value(), registry);
+                }
+            }
+
+            CollectsSagaTrigger singleSaga = method.getAnnotation(CollectsSagaTrigger.class);
+            if (singleSaga != null) {
+                registerMethod(bean, method, singleSaga.watch(), singleSaga.value(), registry);
+            }
+            CollectsSagaTriggers sagaContainer = method.getAnnotation(CollectsSagaTriggers.class);
+            if (sagaContainer != null) {
+                for (CollectsSagaTrigger cst : sagaContainer.value()) {
+                    registerMethod(bean, method, cst.watch(), cst.value(), registry);
+                }
+            }
+
+            CollectsActionTrigger singleAction = method.getAnnotation(CollectsActionTrigger.class);
+            if (singleAction != null) {
+                registerMethod(bean, method, singleAction.watch(), singleAction.value(), registry);
+            }
+            CollectsActionTriggers actionContainer = method.getAnnotation(CollectsActionTriggers.class);
+            if (actionContainer != null) {
+                for (CollectsActionTrigger cst : actionContainer.value()) {
+                    registerMethod(bean, method, cst.watch(), cst.value(), registry);
                 }
             }
 

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetOpponentFacesGenesisVil
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,12 +27,12 @@ public class GenesisOfTheDaleks extends Card {
             List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT));
 
     public GenesisOfTheDaleks() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, DALEKS);
-        addEffect(EffectSlot.SAGA_CHAPTER_II, DALEKS);
-        addEffect(EffectSlot.SAGA_CHAPTER_III, DALEKS);
+        addTrigger(Triggers.chapter(1), DALEKS);
+        addTrigger(Triggers.chapter(2), DALEKS);
+        addTrigger(Triggers.chapter(3), DALEKS);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new TargetOpponentFacesGenesisVillainousChoiceEffect());
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_IV, Set.of(new PlayerPredicateTargetFilter(
+        addTrigger(Triggers.chapter(4), new TargetOpponentFacesGenesisVillainousChoiceEffect());
+        setSagaChapterTargetFilter(4, Set.of(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")));
     }
 }

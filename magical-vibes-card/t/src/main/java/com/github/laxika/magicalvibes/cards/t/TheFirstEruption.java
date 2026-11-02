@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * The First Eruption — {2}{R} Enchantment — Saga
@@ -26,16 +26,16 @@ public class TheFirstEruption extends Card {
 
     public TheFirstEruption() {
         // Chapter I: deal 1 damage to each creature without flying
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MassDamageEffect(
+        addTrigger(Triggers.chapter(1), new MassDamageEffect(
                 1, false, false,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))
         ));
 
         // Chapter II: add {R}{R}
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new AwardManaEffect(ManaColor.RED, 2));
+        addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.RED, 2));
 
         // Chapter III: sacrifice a Mountain; if you do, deal 3 damage to each creature
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new SacrificePermanentThenEffect(
+        addTrigger(Triggers.chapter(3), new SacrificePermanentThenEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                 new MassDamageEffect(3),
                 "a Mountain",

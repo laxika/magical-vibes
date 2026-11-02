@@ -21,8 +21,8 @@ public class ManifestDreadTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
-            slot = EffectSlot.ON_CONTROLLER_MANIFESTS_DREAD)
+    @CollectsActionTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
+            watch = ActionWatch.ON_CONTROLLER_MANIFESTS_DREAD)
     private boolean handleReturnToHand(TriggerMatchContext match,
                                        ReturnTriggeringCardToOwnerHandEffect effect,
                                        TriggerContext context) {

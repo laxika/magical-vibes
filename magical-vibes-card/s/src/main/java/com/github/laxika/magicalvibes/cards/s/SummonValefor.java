@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -17,15 +17,12 @@ import java.util.Set;
 public class SummonValefor extends Card {
 
     public SummonValefor() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffect());
 
-        for (EffectSlot chapter : Set.of(
-                EffectSlot.SAGA_CHAPTER_II,
-                EffectSlot.SAGA_CHAPTER_III,
-                EffectSlot.SAGA_CHAPTER_IV)) {
-            addEffect(chapter, new TapPermanentsEffect(TapUntapScope.TARGET));
-            addEffect(chapter, new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+        for (int chapter : Set.of(2, 3, 4)) {
+            addTrigger(Triggers.chapter(chapter), new TapPermanentsEffect(TapUntapScope.TARGET));
+            addTrigger(Triggers.chapter(chapter), new PutCounterOnTargetPermanentEffect(CounterType.STUN));
             setSagaChapterTargetFilter(chapter, Set.of(TargetFilters.creature()));
         }
     }

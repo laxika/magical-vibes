@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,19 +21,19 @@ import java.util.List;
 public class SummonKujata extends Card {
 
     public SummonKujata() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToTargetCreatureEffect(3));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        addTrigger(Triggers.chapter(1), new DealDamageToTargetCreatureEffect(3));
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 new CantBlockThisTurnEffect(TapUntapScope.TARGET));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II, List.of(
+        setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 3)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DiscardCardThenEffect(
+        addTrigger(Triggers.chapter(3), new DiscardCardThenEffect(
                 null,
                 new DealDamageToPlayersEffect(new LastDiscardedCardManaValue(), DamageRecipient.EACH_OPPONENT),
                 "a card"));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DrawCardEffect(2));
+        addTrigger(Triggers.chapter(3), new DrawCardEffect(2));
     }
 }

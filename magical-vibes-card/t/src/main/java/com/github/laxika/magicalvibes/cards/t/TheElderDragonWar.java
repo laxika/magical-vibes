@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,15 +28,15 @@ public class TheElderDragonWar extends Card {
     public TheElderDragonWar() {
         addStaticEffect(new ReadAheadEffect(false));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToEachMatchingPermanentEffect(
+        addTrigger(Triggers.chapter(1), new DealDamageToEachMatchingPermanentEffect(
                 2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToPlayersEffect(
+        addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(
                 2, DamageRecipient.EACH_OPPONENT));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardAnyNumberThenEffect(
+        addTrigger(Triggers.chapter(2), new DiscardAnyNumberThenEffect(
                 new CardTruePredicate(), new DrawCardEffect(new EventValue()), "cards"));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(3), new CreateTokenEffect(
                 "Dragon", 4, 4, CardColor.RED, List.of(CardSubtype.DRAGON),
                 Set.of(Keyword.FLYING), Set.of()));
     }

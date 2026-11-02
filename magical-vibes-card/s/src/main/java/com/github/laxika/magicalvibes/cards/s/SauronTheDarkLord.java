@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,7 +50,7 @@ public class SauronTheDarkLord extends Card {
                 new AllyCombatDamageTriggerEffect(army, new RingTemptsYouEffect()));
 
         CardEffect discardAndDraw = new DiscardOwnHandThenDrawEffect(new Fixed(4));
-        addEffect(EffectSlot.ON_RING_TEMPTS_YOU,
+        addTrigger(Triggers.ringTemptsYou(),
                 new MayEffect(discardAndDraw, "Discard your hand and draw four cards?"));
     }
 }

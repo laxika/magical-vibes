@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,21 +30,21 @@ public class SummonShiva extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new PutCounterOnTargetPermanentEffect(CounterType.STUN));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        addTrigger(Triggers.chapter(1), new TapPermanentsEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.chapter(1), new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(opponentCreature, "Must target a creature an opponent controls")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(1);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new PutCounterOnTargetPermanentEffect(CounterType.STUN));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
+        addTrigger(Triggers.chapter(2), new TapPermanentsEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.chapter(2), new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+        setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(opponentCreature, "Must target a creature an opponent controls")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+        setSagaChapterTargetRequired(2);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DrawCardEffect(new PermanentCount(
+        addTrigger(Triggers.chapter(3), new DrawCardEffect(new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTappedPredicate()

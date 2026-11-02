@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,15 +26,15 @@ public class NightOfTheFlyingMerfolk extends Card {
     public NightOfTheFlyingMerfolk() {
         setBedtimeStory(true);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 2, "Merfolk", 1, 1, CardColor.BLUE,
                 List.of(CardSubtype.MERFOLK), Set.of(), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new PutCounterOnEachControlledPermanentEffect(
+        addTrigger(Triggers.chapter(2), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.FLYING, 1, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsTappedPredicate()))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new DrawCardEffect(new PermanentCount(
+        addTrigger(Triggers.chapter(3), new DrawCardEffect(new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentDealtCombatDamageToPlayerThisTurnPredicate())),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -24,15 +24,15 @@ import java.util.Set;
 public class TheWarInHeaven extends Card {
 
     public TheWarInHeaven() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DrawCardEffect(3));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new LoseLifeEffect(3, LoseLifeRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(1), new DrawCardEffect(3));
+        addTrigger(Triggers.chapter(1), new LoseLifeEffect(3, LoseLifeRecipient.CONTROLLER));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MillEffect(3, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(2), new MillEffect(3, MillRecipient.CONTROLLER));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+        addTrigger(Triggers.chapter(3), new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 new CardTypePredicate(CardType.CREATURE), 3, false, false, null, 8,
                 null, null, CounterType.NECRODERMIS, 1));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new AnimateReturnedPermanentsEffect(
+        addTrigger(Triggers.chapter(3), new AnimateReturnedPermanentsEffect(
                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
                         Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT, null)));
     }

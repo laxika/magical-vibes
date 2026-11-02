@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -15,14 +14,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
 public class IfritWardenOfInferno extends Card {
 
     public IfritWardenOfInferno() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new SourceFightsTargetCreatureEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        addTrigger(Triggers.chapter(1), new SourceFightsTargetCreatureEffect());
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
@@ -30,13 +30,13 @@ public class IfritWardenOfInferno extends Card {
                         )),
                         "Target must be another creature"), 0, 1)));
 
-        addBrimstoneEffects(EffectSlot.SAGA_CHAPTER_II);
-        addBrimstoneEffects(EffectSlot.SAGA_CHAPTER_III);
+        addBrimstoneEffects(2);
+        addBrimstoneEffects(3);
     }
 
-    private void addBrimstoneEffects(EffectSlot slot) {
-        addEffect(slot, new AwardManaEffect(ManaColor.RED, 4));
-        addEffect(slot, new ConditionalEffect(
+    private void addBrimstoneEffects(int chapter) {
+        addTrigger(Triggers.chapter(chapter), new AwardManaEffect(ManaColor.RED, 4));
+        addTrigger(Triggers.chapter(chapter), new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LORE),
                 new ExileSelfAndReturnTransformedEffect()));
     }

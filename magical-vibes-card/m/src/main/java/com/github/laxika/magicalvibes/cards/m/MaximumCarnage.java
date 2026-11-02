@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "83")
 @CardRegistration(set = "SPM", collectorNumber = "225")
@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class MaximumCarnage extends Card {
 
     public MaximumCarnage() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 GoadCreaturesUntilNextTurnEffect.requirementOnly(new PermanentTruePredicate()));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new AwardManaEffect(ManaColor.RED, 3));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.RED, 3));
+        addTrigger(Triggers.chapter(3),
                 new DealDamageToPlayersEffect(5, DamageRecipient.EACH_OPPONENT));
     }
 }

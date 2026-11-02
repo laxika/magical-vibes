@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ErestorOfTheCouncilEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "53")
 @CardRegistration(set = "LTC", collectorNumber = "136")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ErestorOfTheCouncilEffect;
 public class ErestorOfTheCouncil extends Card {
 
     public ErestorOfTheCouncil() {
-        addEffect(EffectSlot.ON_PLAYERS_FINISH_VOTING, new ErestorOfTheCouncilEffect());
+        addTrigger(Triggers.playersFinishVoting(), new ErestorOfTheCouncilEffect());
     }
 }

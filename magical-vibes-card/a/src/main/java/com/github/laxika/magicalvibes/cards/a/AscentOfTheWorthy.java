@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToChosenCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,11 +17,11 @@ import java.util.List;
 public class AscentOfTheWorthy extends Card {
 
     public AscentOfTheWorthy() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new RedirectAllDamageToChosenCreatureUntilNextTurnEffect());
+        addTrigger(Triggers.chapter(1), new RedirectAllDamageToChosenCreatureUntilNextTurnEffect());
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new RedirectAllDamageToChosenCreatureUntilNextTurnEffect());
+        addTrigger(Triggers.chapter(2), new RedirectAllDamageToChosenCreatureUntilNextTurnEffect());
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)

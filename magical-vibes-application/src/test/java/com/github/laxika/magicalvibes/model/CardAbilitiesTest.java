@@ -175,28 +175,14 @@ class CardAbilitiesTest {
     }
 
     @Test
-    void aSlotGroupedAllGetsOneAbilityAtThePositionOfItsFirstRegistration() {
-        card.addEffect(EffectSlot.ON_CONTROLLER_CLASHES, DRAW_ONE);
-        card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, GAIN_ONE);
-        card.addEffect(EffectSlot.ON_CONTROLLER_CLASHES, DRAW_TWO, TriggerMode.ONCE_PER_BLOCK);
-
-        assertThat(card.getAbilities()).containsExactly(
-                legacy(EffectSlot.ON_CONTROLLER_CLASHES, new EffectRegistration(DRAW_ONE),
-                        new EffectRegistration(DRAW_TWO, TriggerMode.ONCE_PER_BLOCK)),
-                legacy(EffectSlot.ON_SELF_LOSES_CONTROL, new EffectRegistration(GAIN_ONE)));
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_CONTROLLER_CLASHES)).containsExactly(
-                new EffectRegistration(DRAW_ONE), new EffectRegistration(DRAW_TWO, TriggerMode.ONCE_PER_BLOCK));
-    }
-
-    @Test
     void slotViewsCantBeChangedFromOutside() {
         card.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
 
         assertThatThrownBy(() -> card.getEffectRegistrations(EffectSlot.ON_SELF_LOSES_CONTROL).clear())
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> card.getAbilities().clear()).isInstanceOf(UnsupportedOperationException.class);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CLASHES)).isEmpty();
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_CONTROLLER_CLASHES)).isEmpty();
+        assertThat(card.getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED)).isEmpty();
+        assertThat(card.getEffectRegistrations(EffectSlot.ON_SELF_BECOMES_CONTROLLED)).isEmpty();
     }
 
     @Test
@@ -246,50 +232,50 @@ class CardAbilitiesTest {
     @Test
     void sagaChapterTargetsAreHeldByTheChapterAbility() {
         SagaChapterTargetGroup group = new SagaChapterTargetGroup(TargetFilters.creatureAnOpponentControls(), 0, 1);
-        card.addEffect(EffectSlot.SAGA_CHAPTER_I, DRAW_ONE);
-        card.setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(TargetFilters.creatureYouControl()));
-        card.setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
-        card.setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(group));
-        card.addEffect(EffectSlot.SAGA_CHAPTER_I, GAIN_ONE);
+        card.addTrigger(Triggers.chapter(1), DRAW_ONE);
+        card.setSagaChapterTargetFilter(1, Set.of(TargetFilters.creatureYouControl()));
+        card.setSagaChapterTargetRequired(1);
+        card.setSagaChapterTargetGroups(1, List.of(group));
+        card.addTrigger(Triggers.chapter(1), GAIN_ONE);
 
         TriggeredAbility chapter = (TriggeredAbility) card.getAbilities().getFirst();
         assertThat(card.getAbilities()).hasSize(1);
         assertThat(chapter.effects()).extracting(EffectRegistration::effect).containsExactly(DRAW_ONE, GAIN_ONE);
         assertThat(chapter.chapterTargets()).isEqualTo(new SagaChapterTargets(
                 Set.of(TargetFilters.creatureYouControl()), List.of(group), true));
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_I))
+        assertThat(card.getSagaChapterTargetFilters(1))
                 .containsExactly(TargetFilters.creatureYouControl());
-        assertThat(card.isSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I)).isTrue();
-        assertThat(card.getSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I)).containsExactly(group);
+        assertThat(card.isSagaChapterTargetRequired(1)).isTrue();
+        assertThat(card.getSagaChapterTargetGroups(1)).containsExactly(group);
     }
 
     @Test
     void aChapterWithoutTargetsHasNone() {
-        card.addEffect(EffectSlot.SAGA_CHAPTER_I, DRAW_ONE);
+        card.addTrigger(Triggers.chapter(1), DRAW_ONE);
 
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_I)).isEmpty();
-        assertThat(card.getSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II)).isEmpty();
-        assertThat(card.isSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I)).isFalse();
+        assertThat(card.getSagaChapterTargetFilters(1)).isEmpty();
+        assertThat(card.getSagaChapterTargetGroups(2)).isEmpty();
+        assertThat(card.isSagaChapterTargetRequired(1)).isFalse();
     }
 
     @Test
     void chapterTargetsNeedTheChapterEffectsFirst() {
-        assertThatThrownBy(() -> card.setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II))
+        assertThatThrownBy(() -> card.setSagaChapterTargetRequired(2))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("SAGA_CHAPTER_II");
+                .hasMessageContaining("no chapter 2 ability");
     }
 
     @Test
     void aRuntimeCopyHasTheSameAbilitiesAndChangesOnItsOwn() {
-        card.addEffect(EffectSlot.SAGA_CHAPTER_I, DRAW_ONE);
-        card.setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        card.addTrigger(Triggers.chapter(1), DRAW_ONE);
+        card.setSagaChapterTargetRequired(1);
         card.freeze();
 
         Card copy = card.createRuntimeCopy();
         copy.addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, GAIN_ONE);
 
         assertThat(copy.getAbilities()).startsWith(card.getAbilities().getFirst());
-        assertThat(copy.isSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I)).isTrue();
+        assertThat(copy.isSagaChapterTargetRequired(1)).isTrue();
         assertThat(copy.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(GAIN_ONE);
         assertThat(card.getEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).isEmpty();
         assertThat(card.getAbilities()).hasSize(1);

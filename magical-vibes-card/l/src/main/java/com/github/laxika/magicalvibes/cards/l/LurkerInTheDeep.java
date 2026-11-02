@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -36,7 +35,7 @@ public class LurkerInTheDeep extends Card {
         SeekEffect seekNonland = new SeekEffect(new CardNotPredicate(new CardTypePredicate(CardType.LAND)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), seekNonland);
         addTrigger(Triggers.attacks(), seekNonland);
-        addEffect(EffectSlot.ON_CONTROLLER_SEEKS, new ConjureDuplicatesOfSoughtCardsAndManifestEffect());
+        addTrigger(Triggers.youSeek(), new ConjureDuplicatesOfSoughtCardsAndManifestEffect());
 
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(),

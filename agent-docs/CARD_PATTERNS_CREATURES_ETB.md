@@ -22,7 +22,7 @@ CardTypePredicate(INSTANT))` as in `t/TorrentialGearhulk.java`.
 
 ETB Exploit plus an exploit trigger that uses the sacrificed creature's toughness uses
 `MayEffect(ExploitEffect)` on `Triggers.enters(ObjectRelation.THIS)` and
-`ReturnOpponentsCreaturesWithToughnessLessThanSacrificedEffect` on `ON_EXPLOIT`, as in
+`ReturnOpponentsCreaturesWithToughnessLessThanSacrificedEffect` on `Triggers.exploits()`, as in
 `p/ProfanerOfTheDead.java`.
 
 For an ETB that pays X and then offers a free cast of an instant or sorcery with mana value X
@@ -145,9 +145,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has STATIC MayEffect(MillEffect(7, EACH_OPPONENT)) |
 | ETB explore | `b/BrazenBuccaneers.java` | Triggers.enters(ObjectRelation.THIS) ExploreEffect() — reveal top card; land → hand, non-land → +1/+1 counter + may put to graveyard |
 | ETB explores X times | `j/JadelightSpelunker.java` | Triggers.enters(ObjectRelation.THIS) `ExploreEffect(new XValue())` — the existing explore process repeats for the paid X, preserving each nonland graveyard choice |
-| ETB Exploit + ON_EXPLOIT counter | `o/OverchargedAmalgam.java` | ON_ENTER MayEffect(ExploitEffect); ON_EXPLOIT CounterSpellEffect with StackEntryHasTargetPredicate (spell/ability) |
+| ETB Exploit + Triggers.exploits() counter | `o/OverchargedAmalgam.java` | ON_ENTER MayEffect(ExploitEffect); Triggers.exploits() CounterSpellEffect with StackEntryHasTargetPredicate (spell/ability) |
 | Activated: exile from opponent GY + explore | `d/DeadeyeTracker.java` | Tap + {1}{B}: ExileGraveyardCardsEffect(2, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD) + ExploreEffect — exile two target cards from opponent's graveyard, then this creature explores. Uses `activateAbilityWithGraveyardTargets` for multi-target graveyard activated abilities |
-| Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `ExploreTriggerTarget` queue for target selection |
+| Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | Triggers.creatureYouControlExplores() BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `ExploreTriggerTarget` queue for target selection |
 | ETB tokens + ability | `s/SiegeGangCommander.java` | CreateTokenEffect + activated sac ability |
 | ETB copy | `c/Clone.java` | CopyPermanentOnEnterEffect |
 | ETB temporary creature copy | `c/CursedMirror.java` | `CopyPermanentOnEnterEffect.temporaryCopy(...)` — optional creature copy with haste, reverted during cleanup |

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,21 +22,21 @@ import java.util.List;
 public class ArniSlaysTheTroll extends Card {
 
     public ArniSlaysTheTroll() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new FightTargetsEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        addTrigger(Triggers.chapter(1), new FightTargetsEffect());
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1),
                 new SagaChapterTargetGroup(TargetFilters.creatureAnOpponentControls(), 0, 1)
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new AwardManaEffect(ManaColor.RED));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, PutCounterOnTargetPermanentEffect.withTargetRestriction(
+        addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.RED));
+        addTrigger(Triggers.chapter(2), PutCounterOnTargetPermanentEffect.withTargetRestriction(
                 CounterType.PLUS_ONE_PLUS_ONE, 2,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate()
                 ))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new GainLifeEffect(new GreatestPowerAmongControlled()));
     }
 }

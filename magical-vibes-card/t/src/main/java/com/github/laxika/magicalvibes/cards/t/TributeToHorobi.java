@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.cards.e.EchoOfDeathsWail;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,9 +22,9 @@ public class TributeToHorobi extends Card {
         CreateTokenEffect ratToken = new CreateTokenEffect(
                 "Rat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.RAT, CardSubtype.ROGUE), Set.of(), Set.of());
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new EachOpponentCreatesTokenEffect(ratToken));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new EachOpponentCreatesTokenEffect(ratToken));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
+        addTrigger(Triggers.chapter(1), new EachOpponentCreatesTokenEffect(ratToken));
+        addTrigger(Triggers.chapter(2), new EachOpponentCreatesTokenEffect(ratToken));
+        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

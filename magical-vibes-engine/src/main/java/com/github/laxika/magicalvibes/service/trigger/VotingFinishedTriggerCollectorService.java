@@ -22,7 +22,7 @@ public class VotingFinishedTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = ErestorOfTheCouncilEffect.class, slot = EffectSlot.ON_PLAYERS_FINISH_VOTING)
+    @CollectsActionTrigger(value = ErestorOfTheCouncilEffect.class, watch = ActionWatch.ON_PLAYERS_FINISH_VOTING)
     private boolean handleErestor(TriggerMatchContext match, ErestorOfTheCouncilEffect trigger,
                                   TriggerContext context) {
         if (!(context instanceof TriggerContext.VotingFinished votingFinished)
@@ -46,7 +46,7 @@ public class VotingFinishedTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = ModelOfUnityEffect.class, slot = EffectSlot.ON_PLAYERS_FINISH_VOTING)
+    @CollectsActionTrigger(value = ModelOfUnityEffect.class, watch = ActionWatch.ON_PLAYERS_FINISH_VOTING)
     private boolean handleModelOfUnity(TriggerMatchContext match, ModelOfUnityEffect trigger,
                                        TriggerContext context) {
         if (!(context instanceof TriggerContext.VotingFinished votingFinished)

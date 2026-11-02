@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -36,20 +35,20 @@ public class RoadsGoEverEverOn extends Card {
                 new CardSupertypePredicate(CardSupertype.BASIC),
                 new CardTypePredicate(CardType.LAND),
                 new CardSubtypePredicate(CardSubtype.PLAINS)));
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new SequenceEffect(List.of(
                         new SearchLibraryForCardsToExileWithSourceEffect(basicPlains, 2),
                         new GainLifeEffect(2))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, PutCardExiledWithSourceIntoHandEffect.returningToOwner());
-        addEffect(EffectSlot.SAGA_CHAPTER_III, PutCardExiledWithSourceIntoHandEffect.returningToOwner());
+        addTrigger(Triggers.chapter(2), PutCardExiledWithSourceIntoHandEffect.returningToOwner());
+        addTrigger(Triggers.chapter(3), PutCardExiledWithSourceIntoHandEffect.returningToOwner());
 
         PermanentCount plainsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.PLAINS), CountScope.CONTROLLER);
         PermanentAllOfPredicate creatureYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV,
+        addTrigger(Triggers.chapter(4),
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.youAttack(),
                         new BoostTargetCreatureEffect(plainsYouControl, plainsYouControl,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,19 +20,19 @@ import java.util.List;
 public class TheSuperHeroCivilWar extends Card {
 
     public TheSuperHeroCivilWar() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 GainControlOfTargetEffect.withTargetPredicate(
                         ControlDuration.WHILE_SOURCE_REMAINS,
                         new PermanentIsCreaturePredicate()));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2, 6)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new BoostAllOwnCreaturesEffect(1, 1));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2), new BoostAllOwnCreaturesEffect(1, 1));
+        addTrigger(Triggers.chapter(2),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new FightTargetsEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_III, List.of(
+        addTrigger(Triggers.chapter(3), new FightTargetsEffect());
+        setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1),
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
     }

@@ -1934,7 +1934,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record SoulbondChoosePartner(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
     /** "When a creature is championed with this permanent, [targeted effect]." Chooses the target for a
-     *  {@code ON_CHAMPIONED} triggered ability (e.g. Mistbind Clique — tap all lands target
+     *  {@code Triggers.championsCreature()} triggered ability (e.g. Mistbind Clique — tap all lands target
      *  player controls). Fired mid-resolution when the Faerie is championed. */
     record ChampionedTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
@@ -2561,7 +2561,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /**
      * Exploit sacrifice choice: controller picks any creature they control (including the exploit
-     * source) to sacrifice. {@code sourceStillOnBattlefield} gates whether {@code ON_EXPLOIT}
+     * source) to sacrifice. {@code sourceStillOnBattlefield} gates whether {@code Triggers.exploits()}
      * fires after the sacrifice (false when the exploit permanent left before resolution).
      */
     record ExploitSacrifice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
@@ -3098,7 +3098,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  an opponent controls gets -2/-2 until end of turn."). */
     record ExploreTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    /** Clash trigger ({@code ON_CONTROLLER_CLASHES}) that needs to target a creature an
+    /** Clash trigger ({@code Triggers.youClash()}) that needs to target a creature an
      *  opponent controls (e.g. Entangling Trap: "Whenever you clash, tap target creature an opponent
      *  controls. If you won, ..."). The {@code effects} have already been resolved for the clash
      *  outcome (win-conditional effects included only on a won clash). */

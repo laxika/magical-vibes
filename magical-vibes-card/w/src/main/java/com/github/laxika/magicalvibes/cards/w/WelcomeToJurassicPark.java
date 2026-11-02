@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
@@ -25,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -43,23 +43,23 @@ public class WelcomeToJurassicPark extends Card {
         PermanentPredicateTargetFilter chapterOneTarget = new PermanentPredicateTargetFilter(
                 chapterOneFilter, "Target must be a noncreature artifact an opponent controls");
         target(chapterOneTarget, 0, 99)
-                .addEffect(EffectSlot.SAGA_CHAPTER_I, new AnimatePermanentsEffect(
+                .addTrigger(Triggers.chapter(1), new AnimatePermanentsEffect(
                         new Fixed(0), new Fixed(4),
                         List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), null,
                         Set.of(CardType.CREATURE), GrantScope.TARGET,
                         EffectDuration.WHILE_SOURCE_CONTROLLED, chapterOneFilter));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(chapterOneTarget));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
+        setSagaChapterTargetFilter(1, Set.of(chapterOneTarget));
+        setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 1, "Dinosaur", 3, 3, CardColor.GREEN, null,
                 List.of(CardSubtype.DINOSAUR), Set.of(Keyword.TRAMPLE), Set.of(Keyword.HASTE)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new DestroyAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.WALL)));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
+        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

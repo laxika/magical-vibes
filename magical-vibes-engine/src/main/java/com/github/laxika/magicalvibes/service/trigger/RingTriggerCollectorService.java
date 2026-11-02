@@ -19,7 +19,7 @@ public class RingTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_TEMPTS_RING)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_TEMPTS_RING)
     private boolean handleRingTempted(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.RingTempted ringTempted = (TriggerContext.RingTempted) ctx;
         if (match.permanent() == null

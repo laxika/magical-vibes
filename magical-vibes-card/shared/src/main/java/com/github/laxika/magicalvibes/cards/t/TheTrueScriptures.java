@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -22,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,20 +35,20 @@ public class TheTrueScriptures extends Card {
                                 new PermanentIsPlaneswalkerPredicate())),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a creature or planeswalker an opponent controls.");
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DestroyEachTargetPermanentEffect());
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1), new DestroyEachTargetPermanentEffect());
+        setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardEffect(3, DiscardRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MillEffect(3, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(2), new DiscardEffect(3, DiscardRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(2), new MillEffect(3, MillRecipient.EACH_OPPONENT));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .returnAll(true)
                 .build());
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnFrontEffect());
+        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnFrontEffect());
     }
 }

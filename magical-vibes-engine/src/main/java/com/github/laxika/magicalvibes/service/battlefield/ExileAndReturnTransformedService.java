@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -308,7 +308,7 @@ public class ExileAndReturnTransformedService {
                 gameData, saga, CounterType.LORE, 1, controllerId);
         saga.setCounterCount(CounterType.LORE, loreCounters);
         triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, controllerId);
-        List<CardEffect> chapterEffects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
+        List<CardEffect> chapterEffects = card.getTriggerEffects(Triggers.chapter(1));
         if (!chapterEffects.isEmpty()) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

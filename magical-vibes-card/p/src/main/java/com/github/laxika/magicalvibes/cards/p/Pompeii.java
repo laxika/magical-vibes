@@ -27,7 +27,7 @@ public class Pompeii extends Card {
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, eruptionCounter);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), eruptionCounter);
 
-        addEffect(EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
+        addTrigger(Triggers.youRollOneOrMoreDice(),
                 new ConditionalEffect(new NotCondition(new EventValueAtLeast(1)),
                         SequenceEffect.of(new ScryEffect(2), eruptionCounter)));
 

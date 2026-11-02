@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -23,7 +22,7 @@ public class QarsiSadist extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
-        addEffect(EffectSlot.ON_EXPLOIT, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_EXPLOIT, new GainLifeEffect(2));
+        addTrigger(Triggers.exploits(), new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                new GainLifeEffect(2));
     }
 }

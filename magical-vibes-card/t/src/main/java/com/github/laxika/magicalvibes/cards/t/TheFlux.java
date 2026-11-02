@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,17 +27,17 @@ public class TheFlux extends Card {
     ));
 
     public TheFlux() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToTargetCreatureEffect(4, OPPONENT_CREATURE));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        addTrigger(Triggers.chapter(1), new DealDamageToTargetCreatureEffect(4, OPPONENT_CREATURE));
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(OPPONENT_CREATURE,
                         "Must target a creature an opponent controls")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(1);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new ExileTopCardMayPlayThisTurnEffect(false));
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileTopCardMayPlayThisTurnEffect(false));
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new ExileTopCardMayPlayThisTurnEffect(false));
-        addEffect(EffectSlot.SAGA_CHAPTER_V, new ExileTopCardMayPlayThisTurnEffect(false));
-        addEffect(EffectSlot.SAGA_CHAPTER_VI, new AwardManaEffect(ManaColor.RED, 6));
+        addTrigger(Triggers.chapter(2), new ExileTopCardMayPlayThisTurnEffect(false));
+        addTrigger(Triggers.chapter(3), new ExileTopCardMayPlayThisTurnEffect(false));
+        addTrigger(Triggers.chapter(4), new ExileTopCardMayPlayThisTurnEffect(false));
+        addTrigger(Triggers.chapter(5), new ExileTopCardMayPlayThisTurnEffect(false));
+        addTrigger(Triggers.chapter(6), new AwardManaEffect(ManaColor.RED, 6));
     }
 }

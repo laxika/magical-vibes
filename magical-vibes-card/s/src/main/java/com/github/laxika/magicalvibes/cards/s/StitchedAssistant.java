@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -18,7 +17,7 @@ public class StitchedAssistant extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
 
-        addEffect(EffectSlot.ON_EXPLOIT, new ScryEffect(1));
-        addEffect(EffectSlot.ON_EXPLOIT, new DrawCardEffect(1));
+        addTrigger(Triggers.exploits(), new ScryEffect(1),
+                new DrawCardEffect(1));
     }
 }

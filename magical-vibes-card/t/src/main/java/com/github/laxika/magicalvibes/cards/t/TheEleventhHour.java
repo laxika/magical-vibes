@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,19 +25,19 @@ import java.util.Set;
 public class TheEleventhHour extends Card {
 
     public TheEleventhHour() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new SearchLibraryEffect(
+        addTrigger(Triggers.chapter(1), new SearchLibraryEffect(
                 new CardSubtypePredicate(CardSubtype.DOCTOR), LibrarySearchDestination.HAND));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofFoodToken(1));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(2), CreateTokenEffect.ofFoodToken(1));
+        addTrigger(Triggers.chapter(2), new CreateTokenEffect(
                 1, "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of(),
                 List.of(
                         StaticAbility.of(new ReduceCastCostForMatchingSpellsEffect(
                         new CardSubtypePredicate(CardSubtype.DOCTOR), 1, CostModificationScope.SELF)))));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, CreateTokenCopyOfTargetPermanentEffect.withNameAndCreatureSubtypeOverride(
+        addTrigger(Triggers.chapter(3), CreateTokenCopyOfTargetPermanentEffect.withNameAndCreatureSubtypeOverride(
                 "Prisoner Zero", List.of(CardSubtype.ALIEN), Set.of(CardSupertype.LEGENDARY)));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
+        setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature")));
     }

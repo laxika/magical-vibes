@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -14,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,11 +33,11 @@ public class PhyrexianScriptures extends Card {
     public PhyrexianScriptures() {
         // Chapter I: Put a +1/+1 counter on up to one target creature.
         // That creature becomes an artifact in addition to its other types (permanently).
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true));
+        addTrigger(Triggers.chapter(1), new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+        addTrigger(Triggers.chapter(1), new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true));
 
         // Chapter II: Destroy all nonartifact creatures
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new DestroyAllPermanentsEffect(
+        addTrigger(Triggers.chapter(2), new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())
@@ -45,6 +45,6 @@ public class PhyrexianScriptures extends Card {
         ));
 
         // Chapter III: Exile all opponents' graveyards
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS));
+        addTrigger(Triggers.chapter(3), new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS));
     }
 }

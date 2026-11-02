@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,33 +35,33 @@ public class SummonPrimalGaruda extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 new DealDamageToTargetCreatureEffect(4, tappedCreatureOpponentControls));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
+        setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(
                         tappedCreatureOpponentControls,
                         "Target must be a tapped creature an opponent controls")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
+        setSagaChapterTargetRequired(1);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2), new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
+        addTrigger(Triggers.chapter(2),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherCreatureYouControl));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
+        setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(
                         anotherCreatureYouControl,
                         "Target must be another creature you control")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
+        setSagaChapterTargetRequired(2);
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3), new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
+        addTrigger(Triggers.chapter(3),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherCreatureYouControl));
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_III, Set.of(
+        setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(
                         anotherCreatureYouControl,
                         "Target must be another creature you control")
         ));
-        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_III);
+        setSagaChapterTargetRequired(3);
     }
 }

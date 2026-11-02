@@ -589,7 +589,7 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.GiftGiven(giverId);
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (controllerId.equals(giverId)) {
-                dispatchSlot(gameData, permanent, controllerId, EffectSlot.ON_CONTROLLER_GIVES_GIFT, context);
+                dispatchWatch(gameData, permanent, controllerId, ActionWatch.ON_CONTROLLER_GIVES_GIFT, context);
             }
         });
     }
@@ -742,10 +742,10 @@ public class TriggerCollectionService {
         for (int schemeIndex = 0; schemeIndex < schemesSet; schemeIndex++) {
             TriggerContext context = new TriggerContext.SchemeSetInMotion(schemeEntry, settingPlayerId);
             for (Permanent permanent : List.copyOf(battlefield)) {
-                dispatchSlot(gameData, permanent, settingPlayerId,
-                        EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
+                dispatchWatch(gameData, permanent, settingPlayerId,
+                        ActionWatch.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
             }
-            dispatchFaceUpSchemes(gameData, EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context,
+            dispatchFaceUpSchemes(gameData, ActionWatch.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context,
                     settingPlayerId::equals);
         }
     }
@@ -758,24 +758,24 @@ public class TriggerCollectionService {
         TriggerContext ctx = new TriggerContext.Crime(committingPlayerId);
         if (battlefield != null) {
             for (Permanent permanent : List.copyOf(battlefield)) {
-                dispatchSlot(gameData, permanent, committingPlayerId,
-                        EffectSlot.ON_CONTROLLER_COMMITS_CRIME, ctx);
+                dispatchWatch(gameData, permanent, committingPlayerId,
+                        ActionWatch.ON_CONTROLLER_COMMITS_CRIME, ctx);
             }
         }
 
         gameData.forEachBattlefield((controllerId, opponentsBattlefield) -> {
             if (controllerId.equals(committingPlayerId)) return;
             for (Permanent permanent : List.copyOf(opponentsBattlefield)) {
-                dispatchSlot(gameData, permanent, controllerId,
-                        EffectSlot.ON_OPPONENT_COMMITS_CRIME, ctx);
+                dispatchWatch(gameData, permanent, controllerId,
+                        ActionWatch.ON_OPPONENT_COMMITS_CRIME, ctx);
             }
         });
 
         List<Card> graveyard = gameData.playerGraveyards.get(committingPlayerId);
         if (graveyard != null) {
             for (Card card : List.copyOf(graveyard)) {
-                for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                        gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME)) {
+                for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                        gameData, card, ActionWatch.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME.trigger())) {
                     queueGraveyardCrimeTrigger(gameData, card, committingPlayerId, effect);
                 }
             }
@@ -2989,8 +2989,8 @@ public class TriggerCollectionService {
                                              com.github.laxika.magicalvibes.model.VotingResult result) {
         TriggerContext context = new TriggerContext.VotingFinished(result);
         gameData.forEachPermanent((controllerId, permanent) ->
-                dispatchSlot(gameData, permanent, controllerId,
-                        EffectSlot.ON_PLAYERS_FINISH_VOTING, context));
+                dispatchWatch(gameData, permanent, controllerId,
+                        ActionWatch.ON_PLAYERS_FINISH_VOTING, context));
     }
 
     /** Fires triggers whenever a player is tempted by the Ring. */
@@ -3001,8 +3001,8 @@ public class TriggerCollectionService {
         var context = new TriggerContext.RingTempted(temptingPlayerId, ringBearerId);
         for (Permanent permanent : List.copyOf(
                 gameData.playerBattlefields.getOrDefault(temptingPlayerId, List.of()))) {
-            dispatchSlot(gameData, permanent, temptingPlayerId,
-                    EffectSlot.ON_CONTROLLER_TEMPTS_RING, context);
+            dispatchWatch(gameData, permanent, temptingPlayerId,
+                    ActionWatch.ON_CONTROLLER_TEMPTS_RING, context);
         }
     }
 
@@ -3014,7 +3014,7 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.RingTemptsYou(temptedPlayerId);
         for (Permanent permanent : List.copyOf(ownBattlefield)) {
-            dispatchSlot(gameData, permanent, temptedPlayerId, EffectSlot.ON_RING_TEMPTS_YOU, context);
+            dispatchWatch(gameData, permanent, temptedPlayerId, ActionWatch.ON_RING_TEMPTS_YOU, context);
         }
     }
 
@@ -3028,10 +3028,10 @@ public class TriggerCollectionService {
 
         for (Permanent perm : List.copyOf(ownBattlefield)) {
             if (firstInvestigationThisTurn) {
-                dispatchSlot(gameData, perm, investigatingPlayerId, EffectSlot.ON_CONTROLLER_INVESTIGATES, ctx);
+                dispatchWatch(gameData, perm, investigatingPlayerId, ActionWatch.ON_CONTROLLER_INVESTIGATES, ctx);
             }
-            dispatchSlot(gameData, perm, investigatingPlayerId,
-                    EffectSlot.ON_CONTROLLER_INVESTIGATES_EACH_TIME, ctx);
+            dispatchWatch(gameData, perm, investigatingPlayerId,
+                    ActionWatch.ON_CONTROLLER_INVESTIGATES_EACH_TIME, ctx);
         }
     }
 
@@ -3049,7 +3049,7 @@ public class TriggerCollectionService {
     public void checkControllerRollsPlanarDieTriggers(GameData gameData, UUID rollingPlayerId,
                                                        int result) {
         for (Permanent perm : List.copyOf(gameData.playerBattlefields.getOrDefault(rollingPlayerId, List.of()))) {
-            dispatchSlot(gameData, perm, rollingPlayerId, EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
+            dispatchWatch(gameData, perm, rollingPlayerId, ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
                     new TriggerContext.DiceRoll(rollingPlayerId, 1, result, true));
         }
         if (gameData.planechase == null || gameData.planechase.controllerId == null
@@ -3059,11 +3059,10 @@ public class TriggerCollectionService {
         UUID planarControllerId = gameData.planechase.controllerId;
         TriggerContext context = new TriggerContext.DiceRoll(rollingPlayerId, 1, result, true);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            for (CardEffect effect : object.getCard().getEffects(
-                    EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)) {
+            for (CardEffect effect : ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE.effectsOf(object.getCard())) {
                 registry.dispatch(new TriggerMatchContext(gameData, null, planarControllerId, effect,
                                 object.getCard(), object.copy()),
-                        EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, effect, context);
+                        ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, effect, context);
             }
         }
     }
@@ -3083,8 +3082,8 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.DiceRoll(rollingPlayerId, diceCount, result);
         for (Permanent perm : List.copyOf(ownBattlefield)) {
-            dispatchSlot(gameData, perm, rollingPlayerId,
-                    EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, ctx);
+            dispatchWatch(gameData, perm, rollingPlayerId,
+                    ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, ctx);
         }
     }
 
@@ -3101,13 +3100,13 @@ public class TriggerCollectionService {
         for (int result : results) {
             var dieContext = new TriggerContext.DiceRoll(rollingPlayerId, 1, result);
             for (Permanent perm : List.copyOf(ownBattlefield)) {
-                dispatchSlot(gameData, perm, rollingPlayerId, EffectSlot.ON_CONTROLLER_ROLLS_DIE, dieContext);
+                dispatchWatch(gameData, perm, rollingPlayerId, ActionWatch.ON_CONTROLLER_ROLLS_DIE, dieContext);
             }
             if (result != sides) continue;
             var ctx = new TriggerContext.DiceRoll(rollingPlayerId, 1, result);
             for (Permanent perm : List.copyOf(ownBattlefield)) {
-                dispatchSlot(gameData, perm, rollingPlayerId,
-                        EffectSlot.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT, ctx);
+                dispatchWatch(gameData, perm, rollingPlayerId,
+                        ActionWatch.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT, ctx);
             }
         }
     }
@@ -3120,7 +3119,7 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20)) {
+            for (CardEffect effect : ActionWatch.GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20.effectsOf(card)) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -3142,7 +3141,7 @@ public class TriggerCollectionService {
         }
         var context = new TriggerContext.Forage(foragingPlayerId);
         for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, foragingPlayerId, EffectSlot.ON_CONTROLLER_FORAGES, context);
+            dispatchWatch(gameData, permanent, foragingPlayerId, ActionWatch.ON_CONTROLLER_FORAGES, context);
         }
     }
 
@@ -3157,7 +3156,7 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.Seek(
                 seekingPlayerId, soughtCards == null ? List.of() : soughtCards);
         for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, seekingPlayerId, EffectSlot.ON_CONTROLLER_SEEKS, context);
+            dispatchWatch(gameData, permanent, seekingPlayerId, ActionWatch.ON_CONTROLLER_SEEKS, context);
         }
     }
 
@@ -3211,8 +3210,8 @@ public class TriggerCollectionService {
 
         var context = new TriggerContext.ManifestDread(manifestingPlayerId, cardPutIntoGraveyard);
         for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, manifestingPlayerId,
-                    EffectSlot.ON_CONTROLLER_MANIFESTS_DREAD, context);
+            dispatchWatch(gameData, permanent, manifestingPlayerId,
+                    ActionWatch.ON_CONTROLLER_MANIFESTS_DREAD, context);
         }
     }
 
@@ -3246,8 +3245,8 @@ public class TriggerCollectionService {
         if (battlefield != null) {
             TriggerContext context = new TriggerContext.DungeonCompletion(completingPlayerId);
             for (Permanent permanent : List.copyOf(battlefield)) {
-                dispatchSlot(gameData, permanent, completingPlayerId,
-                        EffectSlot.ON_CONTROLLER_COMPLETES_DUNGEON, context);
+                dispatchWatch(gameData, permanent, completingPlayerId,
+                        ActionWatch.ON_CONTROLLER_COMPLETES_DUNGEON, context);
             }
         }
 
@@ -3257,7 +3256,7 @@ public class TriggerCollectionService {
         }
 
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON)) {
+            for (CardEffect effect : ActionWatch.GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON.effectsOf(card)) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -3281,7 +3280,7 @@ public class TriggerCollectionService {
             return;
         }
         for (Permanent perm : List.copyOf(ownBattlefield)) {
-            dispatchSlot(gameData, perm, discoveringPlayerId, EffectSlot.ON_CONTROLLER_DISCOVERS, ctx);
+            dispatchWatch(gameData, perm, discoveringPlayerId, ActionWatch.ON_CONTROLLER_DISCOVERS, ctx);
         }
     }
 
@@ -3293,8 +3292,8 @@ public class TriggerCollectionService {
         if (ownBattlefield != null) {
             var context = new TriggerContext.Conjure(conjuringPlayerId, cardCount);
             for (Permanent permanent : List.copyOf(ownBattlefield)) {
-                dispatchSlot(gameData, permanent, conjuringPlayerId,
-                        EffectSlot.ON_CONTROLLER_CONJURES, context);
+                dispatchWatch(gameData, permanent, conjuringPlayerId,
+                        ActionWatch.ON_CONTROLLER_CONJURES, context);
             }
         }
 
@@ -3303,8 +3302,8 @@ public class TriggerCollectionService {
             return;
         }
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
-                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_CONJURES)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardTriggerEffects(
+                    gameData, card, ActionWatch.GRAVEYARD_ON_CONTROLLER_CONJURES.trigger())) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -7880,8 +7879,8 @@ public class TriggerCollectionService {
         }
 
         for (Permanent perm : List.copyOf(ownBattlefield)) {
-            dispatchSlot(gameData, perm, collectingPlayerId,
-                    EffectSlot.ON_CONTROLLER_COLLECTS_EVIDENCE, ctx);
+            dispatchWatch(gameData, perm, collectingPlayerId,
+                    ActionWatch.ON_CONTROLLER_COLLECTS_EVIDENCE, ctx);
         }
     }
 
@@ -8915,15 +8914,15 @@ public class TriggerCollectionService {
         if (battlefield != null) {
             for (Permanent watcher : new ArrayList<>(battlefield)) {
                 if (watcher.getId().equals(fightingCreature.getId())) continue;
-                dispatchSlot(gameData, watcher, fightingCreatureControllerId,
-                        EffectSlot.ON_ALLY_CREATURE_FIGHTS,
+                dispatchWatch(gameData, watcher, fightingCreatureControllerId,
+                        ActionWatch.ON_ALLY_CREATURE_FIGHTS,
                         new TriggerContext.CreatureFights(fightingCreature));
             }
         }
 
         // A fighting creature's own trigger still triggers if it dies in the fight.
-        dispatchSlot(gameData, fightingCreature, fightingCreatureControllerId,
-                EffectSlot.ON_ALLY_CREATURE_FIGHTS,
+        dispatchWatch(gameData, fightingCreature, fightingCreatureControllerId,
+                ActionWatch.ON_ALLY_CREATURE_FIGHTS,
                 new TriggerContext.CreatureFights(fightingCreature));
     }
 
@@ -9577,7 +9576,7 @@ public class TriggerCollectionService {
             return;
         }
         for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, bendingPlayerId, EffectSlot.ON_CONTROLLER_BENDS, context);
+            dispatchWatch(gameData, permanent, bendingPlayerId, ActionWatch.ON_CONTROLLER_BENDS, context);
         }
     }
 
@@ -9593,7 +9592,7 @@ public class TriggerCollectionService {
         }
         TriggerContext context = new TriggerContext.Exert(exertingPlayerId, exertedCreatureId);
         for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, exertingPlayerId, EffectSlot.ON_CONTROLLER_EXERTS, context);
+            dispatchWatch(gameData, permanent, exertingPlayerId, ActionWatch.ON_CONTROLLER_EXERTS, context);
         }
     }
 
@@ -10436,10 +10435,10 @@ public class TriggerCollectionService {
     public void checkBecomesMonarchTriggers(GameData gameData, UUID monarchPlayerId) {
         gameData.forEachPermanent((ownerId, permanent) -> {
             boolean controllerBecameMonarch = ownerId.equals(monarchPlayerId);
-            EffectSlot slot = controllerBecameMonarch
-                    ? EffectSlot.ON_CONTROLLER_BECOMES_MONARCH
-                    : EffectSlot.ON_OPPONENT_BECOMES_MONARCH;
-            for (CardEffect effect : permanent.getCard().getEffects(slot)) {
+            ActionWatch watch = controllerBecameMonarch
+                    ? ActionWatch.ON_CONTROLLER_BECOMES_MONARCH
+                    : ActionWatch.ON_OPPONENT_BECOMES_MONARCH;
+            for (CardEffect effect : watch.effectsOf(permanent.getCard())) {
                 if (effect instanceof ConditionalEffect conditional
                         && conditional.interveningIf()
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -10492,7 +10491,7 @@ public class TriggerCollectionService {
     public void checkAllyCaseSolvesTriggers(GameData gameData, Permanent solvedCase, UUID controllerId) {
         gameData.forEachPermanent((ownerId, permanent) -> {
             if (!ownerId.equals(controllerId)) return;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ALLY_CASE_SOLVES)) {
+            for (CardEffect effect : ActionWatch.ON_ALLY_CASE_SOLVES.effectsOf(permanent.getCard())) {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, solvedCase.getCard(), gameData,
                         controllerId);
                 if (resolved == null) continue;
@@ -11526,14 +11525,14 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.TaxPayment(payingPlayerId, taxingPlayerId, manaPaid);
         for (Permanent perm : List.copyOf(battlefield)) {
             List<CardEffect> effects = new ArrayList<>(
-                    perm.getCard().getEffects(EffectSlot.ON_OPPONENT_PAYS_TAX));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, perm, EffectSlot.ON_OPPONENT_PAYS_TAX));
+                    ActionWatch.ON_OPPONENT_PAYS_TAX.effectsOf(perm.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, perm, ActionWatch.ON_OPPONENT_PAYS_TAX.trigger()));
             for (CardEffect effect : effects) {
                 CardEffect toDispatch = unwrapOncePerTurnTrigger(gameData, perm, effect);
                 if (toDispatch == null) continue;
                 var match = new TriggerMatchContext(gameData, perm, taxingPlayerId, effect);
-                dispatch(match, EffectSlot.ON_OPPONENT_PAYS_TAX, toDispatch, ctx);
+                dispatch(match, ActionWatch.ON_OPPONENT_PAYS_TAX, toDispatch, ctx);
             }
         }
     }
@@ -12091,8 +12090,8 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.SagaFinalChapterAbilityResolved(
                 sagaControllerId, sagaManaValue);
         gameData.forEachPermanent((controllerId, permanent) ->
-                dispatchSlot(gameData, permanent, controllerId,
-                        EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES, context));
+                dispatchWatch(gameData, permanent, controllerId,
+                        SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES, context));
     }
 
     /** Fires triggers watching a Saga's final chapter ability as it triggers (is put on the stack). */
@@ -12101,15 +12100,15 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.SagaFinalChapterAbilityResolved(
                 sagaControllerId, sagaManaValue);
         gameData.forEachPermanent((controllerId, permanent) ->
-                dispatchSlot(gameData, permanent, controllerId,
-                        EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS, context));
+                dispatchWatch(gameData, permanent, controllerId,
+                        SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS, context));
     }
 
     // ── Explore triggers ──────────────────────────────────────────────
 
     /**
      * Scans the exploring creature's controller's battlefield for permanents
-     * with {@link EffectSlot#ON_ALLY_CREATURE_EXPLORES} effects and queues
+     * with {@link ActionWatch#ON_ALLY_CREATURE_EXPLORES} effects and queues
      * them for target selection or directly onto the stack.
      */
     public void checkExploreTriggers(GameData gameData, UUID controllerId, Card exploredCard) {
@@ -12118,7 +12117,7 @@ public class TriggerCollectionService {
 
         for (Permanent perm : battlefield) {
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-            List<CardEffect> registeredEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES);
+            List<CardEffect> registeredEffects = ActionWatch.ON_ALLY_CREATURE_EXPLORES.effectsOf(perm.getCard());
             if (registeredEffects == null || registeredEffects.isEmpty()) continue;
 
             List<CardEffect> effects = registeredEffects.stream()
@@ -12186,19 +12185,19 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.CreatureConnives(connivingCreature, controllerId);
         for (Permanent watcher : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, watcher, controllerId, EffectSlot.ON_ALLY_CREATURE_CONNIVES, context);
+            dispatchWatch(gameData, watcher, controllerId, ActionWatch.ON_ALLY_CREATURE_CONNIVES, context);
         }
     }
 
     // ── Exploit triggers ──────────────────────────────────────────────
 
     /**
-     * Queues this permanent's {@link EffectSlot#ON_EXPLOIT} ability after it successfully
+     * Queues this permanent's {@link ActionWatch#ON_EXPLOIT} ability after it successfully
      * exploited a creature. Uses the source card's LKI even if the permanent left the battlefield
      * (e.g. it sacrificed itself).
      */
     public void checkExploitTriggers(GameData gameData, Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
-        List<CardEffect> effects = sourceCard.getEffects(EffectSlot.ON_EXPLOIT);
+        List<CardEffect> effects = ActionWatch.ON_EXPLOIT.effectsOf(sourceCard);
         if (effects == null || effects.isEmpty()) return;
 
         StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
@@ -12288,25 +12287,24 @@ public class TriggerCollectionService {
                 if (perm.getId().equals(exploitingPermanent.getId())) {
                     sourceStillPresent = true;
                 }
-                dispatchSlot(gameData, perm, exploitingPlayerId, EffectSlot.ON_ALLY_CREATURE_EXPLOITS, ctx);
+                dispatchWatch(gameData, perm, exploitingPlayerId, ActionWatch.ON_ALLY_CREATURE_EXPLOITS, ctx);
                 if (!exploitedCard.isToken()) {
-                    dispatchSlot(gameData, perm, exploitingPlayerId,
-                            EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE, ctx);
+                    dispatchWatch(gameData, perm, exploitingPlayerId,
+                            ActionWatch.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE, ctx);
                 }
             }
         }
 
         if (!sourceStillPresent) {
-            for (CardEffect effect : exploitingPermanent.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_EXPLOITS)) {
+            for (CardEffect effect : ActionWatch.ON_ALLY_CREATURE_EXPLOITS.effectsOf(exploitingPermanent.getCard())) {
                 dispatch(new TriggerMatchContext(gameData, exploitingPermanent, exploitingPlayerId, effect),
-                        EffectSlot.ON_ALLY_CREATURE_EXPLOITS, effect, ctx);
+                        ActionWatch.ON_ALLY_CREATURE_EXPLOITS, effect, ctx);
             }
             if (exploitedCard.isToken()) return;
-            for (CardEffect effect : exploitingPermanent.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE)) {
+            for (CardEffect effect : ActionWatch.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE
+                    .effectsOf(exploitingPermanent.getCard())) {
                 dispatch(new TriggerMatchContext(gameData, exploitingPermanent, exploitingPlayerId, effect),
-                        EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE, effect, ctx);
+                        ActionWatch.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE, effect, ctx);
             }
         }
     }
@@ -12367,7 +12365,7 @@ public class TriggerCollectionService {
      * Performs a clash for {@code clashingPlayerId} against their (single, 2-player) opponent
      * (MTG rule 701.29): both players reveal the top card of their library, the clashing player
      * wins if their revealed card's mana value is strictly greater than the opponent's, and then
-     * {@link EffectSlot#ON_CONTROLLER_CLASHES} triggers on the clashing player's permanents.
+     * {@link ActionWatch#ON_CONTROLLER_CLASHES} triggers on the clashing player's permanents.
      *
      * <p>The caller subsequently offers each player a top-or-bottom placement choice for their
      * revealed card before continuing the clash effect.
@@ -12431,7 +12429,7 @@ public class TriggerCollectionService {
 
         for (Permanent perm : new ArrayList<>(battlefield)) {
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_CLASHES);
+            List<CardEffect> effects = ActionWatch.ON_CONTROLLER_CLASHES.effectsOf(perm.getCard());
             if (effects == null || effects.isEmpty()) continue;
 
             // Resolve win-conditional clauses now: the clash has ended, so the winner is fixed.
@@ -13551,18 +13549,18 @@ public class TriggerCollectionService {
         if (battlefield != null) {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (!hasActiveTriggeredAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP)) {
+                for (CardEffect effect : ActionWatch.ON_CONTROLLER_WINS_COIN_FLIP.effectsOf(perm.getCard())) {
                     var match = new TriggerMatchContext(gameData, perm, winningPlayerId, effect);
-                    registry.dispatch(match, EffectSlot.ON_CONTROLLER_WINS_COIN_FLIP, effect, ctx);
+                    registry.dispatch(match, ActionWatch.ON_CONTROLLER_WINS_COIN_FLIP, effect, ctx);
                 }
             }
         }
 
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!hasActiveTriggeredAbilities(gameData, permanent)) return;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_WINS_COIN_FLIP)) {
+            for (CardEffect effect : ActionWatch.ON_ANY_PLAYER_WINS_COIN_FLIP.effectsOf(permanent.getCard())) {
                 var match = new TriggerMatchContext(gameData, permanent, controllerId, effect);
-                registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_WINS_COIN_FLIP, effect, ctx);
+                registry.dispatch(match, ActionWatch.ON_ANY_PLAYER_WINS_COIN_FLIP, effect, ctx);
             }
         });
     }
@@ -13743,9 +13741,9 @@ public class TriggerCollectionService {
 
         TriggerContext ctx = new TriggerContext.CoinFlipLost(losingPlayerId);
         for (Permanent perm : List.copyOf(battlefield)) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_LOSES_COIN_FLIP)) {
+            for (CardEffect effect : ActionWatch.ON_CONTROLLER_LOSES_COIN_FLIP.effectsOf(perm.getCard())) {
                 var match = new TriggerMatchContext(gameData, perm, losingPlayerId, effect);
-                registry.dispatch(match, EffectSlot.ON_CONTROLLER_LOSES_COIN_FLIP, effect, ctx);
+                registry.dispatch(match, ActionWatch.ON_CONTROLLER_LOSES_COIN_FLIP, effect, ctx);
             }
         }
     }
@@ -13817,7 +13815,7 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.Foretell(foretellingPlayerId, foretoldCard);
         for (Permanent perm : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, perm, foretellingPlayerId, EffectSlot.ON_CONTROLLER_FORETELLS, ctx);
+            dispatchWatch(gameData, perm, foretellingPlayerId, ActionWatch.ON_CONTROLLER_FORETELLS, ctx);
         }
     }
 
@@ -16376,20 +16374,10 @@ public class TriggerCollectionService {
     // ── Internal dispatch ──────────────────────────────────────────────
 
     /**
-     * Dispatches {@code slot} for each face-up scheme in the command zone whose owner passes
+     * Dispatches the abilities {@code watch} reads for each face-up scheme in the command zone whose owner passes
      * {@code ownerFilter}; a face-up scheme's triggered abilities trigger there (CR 314.4).
      */
-    private void dispatchFaceUpSchemes(GameData gameData, EffectSlot slot, TriggerContext ctx,
-                                       Predicate<UUID> ownerFilter) {
-        gameData.forEachFaceUpSchemeSource((ownerId, scheme) -> {
-            if (ownerFilter.test(ownerId)) {
-                dispatchSlot(gameData, scheme, ownerId, slot, ctx);
-            }
-        });
-    }
-
-    /** {@link #dispatchFaceUpSchemes} for the abilities {@code watch} reads. */
-    private void dispatchFaceUpSchemes(GameData gameData, SpellAbilityWatch watch, TriggerContext ctx,
+    private void dispatchFaceUpSchemes(GameData gameData, TriggerWatch watch, TriggerContext ctx,
                                        Predicate<UUID> ownerFilter) {
         gameData.forEachFaceUpSchemeSource((ownerId, scheme) -> {
             if (ownerFilter.test(ownerId)) {
@@ -17044,7 +17032,7 @@ public class TriggerCollectionService {
     }
 
     public void checkPlotTriggers(GameData gameData, UUID plottingPlayerId, Card plottedCard) {
-        List<CardEffect> effects = plottedCard.getEffects(EffectSlot.ON_SELF_BECOMES_PLOTTED);
+        List<CardEffect> effects = ActionWatch.ON_SELF_BECOMES_PLOTTED.effectsOf(plottedCard);
         if (effects.isEmpty()) return;
         boolean needsAnyTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -17101,28 +17089,28 @@ public class TriggerCollectionService {
         mutatedPermanent.recordMutation();
         TriggerContext context = new TriggerContext.SelfMutates(controllerId);
         for (Card mutatedCard : mutatedCards) {
-            for (CardEffect effect : mutatedCard.getEffects(EffectSlot.ON_SELF_MUTATES)) {
+            for (CardEffect effect : ActionWatch.ON_SELF_MUTATES.effectsOf(mutatedCard)) {
                 registry.dispatch(new TriggerMatchContext(gameData, mutatedPermanent, controllerId, effect,
                                 mutatedCard),
-                        EffectSlot.ON_SELF_MUTATES, effect, context);
+                        ActionWatch.ON_SELF_MUTATES, effect, context);
             }
         }
 
         TriggerContext creatureMutatesContext = new TriggerContext.CreatureMutates(mutatedPermanent, controllerId);
         for (Card mutatedCard : mutatedCards) {
-            for (CardEffect effect : mutatedCard.getEffects(EffectSlot.ON_ALLY_CREATURE_MUTATES)) {
+            for (CardEffect effect : ActionWatch.ON_ALLY_CREATURE_MUTATES.effectsOf(mutatedCard)) {
                 registry.dispatch(new TriggerMatchContext(gameData, mutatedPermanent, controllerId, effect,
                                 mutatedCard),
-                        EffectSlot.ON_ALLY_CREATURE_MUTATES, effect, creatureMutatesContext);
+                        ActionWatch.ON_ALLY_CREATURE_MUTATES, effect, creatureMutatesContext);
             }
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent watcher : List.copyOf(battlefield)) {
                 if (watcher.getId().equals(mutatedPermanent.getId())) continue;
-                for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_MUTATES)) {
+                for (CardEffect effect : ActionWatch.ON_ALLY_CREATURE_MUTATES.effectsOf(watcher.getCard())) {
                     registry.dispatch(new TriggerMatchContext(gameData, watcher, controllerId, effect),
-                            EffectSlot.ON_ALLY_CREATURE_MUTATES, effect, creatureMutatesContext);
+                            ActionWatch.ON_ALLY_CREATURE_MUTATES, effect, creatureMutatesContext);
                 }
             }
         }

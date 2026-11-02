@@ -22,7 +22,7 @@ public class SeekTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SEEKS)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_SEEKS)
     private boolean handleSeek(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
         CardEffect queuedEffect = effect;
         if (effect instanceof ConjureDuplicatesOfSoughtCardsAndManifestEffect) {

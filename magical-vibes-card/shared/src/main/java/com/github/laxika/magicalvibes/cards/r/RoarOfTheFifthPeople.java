@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,11 +23,11 @@ import java.util.Set;
 public class RoarOfTheFifthPeople extends Card {
 
     public RoarOfTheFifthPeople() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
+        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
                 2, "Dinosaur", 3, 3, CardColor.GREEN,
                 List.of(CardSubtype.DINOSAUR), Set.of(), Set.of()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantActivatedAbilityEffect(
+        addTrigger(Triggers.chapter(2), new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
@@ -40,10 +40,10 @@ public class RoarOfTheFifthPeople extends Card {
                 EffectDuration.WHILE_SOURCE_REMAINS
         ));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_IV, new GrantKeywordEffect(
+        addTrigger(Triggers.chapter(4), new GrantKeywordEffect(
                 Set.of(Keyword.DOUBLE_STRIKE, Keyword.TRAMPLE),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)

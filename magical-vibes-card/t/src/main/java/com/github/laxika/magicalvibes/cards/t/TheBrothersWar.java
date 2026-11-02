@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,14 +26,14 @@ import java.util.List;
 public class TheBrothersWar extends Card {
 
     public TheBrothersWar() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, CreateTokenEffect.ofPowerstoneToken(new Fixed(2)));
+        addTrigger(Triggers.chapter(1), CreateTokenEffect.ofPowerstoneToken(new Fixed(2)));
 
         var anyPlayer = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player.");
-        target(anyPlayer, 2, 2).addEffect(EffectSlot.SAGA_CHAPTER_II,
+        target(anyPlayer, 2, 2).addTrigger(Triggers.chapter(2),
                 new TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffect(0));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_II,
+        setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(anyPlayer, 2, 2)));
 
         var anyTarget = new AnyTargetPredicateTargetFilter(
@@ -51,8 +51,8 @@ public class TheBrothersWar extends Card {
                 new DealDamageToAnyTargetEffect(artifactCount, false, false, 2, null);
         target(anyTarget).bindEffect(firstDamage);
         target(anyTarget).bindEffect(secondDamage);
-        addSimultaneousEffects(EffectSlot.SAGA_CHAPTER_III, firstDamage, secondDamage);
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_III, List.of(
+        addSimultaneousTrigger(Triggers.chapter(3), firstDamage, secondDamage);
+        setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(anyTarget, 1, 1),
                 new SagaChapterTargetGroup(anyTarget, 1, 1)));
     }

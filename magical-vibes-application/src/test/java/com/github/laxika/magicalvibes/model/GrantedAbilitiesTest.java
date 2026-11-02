@@ -76,7 +76,7 @@ class GrantedAbilitiesTest {
 
         assertThat(LegacySlots.effectsIn(abilities, EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(DRAW_ONE, DRAW_TWO);
         assertThat(LegacySlots.staticEffectsIn(abilities)).containsExactly(GAIN_ONE);
-        assertThat(LegacySlots.effectsIn(abilities, EffectSlot.ON_CONTROLLER_CLASHES)).isEmpty();
+        assertThat(LegacySlots.effectsIn(abilities, EffectSlot.ON_SELF_BECOMES_CONTROLLED)).isEmpty();
     }
 
     @Test
@@ -168,12 +168,13 @@ class GrantedAbilitiesTest {
         Permanent permanent = new Permanent(new Card());
         permanent.addPersistentTriggeredEffect(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
         permanent.addPersistentTriggeredEffect(EffectSlot.ON_SELF_LOSES_CONTROL, GAIN_ONE);
-        permanent.addPersistentTriggeredEffect(EffectSlot.ON_CONTROLLER_CLASHES, DRAW_ONE);
+        permanent.addPersistentTriggeredEffect(EffectSlot.ON_SELF_BECOMES_CONTROLLED, DRAW_ONE);
 
         permanent.removePersistentTriggeredEffectsIf(EffectSlot.ON_SELF_LOSES_CONTROL, DrawCardEffect.class::isInstance);
 
         assertThat(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_LOSES_CONTROL)).containsExactly(GAIN_ONE);
-        assertThat(permanent.getPersistentTriggeredEffects(EffectSlot.ON_CONTROLLER_CLASHES)).containsExactly(DRAW_ONE);
+        assertThat(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED))
+                .containsExactly(DRAW_ONE);
     }
 
     @Test
@@ -181,12 +182,12 @@ class GrantedAbilitiesTest {
         StackEntry entry = new StackEntry(new Card(), UUID.randomUUID());
 
         entry.addPersistentTriggeredEffectOnEntry(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
-        entry.addGrantedTriggeredEffectOnEntry(EffectSlot.ON_CONTROLLER_CLASHES, DRAW_TWO);
+        entry.addGrantedTriggeredEffectOnEntry(EffectSlot.ON_SELF_BECOMES_CONTROLLED, DRAW_TWO);
 
         assertThat(entry.getPersistentAbilitiesOnEntry())
                 .containsExactly(LegacySlots.ability(EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE));
         assertThat(entry.getGrantedAbilitiesOnEntry())
-                .containsExactly(LegacySlots.ability(EffectSlot.ON_CONTROLLER_CLASHES, DRAW_TWO));
+                .containsExactly(LegacySlots.ability(EffectSlot.ON_SELF_BECOMES_CONTROLLED, DRAW_TWO));
         assertThatThrownBy(() -> entry.getGrantedAbilitiesOnEntry().clear())
                 .isInstanceOf(UnsupportedOperationException.class);
     }
@@ -212,12 +213,14 @@ class GrantedAbilitiesTest {
         GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
         UUID cardId = UUID.randomUUID();
         gameData.grantPerpetualAbility(cardId, EffectSlot.ON_SELF_LOSES_CONTROL, DRAW_ONE);
-        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_CONTROLLER_CLASHES, DRAW_ONE);
+        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_SELF_BECOMES_CONTROLLED, DRAW_ONE);
 
         gameData.removePerpetualAbilitiesIf(cardId, EffectSlot.ON_SELF_LOSES_CONTROL, DrawCardEffect.class::isInstance);
-        assertThat(gameData.perpetualAbilityEffects(cardId, EffectSlot.ON_CONTROLLER_CLASHES)).containsExactly(DRAW_ONE);
+        assertThat(gameData.perpetualAbilityEffects(cardId, EffectSlot.ON_SELF_BECOMES_CONTROLLED))
+                .containsExactly(DRAW_ONE);
 
-        gameData.removePerpetualAbilitiesIf(cardId, EffectSlot.ON_CONTROLLER_CLASHES, DrawCardEffect.class::isInstance);
+        gameData.removePerpetualAbilitiesIf(cardId, EffectSlot.ON_SELF_BECOMES_CONTROLLED,
+                DrawCardEffect.class::isInstance);
         assertThat(gameData.perpetualTriggeredAbilityGrants).doesNotContainKey(cardId);
     }
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,17 +30,17 @@ public class TheAntiquitiesWar extends Card {
 
     public TheAntiquitiesWar() {
         // Chapter I: Look at top 5 cards, may reveal an artifact to hand, rest on bottom
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
+        addTrigger(Triggers.chapter(1),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                         5, new CardTypePredicate(CardType.ARTIFACT)));
 
         // Chapter II: Same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addTrigger(Triggers.chapter(2),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                         5, new CardTypePredicate(CardType.ARTIFACT)));
 
         // Chapter III: Artifacts you control become artifact creatures with base P/T 5/5 until end of turn
-        addEffect(EffectSlot.SAGA_CHAPTER_III,
+        addTrigger(Triggers.chapter(3),
                 new AnimatePermanentsEffect(new Fixed(5), new Fixed(5), List.of(), Set.of(), null, Set.of(),
                         GrantScope.OWN_PERMANENTS, EffectDuration.UNTIL_END_OF_TURN,
                         new PermanentIsArtifactPredicate()));
