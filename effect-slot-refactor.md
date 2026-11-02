@@ -28,7 +28,7 @@ re-check them with a grep before acting on them.
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
-| 13 | Remaining event families (repeatable) | open (runs 1 to 5: families 1 to 5 done) |
+| 13 | Remaining event families (repeatable) | open (runs 1 to 6: families 1 to 6 done) |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
@@ -3147,7 +3147,7 @@ and checks the "plain wording" cards 12a listed whose "another" relation exclude
 ### Step 13
 
 Step 13 is repeatable: each run moves one family of its table. Run 1 moved family 1, run 2 family 2, run 3 family 3,
-run 4 family 4, run 5 family 5.
+run 4 family 4, run 5 family 5, run 6 family 6.
 
 #### Run 1: steps and phases
 
@@ -3713,6 +3713,107 @@ effects' Javadoc that named a slot names its factory; engine Javadoc links point
 - A fresh worktree fetches the sets its card-data cache lacks, and the provider's current `set-sld.json` maps SLD #921
   to another card, so card registration rejects Goblin Matron and every Spring-context test fails (321 AI tests at
   first). Both baselines above were run with the main tree's `card-data-cache` copied into the worktree.
+- The full suite was not run here.
+
+#### Run 6: becomes the target
+
+The 21 becomes-the-target constants are gone: `ON_BECOMES_TARGET_OF_SPELL`, `ON_BECOMES_TARGET_OF_AURA_SPELL`,
+`ON_BECOMES_TARGET_OF_OPPONENT_SPELL` (ward, 235 cards), `ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY`,
+`ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY`, the two controller slots, the ally, another-ally, any and opponent creature
+slots (opponent's spell or ability, any spell or ability, an activated ability, an opponent's spell, a spell, a backup
+ability, an instant or sorcery), the creature-or-creature-spell slot, the three ally permanent slots (with or without
+the player, another) and `ON_ANY_PLAYER_CHOOSES_TARGETS`. Family 7 (library, draw and discard) is next; families 7 to
+11 are left.
+
+**Authoring.**
+
+- `model.trigger.TargetTrigger(TargetEvent event, ObjectRelation relation, PermanentPredicate filter)`: a player or
+  object becomes the target of a spell (**CR 601.2c**, checked) or an ability (**CR 602.2b**, **CR 603.3d**, checked),
+  or a player chooses targets (**CR 115.1**, checked). `TargetEvent` names what targets and, when it isn't a permanent,
+  what becomes the target (`BECOMES_TARGET_OF_SPELL`, `…_OF_AURA_SPELL`, `…_OF_INSTANT_OR_SORCERY_SPELL`,
+  `…_OF_OPPONENT_SPELL`, `…_OF_SPELL_OR_ABILITY`, `…_OF_OPPONENT_SPELL_OR_ABILITY` (ward, **CR 702.21a**, checked),
+  `…_OF_YOUR_SPELL_OR_ABILITY`, `ONE_OR_MORE_BECOME_TARGET_OF_ACTIVATED_ABILITY`, `…_OF_BACKUP_ABILITY`
+  (**CR 702.165a**, checked), `PERMANENT_OR_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
+  `YOU_BECOME_TARGET_OF_SPELL`, `YOU_BECOME_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
+  `YOU_OR_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`, `PLAYER_CHOOSES_TARGETS`); the relation names the
+  permanent that becomes the target (`ANY` for an event about you or about choosing targets); the filter is
+  `Triggers.CREATURE` for the creature forms, which the collectors check in code as before.
+- One named `Triggers` factory per slot (21, all from the battlefield): `becomesTargetOfSpell()`,
+  `becomesTargetOfAuraSpell()`, `becomesTargetOfOpponentSpellOrAbility()` (ward), `becomesTargetOfOpponentSpell()`,
+  `becomesTargetOfSpellOrAbility()`, `youBecomeTargetOfSpell()`, `creatureYouControlBecomesTargetOfOpponentSpellOrAbility()`,
+  `creatureBecomesTargetOfSpellOrAbility()`, `youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility()`,
+  `playerChoosesTargets()`, … (`scripts/step13-target-slots.tsv` maps each slot to its factory, event, relation and
+  filter). The old `ON_BECOMES_TARGET_OF_OPPONENT_SPELL` was already "a spell or ability an opponent controls"; its
+  factory says so.
+- **Kept as the slots were:** on an Aura or Equipment the `THIS` forms of becomes the target of a spell, an Aura spell,
+  a spell or ability and an opponent's spell or ability (the counter-unless path) are the attached permanent's (the
+  enum's Javadoc says so). Step 14 or the step that moves targeting onto rules events splits them into `ENCHANTED` /
+  `EQUIPPED` relations.
+- `PerpetuallyGrantKeywordsToTargetCreatureEffect(keywords, Ability)` and
+  `PerpetuallyGrantKeywordToMatchingCardsEffect(handFilter, permanentFilter, keywords, Ability)` are new: perpetual
+  ward grants (Wilson's green face, Rimewall Protector, …) pass the ability instead of the slot and its effect; the slot
+  constructors stay for other families. `PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler` grants
+  its perpetual ward as `new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(), ward)`.
+- `LegacySlotGrouping.ALL` lost its 12 target slots; `LegacySlots.slotOf` knows `TargetTrigger`.
+
+**No rules event, no index.** As in runs 1 to 5, the becomes-the-target collectors in `TriggerCollectionService`
+(`checkBecomesTargetOfSpellTriggers`, `checkBecomesTargetOfAbilityTriggers`, `checkTargetChoiceTriggers` and the
+`collect…` methods they call) still run where the slots were collected. `service/trigger/TargetWatch` (a
+`TriggerWatch`) has one constant per old slot, naming its trigger and the zone the collector reads. The family had no
+`@CollectsTrigger` handlers, so there is no new annotation and the registry is unchanged. The readers were converted by
+`scripts/step13-target-readers.py` (run 5's reader script on this family's TSV); by hand: the perpetual ward grant and
+the Javadoc links (`{@link EffectSlot#X}` → `{@link TargetWatch#X}`). Grouping, target routing, wrapper checks, ward
+suppression, face-down and ability-loss checks are unchanged, so the run makes no rules change. Shadow mode was not run,
+for run 1's reason.
+
+**Cards.** `scripts/step13-target-triggers.py` (run 5's script reading the target TSV, plus a pass that turns a slot
+and its effect inside the two perpetual keyword grants into one `TriggeredAbility`) converted 342 card classes and no
+card test (none named a target slot), one ability per registration in the old order. Nothing needed `MANUAL`; Phantasmal
+Image's now unused `CardEffect` import was dropped by hand. `scripts/step13-target-docs.py` rewrote agent-docs (100
+lines); by hand: the grant rows of this family show `new TriggeredAbility(…)` (the earlier runs' rows still show the
+`Grant…(Triggers.x(), effect, …)` shorthand), "`Triggers.x()` slot" reads "ability", the `TRIGGER_SLOT_TARGETING.md`
+row with `…_OR_ABILITY` suffixes and the `ACTIVATED_ABILITY_GUIDE.md` ward row ("an opponent's spell" → "spell or
+ability"), the skills and `ARCHITECTURE.md`. `effect-slot-inventory.md` was re-rendered with `--keep-baseline`.
+
+**For later runs.**
+
+- Step 14: the target collectors still read their wrappers (`TriggeringSpellControllerConditionalEffect`,
+  `TriggeringSpellOpponentControllerConditionalEffect`, `TriggeringPermanentConditionalEffect` for "a Dragon you
+  control", `TriggeringAbilityFromNamedLandConditionalEffect`, `AbilityTargetChoiceTriggerEffect`,
+  `OncePerTurnTriggerEffect` for "for the first time each turn" and Professor Hojo's "only once each turn", the
+  backup ability's once-per-turn cap), and `playerChoosesTargets()` covers both "a player chooses one or more targets"
+  (Psychic Battle) and "a spell or ability is put onto the stack, if it has a single target" (Grip of Chaos) and Loki's
+  "becomes the target of an ability you control", told apart by their effects.
+- Step 15: the targeted permanent (`targetId` / `triggeringPermanentId`), the targeting spell or ability
+  (`resolveForBecomesTargetOfSpellOrAbility`, the `TriggeringSpellReferencingEffect`s) and Mirror Shield Hoplite's
+  backup ability are still bound by the collectors.
+- Ward's `isCounterUnlessTrigger` checks (`hasWardAbility`, `hasGrantedCounterUnlessTrigger`) still look for a
+  `CounterUnlessEffect` among the ward trigger's effects; ward as a keyword ability with a cost would replace them.
+- The Aura/Equipment readings of the `THIS` forms (above).
+
+**Tests changed.**
+
+- New `TargetTriggerTest` (`model/trigger/`): default zone, the factories' events, relations and filters, null
+  rejection, a card's target abilities read by trigger and zone, a perpetual ward grant read by its trigger, and the
+  two new perpetual keyword grant constructors.
+- New `TargetWatchTest`: every target, counter, damage, combat and spell-and-ability watch has its own (trigger, zone)
+  pair, every target watch reads the battlefield, and a watch reads only its trigger's abilities from its zone.
+- `LegacySlotTriggerTest`'s per-slot case runs 21 fewer times (it is parameterised over `EffectSlot.values()`).
+- No other test named a target slot.
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that references one (603 classes, 5,567 tests): all
+  passing.
+- Application: the trigger-model, watch, registry, granted-ability, freeze, architecture, simulation-copy, pipeline,
+  legacy-binding, activation, counter-spell, counter-unless, spell-casting, spell-cast collector and target-legality
+  classes (29 classes; 772 tests, 784 at HEAD: 21 deleted cases, 9 new): 68 failures, exactly the tests that fail at
+  HEAD (`5129141755`, same classes run in a worktree with the main tree's `card-data-cache`, no `cardRegistry` errors):
+  mock wiring in `ActivatedAbilityExecutionServiceTest`, `SpellCastingServiceTest`, `SpellCastTriggerCollectorServiceTest`,
+  `TargetLegalityServiceTest` and `CounterSpellEffectHandlerTest`, and the known ones in `CardImmutabilityArchTest`,
+  `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 5 (the modal-mode, kicker and Reign of
+  Chaos choices in the four AI decision engine tests and the two `TargetPolarityGuardTest` cases).
 - The full suite was not run here.
 
 ## Prompt

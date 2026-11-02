@@ -24,7 +24,7 @@ import java.util.Set;
 public class SummonLeviathan extends Card {
 
     public SummonLeviathan() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
 
         var seaCreature = new PermanentHasAnySubtypePredicate(Set.of(
                 CardSubtype.KRAKEN, CardSubtype.LEVIATHAN, CardSubtype.MERFOLK,

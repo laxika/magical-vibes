@@ -22,7 +22,7 @@ import java.util.Set;
 public class VarisSilverymoonRanger extends Card {
 
     public VarisSilverymoonRanger() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
 
         addTrigger(Triggers.youCastSpell(), new OncePerTurnTriggerEffect(
                 new SpellCastTriggerEffect(

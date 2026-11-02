@@ -35,7 +35,7 @@ public class SauronTheDarkLord extends Card {
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()))));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessSacrificesEffect(
                         legendaryArtifactOrCreature,
                         "legendary artifact or legendary creature"));

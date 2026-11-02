@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class GavonyDawnguard extends Card {
 
     public GavonyDawnguard() {
         addStaticEffect(new BecomeDayAsEntersEffect());
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
         addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4,
                         new CardAllOfPredicate(List.of(

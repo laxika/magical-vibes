@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -17,7 +16,7 @@ public class BraveMeadowguard extends Card {
     public BraveMeadowguard() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConjureCardToHandEffect("BLB", "144"));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+        addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
                 new TriggeringSpellControllerConditionalEffect(new OncePerTurnTriggerEffect(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))));
     }

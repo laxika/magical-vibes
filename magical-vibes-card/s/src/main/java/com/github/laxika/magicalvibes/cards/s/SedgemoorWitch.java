@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -25,7 +24,7 @@ import java.util.Set;
 public class SedgemoorWitch extends Card {
 
     public SedgemoorWitch() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysEffect(0, 3));
 
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(

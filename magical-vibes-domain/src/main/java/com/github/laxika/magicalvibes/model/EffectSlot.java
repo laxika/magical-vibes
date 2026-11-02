@@ -107,25 +107,6 @@ public enum EffectSlot {
     ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA,
     /** Triggers whenever an opponent gains control of a permanent from this permanent's controller. */
     ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT,
-    /** Triggered when a player chooses one or more targets for a spell or ability. */
-    ON_ANY_PLAYER_CHOOSES_TARGETS,
-    ON_BECOMES_TARGET_OF_SPELL,
-    /** Triggers when this permanent becomes the target of an Aura spell (any player's — the Aura's
-     *  controller is irrelevant). Spells only; an Aura already on the battlefield being moved by an
-     *  ability never triggers it. The trigger belongs to the targeted permanent's controller and goes
-     *  on the stack with {@code sourcePermanentId} set. Checked in
-     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}. Used by Fugitive Druid
-     *  (pair with {@code DrawCardEffect}). */
-    ON_BECOMES_TARGET_OF_AURA_SPELL,
-    ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-    /** Triggers when this permanent becomes the target of an opponent-controlled spell, but not an ability. */
-    ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY,
-    /** Triggers when this permanent's controller becomes the target of a spell. */
-    ON_CONTROLLER_BECOMES_TARGET_OF_SPELL,
-    /** Triggers when the controller of a permanent with this slot becomes the target of a spell or
-     * ability controlled by an opponent. The targeted player is not a permanent, so this is checked
-     * from the player-target paths in {@code TriggerCollectionService}. */
-    ON_CONTROLLER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     /** Triggers on a permanent whenever an Aura becomes attached to it — both when an Aura spell
      *  resolves onto it and when an already-resolved Aura is moved onto it. Queued as a
      *  non-targeting triggered ability whose {@code sourcePermanentId} is the enchanted permanent,
@@ -234,7 +215,6 @@ public enum EffectSlot {
     ON_ANY_PLAYER_WINS_COIN_FLIP,
     /** Triggers whenever this permanent's controller loses a coin flip. */
     ON_CONTROLLER_LOSES_COIN_FLIP,
-    ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
     STATE_TRIGGERED,
@@ -291,72 +271,6 @@ public enum EffectSlot {
     /** Triggers whenever a creature controlled by this permanent's controller exploits a nontoken
      *  creature. Fired after the exploit sacrifice completes. */
     ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
-    /** Triggers whenever a creature controlled by the same player becomes the target of a spell
-     *  or ability controlled by an opponent. Fires on ALL permanents with this slot on the
-     *  creature's controller's battlefield (not just the targeted creature).
-     *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
-     *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
-    ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
-    /** Triggers whenever another creature controlled by the same player becomes the target of any
-     *  spell or ability. Fires on all permanents with this slot on that player's battlefield. The
-     *  targeted creature is stored as the triggered entry's non-targeting {@code targetId}. */
-    ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
-    /** Triggers once when one or more creatures controlled by this permanent's controller become
-     *  the target of an activated ability. Checked in
-     *  {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
-    ON_ALLY_CREATURE_BECOMES_TARGET_OF_ACTIVATED_ABILITY,
-    /** Triggers whenever a creature controlled by the same player becomes the target of a spell
-     * controlled by an opponent. Activated and triggered abilities do not trigger this slot. */
-    ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL,
-    /** Triggers whenever a creature or creature spell controlled by the same player becomes the
-     *  target of a spell or ability controlled by an opponent. Fires on all permanents with this
-     *  slot on that player's battlefield. Checked in {@code TriggerCollectionService}. */
-    ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
-    /** Triggers whenever the controller of this permanent, or any permanent they control, becomes
-     *  the target of a spell or ability controlled by an opponent. Fires for all permanent types
-     *  and for player targets. Wrap effects in {@code TriggeringPermanentConditionalEffect} to limit
-     *  them to a target type (player targets never match a permanent predicate). Checked in
-     *  {@code TriggerCollectionService} from both the spell and ability target paths. */
-    ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
-    ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
-    /** Triggers once for each other permanent controlled by this permanent's controller that
-     * becomes the target of a spell or ability controlled by an opponent. The targeted permanent
-     * is stored as the triggered entry's non-targeting {@code triggeringPermanentId}. Checked in
-     * {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
-     * {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
-    ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
-    /** Triggers whenever ANY creature (any controller) becomes the target of ANY spell or ability.
-     *  Fires on ALL permanents with this slot across every battlefield (not just the targeted
-     *  creature). The targeted creature's permanent ID is set as the non-targeting {@code targetId}
-     *  on the stack entry so the resolved effect can act on it. Checked in
-     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
-     *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Cowardice. */
-    ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
-    /** Triggers whenever a creature an opponent controls becomes the target of a spell or ability
-     *  controlled by this permanent's controller. Fires on ALL permanents with this slot on the
-     *  spell/ability controller's battlefield (not just the targeted creature). The targeted
-     *  creature's permanent ID is set as the non-targeting {@code targetId} and the listening
-     *  permanent as the {@code sourcePermanentId}, so duration-linked effects like
-     *  {@code GainControlOfTargetEffect(WHILE_SOURCE_ON_BATTLEFIELD)} resolve correctly. Checked in
-     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
-     *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Willbreaker. */
-    ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY,
-    /** Triggers whenever a creature controlled by the same player becomes the target of a spell.
-     *  Fires on all permanents with this slot on the creature's controller's battlefield. The
-     *  spell path only checks this slot; activated abilities do not trigger it. */
-    ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL,
-    /** Triggers whenever a creature controlled by the same player becomes the target of a backup
-     *  ability. The triggering backup ability is stored by its source card ID so the effect can
-     *  copy it while it remains on the stack. */
-    ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY,
-    /** Triggers whenever a creature controlled by the same player becomes the target of an instant
-     *  or sorcery spell — regardless of who controls that spell. Fires on ALL permanents with this
-     *  slot on the creature's controller's battlefield (not just the targeted creature). The
-     *  targeted creature's permanent ID is set as the non-targeting {@code targetId} on the stack
-     *  entry so the resolved effect can act on it. Spell path only (abilities never trigger it).
-     *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}.
-     *  Used by Wild Defiance. */
-    ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
      *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
      *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller

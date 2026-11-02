@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -17,7 +16,7 @@ public class MistwaySpy extends Card {
 
     public MistwaySpy() {
         addMorph("{1}{U}");
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(

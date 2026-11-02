@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
@@ -39,8 +39,8 @@ public class SolitaryDefiance extends Card {
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.WARD), GrantScope.OWN_CREATURES)));
         addStaticEffect(new ConditionalEffect(exactlyOneCreature,
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                        new CounterUnlessPaysEffect(2), GrantScope.OWN_CREATURES)));
+                        new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                        new CounterUnlessPaysEffect(2)), GrantScope.OWN_CREATURES)));
 
         addTrigger(Triggers.creatureYouControlAttacks(),
                 new ConditionalEffect(new AttacksAlone(), SequenceEffect.of(

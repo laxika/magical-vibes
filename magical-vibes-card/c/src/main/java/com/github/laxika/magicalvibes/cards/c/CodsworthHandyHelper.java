@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraOrEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,13 +30,13 @@ public class CodsworthHandyHelper extends Card {
 
     public CodsworthHandyHelper() {
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(2),
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                new CounterUnlessPaysEffect(2)),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentIsCommanderPredicate()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(2), GrantScope.SELF,
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                new CounterUnlessPaysEffect(2)), GrantScope.SELF,
                 new PermanentIsCommanderPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

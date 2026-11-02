@@ -2,16 +2,16 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "144")
 public class Crystallization extends Card {
 
     public Crystallization() {
         target(TargetFilters.creature()).addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-          .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, new ExileEnchantedCreatureEffect());
+          .addTrigger(Triggers.becomesTargetOfSpellOrAbility(), new ExileEnchantedCreatureEffect());
     }
 }

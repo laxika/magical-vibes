@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -42,7 +43,7 @@ public class WilsonBearComrade extends Card {
     }
 
     public static void addWardAbility(Card card) {
-        card.addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        card.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysEffect(2));
     }
 
@@ -109,8 +110,8 @@ public class WilsonBearComrade extends Card {
             case RED -> new PerpetuallyGrantKeywordsToTargetCreatureEffect(Set.of(Keyword.DOUBLE_STRIKE));
             case GREEN -> new PerpetuallyGrantKeywordsToTargetCreatureEffect(
                     EnumSet.of(Keyword.REACH, Keyword.TRAMPLE, Keyword.WARD),
-                    EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                    new CounterUnlessPaysEffect(2));
+                    new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                    new CounterUnlessPaysEffect(2)));
         };
     }
 

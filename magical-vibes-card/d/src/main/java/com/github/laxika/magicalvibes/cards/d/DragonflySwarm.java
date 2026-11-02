@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -26,7 +25,7 @@ import java.util.List;
 public class DragonflySwarm extends Card {
 
     public DragonflySwarm() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
         CardsInGraveyard noncreatureNonlandCards = new CardsInGraveyard(new CardAllOfPredicate(List.of(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))

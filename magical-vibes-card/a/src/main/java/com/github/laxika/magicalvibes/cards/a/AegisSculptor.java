@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,7 +21,7 @@ import java.util.List;
 public class AegisSculptor extends Card {
 
     public AegisSculptor() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect(2));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), ConditionalEffect.unless(
                 new AllOf(List.of(new GraveyardCardThreshold(2, new CardTruePredicate()))),

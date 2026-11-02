@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -25,7 +24,7 @@ public class GoldspanDragon extends Card {
 
     public GoldspanDragon() {
         addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, CreateTokenEffect.ofTreasureToken(1));
+        addTrigger(Triggers.becomesTargetOfSpell(), CreateTokenEffect.ofTreasureToken(1));
 
         ActivatedAbility treasureManaAbility = new ActivatedAbility(
                 true,

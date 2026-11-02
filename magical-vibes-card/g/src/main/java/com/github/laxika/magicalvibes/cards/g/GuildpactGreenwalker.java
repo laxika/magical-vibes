@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessAndIncorporationEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -29,7 +29,7 @@ public class GuildpactGreenwalker extends Card {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.WARD, GrantScope.OWN_CREATURES, multicoloredCreature));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(2), GrantScope.OWN_CREATURES, multicoloredCreature));
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                new CounterUnlessPaysEffect(2)), GrantScope.OWN_CREATURES, multicoloredCreature));
     }
 }

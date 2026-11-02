@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -33,7 +32,7 @@ public class OctaviaLivingThesis extends Card {
                 new GraveyardCardThreshold(8, instantOrSorcery),
                 new ReduceOwnCastCostEffect(new Fixed(8))));
 
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysEffect(8));
 
         List<CardEffect> setBasePowerToughness = List.of(new SetBasePowerToughnessEffect(8, 8));

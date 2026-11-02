@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -35,7 +34,7 @@ public class RecruitInstructor extends Card {
                 new DraftCardFromSpellbookToHandEffect.CardPrintingReference("BLB", "160")
         )));
 
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+        addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
                 new TriggeringSpellControllerConditionalEffect(new OncePerTurnTriggerEffect(
                         new CreateTokenEffect(1, "Mouse", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.MOUSE), Set.of(), Set.of()))));

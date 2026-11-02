@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -55,8 +55,8 @@ public class InnkeepersTalent extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                        new CounterUnlessPaysEffect(1),
+                        new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                        new CounterUnlessPaysEffect(1)),
                         GrantScope.OWN_PERMANENTS,
                         new PermanentHasCountersPredicate(CounterType.ANY))));
         addStaticEffect(new ConditionalEffect(

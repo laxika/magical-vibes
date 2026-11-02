@@ -42,6 +42,11 @@ public record PerpetuallyGrantKeywordsToTargetCreatureEffect(
         this(keywords, null, null, filter);
     }
 
+    /** Keywords and {@code grantedAbility} for a target creature its controller controls. */
+    public PerpetuallyGrantKeywordsToTargetCreatureEffect(Set<Keyword> keywords, Ability grantedAbility) {
+        this(Set.copyOf(keywords), grantedAbility, new PermanentControlledBySourceControllerPredicate());
+    }
+
     public PerpetuallyGrantKeywordsToTargetCreatureEffect(Set<Keyword> keywords,
                                                           EffectSlot triggeredAbilitySlot,
                                                           CardEffect triggeredAbility) {

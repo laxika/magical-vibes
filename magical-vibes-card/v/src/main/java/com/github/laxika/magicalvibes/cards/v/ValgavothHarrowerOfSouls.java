@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstOpponentLifeLossEachTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
 public class ValgavothHarrowerOfSouls extends Card {
 
     public ValgavothHarrowerOfSouls() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysLifeEffect(new Fixed(2)));
         addEffect(EffectSlot.ON_OPPONENT_LOSES_LIFE,
                 new FirstOpponentLifeLossEachTurnTriggerEffect(List.of(

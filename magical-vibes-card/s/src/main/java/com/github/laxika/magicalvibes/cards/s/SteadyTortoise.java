@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.h.HarriedDash;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -17,7 +16,7 @@ public class SteadyTortoise extends Card {
 
     public SteadyTortoise() {
         setBackFaceCard(new HarriedDash());
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
         addCastingOption(new AdventureCast("{R}"));
 
         PerpetuallyBoostCardEffect attackBoost = new PerpetuallyBoostCardEffect(this, 1, 1);

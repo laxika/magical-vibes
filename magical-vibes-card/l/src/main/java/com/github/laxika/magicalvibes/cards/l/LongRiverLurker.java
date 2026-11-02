@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -25,10 +25,10 @@ import java.util.List;
 public class LongRiverLurker extends Card {
 
     public LongRiverLurker() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(1),
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                new CounterUnlessPaysEffect(1)),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.FROG)));
 

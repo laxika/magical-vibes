@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -30,9 +30,9 @@ public class RimewallProtector extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PerpetuallyGrantKeywordToMatchingCardsEffect(
                         giantOrWizardCard, giantOrWizardPermanent, Set.of(Keyword.WARD),
-                        EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                        new CounterUnlessPaysEffect(1)));
+                        new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                        new CounterUnlessPaysEffect(1))));
         // Ward {1}.
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
     }
 }

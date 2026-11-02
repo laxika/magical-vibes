@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -27,8 +27,8 @@ public class IymrithDesertDoom extends Card {
     public IymrithDesertDoom() {
         addStaticEffect(new ConditionalEffect(new SourceUntapped(),
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                        new CounterUnlessPaysEffect(4),
+                        new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                        new CounterUnlessPaysEffect(4)),
                         GrantScope.SELF)));
 
         CardsInHand controllerHand = new CardsInHand(CountScope.CONTROLLER);

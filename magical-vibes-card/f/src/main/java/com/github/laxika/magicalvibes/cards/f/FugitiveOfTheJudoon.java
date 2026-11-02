@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTwoPermanentsThenSearchLibraryEffect;
@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,8 @@ public class FugitiveOfTheJudoon extends Card {
         CreateTokenEffect humanToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Human", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.HUMAN), Set.of(Keyword.WARD), Set.of(), false, false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2))),
+                List.of(new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                        new CounterUnlessPaysEffect(2))),
                 List.of(), false, false, false, 0, Set.of());
         CreateTokenEffect rhinoToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Alien Rhino", 4, 4, CardColor.WHITE, null,

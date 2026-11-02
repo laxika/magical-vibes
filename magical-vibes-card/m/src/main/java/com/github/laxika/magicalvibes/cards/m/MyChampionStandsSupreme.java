@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,8 +21,8 @@ public class MyChampionStandsSupreme extends Card {
 
         // Your commander has ward {2}.
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(2), GrantScope.ALL_PERMANENTS, commander));
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                new CounterUnlessPaysEffect(2)), GrantScope.ALL_PERMANENTS, commander));
 
         // Whenever your commander attacks, put two +1/+1 counters on it.
         addStaticEffect(new GrantTriggeredAbilityEffect(

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,8 +17,8 @@ public class ChainsOfCustody extends Card {
     public ChainsOfCustody() {
         target(TargetFilters.creatureYouControl())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                        new CounterUnlessPaysEffect(2), GrantScope.ENCHANTED_CREATURE));
+                        new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                        new CounterUnlessPaysEffect(2)), GrantScope.ENCHANTED_CREATURE));
 
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),

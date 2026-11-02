@@ -1189,4 +1189,128 @@ public final class Triggers {
     public static CounterTrigger youProliferate() {
         return new CounterTrigger(CounterTrigger.CounterEvent.YOU_PROLIFERATE, ObjectRelation.ANY);
     }
+
+    /** "Whenever a player chooses one or more targets" for a spell or ability */
+    public static TargetTrigger playerChoosesTargets() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.PLAYER_CHOOSES_TARGETS, ObjectRelation.ANY);
+    }
+
+    /** "Whenever this permanent becomes the target of a spell" */
+    public static TargetTrigger becomesTargetOfSpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_SPELL, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this permanent becomes the target of an Aura spell" */
+    public static TargetTrigger becomesTargetOfAuraSpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_AURA_SPELL, ObjectRelation.THIS);
+    }
+
+    /** "Whenever this permanent becomes the target of a spell or ability an opponent controls": ward's trigger. */
+    public static TargetTrigger becomesTargetOfOpponentSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+                ObjectRelation.THIS);
+    }
+
+    /** "Whenever this permanent becomes the target of a spell an opponent controls" */
+    public static TargetTrigger becomesTargetOfOpponentSpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_OPPONENT_SPELL, ObjectRelation.THIS);
+    }
+
+    /** "Whenever you become the target of a spell" */
+    public static TargetTrigger youBecomeTargetOfSpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.YOU_BECOME_TARGET_OF_SPELL, ObjectRelation.ANY);
+    }
+
+    /** "Whenever you become the target of a spell or ability an opponent controls" */
+    public static TargetTrigger youBecomeTargetOfOpponentSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.YOU_BECOME_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+                ObjectRelation.ANY);
+    }
+
+    /** "Whenever this permanent becomes the target of a spell or ability" */
+    public static TargetTrigger becomesTargetOfSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_SPELL_OR_ABILITY, ObjectRelation.THIS);
+    }
+
+    /** "Whenever a creature you control becomes the target of a spell or ability an opponent controls" */
+    public static TargetTrigger creatureYouControlBecomesTargetOfOpponentSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever another creature you control becomes the target of a spell or ability" */
+    public static TargetTrigger anotherCreatureYouControlBecomesTargetOfSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+                ObjectRelation.ANOTHER_YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever one or more creatures you control become the target of an activated ability", once for each ability */
+    public static TargetTrigger creaturesYouControlBecomeTargetOfActivatedAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.ONE_OR_MORE_BECOME_TARGET_OF_ACTIVATED_ABILITY,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever a creature you control becomes the target of a spell an opponent controls" */
+    public static TargetTrigger creatureYouControlBecomesTargetOfOpponentSpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_OPPONENT_SPELL,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /**
+     * "Whenever a creature you control or a creature spell you control becomes the target of a spell or ability an
+     * opponent controls"
+     */
+    public static TargetTrigger creatureOrCreatureSpellYouControlBecomesTargetOfOpponentSpellOrAbility() {
+        return new TargetTrigger(
+                TargetTrigger.TargetEvent.PERMANENT_OR_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever you or a permanent you control becomes the target of a spell or ability an opponent controls" */
+    public static TargetTrigger youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.YOU_OR_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever a permanent you control becomes the target of a spell or ability an opponent controls" */
+    public static TargetTrigger permanentYouControlBecomesTargetOfOpponentSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /** "Whenever another permanent you control becomes the target of a spell or ability an opponent controls" */
+    public static TargetTrigger anotherPermanentYouControlBecomesTargetOfOpponentSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+                ObjectRelation.ANOTHER_YOU_CONTROL);
+    }
+
+    /** "Whenever a creature becomes the target of a spell or ability" */
+    public static TargetTrigger creatureBecomesTargetOfSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+                ObjectRelation.ANY, CREATURE);
+    }
+
+    /** "Whenever a creature an opponent controls becomes the target of a spell or ability you control" */
+    public static TargetTrigger creatureOpponentControlsBecomesTargetOfYourSpellOrAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY,
+                ObjectRelation.OPPONENT_CONTROLS, CREATURE);
+    }
+
+    /** "Whenever a creature you control becomes the target of a spell" */
+    public static TargetTrigger creatureYouControlBecomesTargetOfSpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_SPELL,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever a creature you control becomes the target of a backup ability" */
+    public static TargetTrigger creatureYouControlBecomesTargetOfBackupAbility() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_BACKUP_ABILITY,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
+
+    /** "Whenever a creature you control becomes the target of an instant or sorcery spell" */
+    public static TargetTrigger creatureYouControlBecomesTargetOfInstantOrSorcerySpell() {
+        return new TargetTrigger(TargetTrigger.TargetEvent.BECOMES_TARGET_OF_INSTANT_OR_SORCERY_SPELL,
+                ObjectRelation.YOU_CONTROL, CREATURE);
+    }
 }

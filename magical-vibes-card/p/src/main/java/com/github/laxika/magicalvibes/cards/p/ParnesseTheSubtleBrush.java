@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CopyCopiedSpellForTargetPlayerEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class ParnesseTheSubtleBrush extends Card {
 
     public ParnesseTheSubtleBrush() {
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+        addTrigger(Triggers.youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysLifeEffect(new Fixed(4)));
 
         var targetOpponent = new PlayerPredicateTargetFilter(

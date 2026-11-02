@@ -3,12 +3,11 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +26,7 @@ public class PhantasmalImage extends Card {
         addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature",
                 Set.of(CardSubtype.ILLUSION),
-                List.of(LegacySlots.triggered(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, List.<CardEffect>of(new SacrificeSelfEffect())))
+                List.of(new TriggeredAbility(Triggers.becomesTargetOfSpellOrAbility(), new SacrificeSelfEffect()))
         ));
     }
 }

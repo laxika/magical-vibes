@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -21,7 +20,7 @@ public class AlleyAssailant extends Card {
 
     public AlleyAssailant() {
         addMorph("{4}{B}{B}");
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         addStaticEffect(new EntersTappedEffect());
         target(new PlayerPredicateTargetFilter(

@@ -39,6 +39,14 @@ public record PerpetuallyGrantKeywordToMatchingCardsEffect(
         this(handFilter, permanentFilter, keywords, null, null, null, null);
     }
 
+    /** Keywords and {@code grantedAbility} for matching cards in hand and matching permanents. */
+    public PerpetuallyGrantKeywordToMatchingCardsEffect(CardPredicate handFilter,
+                                                         PermanentPredicate permanentFilter,
+                                                         Set<Keyword> keywords,
+                                                         Ability grantedAbility) {
+        this(handFilter, permanentFilter, Set.copyOf(keywords), grantedAbility, null, null);
+    }
+
     public PerpetuallyGrantKeywordToMatchingCardsEffect(CardPredicate handFilter,
                                                          PermanentPredicate permanentFilter,
                                                          Set<Keyword> keywords,

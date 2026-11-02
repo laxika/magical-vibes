@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -20,7 +19,7 @@ public class TectonicGiant extends Card {
 
     public TectonicGiant() {
         addTrigger(Triggers.attacks(), chooseMode());
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY, chooseMode());
+        addTrigger(Triggers.becomesTargetOfOpponentSpell(), chooseMode());
     }
 
     private ChooseOneEffect chooseMode() {

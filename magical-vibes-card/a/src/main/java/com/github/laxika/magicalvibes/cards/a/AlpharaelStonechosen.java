@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AlpharaelStonechosen extends Card {
 
     public AlpharaelStonechosen() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessDiscardsEffect(true));
         addTrigger(Triggers.attacks(), new ConditionalEffect(
                 new VoidCondition(),

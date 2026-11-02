@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -20,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -37,8 +37,8 @@ public class MyriadConstruct extends Card {
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(nonbasicLand, CountScope.OPPONENTS))));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new SacrificeSelfEffect());
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new CreateTokenEffect(
+        addTrigger(Triggers.becomesTargetOfSpell(), new SacrificeSelfEffect());
+        addTrigger(Triggers.becomesTargetOfSpell(), new CreateTokenEffect(
                 CardType.CREATURE, new SourcePower(), "Construct", 1, 1, null, null,
                 List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT),
                 false, false, List.of(), List.of(), false, false, false, 0, Set.of()));

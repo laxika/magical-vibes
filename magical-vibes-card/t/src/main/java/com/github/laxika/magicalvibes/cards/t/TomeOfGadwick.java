@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToHandEffect;
@@ -21,8 +21,8 @@ public class TomeOfGadwick extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new Fixed(1), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(1),
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                new CounterUnlessPaysEffect(1)),
                 GrantScope.EQUIPPED_CREATURE));
         addTrigger(Triggers.attacks(), new ConjureRandomCardFromSpellbookToHandEffect(List.of(
                 new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("A25", "46"),

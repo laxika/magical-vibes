@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
@@ -47,7 +46,7 @@ public class CatchOfTheDay extends Card {
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(ISLANDWALK),
                 new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new ConditionalEffect(new SourceHasChosenMode(WARD), new CounterUnlessPaysEffect(3)));
 
         addTrigger(Triggers.attacks(), new ConditionalEffect(new SourceHasChosenMode(SCRY),

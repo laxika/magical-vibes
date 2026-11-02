@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageLootEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +35,7 @@ public class JaceCunningCastaway extends Card {
                         1, "Illusion", 2, 2,
                         CardColor.BLUE, List.of(CardSubtype.ILLUSION),
                         Set.of(), Set.of(),
-                        List.of(LegacySlots.triggered(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new SacrificeSelfEffect()))
+                        List.of(new TriggeredAbility(Triggers.becomesTargetOfSpell(), new SacrificeSelfEffect()))
                 )),
                 "\u22122: Create a 2/2 blue Illusion creature token with \"When this creature becomes the target of a spell, sacrifice it.\""
         ));

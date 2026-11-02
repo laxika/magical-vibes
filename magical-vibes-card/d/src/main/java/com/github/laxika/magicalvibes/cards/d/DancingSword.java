@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -31,8 +31,8 @@ public class DancingSword extends Card {
                 SequenceEffect.of(new BecomeCreatureEffect(2, 1, List.of(CardSubtype.CONSTRUCT),
                         Set.of(Keyword.FLYING), Set.of(), Set.of(CardType.ARTIFACT)),
                         new GrantStaticEffectToSourceEffect(new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                                new CounterUnlessPaysEffect(1), GrantScope.SELF))),
+                                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                                new CounterUnlessPaysEffect(1)), GrantScope.SELF))),
                 "Have Dancing Sword become a creature?"));
 
         addActivatedAbility(new EquipActivatedAbility("{1}"));

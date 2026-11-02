@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class TheMeep extends Card {
 
     public TheMeep() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysLifeEffect(new Fixed(3)));
         addTrigger(Triggers.attacks(), new MayEffect(
                 new SacrificePermanentThenEffect(

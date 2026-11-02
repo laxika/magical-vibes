@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -36,8 +36,8 @@ public class NiambiBelovedProtector extends Card {
                         .targetPutIntoGraveyardFromBattlefieldThisTurn(true)
                         .perpetualBattlefieldEffectGrants(List.of(
                                 new GrantTriggeredAbilityEffect(
-                                        EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
-                                        new OncePerTurnTriggerEffect(new DrawCardEffect(1)),
+                                        new TriggeredAbility(Triggers.becomesTargetOfSpellOrAbility(),
+                                        new OncePerTurnTriggerEffect(new DrawCardEffect(1))),
                                         GrantScope.SELF)))
                         .build()));
     }

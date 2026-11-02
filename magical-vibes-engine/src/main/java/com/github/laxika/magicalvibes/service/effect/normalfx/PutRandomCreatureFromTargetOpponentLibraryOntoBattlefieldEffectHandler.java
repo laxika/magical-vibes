@@ -2,16 +2,17 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -105,7 +106,8 @@ public class PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHand
     private void rememberPerpetualWard(GameData gameData, UUID cardId, CounterUnlessPaysEffect ward) {
         gameData.perpetualCardKeywords.merge(cardId, Set.of(Keyword.WARD),
                 PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler::mergeKeywords);
-        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, ward);
+        gameData.grantPerpetualAbility(cardId,
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(), ward));
     }
 
     private static Set<Keyword> mergeKeywords(Set<Keyword> existing, Set<Keyword> added) {

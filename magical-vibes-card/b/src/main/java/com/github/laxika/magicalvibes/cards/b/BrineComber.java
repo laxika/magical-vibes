@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DisturbCast;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +15,7 @@ public class BrineComber extends Card {
         setBackFaceCard(new BrineboundGift());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.whiteSpirit(1));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_AURA_SPELL, CreateTokenEffect.whiteSpirit(1));
+        addTrigger(Triggers.becomesTargetOfAuraSpell(), CreateTokenEffect.whiteSpirit(1));
         addCastingOption(new DisturbCast("{W}{U}"));
     }
 

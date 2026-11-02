@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOK", collectorNumber = "40")
 @CardRegistration(set = "MMA", collectorNumber = "49")
@@ -20,8 +21,8 @@ public class KiraGreatGlassSpinner extends Card {
         // itself. The "first time each turn" gating and targeting the triggering object are handled in
         // TriggerCollectionService for any counterspelling effect in this slot (as for Glyph Keeper).
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
-                new CounterSpellEffect(),
+                new TriggeredAbility(Triggers.becomesTargetOfSpellOrAbility(),
+                new CounterSpellEffect()),
                 GrantScope.ALL_OWN_CREATURES));
     }
 }

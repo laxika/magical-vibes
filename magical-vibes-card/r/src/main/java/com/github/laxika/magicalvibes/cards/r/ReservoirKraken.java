@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect;
@@ -24,7 +23,7 @@ public class ReservoirKraken extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), new ConditionalEffect(
                 new SourceUntapped(),
                 new AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect(fishToken())));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
     }
 
     private static CreateTokenEffect fishToken() {

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.l.LukkaWaywardBonder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -28,7 +27,7 @@ public class MilaCraftyCompanion extends Card {
                 new ConditionalEffect(new OpponentAttacksPlaneswalker(),
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.LOYALTY, 1, new PermanentIsPlaneswalkerPredicate())));
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+        addTrigger(Triggers.permanentYouControlBecomesTargetOfOpponentSpellOrAbility(),
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
 
         addSpellEffect(new ChooseOneEffect(List.of(

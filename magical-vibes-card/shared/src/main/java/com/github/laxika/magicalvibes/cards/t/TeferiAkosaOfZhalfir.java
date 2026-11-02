@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardTwoUnlessCreatureEffect;
@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,8 +40,8 @@ public class TeferiAkosaOfZhalfir extends Card {
                         List.of(
                                 new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, knight),
                                 new GrantTriggeredAbilityEffect(
-                                        EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                                        new CounterUnlessPaysEffect(1),
+                                        new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                                        new CounterUnlessPaysEffect(1)),
                                         GrantScope.OWN_CREATURES,
                                         knight)
                         ),

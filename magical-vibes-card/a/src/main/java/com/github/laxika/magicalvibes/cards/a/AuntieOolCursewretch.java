@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AuntieOolCursewretch extends Card {
 
     public AuntieOolCursewretch() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessBlightsEffect(2));
 
         TargetPermanentMatches controlsAffectedCreature = new TargetPermanentMatches(

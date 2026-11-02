@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -27,7 +26,7 @@ public class EvinWaterdeepOpportunist extends Card {
         addStaticEffect(new BoostSelfEffect(new Scaled(treasures, 2), new Fixed(0)));
         addTrigger(Triggers.sacrificed(Triggers.CREATURE, ObjectRelation.ANY),
                 new OncePerTurnTriggerEffect(CreateTokenEffect.ofTreasureToken(1, true)));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessSacrificesEffect(new PermanentIsCreaturePredicate(), "creature"));
     }
 }

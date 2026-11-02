@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -24,7 +23,7 @@ public class BlackBoltInhumanKing extends Card {
                 List.of(new BoostSelfEffect(2, 2))));
 
         target(TargetFilters.nonlandPermanentAnOpponentControls())
-                .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                .addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                         new DestroyTargetPermanentEffect());
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -24,7 +23,7 @@ public class OvikaEnigmaGoliath extends Card {
 
     public OvikaEnigmaGoliath() {
         // Ward—{3}, Pay 3 life.
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(3, 3));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(3, 3));
 
         CreateTokenEffect phyrexianGoblin = new CreateTokenEffect(
                 CardType.CREATURE, new EventValue(), "Phyrexian Goblin", 1, 1, CardColor.RED, null,

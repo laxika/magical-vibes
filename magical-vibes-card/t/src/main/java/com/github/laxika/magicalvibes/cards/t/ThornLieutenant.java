@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +19,7 @@ public class ThornLieutenant extends Card {
     public ThornLieutenant() {
         // Whenever this creature becomes the target of a spell or ability an opponent controls,
         // create a 1/1 green Elf Warrior creature token.
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CreateTokenEffect("Elf Warrior", 1, 1, CardColor.GREEN,
                         List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()));
 

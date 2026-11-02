@@ -7133,8 +7133,7 @@ public class TriggerCollectionService {
             if (battlefield == null) continue;
             for (Permanent source : List.copyOf(battlefield)) {
                 if (source.isCloaked() || source.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                for (CardEffect authoredEffect : source.getCard().getEffects(
-                        EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_ACTIVATED_ABILITY)) {
+                for (CardEffect authoredEffect : TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_ACTIVATED_ABILITY.effectsOf(source.getCard())) {
                     CardEffect resolvedEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(
                             gameData, source, authoredEffect);
                     if (resolvedEffect == null) continue;
@@ -7169,10 +7168,9 @@ public class TriggerCollectionService {
 
         for (Permanent source : battlefield) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, source)) continue;
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.trigger()));
             effects = effects.stream()
                     .map(effect -> resolveTriggeringPermanentConditional(
                             gameData, source, targetControllerId, targetPermanent, effect))
@@ -7253,10 +7251,9 @@ public class TriggerCollectionService {
         for (Permanent source : battlefield) {
             if (source.getId().equals(targetPermanent.getId())) continue;
 
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.trigger()));
             for (CardEffect effect : effects) {
                 if (!(effect instanceof CounterUnlessEffect counterEffect)) continue;
 
@@ -7311,11 +7308,10 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         for (Permanent source : battlefield) {
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                     gameData, source,
-                    EffectSlot.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+                    TargetWatch.ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.trigger()));
             if (effects.isEmpty()) continue;
 
             StackEntry entry = new StackEntry(
@@ -7398,7 +7394,7 @@ public class TriggerCollectionService {
         }
 
         gameData.forEachPermanent((controllerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_CHOOSES_TARGETS)) {
+            for (CardEffect effect : TargetWatch.ON_ANY_PLAYER_CHOOSES_TARGETS.effectsOf(permanent.getCard())) {
                 CardEffect effectToQueue = effect;
                 if (effect instanceof TargetChoiceTriggerEffect targetChoiceEffect) {
                     if (gameQueryService.hasLostAllAbilities(gameData, permanent)
@@ -7455,10 +7451,10 @@ public class TriggerCollectionService {
     private void collectBecomesTargetTriggers(GameData gameData, Permanent source, UUID controllerId,
                                               Permanent targetedCreature, StackEntry spellEntry) {
         if (source.isCloaked() || gameQueryService.hasLostPrintedAbilities(gameData, source)) return;
-        List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL));
+        List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_BECOMES_TARGET_OF_SPELL.effectsOf(source.getCard()));
         if (source == targetedCreature) {
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_SPELL));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_SPELL.trigger()));
         }
         if (effects.isEmpty()) return;
 
@@ -7556,13 +7552,13 @@ public class TriggerCollectionService {
         List<CardEffect> effects = new ArrayList<>(source.isCloaked()
                 || gameQueryService.hasLostPrintedAbilities(gameData, source)
                 ? List.<CardEffect>of()
-                : source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
-        effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
-        effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
+                : TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+        effects.addAll(source.getTemporaryTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
+        effects.addAll(source.getPersistentTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
         // Dismiss into Dream continuously grants "When this creature becomes the target of a spell
         // or ability, sacrifice it" to each creature its controller's opponents control.
-        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
+        effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
         // Makeshift Mannequin: while a permanent has a mannequin counter, it has "When this creature
         // becomes the target of a spell or ability, sacrifice it." The grant comes from the resolving
         // spell (CR 611.2b), so it is tracked on the permanent rather than read from the counter alone.
@@ -7709,7 +7705,7 @@ public class TriggerCollectionService {
 
     /**
      * "Whenever this creature becomes the target of an Aura spell, &lt;effect&gt;." Narrower than
-     * {@link EffectSlot#ON_BECOMES_TARGET_OF_SPELL}: only Aura spells count, and there is no controller
+     * {@link TargetWatch#ON_BECOMES_TARGET_OF_SPELL}: only Aura spells count, and there is no controller
      * restriction, so an opponent's Aura triggers it just as the controller's own does. Used by
      * Fugitive Druid.
      */
@@ -7718,7 +7714,7 @@ public class TriggerCollectionService {
         Card spellCard = spellEntry.getTargetingCard();
         if (spellCard == null || !spellCard.isAura()) return;
 
-        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_AURA_SPELL);
+        List<CardEffect> effects = TargetWatch.ON_BECOMES_TARGET_OF_AURA_SPELL.effectsOf(source.getCard());
         if (effects.isEmpty()) return;
 
         StackEntry entry = new StackEntry(
@@ -7758,14 +7754,14 @@ public class TriggerCollectionService {
                 || triggeringEntry.getMixedZoneTargetPermanentIds().containsValue(source.getId());
         if (!source.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, source)
                 && (sourceIsTarget || !source.getCard().getKeywords().contains(Keyword.WARD))) {
-            effects.addAll(source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
+            effects.addAll(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.effectsOf(source.getCard()));
         }
-        effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
-        effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
+        effects.addAll(source.getTemporaryTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
+        effects.addAll(source.getPersistentTriggerEffects(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
         // Granted ward ("each legendary permanent you control has ward {2}") is a "this permanent becomes
         // the target" trigger, so an attached permanent only gets it when it is itself the target.
-        List<CardEffect> grantedEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
+        List<CardEffect> grantedEffects = grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()).stream()
                 .filter(effect -> sourceIsTarget || !isCounterUnlessTrigger(effect))
                 .toList();
         effects.addAll(grantedEffects);
@@ -7917,8 +7913,7 @@ public class TriggerCollectionService {
         for (Permanent source : new ArrayList<>(battlefield)) {
             if (source.isLosesAllAbilitiesUntilEndOfTurn()) continue;
 
-            for (CardEffect effect : source.getCard().getEffects(
-                    EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY)) {
+            for (CardEffect effect : TargetWatch.ON_CONTROLLER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.effectsOf(source.getCard())) {
                 if (!(effect instanceof CounterUnlessEffect)) continue;
 
                 StackEntry entry = new StackEntry(
@@ -7953,10 +7948,10 @@ public class TriggerCollectionService {
         for (Permanent source : new ArrayList<>(battlefield)) {
             List<CardEffect> effects = new ArrayList<>();
             if (!gameQueryService.hasLostPrintedAbilities(gameData, source)) {
-                effects.addAll(source.getCard().getEffects(EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_SPELL));
+                effects.addAll(TargetWatch.ON_CONTROLLER_BECOMES_TARGET_OF_SPELL.effectsOf(source.getCard()));
             }
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_SPELL));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_CONTROLLER_BECOMES_TARGET_OF_SPELL.trigger()));
             if (effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -7983,7 +7978,7 @@ public class TriggerCollectionService {
 
     /**
      * "Whenever this creature becomes the target of a spell or ability an opponent controls, &lt;non-counter effect&gt;."
-     * Handles the non-counter effects in {@link EffectSlot#ON_BECOMES_TARGET_OF_OPPONENT_SPELL} (e.g. "you may
+     * Handles the non-counter effects in {@link TargetWatch#ON_BECOMES_TARGET_OF_OPPONENT_SPELL} (e.g. "you may
      * draw a card"). Counter/Ward effects on that slot are handled separately by
      * {@link #collectBecomesTargetOfOpponentCounterTriggers}. Called from both the spell and
      * ability paths so the "or ability" clause is honored. Used by Tenured Concocter.
@@ -7995,7 +7990,7 @@ public class TriggerCollectionService {
         if (source.isCloaked()) return;
         if (source.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, source)) return;
 
-        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
+        List<CardEffect> effects = TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.effectsOf(source.getCard()).stream()
                 .filter(e -> !(e instanceof CounterUnlessEffect)
                         && !(e instanceof ConditionalEffect conditional
                         && conditional.wrapped() instanceof CounterUnlessEffect))
@@ -8031,10 +8026,9 @@ public class TriggerCollectionService {
             GameData gameData, Permanent source, UUID controllerId, UUID spellControllerId) {
         if (controllerId.equals(spellControllerId)) return;
 
-        List<CardEffect> printed = new ArrayList<>(source.getCard().getEffects(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY));
-        List<CardEffect> granted = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY);
+        List<CardEffect> printed = new ArrayList<>(TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY.effectsOf(source.getCard()));
+        List<CardEffect> granted = grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY.trigger());
         if (printed.isEmpty() && granted.isEmpty()) return;
 
         List<List<CardEffect>> abilities = new ArrayList<>();
@@ -8064,7 +8058,7 @@ public class TriggerCollectionService {
 
     /**
      * Checks ALL permanents on the targeted creature's controller's battlefield for
-     * {@link EffectSlot#ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY}.
+     * {@link TargetWatch#ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY}.
      * Only fires when the targeted permanent is a creature and the spell/ability
      * is controlled by an opponent of the creature's controller.
      */
@@ -8080,10 +8074,9 @@ public class TriggerCollectionService {
 
         for (Permanent source : battlefield) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, source)) continue;
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.trigger()));
             if (effects.isEmpty()) continue;
 
             List<CardEffect> nonCounterEffects = new ArrayList<>();
@@ -8193,10 +8186,9 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         for (Permanent source : battlefield) {
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL));
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()));
             if (effects.isEmpty()) continue;
 
             List<CardEffect> resolvedEffects = new ArrayList<>();
@@ -8228,7 +8220,7 @@ public class TriggerCollectionService {
 
     /**
      * Checks ALL permanents on the targeted creature's controller's battlefield for
-     * {@link EffectSlot#ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY}. Only fires when the
+     * {@link TargetWatch#ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY}. Only fires when the
      * targeted permanent is a creature and the targeting spell is an instant or a sorcery; there is
      * no controller restriction, so the creature's controller's own spells trigger it too. The
      * targeted creature is stored as the non-targeting {@code targetId} so the resolved effect can
@@ -8246,8 +8238,7 @@ public class TriggerCollectionService {
 
         for (Permanent source : battlefield) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, source)) continue;
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY);
+            List<CardEffect> effects = TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY.effectsOf(source.getCard());
             if (effects.isEmpty()) continue;
 
             List<CardEffect> resolvedEffects = new ArrayList<>();
@@ -8416,7 +8407,7 @@ public class TriggerCollectionService {
 
     /**
      * Checks ALL permanents on the targeted creature's controller's battlefield for
-     * {@link EffectSlot#ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL}. Only the spell path calls this
+     * {@link TargetWatch#ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL}. Only the spell path calls this
      * method, so activated abilities do not trigger it. The card's target groups are reused to
      * choose any optional targets as the triggered ability is put on the stack.
      */
@@ -8432,10 +8423,9 @@ public class TriggerCollectionService {
             GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, source);
             if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
                     || gameQueryService.hasLostPrintedAbilities(gameData, source)) continue;
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL));
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL.trigger()));
             if (effects.isEmpty()) continue;
 
             if (source.getCard().getTargetGroups().size() > 1
@@ -8457,7 +8447,7 @@ public class TriggerCollectionService {
 
     /**
      * Checks all other permanents on the targeted creature's controller's battlefield for
-     * {@link EffectSlot#ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY}. The
+     * {@link TargetWatch#ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY}. The
      * targeted creature is stored as the non-targeting {@code targetId} of the queued ability.
      */
     private void collectAnotherAllyCreatureBecomesTargetOfSpellOrAbilityTriggers(
@@ -8472,10 +8462,9 @@ public class TriggerCollectionService {
                     || source.isCloaked()
                     || source.isLosesAllAbilitiesUntilEndOfTurn()) continue;
 
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_ANOTHER_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()));
             if (effects.isEmpty()) continue;
 
             StackEntry entry = new StackEntry(
@@ -8497,7 +8486,7 @@ public class TriggerCollectionService {
 
     /**
      * Checks ALL permanents across every battlefield for
-     * {@link EffectSlot#ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY}. Only fires when the
+     * {@link TargetWatch#ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY}. Only fires when the
      * targeted permanent is a creature. The targeted creature is stored as the non-targeting
      * {@code targetId} so the resolved effect can act on it. Used by Cowardice.
      */
@@ -8515,8 +8504,7 @@ public class TriggerCollectionService {
 
             for (Permanent source : battlefield) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, source)) continue;
-                List<CardEffect> effects = source.getCard().getEffects(
-                        EffectSlot.ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY);
+                List<CardEffect> effects = TargetWatch.ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY.effectsOf(source.getCard());
                 if (effects.isEmpty()) continue;
 
                 List<CardEffect> resolvedEffects = effects.stream()
@@ -8564,7 +8552,7 @@ public class TriggerCollectionService {
 
     /**
      * Checks the spell/ability controller's battlefield for
-     * {@link EffectSlot#ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY}. Only fires
+     * {@link TargetWatch#ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY}. Only fires
      * when the targeted permanent is a creature controlled by an opponent of the spell/ability's
      * controller. The targeted creature is stored as the non-targeting {@code targetId} and the
      * listening permanent as the {@code sourcePermanentId}. Used by Willbreaker.
@@ -8580,8 +8568,7 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         for (Permanent source : List.copyOf(battlefield)) {
-            List<CardEffect> effects = source.getCard().getEffects(
-                    EffectSlot.ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY);
+            List<CardEffect> effects = TargetWatch.ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY.effectsOf(source.getCard());
             if (effects.isEmpty() || gameQueryService.hasLostPrintedAbilities(gameData, source)) continue;
 
             StackEntry entry = new StackEntry(
@@ -11898,10 +11885,9 @@ public class TriggerCollectionService {
         for (Permanent source : List.copyOf(battlefield)) {
             if (source.isBackupAbilityCopyUsedThisTurn()) continue;
 
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, source, EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY));
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                    gameData, source, TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY.trigger()));
             if (effects.isEmpty()) continue;
 
             source.setBackupAbilityCopyUsedThisTurn(true);
@@ -13442,11 +13428,10 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         for (Permanent source : List.copyOf(battlefield)) {
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                     gameData, source,
-                    EffectSlot.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+                    TargetWatch.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.trigger()));
             if (effects.isEmpty()) continue;
 
             enqueueTargetTriggeredAbility(gameData, targetPermanent, creatureControllerId, source,
@@ -13477,11 +13462,10 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         for (Permanent source : List.copyOf(battlefield)) {
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(
-                    EffectSlot.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
-            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+            List<CardEffect> effects = new ArrayList<>(TargetWatch.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.effectsOf(source.getCard()));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggerEffects(
                     gameData, source,
-                    EffectSlot.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY));
+                    TargetWatch.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.trigger()));
             if (effects.isEmpty()) continue;
 
             gameData.stack.add(new StackEntry(
@@ -15504,8 +15488,8 @@ public class TriggerCollectionService {
         }
         if (gameQueryService.isCreature(gameData, source)
                 && (gameQueryService.hasKeyword(gameData, source, Keyword.WARD)
-                || grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
+                || grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()).stream()
                 .anyMatch(this::isCounterUnlessTrigger))) {
             return true;
         }
@@ -15519,8 +15503,8 @@ public class TriggerCollectionService {
     }
 
     private boolean hasGrantedCounterUnlessTrigger(GameData gameData, Permanent source) {
-        return grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
+        return grantedTriggeredAbilitySupport.grantedTriggerEffects(
+                gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL.trigger()).stream()
                 .anyMatch(this::isCounterUnlessTrigger);
     }
 

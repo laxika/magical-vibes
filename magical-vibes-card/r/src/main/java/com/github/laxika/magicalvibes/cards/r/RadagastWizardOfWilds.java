@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -30,7 +30,7 @@ public class RadagastWizardOfWilds extends Card {
     private static final String BIRD_MODE = "Create a 2/2 blue Bird creature token with flying";
 
     public RadagastWizardOfWilds() {
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(1));
 
         PermanentAnyOfPredicate beastOrBird = new PermanentAnyOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.BEAST),
@@ -38,8 +38,8 @@ public class RadagastWizardOfWilds extends Card {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.WARD, GrantScope.OWN_CREATURES, beastOrBird));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(1), GrantScope.OWN_CREATURES, beastOrBird));
+                new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
+                new CounterUnlessPaysEffect(1)), GrantScope.OWN_CREATURES, beastOrBird));
 
         addTrigger(Triggers.youCastSpell(), new SpellCastTriggerEffect(
                 new CardMinManaValuePredicate(5),

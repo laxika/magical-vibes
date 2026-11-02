@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -34,7 +33,7 @@ public class ShayCormac extends Card {
                 new RemoveKeywordEffect(Keyword.WARD, GrantScope.ALL_PERMANENTS, opponentPermanent)),
                 "{1}: Permanents your opponents control lose hexproof, indestructible, protection, shroud, and ward until end of turn."));
 
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_BECOMES_TARGET_OF_YOUR_SPELL_OR_ABILITY,
+        addTrigger(Triggers.creatureOpponentControlsBecomesTargetOfYourSpellOrAbility(),
                 new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY, 1));
         addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(

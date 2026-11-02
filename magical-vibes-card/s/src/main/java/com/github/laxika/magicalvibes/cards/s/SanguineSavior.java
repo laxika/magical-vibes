@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,7 +25,7 @@ public class SanguineSavior extends Card {
 
     public SanguineSavior() {
         addMorph("{W/B}{W/B}");
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
 
         PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(

@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOM", collectorNumber = "172")
 @CardRegistration(set = "2X2", collectorNumber = "307")
@@ -17,7 +18,7 @@ public class LivewireLash extends Card {
     public LivewireLash() {
         addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new DealDamageToAnyTargetEffect(2),
+                new TriggeredAbility(Triggers.becomesTargetOfSpell(), new DealDamageToAnyTargetEffect(2)),
                 GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

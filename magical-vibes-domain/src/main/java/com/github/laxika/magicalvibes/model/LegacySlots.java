@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 
@@ -121,6 +122,7 @@ public final class LegacySlots {
                 case CombatTrigger ignored -> null;
                 case DamageTrigger ignored -> null;
                 case CounterTrigger ignored -> null;
+                case TargetTrigger ignored -> null;
             };
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities aren't kept in a slot");
