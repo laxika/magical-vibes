@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -23,8 +22,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SilvanReveler extends Card {
 
     public SilvanReveler() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardCardThenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardCardThenEffect(
                 null,
                 new ReturnDiscardedCardFromGraveyardToBattlefieldEffect(true),
                 "a card",

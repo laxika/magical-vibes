@@ -10,13 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "2")
 public class BishopOfBinding extends Card {
 
     public BishopOfBinding() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect());
 
         target(new PermanentPredicateTargetFilter(

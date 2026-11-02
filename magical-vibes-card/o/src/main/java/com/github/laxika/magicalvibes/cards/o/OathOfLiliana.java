@@ -11,13 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EMN", collectorNumber = "99")
 @CardRegistration(set = "PIO", collectorNumber = "336")
 public class OathOfLiliana extends Card {
 
     public OathOfLiliana() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificePermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.PLANESWALKER), 1),

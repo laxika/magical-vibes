@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -39,7 +38,7 @@ import java.util.Set;
 public class BuildersTalent extends Card {
 
     public BuildersTalent() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect("Wall", 0, 4, CardColor.WHITE,
                         List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.<CardType>of()));
 

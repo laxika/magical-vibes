@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +30,7 @@ public class SlitheryStalker extends Card {
         target(new PermanentPredicateTargetFilter(
                 TARGET,
                 "Target must be a green or white creature an opponent controls"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetPermanentAndTrackWithSourceEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ReturnAllCardsExiledWithSourceEffect());
     }

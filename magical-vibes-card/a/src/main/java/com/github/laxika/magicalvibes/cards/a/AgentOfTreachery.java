@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "43")
 @CardRegistration(set = "SLD", collectorNumber = "2005")
@@ -19,7 +21,7 @@ public class AgentOfTreachery extends Card {
 
     public AgentOfTreachery() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(

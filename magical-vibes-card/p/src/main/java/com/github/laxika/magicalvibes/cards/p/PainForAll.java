@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -38,7 +40,8 @@ public class PainForAll extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any other target");
         target(anyTarget)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnchantedCreatureDealsPowerDamageToAnyTargetEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new EnchantedCreatureDealsPowerDamageToAnyTargetEffect());
 
         addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
                 new EnchantedCreatureDealsDamageToEachOpponentEffect());

@@ -11,13 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WOC", collectorNumber = "25")
 @CardRegistration(set = "WOC", collectorNumber = "33")
 public class CourtOfGarenbrig extends Card {
 
     public CourtOfGarenbrig() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
 
         target(TargetFilters.creature(), 0, 2).addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 SequenceEffect.of(

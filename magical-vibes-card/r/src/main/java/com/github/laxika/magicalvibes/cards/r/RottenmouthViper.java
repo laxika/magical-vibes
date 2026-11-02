@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLB", collectorNumber = "107")
 public class RottenmouthViper extends Card {
@@ -22,7 +24,7 @@ public class RottenmouthViper extends Card {
         SequenceEffect blightTrigger = SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.BLIGHT),
                 new TormentOfHailfireEffect(4, null, new CountersOnSource(CounterType.BLIGHT)).deferringChoices());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, blightTrigger);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), blightTrigger);
         addEffect(EffectSlot.ON_ATTACK, blightTrigger);
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
@@ -25,7 +24,7 @@ import java.util.List;
 public class DemonOfDarkSchemes extends Card {
 
     public DemonOfDarkSchemes() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllCreaturesEffect(-2, -2,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 

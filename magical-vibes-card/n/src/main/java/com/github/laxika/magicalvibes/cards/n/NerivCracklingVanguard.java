@@ -14,12 +14,14 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDC", collectorNumber = "6")
 public class NerivCracklingVanguard extends Card {
 
     public NerivCracklingVanguard() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Goblin", 1, 1, CardColor.RED,
                         null, java.util.List.of(CardSubtype.GOBLIN)));
 

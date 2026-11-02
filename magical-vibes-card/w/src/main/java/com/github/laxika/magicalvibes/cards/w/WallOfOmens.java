@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ROE", collectorNumber = "53")
 @CardRegistration(set = "DDK", collectorNumber = "4")
@@ -19,6 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class WallOfOmens extends Card {
 
     public WallOfOmens() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
     }
 }

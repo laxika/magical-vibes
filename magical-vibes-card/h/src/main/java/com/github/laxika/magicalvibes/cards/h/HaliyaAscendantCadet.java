@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "218")
 public class HaliyaAscendantCadet extends Card {
@@ -17,7 +19,7 @@ public class HaliyaAscendantCadet extends Card {
         target(TargetFilters.creatureYouControl());
         PutCounterOnTargetPermanentEffect counter =
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, counter);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), counter);
         addEffect(EffectSlot.ON_ATTACK, counter);
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

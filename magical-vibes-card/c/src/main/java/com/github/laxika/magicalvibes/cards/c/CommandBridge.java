@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "252")
 public class CommandBridge extends Card {
@@ -18,7 +19,7 @@ public class CommandBridge extends Card {
         addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you tap an untapped permanent you control.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayPayTapPermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayTapPermanentsEffect(
                 new TapMultiplePermanentsCost(1, new PermanentTruePredicate()),
                 null,
                 "Tap an untapped permanent you control?",

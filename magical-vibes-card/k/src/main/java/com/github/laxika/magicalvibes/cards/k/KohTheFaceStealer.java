@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
@@ -30,7 +29,7 @@ public class KohTheFaceStealer extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature"), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentAndTrackWithSourceEffect());
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER),
                 new MayEffect(new ExileTriggeringCreatureAndTrackWithSourceEffect(),

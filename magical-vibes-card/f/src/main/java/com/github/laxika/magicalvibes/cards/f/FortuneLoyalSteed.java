@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfAndSaddledCreatureEf
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "OTJ", collectorNumber = "12")
@@ -20,7 +22,7 @@ import java.util.List;
 public class FortuneLoyalSteed extends Card {
 
     public FortuneLoyalSteed() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new SourceIsSaddled(), new DelayedEndOfCombatEffect(
                         new ExileSelfAndSaddledCreatureEffect())));

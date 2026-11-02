@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "20")
 public class HardlightContainment extends Card {
@@ -18,7 +20,7 @@ public class HardlightContainment extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(), "Target must be an artifact you control"));
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect());
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,

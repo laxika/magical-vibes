@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
 public class LasydProwler extends Card {
 
     public LasydProwler() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new MillEffect(new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
                         MillRecipient.CONTROLLER),
                 "Mill cards equal to the number of lands you control?"));

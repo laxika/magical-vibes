@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
 public class IrascibleWolverine extends Card {
 
     public IrascibleWolverine() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardMayPlayThisTurnEffect(false));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTopCardMayPlayThisTurnEffect(false));
 
         // Plot {2}{R}
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}"))));

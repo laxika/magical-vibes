@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class EssenceknitScholar extends Card {
     public EssenceknitScholar() {
         // When Essenceknit Scholar enters, create a 1/1 black and green Pest creature token with
         // "Whenever this token attacks, you gain 1 life."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Pest", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(),

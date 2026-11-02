@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BehemothOfVault0 extends Card {
 
     public BehemothOfVault0() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(4));
 
         target(TargetFilters.nonlandPermanent()).addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(

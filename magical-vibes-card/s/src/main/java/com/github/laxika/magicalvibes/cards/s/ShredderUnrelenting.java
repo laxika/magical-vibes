@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class ShredderUnrelenting extends Card {
                 )),
                 "Target must be another creature you control"
         ))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
                 .addEffect(EffectSlot.ON_ATTACK,
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET));

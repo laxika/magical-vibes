@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToCo
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDC", collectorNumber = "242")
 @CardRegistration(set = "MKC", collectorNumber = "163")
@@ -17,7 +19,7 @@ public class VengefulAncestor extends Card {
     public VengefulAncestor() {
         GoadTargetCreatureUntilNextTurnEffect goad = new GoadTargetCreatureUntilNextTurnEffect();
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, goad)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), goad)
                 .addEffect(EffectSlot.ON_ATTACK, goad);
 
         addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,

@@ -2,20 +2,21 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MBS", collectorNumber = "137")
 public class Strandwalker extends Card {
 
     public Strandwalker() {
         // Living weapon — create 0/0 black Phyrexian Germ token and attach
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LivingWeaponEffect());
 
         // Equipped creature gets +2/+4 and has reach
         addStaticEffect(new StaticBoostEffect(2, 4, GrantScope.EQUIPPED_CREATURE));

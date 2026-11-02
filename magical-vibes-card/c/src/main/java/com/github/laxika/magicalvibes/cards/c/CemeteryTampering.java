@@ -11,13 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "69")
 @CardRegistration(set = "DSC", collectorNumber = "135")
 public class CemeteryTampering extends Card {
 
     public CemeteryTampering() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(5, true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ImprintFromTopCardsEffect(5, true));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new MayEffect(new MillEffect(3, MillRecipient.CONTROLLER), "Mill three cards?"),
                 ConditionalEffect.unless(new GraveyardCardThreshold(20, null),

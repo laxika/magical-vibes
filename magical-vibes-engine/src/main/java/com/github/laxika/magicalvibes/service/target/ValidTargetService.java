@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.target;
 
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -9,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -194,7 +195,7 @@ public class ValidTargetService {
         boolean isMultiTarget = card.getMaxTargets() > 1 || modalTargetFilters.size() > 1;
 
         List<CardEffect> spellEffects = card.getCastingCostsAndSpellEffects();
-        List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
+        List<CardEffect> etbEffects = card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS));
         if (spellEffects.stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class::cast)
@@ -689,12 +690,12 @@ public class ValidTargetService {
         return effectiveXValue;
     }
 
-    /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */
+    /** Finds the card's modal effect in its spell ability or "when this enters" abilities, if any. */
     private ChooseOneEffect findModalEffect(Card card) {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
-        for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect e : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;
@@ -1771,7 +1772,7 @@ public class ValidTargetService {
                     gameData, card, controllerId, xValue, Boolean.TRUE.equals(kicked)).isEmpty();
         }
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
-                spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         boolean isMultiTarget = card.getMaxTargets() > 1;
         boolean hasValidPermanentTargetSet = card.getMultiTargetConstraint()

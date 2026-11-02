@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class MalcatorPurityOverseer extends Card {
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOLEM), Set.of(),
                 Set.of(CardType.ARTIFACT));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, golem);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), golem);
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 3),

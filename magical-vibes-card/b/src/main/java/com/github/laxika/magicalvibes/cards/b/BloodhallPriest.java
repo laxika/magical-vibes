@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "232")
 @CardRegistration(set = "EMN", collectorNumber = "181")
@@ -22,7 +24,7 @@ public class BloodhallPriest extends Card {
         // this creature deals 2 damage to any target.
         ConditionalEffect emptyHandDamage = new ConditionalEffect(
                 new ControllerHandEmpty(), new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, emptyHandDamage);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), emptyHandDamage);
         addEffect(EffectSlot.ON_ATTACK, emptyHandDamage);
     }
 }

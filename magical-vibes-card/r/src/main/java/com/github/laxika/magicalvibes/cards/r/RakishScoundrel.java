@@ -21,7 +21,7 @@ public class RakishScoundrel extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET))
                 .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));

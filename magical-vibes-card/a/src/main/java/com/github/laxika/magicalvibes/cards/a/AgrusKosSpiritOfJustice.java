@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "184")
 @CardRegistration(set = "MKM", collectorNumber = "354")
@@ -19,8 +21,8 @@ public class AgrusKosSpiritOfJustice extends Card {
 
     public AgrusKosSpiritOfJustice() {
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exileIfSuspected())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, suspectIfNotSuspected())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), exileIfSuspected())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), suspectIfNotSuspected())
                 .addEffect(EffectSlot.ON_ATTACK, exileIfSuspected())
                 .addEffect(EffectSlot.ON_ATTACK, suspectIfNotSuspected());
     }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class T45PowerArmor extends Card {
 
     public T45PowerArmor() {
         // When this Equipment enters, you get two energy counters.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
         // Equipped creature gets +3/+3 and doesn't untap during its controller's untap step.
         addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));

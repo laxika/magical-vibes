@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +20,7 @@ import java.util.Set;
 public class LivingHistory extends Card {
 
     public LivingHistory() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 1, "Spirit", 2, 2, CardColor.RED, Set.of(CardColor.RED, CardColor.WHITE),
                 List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
 

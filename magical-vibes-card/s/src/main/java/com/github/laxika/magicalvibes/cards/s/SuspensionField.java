@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class SuspensionField extends Card {
                         new PermanentToughnessAtLeastPredicate(3)
                 )),
                 "Target must be a creature with toughness 3 or greater"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(),
                         "Exile target creature with toughness 3 or greater?"));
     }

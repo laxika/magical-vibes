@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class AragornAndArwenWed extends Card {
                         new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true))
         );
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggerEffect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), triggerEffect);
         addEffect(EffectSlot.ON_ATTACK, triggerEffect);
     }
 }

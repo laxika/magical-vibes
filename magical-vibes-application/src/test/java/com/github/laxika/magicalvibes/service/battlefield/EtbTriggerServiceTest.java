@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -32,6 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -91,7 +92,7 @@ class EtbTriggerServiceTest {
         Card creature = new Card();
         creature.setName("Optional draw creature");
         creature.setType(CardType.CREATURE);
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new com.github.laxika.magicalvibes.model.effect.MayEffect(
                         new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(
                                 new com.github.laxika.magicalvibes.model.amount.XValue()), "Draw?"));
@@ -110,7 +111,7 @@ class EtbTriggerServiceTest {
         creature.setName("Once-per-turn creature");
         creature.setType(CardType.CREATURE);
         SurveilEffect surveil = new SurveilEffect(1);
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new OncePerTurnTriggerEffect(surveil));
         Permanent permanent = new Permanent(creature);
         gameData.playerBattlefields.get(controllerId).add(permanent);
@@ -133,7 +134,7 @@ class EtbTriggerServiceTest {
         Card creature = new Card();
         creature.setName("Waterbend creature");
         creature.setType(CardType.CREATURE);
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
         Permanent permanent = new Permanent(creature);
         permanent.setWaterbendCostPaid(true);
@@ -150,7 +151,7 @@ class EtbTriggerServiceTest {
         Card land = new Card();
         land.setName("Targeted Land");
         land.setType(CardType.LAND);
-        land.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        land.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(land));
 
@@ -167,7 +168,7 @@ class EtbTriggerServiceTest {
         Card creature = new Card();
         creature.setName("Reflexive Creature");
         creature.setType(CardType.CREATURE);
-        creature.target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        creature.target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayPayManaEffect("{2}",
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new TapPermanentsEffect(TapUntapScope.TARGET),
@@ -188,7 +189,7 @@ class EtbTriggerServiceTest {
         Card creature = new Card();
         creature.setName("Reflexive Sacrifice Creature");
         creature.setType(CardType.CREATURE);
-        creature.target(TargetFilters.creature(), 0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        creature.target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(
                         new SacrificePermanentThenEffect(new PermanentIsCreaturePredicate(),
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
@@ -211,8 +212,8 @@ class EtbTriggerServiceTest {
         creature.setType(CardType.CREATURE);
         ExileGraveyardCardsEffect exile = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
         LoseLifeEffect lifeLoss = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exile);
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, lifeLoss);
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS), exile);
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS), lifeLoss);
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
 
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
@@ -277,7 +278,7 @@ class EtbTriggerServiceTest {
                 new ChooseOneEffect.ChooseOneOption("Draw one", new DrawCardEffect(1)),
                 new ChooseOneEffect.ChooseOneOption("Draw another", new DrawCardEffect(1))),
                 new Delirium());
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChooseOneAtTriggerTimeEffect(modal));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
         when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);

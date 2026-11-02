@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "34")
 @CardRegistration(set = "PIP", collectorNumber = "562")
@@ -25,6 +27,6 @@ public class NerdRage extends Card {
                         EffectSlot.ON_ATTACK,
                         new ConditionalEffect(new CardsInHandAtLeast(10), new BoostSelfEffect(10, 10)),
                         GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
     }
 }

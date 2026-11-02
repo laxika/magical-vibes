@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,8 +15,8 @@ import java.util.List;
 public class GlassblowersPuzzleknot extends Card {
 
     public GlassblowersPuzzleknot() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

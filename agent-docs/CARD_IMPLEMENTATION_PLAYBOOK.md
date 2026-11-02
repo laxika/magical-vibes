@@ -75,7 +75,7 @@ public class ExampleCard extends Card {
 
 - ETB target-opponent control handoff:
   - `setTargetFilter(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), ...))`
-  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect())`
+  - `addTrigger(Triggers.enters(ObjectRelation.THIS), new TargetPlayerGainsControlOfSourceCreatureEffect())`
   - Targeting is computed from the ETB effect — no `setNeedsTarget` call needed.
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
 
@@ -116,7 +116,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/f/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
 - Kindred Enchantment with ETB token creation + activated token ability:
-  - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(N, tokenName, power, toughness, color, colors, subtypes))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes)), description))`
+  - `addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(N, tokenName, power, toughness, color, colors, subtypes))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes)), description))`
   - Example: `magical-vibes-card/c/src/main/java/com/github/laxika/magicalvibes/cards/c/ClachanFestival.java`
 
 - Per-blocker trigger ("becomes blocked by a creature"):
@@ -184,7 +184,7 @@ public class ExampleCard extends Card {
   - Like evoke, it is a pure-mana alternate cost forced through a dedicated entry point (`GameService.playCardWithProwl` / harness `castWithProwl`); the availability gate runs in `SpellCastingService`.
   - A static "[filter] spells you cast have prowl {cost}" grant uses `GrantProwlToSpellsEffect`; the engine synthesizes the alternate cast from the spell's effective creature types.
   - A static "[filter] permanent spells you cast have evoke {cost}" grant uses `GrantEvokeToSpellsEffect`; the engine synthesizes the alternate cast and adds the standard evoke sacrifice ETB to the runtime card.
-  - "When this creature enters, if its prowl cost was paid, [effect]": wrap the ETB effect in `ConditionalEffect(new CastForProwlCost(), innerEffect)` on `ON_ENTER_BATTLEFIELD` (Latchkey Faerie = `DrawCardEffect`). The prowl flag is stamped on the `StackEntry`/`Permanent` at cast/resolution and gated by `EtbEffectResolver` (unwrap when paid, drop otherwise — CR 603.4).
+  - "When this creature enters, if its prowl cost was paid, [effect]": wrap the ETB effect in `ConditionalEffect(new CastForProwlCost(), innerEffect)` on `Triggers.enters(ObjectRelation.THIS)` (Latchkey Faerie = `DrawCardEffect`). The prowl flag is stamped on the `StackEntry`/`Permanent` at cast/resolution and gated by `EtbEffectResolver` (unwrap when paid, drop otherwise — CR 603.4).
 - Freerunning ("Freerunning {cost}" — an alternate hand cost gated on combat damage with an Assassin or commander): use `new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), new Freerunning(), false)`. The condition reads the existing combat-damage source history and designated commander identities; cast it through `GameService.playCardWithAlternateCost` / harness `castWithAlternateCost`.
   - Example: `magical-vibes-card/k/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
 

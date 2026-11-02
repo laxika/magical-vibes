@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureBecomesCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTJ", collectorNumber = "192")
 public class AssimilationAegis extends Card {
 
     public AssimilationAegis() {
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect());
         addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
                 new AttachedCreatureBecomesCopyOfExiledCreatureEffect());

@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTur
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MRD", collectorNumber = "112")
 public class WarElemental extends Card {
 
     public WarElemental() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new NotCondition(new OpponentDealtDamageThisTurn(1)), new SacrificeSelfEffect()));
         addEffect(EffectSlot.ON_OPPONENT_DEALT_DAMAGE,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));

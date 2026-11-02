@@ -26,7 +26,7 @@ public class LordXanderTheCollector extends Card {
     public LordXanderTheCollector() {
         PermanentNotPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         target(opponentTarget())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DiscardEffect(
                                 new Divided(new CardsInHand(CountScope.TARGET_PLAYER), 2),
                                 DiscardRecipient.TARGET_PLAYER))

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -15,10 +14,12 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Classifies instant-speed cards by their primary role. For instants, scans the
- * card's SPELL effects. For flash creatures, scans ON_ENTER_BATTLEFIELD effects.
+ * card's SPELL effects. For flash creatures, scans its "when this enters" effects.
  * Returns the first matching category. Priority order ensures
  * counter > removal > combat trick > burn > card advantage > other/flash_creature.
  */
@@ -90,7 +91,7 @@ public final class InstantCategoryClassifier {
     }
 
     /**
-     * Classifies a flash creature by scanning its ON_ENTER_BATTLEFIELD effects.
+     * Classifies a flash creature by scanning its "when this enters" effects.
      * If the creature has a notable ETB (removal, card draw, etc.), it returns
      * the corresponding instant category so timing rules match. Otherwise returns
      * FLASH_CREATURE for generic "cast at end of opponent's turn" handling.
@@ -100,7 +101,7 @@ public final class InstantCategoryClassifier {
             return InstantCategory.OTHER;
         }
 
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             InstantCategory cat = classifySingleEffect(effect);
             if (cat != null) return cat;
         }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -21,7 +20,7 @@ import java.util.List;
 public class CryogenRelic extends Card {
 
     public CryogenRelic() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(

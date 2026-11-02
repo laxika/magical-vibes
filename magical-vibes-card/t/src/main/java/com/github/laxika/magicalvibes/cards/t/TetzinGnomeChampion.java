@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
@@ -32,7 +31,7 @@ public class TetzinGnomeChampion extends Card {
     public TetzinGnomeChampion() {
         setBackFaceCard(new TheGoldenGearColossus());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, MILL_ARTIFACT);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), MILL_ARTIFACT);
         addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

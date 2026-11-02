@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class LithoformBlight extends Card {
     public LithoformBlight() {
         target(TargetFilters.land());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         addStaticEffect(new LoseAllLandTypesEffect(GrantScope.ENCHANTED_PERMANENT, null));
         addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT));
         addStaticEffect(new GrantActivatedAbilityEffect(

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECL", collectorNumber = "46")
 @CardRegistration(set = "ECL", collectorNumber = "356")
@@ -25,8 +27,8 @@ public class ChampionsOfTheShoal extends Card {
                 new TapPermanentsEffect(TapUntapScope.TARGET),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN))
                 .addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
                         new TriggeringPermanentConditionalEffect(

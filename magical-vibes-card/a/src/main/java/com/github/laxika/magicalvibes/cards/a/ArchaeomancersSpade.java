@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.SeekFromLibraryToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ import java.util.List;
 public class ArchaeomancersSpade extends Card {
 
     public ArchaeomancersSpade() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SequenceEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SequenceEffect(List.of(
                 new SeekFromLibraryToGraveyardEffect(new CardHasFlashbackPredicate()),
                 new SeekFromLibraryToGraveyardEffect(new CardHasFlashbackPredicate()))));
 

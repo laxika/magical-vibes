@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class IndrisTheHydrostaticSurge extends Card {
     public IndrisTheHydrostaticSurge() {
         CardEffect stormLightningBolt = new ConjureCardIntoControllerLibraryEffect(
                 "M10", "146", List.of(LegacySlots.triggered(EffectSlot.ON_SELF_CAST, List.of(new StormEffect()))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 stormLightningBolt,
                 stormLightningBolt,
                 stormLightningBolt,

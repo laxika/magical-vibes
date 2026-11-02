@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,11 +25,11 @@ import java.util.Set;
 public class TeysaOfTheGhostCouncil extends Card {
 
     public TeysaOfTheGhostCouncil() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(1, "Spirit", 1, 1, CardColor.WHITE,
                         Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.SPIRIT),
                         Set.of(Keyword.FLYING), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new IntensifySourceCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new IntensifySourceCardEffect(1));
 
         addStaticEffect(new DynamicStaticBoostEffect(
                 new SourceIntensity(), new Fixed(0), GrantScope.OWN_CREATURES,

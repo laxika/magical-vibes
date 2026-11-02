@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M21", collectorNumber = "110")
 @CardRegistration(set = "M21", collectorNumber = "299")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class LilianasStandardBearer extends Card {
 
     public LilianasStandardBearer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(new CreatureDeathsThisTurn(CountScope.CONTROLLER)));
     }
 }

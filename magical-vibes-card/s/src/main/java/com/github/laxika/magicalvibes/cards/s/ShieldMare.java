@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -20,7 +22,7 @@ public class ShieldMare extends Card {
 
         // When this creature enters or becomes the target of a spell or ability an opponent
         // controls, you gain 3 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new GainLifeEffect(3));
     }
 }

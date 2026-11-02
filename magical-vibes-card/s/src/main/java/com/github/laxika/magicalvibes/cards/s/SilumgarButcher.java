@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DTK", collectorNumber = "122")
 @CardRegistration(set = "PIO", collectorNumber = "109")
@@ -14,7 +16,7 @@ public class SilumgarButcher extends Card {
 
     public SilumgarButcher() {
         // Exploit (When this creature enters, you may sacrifice a creature.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
 
         // When this creature exploits a creature, target creature gets -3/-3 until end of turn.

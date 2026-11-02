@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -51,7 +53,7 @@ public class VibraniumMiningMech extends Card {
     );
 
     public VibraniumMiningMech() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, VIBRANIUM_TOKEN);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), VIBRANIUM_TOKEN);
         addEffect(EffectSlot.ON_ATTACK, VIBRANIUM_TOKEN);
 
         addActivatedAbility(new ActivatedAbility(

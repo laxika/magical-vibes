@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,7 +16,7 @@ import java.util.Set;
 public class UndercellarMyconid extends Card {
 
     public UndercellarMyconid() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, saprolingToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), saprolingToken());
         addTrigger(Triggers.dies(ObjectRelation.THIS), saprolingToken());
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }

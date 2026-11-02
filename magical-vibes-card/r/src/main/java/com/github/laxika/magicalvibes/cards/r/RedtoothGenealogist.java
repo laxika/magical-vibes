@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -37,7 +39,7 @@ public class RedtoothGenealogist extends Card {
         target(new PermanentPredicateTargetFilter(
                 anotherCreatureYouControl,
                 "Target must be another creature you control"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenAttachedToTargetEffect(royalRoleToken()));
     }
 

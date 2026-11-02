@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class VishgrazTheDoomhive extends Card {
         addStaticEffect(new BoostSelfEffect(
                 new OpponentPoisonCounters(), new OpponentPoisonCounters()));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.CREATURE,
                 3,
                 "Mite",

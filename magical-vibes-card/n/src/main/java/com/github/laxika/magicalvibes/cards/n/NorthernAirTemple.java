@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -22,7 +21,7 @@ public class NorthernAirTemple extends Card {
     public NorthernAirTemple() {
         PermanentCount shrineCount = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new LoseLifeEffect(shrineCount, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(shrineCount)));
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),

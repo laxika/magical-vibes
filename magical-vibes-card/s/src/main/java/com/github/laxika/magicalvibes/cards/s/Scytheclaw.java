@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "408")
 @CardRegistration(set = "CMM", collectorNumber = "615")
@@ -21,7 +23,7 @@ public class Scytheclaw extends Card {
 
     public Scytheclaw() {
         // Living weapon — create a 0/0 black Phyrexian Germ token and attach
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LivingWeaponEffect());
 
         // Equipped creature gets +1/+1
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));

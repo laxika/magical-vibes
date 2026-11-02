@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class DuskanaTheRageMother extends Card {
 
         // When Duskana enters, draw a card for each creature you control with base power and
         // toughness 2/2.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DrawCardEffect(new PermanentCount(twoTwoCreature, CountScope.CONTROLLER)));
 
         // Whenever a creature you control with base power and toughness 2/2 attacks, it gets

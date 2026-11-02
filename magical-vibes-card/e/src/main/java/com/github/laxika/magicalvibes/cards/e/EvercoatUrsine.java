@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOneFromTopCardsFaceDownWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLC", collectorNumber = "30")
 @CardRegistration(set = "BLC", collectorNumber = "64")
 public class EvercoatUrsine extends Card {
 
     public EvercoatUrsine() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ExileOneFromTopCardsFaceDownWithSourceEffect(3, true),
                 new ExileOneFromTopCardsFaceDownWithSourceEffect(3, true)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

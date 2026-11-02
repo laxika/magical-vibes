@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,7 @@ public class MisfortuneTeller extends Card {
                 CreateTokenEffect.ofTreasureToken(1),
                 new GainLifeEffect(3));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exileEffect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), exileEffect);
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, exileEffect);
     }
 }

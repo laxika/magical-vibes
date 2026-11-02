@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -28,7 +27,7 @@ import java.util.List;
 public class SkyfisherSpider extends Card {
 
     public SkyfisherSpider() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

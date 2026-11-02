@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMC", collectorNumber = "10")
 public class BaxterFlyInTheOintment extends Card {
@@ -20,7 +22,7 @@ public class BaxterFlyInTheOintment extends Card {
                 Keyword.FLYING,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.ANY));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, flyingForCounteredCreatures);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), flyingForCounteredCreatures);
         addEffect(EffectSlot.ON_ATTACK, flyingForCounteredCreatures);
 
         // Whenever you draw a card, put a +1/+1 counter on Baxter.

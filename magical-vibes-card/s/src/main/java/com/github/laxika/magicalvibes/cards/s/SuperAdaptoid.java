@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -42,21 +44,27 @@ public class SuperAdaptoid extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         copyKeywordAsCounter(Keyword.FIRST_STRIKE, CounterType.FIRST_STRIKE))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         copyKeywordAsCounter(Keyword.DOUBLE_STRIKE, CounterType.DOUBLE_STRIKE))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         copyKeywordAsCounter(Keyword.DEATHTOUCH, CounterType.DEATHTOUCH))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         copyKeywordAsCounter(Keyword.INDESTRUCTIBLE, CounterType.INDESTRUCTIBLE))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyKeywordAsCounter(Keyword.REACH, CounterType.REACH))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        copyKeywordAsCounter(Keyword.LIFELINK, CounterType.LIFELINK))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        copyKeywordAsCounter(Keyword.MENACE, CounterType.MENACE))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        copyKeywordAsCounter(Keyword.REACH, CounterType.REACH))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        copyKeywordAsCounter(Keyword.TRAMPLE, CounterType.TRAMPLE))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         copyKeywordAsCounter(Keyword.VIGILANCE, CounterType.VIGILANCE))
                 .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.HASTE, CounterType.HASTE))
                 .addEffect(EffectSlot.ON_ATTACK, copyKeywordAsCounter(Keyword.FLYING, CounterType.FLYING))

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class VedalkenPlotter extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                         new PermanentIsLandPredicate())),
                 "Second target must be a land an opponent controls"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExchangeControlOfTargetPermanentsEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ExchangeControlOfTargetPermanentsEffect(
                         new PermanentIsLandPredicate(), false));
     }
 }

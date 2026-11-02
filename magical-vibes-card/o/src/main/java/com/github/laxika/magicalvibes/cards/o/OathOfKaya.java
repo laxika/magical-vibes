@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,8 +31,8 @@ public class OathOfKaya extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(3));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
 
         addEffect(EffectSlot.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL,
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));

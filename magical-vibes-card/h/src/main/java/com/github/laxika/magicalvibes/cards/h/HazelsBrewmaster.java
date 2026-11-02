@@ -8,15 +8,17 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLC", collectorNumber = "17")
 @CardRegistration(set = "BLC", collectorNumber = "52")
 public class HazelsBrewmaster extends Card {
 
     public HazelsBrewmaster() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofFoodToken(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofFoodToken(1));
         addEffect(EffectSlot.ON_ATTACK,
                 ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource());
         addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofFoodToken(1));

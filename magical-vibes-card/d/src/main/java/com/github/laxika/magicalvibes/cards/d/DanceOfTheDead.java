@@ -35,7 +35,7 @@ public class DanceOfTheDead extends Card {
                 .targetGraveyard(true)
                 .enterTapped(true)
                 .build());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReanimateEnchantedCreatureCardEffect(true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ReanimateEnchantedCreatureCardEffect(true));
         // "Enchanted creature gets +1/+1 and doesn't untap during its controller's untap step."
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
         addStaticEffect(DoesntUntapEffect.enchanted());

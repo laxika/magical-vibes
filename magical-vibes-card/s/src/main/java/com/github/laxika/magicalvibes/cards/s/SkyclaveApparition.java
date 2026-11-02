@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForExiledCardsWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
@@ -39,7 +38,7 @@ public class SkyclaveApparition extends Card {
         target(new PermanentPredicateTargetFilter(
                 targetPredicate,
                 "Target must be a nonland, nontoken permanent you don't control with mana value 4 or less"
-        ), 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetPermanentAndTrackWithSourceEffect());
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),

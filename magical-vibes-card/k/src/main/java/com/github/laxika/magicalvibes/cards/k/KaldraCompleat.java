@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -19,7 +21,7 @@ import java.util.Set;
 public class KaldraCompleat extends Card {
 
     public KaldraCompleat() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LivingWeaponEffect());
         addStaticEffect(new StaticBoostEffect(5, 5, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE, Keyword.HASTE),

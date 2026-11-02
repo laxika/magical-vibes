@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,7 +24,7 @@ public class SandScout extends Card {
     public SandScout() {
         // When this creature enters, if an opponent controls more lands than you, search your
         // library for a Desert card, put it onto the battlefield tapped, then shuffle.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new OpponentControlsMoreLands(),
                         new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DESERT),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED)));

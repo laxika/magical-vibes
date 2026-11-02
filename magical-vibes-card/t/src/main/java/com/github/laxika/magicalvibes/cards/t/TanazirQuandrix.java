@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerTo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "STX", collectorNumber = "240")
 @CardRegistration(set = "SOC", collectorNumber = "332")
@@ -18,7 +20,7 @@ public class TanazirQuandrix extends Card {
 
     public TanazirQuandrix() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DoublePlusOneCountersOnTargetCreatureEffect());
 
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(

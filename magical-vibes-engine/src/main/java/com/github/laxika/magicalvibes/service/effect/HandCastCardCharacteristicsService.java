@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdventureToCreatureCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantOffspringToCreatureSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
@@ -87,7 +88,7 @@ public final class HandCastCardCharacteristicsService {
                 .noneMatch(KickerEffect.class::isInstance)) {
             Card copy = effective.createRuntimeCopy();
             copy.addStaticEffect(new KickerEffect(offspringCost, false));
-            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+            copy.addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
                     new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
             effective = copy;
         }

@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "188")
 @CardRegistration(set = "RVR", collectorNumber = "211")
@@ -23,6 +24,6 @@ public class PrimeSpeakerZegana extends Card {
                 new GreatestPowerAmongControlled()));
 
         // When Prime Speaker Zegana enters, draw cards equal to its power.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(new SourcePower()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(new SourcePower()));
     }
 }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "80")
 @CardRegistration(set = "VOW", collectorNumber = "71")
@@ -18,7 +20,7 @@ public class OverchargedAmalgam extends Card {
         // Flash, Flying, Exploit — keywords auto-loaded from Scryfall.
 
         // Exploit (When this creature enters, you may sacrifice a creature.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
 
         // When this creature exploits a creature, counter target spell, activated ability, or

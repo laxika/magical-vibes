@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZEN", collectorNumber = "18")
 @CardRegistration(set = "DDI", collectorNumber = "13")
@@ -16,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class KorCartographer extends Card {
 
     public KorCartographer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchLibraryEffect(
                         new CardSubtypePredicate(CardSubtype.PLAINS),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),

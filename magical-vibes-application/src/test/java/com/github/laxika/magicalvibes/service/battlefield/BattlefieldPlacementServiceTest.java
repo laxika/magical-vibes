@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -243,7 +244,7 @@ class BattlefieldPlacementServiceTest {
         Card card = new Card();
         card.setName("Entering Permanent");
         card.setType(CardType.ARTIFACT);
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         return new Permanent(card);
     }
 

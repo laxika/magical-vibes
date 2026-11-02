@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesPermanentToExileUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -16,7 +15,7 @@ public class WormfangCrab extends Card {
 
     public WormfangCrab() {
         addStaticEffect(new CantBeBlockedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new OpponentChoosesPermanentToExileUntilSourceLeavesEffect(
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),

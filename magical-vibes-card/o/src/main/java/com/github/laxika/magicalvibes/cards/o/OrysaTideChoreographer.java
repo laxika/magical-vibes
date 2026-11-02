@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOS", collectorNumber = "62")
 public class OrysaTideChoreographer extends Card {
@@ -16,6 +17,6 @@ public class OrysaTideChoreographer extends Card {
                 new FixedIfControlledCreaturesTotalToughnessAtLeast(10, 3)));
 
         // When Orysa enters, draw two cards.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
     }
 }

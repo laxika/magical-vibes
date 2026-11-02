@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class RoyalTalonFighterJet extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         CountersOnSource plusOnePlusOneCounters = new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.whiteSoldier(plusOnePlusOneCounters));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.whiteSoldier(plusOnePlusOneCounters));
         addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.whiteSoldier(plusOnePlusOneCounters));
 
         addActivatedAbility(new ActivatedAbility(

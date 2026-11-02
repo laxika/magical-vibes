@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
@@ -386,6 +387,11 @@ public class TriggerCollectionService {
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
+    }
+
+    /** {@link GrantedTriggeredAbilitySupport#grantedTriggerEffects}. */
+    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent, Trigger trigger) {
+        return grantedTriggeredAbilitySupport.grantedTriggerEffects(gameData, permanent, trigger);
     }
 
     /** {@link GrantedTriggeredAbilitySupport#grantedZoneChangeAbilities}. */

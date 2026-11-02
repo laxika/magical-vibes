@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class HuntersTalent extends Card {
     public HuntersTalent() {
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetDealsPowerDamageToTargetEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TargetDealsPowerDamageToTargetEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

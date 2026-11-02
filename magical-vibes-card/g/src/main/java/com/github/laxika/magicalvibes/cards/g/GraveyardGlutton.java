@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 public class GraveyardGlutton extends Card {
 
     public GraveyardGlutton() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exileFromGraveyard());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), exileFromGraveyard());
         addEffect(EffectSlot.ON_ATTACK, exileFromGraveyard());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessDiscardsEffect());
     }

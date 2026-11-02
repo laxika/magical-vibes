@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExiledWithSourceTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Search the City — {4}{U} enchantment.
@@ -22,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayedCardNameMatchesCardExil
 public class SearchTheCity extends Card {
 
     public SearchTheCity() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(5, false));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTopCardsToSourceEffect(5, false));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new PlayedCardNameMatchesCardExiledWithSourceTriggerEffect());
         addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,

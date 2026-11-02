@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ import java.util.Set;
 public class MuYanlingWindRider extends Card {
 
     public MuYanlingWindRider() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Vehicle", 3, 2, null, null,
                 List.of(CardSubtype.VEHICLE), Set.of(), Set.of(), false, false, List.of(),
                 List.of(new ActivatedAbility(

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "247")
 @CardRegistration(set = "FIN", collectorNumber = "513")
@@ -19,7 +21,7 @@ public class UltimeciaTimeSorceress extends Card {
     public UltimeciaTimeSorceress() {
         setBackFaceCard(new UltimeciaOmnipotent());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
         addEffect(EffectSlot.ON_ATTACK, new SurveilEffect(2));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 ConditionalEffect.unless(

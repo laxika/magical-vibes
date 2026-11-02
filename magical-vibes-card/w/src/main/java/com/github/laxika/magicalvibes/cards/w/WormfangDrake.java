@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "JUD", collectorNumber = "57")
 @CardRegistration(set = "DMR", collectorNumber = "74")
 public class WormfangDrake extends Card {
 
     public WormfangDrake() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChampionCreatureEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChampionCreatureEffect());
     }
 }

@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class SkyclaveCleric extends Card {
         setBackFaceCard(new SkyclaveBasilica());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Skyclave Cleric", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Skyclave Basilica", List.of())

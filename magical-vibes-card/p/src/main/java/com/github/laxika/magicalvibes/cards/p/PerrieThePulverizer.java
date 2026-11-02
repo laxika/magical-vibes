@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "5")
 @CardRegistration(set = "NCC", collectorNumber = "107")
@@ -18,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PerrieThePulverizer extends Card {
 
     public PerrieThePulverizer() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutCounterOnTargetPermanentEffect(CounterType.SHIELD));
 
         target(TargetFilters.creatureYouControl())

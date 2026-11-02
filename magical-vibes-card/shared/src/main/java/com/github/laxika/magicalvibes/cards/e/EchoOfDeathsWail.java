@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class EchoOfDeathsWail extends Card {
             new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
     public EchoOfDeathsWail() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GainControlOfAllPermanentsMatchingEffect(RAT_TOKEN));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SacrificePermanentThenEffect(ANOTHER_CREATURE, new DrawCardEffect(1),

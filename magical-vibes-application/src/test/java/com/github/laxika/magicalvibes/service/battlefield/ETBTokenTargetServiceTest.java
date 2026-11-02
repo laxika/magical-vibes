@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,6 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -59,7 +60,7 @@ class ETBTokenTargetServiceTest {
         card.setName("Player targeting trigger");
         var effect = new com.github.laxika.magicalvibes.model.effect.LoseLifeEffect(
                 1, com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient.TARGET_PLAYER);
-        card.target(0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        card.target(0, 2).addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 card, player1Id, List.of(effect), null, List.of(), 0, 0);
         gd.queueInteraction(pending);
@@ -157,7 +158,7 @@ class ETBTokenTargetServiceTest {
         Card sourceCard = new Card();
         sourceCard.setName("Venser, Shaper Savant");
         var effect = new ReturnTargetSpellOrPermanentToHandEffect();
-        sourceCard.target(TargetFilters.permanent()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        sourceCard.target(TargetFilters.permanent()).addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         gd.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                 sourceCard, player1Id, List.of(effect), null, false, null));
 
@@ -217,9 +218,9 @@ class ETBTokenTargetServiceTest {
         Card card = new Card();
         card.setName("Noggle Hedge-Mage");
         var group0Effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
-        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, group0Effect);
+        card.target(null, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), group0Effect);
         var group1Effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
-        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, group1Effect);
+        card.target(null, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), group1Effect);
 
         gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 card, player1Id, List.of(group1Effect), UUID.randomUUID(), List.of(), 0, 0));
@@ -256,8 +257,8 @@ class ETBTokenTargetServiceTest {
                 new PermanentIsCreaturePredicate(), "Target must be a creature that player controls");
         var handEffect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
         var creatureEffect = new ExileTargetPermanentUntilSourceLeavesEffect();
-        card.target(opponentFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, handEffect);
-        card.target(creatureFilter, 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, creatureEffect);
+        card.target(opponentFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), handEffect);
+        card.target(creatureFilter, 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), creatureEffect);
         card.setMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET);
         gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 card, player1Id, List.of(handEffect, creatureEffect), UUID.randomUUID(),
@@ -284,7 +285,7 @@ class ETBTokenTargetServiceTest {
         card.setName("Sylvan Primordial");
         card.setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
         var effect = new DestroyTargetPermanentEffect();
-        card.target(null, 0, 99).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        card.target(null, 0, 99).addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 card, player1Id, List.of(effect), UUID.randomUUID(), List.of(), 0, 0));
 
@@ -306,8 +307,8 @@ class ETBTokenTargetServiceTest {
         card.setAllowSharedTargets(true);
         var firstEffect = new DestroyTargetPermanentEffect();
         var secondEffect = new DestroyTargetPermanentEffect();
-        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, firstEffect);
-        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, secondEffect);
+        card.target(null, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), firstEffect);
+        card.target(null, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), secondEffect);
         gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 card, player1Id, List.of(firstEffect, secondEffect), UUID.randomUUID(),
                 List.of(candidate.getId()), 1, 0, List.of(1)));
@@ -323,7 +324,7 @@ class ETBTokenTargetServiceTest {
     void controllerChoiceTargetsTheControllerWhenTheyAreALegalTarget() {
         Card card = optionalPlayerTargetCard();
         var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                card, player1Id, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null, List.of(), 0, 0);
+                card, player1Id, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null, List.of(), 0, 0);
         when(targetLegalityService.matchesPlayerPredicate(eq(gd), eq(player1Id), eq(player1Id),
                 org.mockito.ArgumentMatchers.any())).thenReturn(true);
 
@@ -335,7 +336,7 @@ class ETBTokenTargetServiceTest {
     void controllerChoiceStopsAGroupThatCannotTargetPlayers() {
         Card card = optionalCreatureTargetCard();
         var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                card, player1Id, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null, List.of(), 0, 0);
+                card, player1Id, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null, List.of(), 0, 0);
 
         assertThat(service.controllerChoiceStopsGroup(gd, pending)).isTrue();
     }
@@ -346,10 +347,10 @@ class ETBTokenTargetServiceTest {
         Card playerTargetCard = optionalPlayerTargetCard();
         Card creatureTargetCard = optionalCreatureTargetCard();
         var playerTrigger = new PermanentChoiceContext.ETBTokenTargetTrigger(playerTargetCard, player1Id,
-                playerTargetCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null,
+                playerTargetCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null,
                 playerTargetCard.getTargetFilter(), null);
         var creatureTrigger = new PermanentChoiceContext.ETBTokenTargetTrigger(creatureTargetCard, player1Id,
-                creatureTargetCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null,
+                creatureTargetCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null,
                 creatureTargetCard.getTargetFilter(), null);
 
         assertThat(service.controllerChoiceDeclines(gd, playerTrigger)).isFalse();
@@ -362,7 +363,7 @@ class ETBTokenTargetServiceTest {
         gd.playerIds.add(player1Id);
         Card card = optionalPlayerTargetCard();
         var pending = new PermanentChoiceContext.ETBTokenTargetTrigger(card, player1Id,
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null, card.getTargetFilter(), null);
+                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null, card.getTargetFilter(), null);
         gd.queueInteraction(pending);
 
         service.processNextETBTokenTargetTrigger(gd);
@@ -379,7 +380,8 @@ class ETBTokenTargetServiceTest {
         card.setName("Endurance");
         card.target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY),
                         "Target must be a player"), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutTargetPlayerGraveyardOnBottomOfLibraryEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new PutTargetPlayerGraveyardOnBottomOfLibraryEffect());
         return card;
     }
 
@@ -388,7 +390,7 @@ class ETBTokenTargetServiceTest {
         card.setName("Ennis, Debate Moderator");
         card.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature"), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
         return card;
     }
 }

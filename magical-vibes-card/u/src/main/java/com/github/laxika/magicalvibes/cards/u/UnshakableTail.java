@@ -26,7 +26,7 @@ import java.util.List;
 public class UnshakableTail extends Card {
 
     public UnshakableTail() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(1));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));
         addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE,
                 ObjectRelation.YOU_OWN)),

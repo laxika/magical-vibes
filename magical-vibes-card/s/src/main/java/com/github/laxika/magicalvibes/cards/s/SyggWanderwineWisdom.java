@@ -29,7 +29,7 @@ public class SyggWanderwineWisdom extends Card {
         // gains "Whenever this creature deals combat damage to a player or planeswalker, draw a card"
         // until end of turn.
         target(TargetFilters.creature());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, combatDamageDraw);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), combatDamageDraw);
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), combatDamageDraw);
 
         // At the beginning of your first main phase, you may pay {W}. If you do, transform Sygg.

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -24,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -37,7 +38,7 @@ public class LukaminaMoonDruid extends Card {
     }
 
     public static void addBaseAbilities(Card card) {
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new WasCast(),
                         new SeekLibraryEffect(1, landWithBasicLandType())));
 

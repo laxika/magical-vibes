@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,8 +36,8 @@ public class OxDrover extends Card {
         var oxToken = new CreateTokenForTargetPlayerEffect(new CreateTokenEffect(
                 "Ox", 2, 4, CardColor.WHITE, List.of(CardSubtype.OX), Set.of(), Set.of()));
         target(opponentTarget)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, oxToken)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), oxToken)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1))
                 .addEffect(EffectSlot.ON_ATTACK, oxToken)
                 .addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect(1));
     }

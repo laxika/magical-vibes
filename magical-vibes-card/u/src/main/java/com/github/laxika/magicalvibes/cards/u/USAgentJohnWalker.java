@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndAttachToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class USAgentJohnWalker extends Card {
         CreateTokenEffect sturdyShield = CreateTokenEffect.ofArtifactToken(
                 1, "Sturdy Shield", List.of(CardSubtype.EQUIPMENT), List.of(new EquipActivatedAbility("{2}")))
                 .withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenAndAttachToSourceEffect(sturdyShield));
     }
 }

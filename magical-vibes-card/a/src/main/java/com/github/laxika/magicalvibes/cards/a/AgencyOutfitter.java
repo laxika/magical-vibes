@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "38")
 public class AgencyOutfitter extends Card {
@@ -13,7 +14,7 @@ public class AgencyOutfitter extends Card {
     public AgencyOutfitter() {
         // When this creature enters, you may search your graveyard, hand, and/or library for a card
         // named Magnifying Glass and/or a card named Thinking Cap and put them onto the battlefield.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchZonesForCardNamedToBattlefieldEffect(java.util.List.of("Magnifying Glass", "Thinking Cap")),
                 "Search your graveyard, hand, and/or library for a card named Magnifying Glass and/or "
                         + "a card named Thinking Cap?"));

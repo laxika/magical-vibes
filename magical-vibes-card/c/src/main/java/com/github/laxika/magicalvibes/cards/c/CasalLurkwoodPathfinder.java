@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1241")
 @CardRegistration(set = "SLX", collectorNumber = "29")
@@ -17,7 +19,7 @@ public class CasalLurkwoodPathfinder extends Card {
     public CasalLurkwoodPathfinder() {
         setBackFaceCard(new CasalPathbreakerOwlbear());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.FOREST),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
         addEffect(EffectSlot.ON_ATTACK,

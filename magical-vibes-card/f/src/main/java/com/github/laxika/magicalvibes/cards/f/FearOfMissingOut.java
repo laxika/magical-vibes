@@ -14,13 +14,15 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "136")
 public class FearOfMissingOut extends Card {
 
     public FearOfMissingOut() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new OncePerTurnTriggerEffect(
                 new ConditionalEffect(new Delirium(), SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),

@@ -3,13 +3,15 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "156")
 @CardRegistration(set = "TSR", collectorNumber = "250")
@@ -23,11 +25,12 @@ public class DormantSliver extends Card {
                 sliver));
         addStaticEffect(new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, sliver));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DrawCardEffect(1),
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                new DrawCardEffect(1)),
                 GrantScope.ALL_PERMANENTS,
                 sliver));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1), GrantScope.SELF, sliver));
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                        new DrawCardEffect(1)), GrantScope.SELF, sliver));
     }
 }

@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnLandsBecomeChosenTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class ElsewhereFlask extends Card {
 
     public ElsewhereFlask() {
         // When this artifact enters, draw a card.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
 
         // Sacrifice this artifact: Choose a basic land type. Each land you control becomes
         // that type until end of turn.

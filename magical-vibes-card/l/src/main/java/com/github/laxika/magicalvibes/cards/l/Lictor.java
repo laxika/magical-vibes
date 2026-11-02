@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +22,7 @@ public class Lictor extends Card {
     public Lictor() {
         // Pheromone Trail — when this creature enters, create a Tyranid Warrior token if a
         // creature entered the battlefield under an opponent's control this turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new OpponentPermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE), 1),
                 new CreateTokenEffect(
                         "Tyranid Warrior", 3, 3, CardColor.GREEN,

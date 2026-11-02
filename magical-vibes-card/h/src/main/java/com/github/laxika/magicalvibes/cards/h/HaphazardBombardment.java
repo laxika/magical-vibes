@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentsAndPu
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "131")
 public class HaphazardBombardment extends Card {
@@ -15,7 +17,7 @@ public class HaphazardBombardment extends Card {
     public HaphazardBombardment() {
         // "When this enchantment enters, choose four nonenchantment permanents you don't
         // control and put an aim counter on each of them."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChooseOpponentPermanentsAndPutCountersEffect(
                         CounterType.AIM, 4,
                         new PermanentNotPredicate(new PermanentIsEnchantmentPredicate())));

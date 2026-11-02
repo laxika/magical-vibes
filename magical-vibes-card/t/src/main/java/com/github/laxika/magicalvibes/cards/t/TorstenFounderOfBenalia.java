@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class TorstenFounderOfBenalia extends Card {
 
     public TorstenFounderOfBenalia() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LookAtTopCardsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LookAtTopCardsEffect(
                 new Fixed(7), new Fixed(7),
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

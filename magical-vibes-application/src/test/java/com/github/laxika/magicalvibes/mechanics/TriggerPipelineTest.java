@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -275,6 +276,42 @@ class TriggerPipelineTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(triggersOf(self)).hasSize(1);
         assertThat(triggersOf(other)).isEmpty();
+    }
+
+    @Test
+    void aWhenThisEntersAbilityTriggersOnceForItsOwnEntryAndNotForAnotherPermanents() {
+        Card self = new GrizzlyBears();
+        self.addTrigger(Triggers.enters(ObjectRelation.THIS), GAIN);
+        harness.setHand(player1, List.of(self, new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        onlyTriggerOf(self);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(triggersOf(self)).isEmpty();
+    }
+
+    @Test
+    void plainWhenThisEntersAbilitiesShareOneStackObjectAndAnIndependentOneHasItsOwn() {
+        Card card = new GrizzlyBears();
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), DRAW);
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), GAIN);
+        CardEffect independent = new GainLifeEffect(1);
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, independent);
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(triggersOf(card)).extracting(StackEntry::getEffectsToResolve)
+                .containsExactlyInAnyOrder(List.of(DRAW, GAIN), List.of(independent));
     }
 
     @Test

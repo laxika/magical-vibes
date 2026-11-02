@@ -26,7 +26,7 @@ public class RampartArchitect extends Card {
     public RampartArchitect() {
         CreateTokenEffect wallToken = new CreateTokenEffect(
                 "Wall", 1, 3, CardColor.WHITE, List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, wallToken);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), wallToken);
         addEffect(EffectSlot.ON_ATTACK, wallToken);
         var defenderDeathSearch = new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.DEFENDER),

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPai
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class GoblinHeelcutter extends Card {
 
     public GoblinHeelcutter() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}"))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnSelfToHandIfDashCostPaidEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),

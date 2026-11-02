@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
@@ -21,7 +20,7 @@ public class PatchplateResolute extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
                         new Fixed(1))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, boon);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), boon);
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), boon);
         addUnearth("{1}{W}");
     }

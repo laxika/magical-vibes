@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RAV", collectorNumber = "155")
 @CardRegistration(set = "IMA", collectorNumber = "156")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class CarvenCaryatid extends Card {
 
     public CarvenCaryatid() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
     }
 }

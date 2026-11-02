@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFromExileConditionalEffect;
@@ -18,7 +17,7 @@ public class ExtraordinaryJourney extends Card {
 
     public ExtraordinaryJourney() {
         targetUpTo(new XValue(), TargetFilters.creature(), 100)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentMayPlayWithOpponentTaxEffect(0));
         // The draw trigger also sees Extraordinary Journey's own entry when it is a creature (Opalescence).
         // The any-other slot skips the source, so the self-or-ally slot covers that entry; the once-each-turn

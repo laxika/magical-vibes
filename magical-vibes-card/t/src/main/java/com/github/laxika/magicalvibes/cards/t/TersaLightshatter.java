@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromGraveyardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "127")
 public class TersaLightshatter extends Card {
 
     public TersaLightshatter() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardUpToThenDrawThatManyEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardUpToThenDrawThatManyEffect(2));
 
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new GraveyardCardThreshold(7, new CardTruePredicate()),

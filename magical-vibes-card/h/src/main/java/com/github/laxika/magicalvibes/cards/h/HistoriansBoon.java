@@ -22,7 +22,7 @@ public class HistoriansBoon extends Card {
 
     public HistoriansBoon() {
         CreateTokenEffect soldier = CreateTokenEffect.whiteSoldier(1);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, soldier);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), soldier);
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()), soldier));

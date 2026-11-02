@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayCastMatchingUntilNextTurnEffect;
@@ -18,7 +17,7 @@ public class EagerFlameguide extends Card {
 
     public EagerFlameguide() {
         // When Eager Flameguide enters, add {C}{C}{C}. Spend this mana only to cast creature spells.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AwardRestrictedManaEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new AwardRestrictedManaEffect(
                 ManaColor.COLORLESS, 3, new ManaRestriction.CreatureSpells()));
 
         // When Eager Flameguide dies, exile the top two cards of your library. Until the end of

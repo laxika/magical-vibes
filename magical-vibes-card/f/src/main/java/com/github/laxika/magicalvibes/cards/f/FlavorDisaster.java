@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -50,7 +49,7 @@ public class FlavorDisaster extends Card {
         addMorph("{1}{G}");
         addStaticEffect(new PutCountersOnTurnFaceUpEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, false));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()))
                 .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(new SourcePower(), new SourcePower()));

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "98")
 @CardRegistration(set = "PIP", collectorNumber = "411")
@@ -20,12 +23,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class ColonelAutumn extends Card {
 
     public ColonelAutumn() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new MayEffect(new ExploitEffect(), "Sacrifice a creature?"),
+                        new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                        new MayEffect(new ExploitEffect(), "Sacrifice a creature?")),
                         GrantScope.OWN_CREATURES,
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
 

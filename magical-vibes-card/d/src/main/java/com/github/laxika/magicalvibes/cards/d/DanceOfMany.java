@@ -36,7 +36,7 @@ public class DanceOfMany extends Card {
                 // "When this enchantment enters, create a token that's a copy of target nontoken creature."
                 // Every token created this way becomes linked to this enchantment (see the leaves-battlefield
                 // triggers below); with a token doubler, "the token" refers to all of them.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenCopyAndLinkToSourceEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenCopyAndLinkToSourceEffect())
                 // "When this enchantment leaves the battlefield, exile the token."
                 .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ExileTokensCreatedWithSourceEffect())
                 // "At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}{U}."

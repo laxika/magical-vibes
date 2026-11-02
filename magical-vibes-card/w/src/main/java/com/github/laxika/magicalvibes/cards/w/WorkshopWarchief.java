@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,7 +25,7 @@ public class WorkshopWarchief extends Card {
     public WorkshopWarchief() {
         addCastingOption(AlternateHandCast.blitz("{4}{G}{G}"));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Rhino Warrior", 4, 4, CardColor.GREEN,

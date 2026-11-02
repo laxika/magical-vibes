@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,13 +31,13 @@ public class HarmonicSliver extends Card {
                 new DestroyTargetPermanentEffect(artifactOrEnchantment);
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                destroyArtifactOrEnchantment,
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                destroyArtifactOrEnchantment),
                 GrantScope.ALL_CREATURES,
                 sliver));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                destroyArtifactOrEnchantment,
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                destroyArtifactOrEnchantment),
                 GrantScope.SELF,
                 sliver));
     }

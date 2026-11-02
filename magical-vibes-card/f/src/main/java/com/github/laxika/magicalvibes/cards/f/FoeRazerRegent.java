@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DTK", collectorNumber = "187")
 @CardRegistration(set = "SCD", collectorNumber = "183")
@@ -15,7 +17,7 @@ public class FoeRazerRegent extends Card {
 
     public FoeRazerRegent() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                         new SourceFightsTargetCreatureEffect(),
                         "Have this creature fight target creature you don't control?"));
         addEffect(EffectSlot.ON_ALLY_CREATURE_FIGHTS,

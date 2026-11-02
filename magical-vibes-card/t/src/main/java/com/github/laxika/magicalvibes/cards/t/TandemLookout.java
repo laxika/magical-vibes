@@ -21,7 +21,7 @@ public class TandemLookout extends Card {
 
     public TandemLookout() {
         // Soulbond (CR 702.95): may pair when this or another unpaired creature enters.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Tandem Lookout with another unpaired creature you control?"));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

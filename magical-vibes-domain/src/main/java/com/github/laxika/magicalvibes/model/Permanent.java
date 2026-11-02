@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -2097,6 +2098,25 @@ public class Permanent {
         combined.addAll(untilEndOfCombat);
         combined.addAll(untilNextUpkeep);
         return combined;
+    }
+
+    /**
+     * The effects of the triggered abilities with {@code trigger} granted until end of turn, end of combat or next
+     * upkeep, then those granted until it leaves the battlefield, in that order.
+     */
+    public List<CardEffect> getGrantedTriggerEffects(Trigger trigger) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (TriggeredAbility ability : getTemporaryTriggeredAbilities()) {
+            if (ability.hasTrigger(trigger)) {
+                ability.effects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
+        for (TriggeredAbility ability : getPersistentTriggeredAbilities()) {
+            if (ability.hasTrigger(trigger)) {
+                ability.effects().forEach(registration -> effects.add(registration.effect()));
+            }
+        }
+        return effects;
     }
 
     /**

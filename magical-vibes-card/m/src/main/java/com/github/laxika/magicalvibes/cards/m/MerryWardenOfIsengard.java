@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -25,7 +24,7 @@ public class MerryWardenOfIsengard extends Card {
     private static final String PARTNER_NAME = "Pippin, Warden of Isengard";
 
     public MerryWardenOfIsengard() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(PARTNER_NAME),
                 "Have target player put " + PARTNER_NAME + " into their hand from their library?",
                 null,

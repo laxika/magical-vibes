@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -50,7 +51,8 @@ import java.util.UUID;
  * <p>A permanent entering is seen by every permanent on the battlefield after the event, the newcomers and the
  * entering permanent itself included (CR 603.6a). Those abilities, but for the token watches, are matched as the
  * entering permanent's own enters abilities are processed ({@link #triggerEnteringObservers}), where the old slot
- * collectors ran, once the permanents that entered with it are all on the battlefield. A permanent phasing, transforming or being turned face up is a {@link PermanentChangeEvent},
+ * collectors ran, once the permanents that entered with it are all on the battlefield. The entering permanent's own
+ * "when this enters" abilities are put on the stack there too, by {@code EtbTriggerService}, below the others. A permanent phasing, transforming or being turned face up is a {@link PermanentChangeEvent},
  * matched against permanent-change triggers: the "one or more" abilities once for the batch, then each event's.
  *
  * <p>Abilities still held in an {@code EffectSlot} are the slot collectors' business. For the slots a test puts in
@@ -60,6 +62,12 @@ import java.util.UUID;
  */
 @Service
 public class RulesEventPipeline {
+
+    /**
+     * "When this enters": the entering permanent's own enters abilities, which {@code EtbTriggerService} puts on the
+     * stack as it processes the permanent's entry, before the abilities that see it enter.
+     */
+    private static final ZoneChangeTrigger OWN_ENTRY = Triggers.enters(ObjectRelation.THIS);
 
     private final TriggerIndex triggerIndex;
     private final TriggeredAbilityStackService stackService;
@@ -215,7 +223,7 @@ public class RulesEventPipeline {
         for (TriggerCandidate candidate : triggerIndex.observerCandidates(gameData, event, batch)) {
             ZoneChangeTrigger trigger = TriggerMatcher.matchedTrigger(gameData, predicateEvaluationService,
                     candidate, event, false);
-            if (trigger == null || !matchedAsItsEntryIsProcessed(candidate, trigger)) {
+            if (trigger == null || !matchedAsItsEntryIsProcessed(candidate, trigger) || trigger.equals(OWN_ENTRY)) {
                 continue;
             }
             if (candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DGM", collectorNumber = "63")
 @CardRegistration(set = "GK1", collectorNumber = "58")
@@ -16,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 public class DeadbridgeChant extends Card {
 
     public DeadbridgeChant() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(10, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(10, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .returnAtRandom(true)

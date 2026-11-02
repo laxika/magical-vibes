@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ACR", collectorNumber = "7")
 @CardRegistration(set = "ACR", collectorNumber = "127")
@@ -21,7 +23,7 @@ public class LaylaHassan extends Card {
                 .targetGraveyard(true)
                 .build();
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnHistoricCard);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnHistoricCard);
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),

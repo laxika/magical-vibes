@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class OverlordOfTheBoilerbilges extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}{R}"))));
 
         DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(4);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, damage);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), damage);
         addEffect(EffectSlot.ON_ATTACK, damage);
 
         addStaticEffect(new ConditionalEffect(

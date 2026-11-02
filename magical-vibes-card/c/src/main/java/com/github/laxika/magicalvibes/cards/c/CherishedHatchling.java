@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
@@ -29,13 +29,13 @@ public class CherishedHatchling extends Card {
                 new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.DINOSAUR),
                 List.of(new GrantTriggeredAbilityToCastSpellEffect(
-                        EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                         new MayEffect(new EnteringCreatureFightsTargetCreatureEffect(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                                 ))),
-                                "Have it fight another target creature?"))),
+                                "Have it fight another target creature?")))),
                 false)));
     }
 }

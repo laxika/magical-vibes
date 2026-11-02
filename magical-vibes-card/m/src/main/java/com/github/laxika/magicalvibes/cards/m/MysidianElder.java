@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class MysidianElder extends Card {
     public MysidianElder() {
         // When this creature enters, create a 0/1 black Wizard creature token with
         // "Whenever you cast a noncreature spell, this token deals 1 damage to each opponent."
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Wizard", 0, 1,
                 CardColor.BLACK, null, List.of(CardSubtype.WIZARD), Set.of(), Set.of(),
                 false, false,

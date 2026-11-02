@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.EachOpponentGainsLifeCastingCost;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCast;
@@ -950,7 +949,7 @@ public class SpellCastingService {
 
     private static boolean isModalSpell(Card card) {
         return card.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance)
-                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(ChooseOneEffect.class::isInstance);
+                || card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream().anyMatch(ChooseOneEffect.class::isInstance);
     }
 
     private ReturnTargetCardsFromGraveyardToHandEffect restrictBargainedReturnCandidates(
@@ -1641,7 +1640,7 @@ public class SpellCastingService {
     }
 
     private void applyModalEtbTargetFilter(Card card, int effectiveXValue) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (effect instanceof ChooseOneEffect coe) {
                 if (effectiveXValue >= 0 && effectiveXValue < coe.options().size()) {
                     TargetFilter filter = coe.options().get(effectiveXValue).targetFilter();
@@ -1658,7 +1657,7 @@ public class SpellCastingService {
         if (effectiveXValue >= 0) {
             return false;
         }
-        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        return card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(e -> e instanceof ChooseOneEffect coe && coe.optional());
     }
 
@@ -4216,7 +4215,7 @@ public class SpellCastingService {
                 : modalRuntimeCopyForHandCast(effectiveHand, cardIndex);
         if (usingGrantedEvoke) {
             preparedCard = preparedCard.createRuntimeCopy();
-            preparedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());
+            preparedCard.addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
             effectiveHand.set(cardIndex, preparedCard);
         }
         if (usingGrantedBlitz) {
@@ -4324,7 +4323,7 @@ public class SpellCastingService {
         int perTargetCost = card.getAdditionalCostPerExtraTarget() * extraTargetCount;
         boolean hasXCost = card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX();
         String perTargetManaCost = repeatAdditionalTargetManaCost(card, extraTargetCount);
-        boolean hasModalEtb = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        boolean hasModalEtb = card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(ChooseOneEffect.class::isInstance);
         applyModalEtbTargetFilter(card, effectiveXValue);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
@@ -5563,7 +5562,7 @@ public class SpellCastingService {
         }
 
         if (hasModalEtb && targetId != null) {
-            for (CardEffect etbEffect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            for (CardEffect etbEffect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
                 if (etbEffect instanceof ChooseOneEffect choice
                         && effectiveXValue >= 0 && effectiveXValue < choice.options().size()) {
                     Zone etbTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE

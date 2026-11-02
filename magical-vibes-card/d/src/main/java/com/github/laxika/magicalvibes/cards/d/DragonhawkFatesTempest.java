@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class DragonhawkFatesTempest extends Card {
         ));
         var effect = new ExileTopCardsMayPlayUntilNextEndStepAndDamageForEachStillExiledEffect(
                 new PermanentCount(powerFourCreatures, CountScope.CONTROLLER), 2);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         addEffect(EffectSlot.ON_ATTACK, effect);
     }
 }

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MBS", collectorNumber = "119")
 @CardRegistration(set = "MB1", collectorNumber = "243")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class PeaceStrider extends Card {
 
     public PeaceStrider() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
     }
 }

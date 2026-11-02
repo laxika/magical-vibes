@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
@@ -60,6 +61,7 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
         var keyed = new OncePerTurnTriggerEffect(once.wrapped(), once.markOnAcceptance(),
                 "granted-by:" + grantingPermanentId, once.firstTokenCreation(), once.firstLifeGain(),
                 once.firstLandGraveyardEvent(), once.firstLifeLoss(), once.firstCycling());
-        return new GrantTriggeredAbilityEffect(grant.slot(), keyed, grant.scope(), grant.filter());
+        return new GrantTriggeredAbilityEffect(LegacySlots.withEffect(grant.grantedAbility(), keyed), grant.scope(),
+                grant.filter());
     }
 }

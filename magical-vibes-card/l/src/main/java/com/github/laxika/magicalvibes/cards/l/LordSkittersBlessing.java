@@ -34,7 +34,7 @@ public class LordSkittersBlessing extends Card {
 
     public LordSkittersBlessing() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(wickedRoleToken()));
 
         addEffect(EffectSlot.DRAW_TRIGGERED, new ConditionalEffect(

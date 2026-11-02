@@ -415,7 +415,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class CARDNAME extends Card {
 
     public CARDNAME() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EFFECT_CLASS(ARGS));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EFFECT_CLASS(ARGS));
     }
 }
 ```
@@ -669,7 +669,7 @@ public class CARDNAME extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(POWER_BOOST, TOUGHNESS_BOOST));
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(POWER_BOOST, TOUGHNESS_BOOST));
     }
 }
 ```

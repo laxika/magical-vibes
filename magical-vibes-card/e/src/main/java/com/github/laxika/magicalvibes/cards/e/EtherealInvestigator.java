@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "105")
 @CardRegistration(set = "VOC", collectorNumber = "12")
@@ -15,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 public class EtherealInvestigator extends Card {
 
     public EtherealInvestigator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 CreateTokenEffect.ofClueToken(new Sum(new PlayersInGame(), new Fixed(-1))));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
                 new NthCardDrawTriggerEffect(2, CreateTokenEffect.whiteSpirit(1)));

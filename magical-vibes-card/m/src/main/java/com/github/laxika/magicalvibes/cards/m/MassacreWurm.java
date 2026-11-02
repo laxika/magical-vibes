@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -21,7 +20,7 @@ public class MassacreWurm extends Card {
 
     public MassacreWurm() {
         // ETB: creatures your opponents control get -2/-2 until end of turn
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllCreaturesEffect(-2, -2,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 

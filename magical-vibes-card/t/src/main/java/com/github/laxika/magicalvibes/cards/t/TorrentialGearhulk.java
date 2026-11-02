@@ -3,10 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KLD", collectorNumber = "67")
 @CardRegistration(set = "CMM", collectorNumber = "128")
@@ -17,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class TorrentialGearhulk extends Card {
 
     public TorrentialGearhulk() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CastTargetInstantOrSorceryFromGraveyardEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CastTargetInstantOrSorceryFromGraveyardEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                 true,
                 true,

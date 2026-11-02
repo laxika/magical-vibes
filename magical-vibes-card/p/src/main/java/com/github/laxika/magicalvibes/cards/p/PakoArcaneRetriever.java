@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachPlayersLibraryWithFetchCountersAndPutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C20", collectorNumber = "13")
 public class PakoArcaneRetriever extends Card {
@@ -14,7 +16,7 @@ public class PakoArcaneRetriever extends Card {
     private static final String PARTNER_NAME = "Haldan, Avid Arcanist";
 
     public PakoArcaneRetriever() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(PARTNER_NAME),
                 "Have target player put Haldan, Avid Arcanist into their hand from their library?",
                 null,

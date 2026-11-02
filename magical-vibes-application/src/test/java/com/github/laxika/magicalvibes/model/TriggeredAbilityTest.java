@@ -80,7 +80,7 @@ class TriggeredAbilityTest {
     @Test
     void aLegacySlotTriggerIsTheOnlyConditionOfItsAbility() {
         List<TriggerCondition> twoSlots = List.of(
-                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_ENTER_BATTLEFIELD)),
+                new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_SELF_BECOMES_UNTAPPED)),
                 new TriggerCondition(new LegacySlotTrigger(EffectSlot.ON_ATTACK)));
 
         assertThatThrownBy(() -> new TriggeredAbility(twoSlots, TriggerOptions.DEFAULT, ZOMBIE))

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,10 +28,10 @@ public class CelebrateTheMountainKing extends Card {
     public CelebrateTheMountainKing() {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, Integer.MAX_VALUE)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new ExileTargetPermanentUntilSourceLeavesEffect(), TriggerMode.INDEPENDENT);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                        new ExileTargetPermanentUntilSourceLeavesEffect());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
                 SequenceEffect.of(
                         new DrawCardEffect(1),
                         new DiscardCardThenEffect(
@@ -39,7 +40,6 @@ public class CelebrateTheMountainKing extends Card {
                                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),
                                 "a card",
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                                false, null, null, DiscardRecipient.CONTROLLER, true)),
-                TriggerMode.INDEPENDENT);
+                                false, null, null, DiscardRecipient.CONTROLLER, true)));
     }
 }

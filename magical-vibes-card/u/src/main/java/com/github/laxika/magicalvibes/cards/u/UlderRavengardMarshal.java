@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class UlderRavengardMarshal extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another nontoken creature you control"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantKeywordEffect(Keyword.DOUBLE_TEAM, GrantScope.TARGET));
 
         target(new PermanentPredicateTargetFilter(

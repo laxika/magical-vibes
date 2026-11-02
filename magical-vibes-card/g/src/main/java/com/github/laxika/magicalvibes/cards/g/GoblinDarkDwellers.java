@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OGW", collectorNumber = "110")
 @CardRegistration(set = "LTC", collectorNumber = "219")
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 public class GoblinDarkDwellers extends Card {
 
     public GoblinDarkDwellers() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CastTargetInstantOrSorceryFromGraveyardEffect(
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
                         true,

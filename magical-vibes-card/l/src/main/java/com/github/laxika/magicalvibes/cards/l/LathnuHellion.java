@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -14,7 +16,7 @@ import java.util.List;
 public class LathnuHellion extends Card {
 
     public LathnuHellion() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ForcedCostOrElseEffect(new PayEnergyCost(2), List.of(new SacrificeSelfEffect()), true));
     }

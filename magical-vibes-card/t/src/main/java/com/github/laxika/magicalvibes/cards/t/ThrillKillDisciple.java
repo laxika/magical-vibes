@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -27,7 +26,7 @@ public class ThrillKillDisciple extends Card {
 
     public ThrillKillDisciple() {
         addCastingCost(RepeatableAdditionalManaCost.withDiscard(List.of("{1}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new RepeatedAdditionalCostPaid("{1}"),
                         new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}"))));
         addTrigger(Triggers.dies(ObjectRelation.THIS), junkToken());

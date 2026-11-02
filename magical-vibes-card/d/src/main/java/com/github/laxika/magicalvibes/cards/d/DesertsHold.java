@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class DesertsHold extends Card {
         target(TargetFilters.creature())
                 // When this Aura enters, if you control a Desert or there is a Desert card in
                 // your graveyard, you gain 3 life.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                         new AnyOf(List.of(
                                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))

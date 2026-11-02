@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -59,7 +58,7 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
                 specialized.setCardText("When this creature specializes, target creature card exiled with this creature perpetually loses all abilities and has base power and toughness 1/1.");
                 specialized.setPower(4);
                 specialized.setToughness(4);
-                specialized.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, specializedTrigger);
+                specialized.addTrigger(Triggers.enters(ObjectRelation.THIS), specializedTrigger);
             }
             case BLUE -> {
                 specialized.setName("Rasaad, Dragon Monk");

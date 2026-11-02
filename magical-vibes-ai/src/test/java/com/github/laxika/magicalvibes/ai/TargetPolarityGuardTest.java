@@ -54,6 +54,8 @@ import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtE
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -72,7 +74,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Exhaustiveness guard for {@link TargetPolarityClassifier}: every permanent-targeting
- * effect that any registered card puts in its spell ability or ON_ENTER_BATTLEFIELD slot must
+ * effect that any registered card puts in its spell ability or "when this enters" abilities must
  * classify to a non-null {@link TargetPolarity}. An unclassified shape falls into
  * {@code AiTargetSelector.chooseTarget}'s own-battlefield-first general fallback, which
  * silently aims harmful spells at the AI's own permanents (the Quicksilver Geyser / Stun
@@ -330,7 +332,7 @@ class TargetPolarityGuardTest {
                     continue;
                 }
                 List<CardEffect> effects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
-                effects.addAll(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+                effects.addAll(card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)));
                 for (CardEffect effect : effects) {
                     if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                         continue;

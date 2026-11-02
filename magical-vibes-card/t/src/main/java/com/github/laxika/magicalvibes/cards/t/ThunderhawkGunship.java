@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -21,7 +23,7 @@ import java.util.Set;
 public class ThunderhawkGunship extends Card {
 
     public ThunderhawkGunship() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Astartes Warrior", 2, 2, CardColor.WHITE,
                         List.of(CardSubtype.ASTARTES, CardSubtype.WARRIOR),
                         Set.of(Keyword.VIGILANCE), Set.of()));

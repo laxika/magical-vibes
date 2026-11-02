@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -218,7 +220,7 @@ class StackEntryTargetGroupsTest {
         card.setSubtypes(List.of(CardSubtype.AURA));
         CardEffect etbEffect = new BoostTargetCreatureEffect(1, 1);
         card.target(1, 1); // group 0: the enchant target
-        card.target(1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, etbEffect);
+        card.target(1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), etbEffect);
 
         UUID enchanted = UUID.randomUUID();
         UUID etbTarget = UUID.randomUUID();
@@ -237,7 +239,7 @@ class StackEntryTargetGroupsTest {
         card.setSubtypes(List.of(CardSubtype.AURA));
         CardEffect etbEffect = new BoostTargetCreatureEffect(1, 1);
         card.target(1, 1); // group 0: the enchant target
-        card.target(0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, etbEffect);
+        card.target(0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), etbEffect);
 
         UUID enchanted = UUID.randomUUID();
         StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card, CONTROLLER, "test",

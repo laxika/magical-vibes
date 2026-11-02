@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenPutCountersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,7 @@ public class OutlawStitcher extends Card {
                 false, false,
                 List.of(),
                 List.of(), false, false, false, 0, Set.of());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenThenPutCountersEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenThenPutCountersEffect(
                 zombieRogue, CounterType.PLUS_ONE_PLUS_ONE, countersForSpellsAfterFirst));
 
         // Plot {4}{U}

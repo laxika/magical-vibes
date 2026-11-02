@@ -13,12 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "118")
 public class DreadwingScavenger extends Card {
 
     public DreadwingScavenger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loot());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), loot());
         addEffect(EffectSlot.ON_ATTACK, loot());
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);

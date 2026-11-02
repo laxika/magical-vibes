@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class WestWindAvatar extends Card {
                 new SacrificePermanentThenEffect(tokenOrLand, new GainLifeEffect(3),
                         "a token or a land", false, false),
                 "Sacrifice a token or a land?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, sacrificeForLife);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeForLife);
         addEffect(EffectSlot.ON_ATTACK, sacrificeForLife);
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

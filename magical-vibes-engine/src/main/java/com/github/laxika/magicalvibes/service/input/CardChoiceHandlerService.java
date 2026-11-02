@@ -187,7 +187,7 @@ public class CardChoiceHandlerService {
             modifiedCard.addStaticEffect(new KickerEffect(choice.offspringCost(), false));
             offspringPaid = new Kicked();
         } else {
-            int paymentOrdinal = 1 + (int) modifiedCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            int paymentOrdinal = 1 + (int) modifiedCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                     .filter(ConditionalEffect.class::isInstance).map(ConditionalEffect.class::cast)
                     .map(ConditionalEffect::condition)
                     .filter(com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid.class::isInstance)
@@ -198,7 +198,7 @@ public class CardChoiceHandlerService {
             offspringPaid = new com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid(
                     choice.offspringCost(), paymentOrdinal);
         }
-        modifiedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        modifiedCard.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(offspringPaid,
                         new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
 
@@ -291,9 +291,9 @@ public class CardChoiceHandlerService {
                         .map(AlternateHandCast::blitz)
                         .orElse(false) == false) {
             copy.addCastingOption(AlternateHandCast.blitz(copy.getManaCost()));
-            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+            copy.addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                     new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+            copy.addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                     new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
             copy.addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
                     new CastForAlternateCost(), new DrawCardEffect(1)));

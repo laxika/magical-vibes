@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookToExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
@@ -391,11 +392,11 @@ public class EtbTriggerService {
 
         List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed || printedAbilitiesRemoved
                 ? new ArrayList<>()
-                : new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+                : new ArrayList<>(card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)));
         List<CardEffect> independentlyGrantedEffects = new ArrayList<>();
         if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
-            independentlyGrantedEffects.addAll(enteringPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
-            independentlyGrantedEffects.addAll(enteringPermanent.getPersistentTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+            independentlyGrantedEffects.addAll(enteringPermanent.getGrantedTriggerEffects(
+                    Triggers.enters(ObjectRelation.THIS)));
         }
         if (!enteringPermanentTriggersSuppressed && !printedAbilitiesRemoved) {
             independentlyGrantedEffects.addAll(gameData.perpetualEnterEffectsByCardId
@@ -408,8 +409,8 @@ public class EtbTriggerService {
         if (!enteringPermanentTriggersSuppressed && battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard() == card) {
-                    independentlyGrantedEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
-                            gameData, permanent, EffectSlot.ON_ENTER_BATTLEFIELD));
+                    independentlyGrantedEffects.addAll(triggerCollectionService.grantedTriggerEffects(
+                            gameData, permanent, Triggers.enters(ObjectRelation.THIS)));
                     break;
                 }
             }
@@ -489,7 +490,7 @@ public class EtbTriggerService {
                     .toList();
 
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
-            List<CardEffect> independentEffects = new ArrayList<>(card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            List<CardEffect> independentEffects = new ArrayList<>(card.getTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
                     .filter(registration -> registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)
                     .filter(registration -> !(registration.effect() instanceof MayEffect))
                     .filter(registration -> !(registration.effect() instanceof ChooseOneAtTriggerTimeEffect))
@@ -1096,7 +1097,7 @@ public class EtbTriggerService {
                     etbEntry.setKicked(true);
                 }
                 if (enteringPermanent != null && enteringPermanent.isEvoked()
-                        && card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        && card.getTriggerEffectRegistrations(Triggers.enters(ObjectRelation.THIS)).stream()
                         .anyMatch(registration -> registration.triggerMode()
                                 == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
                     etbEntry.setTriggeringCardId(card.getId());

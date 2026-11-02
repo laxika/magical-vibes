@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +19,7 @@ import java.util.Set;
 public class GhiredConclaveExile extends Card {
 
     public GhiredConclaveExile() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect("Rhino", 4, 4,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect("Rhino", 4, 4,
                 CardColor.GREEN, List.of(CardSubtype.RHINO), Set.of(Keyword.TRAMPLE), Set.of()));
         addEffect(EffectSlot.ON_ATTACK, new PopulateEffect());
         addEffect(EffectSlot.ON_ATTACK, new MakeCreatedPermanentsAttackingEffect(true));

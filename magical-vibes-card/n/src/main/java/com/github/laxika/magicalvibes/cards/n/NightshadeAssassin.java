@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TSP", collectorNumber = "121")
 @CardRegistration(set = "TSR", collectorNumber = "128")
@@ -21,9 +22,9 @@ public class NightshadeAssassin extends Card {
         addCastingOption(new MadnessCast("{1}{B}"));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RevealAnyNumberOfCardsFromHandEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealAnyNumberOfCardsFromHandEffect(
                         new CardColorPredicate(CardColor.BLACK)))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(
                         new Scaled(new EventValue(), -1),
                         new Scaled(new EventValue(), -1)));
     }

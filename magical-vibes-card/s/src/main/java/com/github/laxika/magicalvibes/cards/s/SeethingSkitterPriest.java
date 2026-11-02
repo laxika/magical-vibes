@@ -26,7 +26,7 @@ import java.util.Set;
 public class SeethingSkitterPriest extends Card {
 
     public SeethingSkitterPriest() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PerpetuallyGrantTriggeredAbilityToMatchingCardsEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         new PermanentIsCreaturePredicate(),

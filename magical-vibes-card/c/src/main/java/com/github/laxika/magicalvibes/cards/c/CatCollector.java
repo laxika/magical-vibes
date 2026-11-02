@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ import java.util.Set;
 public class CatCollector extends Card {
 
     public CatCollector() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
         // "for the first time during each of your turns": the first life gain of the turn counts
         // even if it happened before this creature entered, and only on your own turn
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,

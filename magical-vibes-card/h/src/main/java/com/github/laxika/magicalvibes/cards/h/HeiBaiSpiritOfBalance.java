@@ -38,7 +38,7 @@ public class HeiBaiSpiritOfBalance extends Card {
                         "another creature or artifact"),
                 "Sacrifice another creature or artifact?");
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, sacrificeTrigger);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeTrigger);
         addEffect(EffectSlot.ON_ATTACK, sacrificeTrigger);
         target(TargetFilters.creatureYouControl()).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new PutCountersOnTargetForEachLeavingSourceCountersEffect());

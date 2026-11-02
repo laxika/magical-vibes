@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,7 @@ public class FireNationOccupation extends Card {
 
     public FireNationOccupation() {
         // When this enchantment enters, create a 2/2 red Soldier creature token with firebending 1.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SOLDIER_TOKEN);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SOLDIER_TOKEN);
 
         // Whenever you cast a spell during an opponent's turn, create a 2/2 red Soldier creature
         // token with firebending 1.

@@ -14,7 +14,6 @@ public enum EffectSlot {
     ON_SELF_TAPPED_FOR_MANA,
     /** "Whenever a mana ability of this permanent resolves." */
     ON_SELF_MANA_ABILITY_RESOLVES,
-    ON_ENTER_BATTLEFIELD,
     /** Triggers when this permanent changes control to another player. */
     ON_SELF_BECOMES_CONTROLLED,
     /** Triggers when this permanent changes control away from its current controller. */

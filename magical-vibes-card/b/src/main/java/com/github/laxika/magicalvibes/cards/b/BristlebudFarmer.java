@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMil
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ import java.util.List;
 public class BristlebudFarmer extends Card {
 
     public BristlebudFarmer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodTokens());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), foodTokens());
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD),

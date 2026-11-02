@@ -68,6 +68,8 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -2054,7 +2056,7 @@ class TargetLegalityServiceTest {
             aura.setType(CardType.ENCHANTMENT);
             aura.setSubtypes(List.of(CardSubtype.AURA));
             aura.target(enchantFilter);
-            aura.target(etbFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, etbEffect);
+            aura.target(etbFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), etbEffect);
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     aura,
@@ -2127,8 +2129,8 @@ class TargetLegalityServiceTest {
             CardEffect firstEffect = new DestroyTargetPermanentEffect();
             CardEffect secondEffect = ReturnToHandEffect.target();
             Card source = createCreature("Source", CardColor.RED);
-            source.target(firstFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, firstEffect);
-            source.target(secondFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, secondEffect);
+            source.target(firstFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), firstEffect);
+            source.target(secondFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), secondEffect);
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     source,

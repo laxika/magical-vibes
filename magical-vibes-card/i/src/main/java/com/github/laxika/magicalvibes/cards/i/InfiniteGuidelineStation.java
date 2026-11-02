@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class InfiniteGuidelineStation extends Card {
         PermanentCount multicoloredPermanents = new PermanentCount(
                 new PermanentIsMulticoloredPredicate(), CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(multicoloredPermanents, "Robot", 2, 2, null,
                         List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT)).withTapped(true));
 

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "379")
 public class ZndrspltEyeOfWisdom extends Card {
@@ -15,7 +17,7 @@ public class ZndrspltEyeOfWisdom extends Card {
     private static final String OKAUN = "Okaun, Eye of Chaos";
 
     public ZndrspltEyeOfWisdom() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(OKAUN),
                 "Have target player put Okaun into their hand from their library?",
                 null,

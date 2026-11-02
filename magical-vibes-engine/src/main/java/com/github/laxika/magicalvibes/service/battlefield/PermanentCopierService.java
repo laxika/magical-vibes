@@ -156,6 +156,15 @@ public class PermanentCopierService {
                 }
             }
         }
+        for (TriggeredAbility ability : original.getUnslottedTriggeredAbilities()) {
+            for (EffectRegistration registration : ability.effects()) {
+                CardEffect chosen = chosenModeEffect(copy, permanent, registration.effect());
+                if (chosen != null) {
+                    copy.addTriggeredAbility(ability.withEffects(List.of(
+                            new EffectRegistration(chosen, registration.triggerMode()))));
+                }
+            }
+        }
         return copy;
     }
 

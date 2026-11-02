@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Back face of {@link BrineComber}. */
 public class BrineboundGift extends Card {
@@ -12,7 +14,7 @@ public class BrineboundGift extends Card {
     public BrineboundGift() {
         target(TargetFilters.creature());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.whiteSpirit(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.whiteSpirit(1));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_AURA_SPELL, CreateTokenEffect.whiteSpirit(1));
         addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }

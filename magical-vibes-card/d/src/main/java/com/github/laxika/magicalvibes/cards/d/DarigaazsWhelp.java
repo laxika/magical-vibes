@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostDrawnDragonEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekDragonAndPerpetuallyBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDMU", collectorNumber = "8")
 public class DarigaazsWhelp extends Card {
@@ -15,7 +17,7 @@ public class DarigaazsWhelp extends Card {
     public DarigaazsWhelp() {
         addStaticEffect(new KickerEffect("{1}{R}"));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new PerpetuallyBoostDrawnDragonEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new Kicked(), new SeekDragonAndPerpetuallyBoostEffect()));
     }
 }

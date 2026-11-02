@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -52,6 +51,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -818,7 +819,7 @@ class ValidTargetServiceTest {
         void resolvesModalEtbMode() {
             Card creatureSpell = createCreatureCard();
             creatureSpell.setColor(CardColor.BLUE);
-            creatureSpell.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+            creatureSpell.addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
                     new ChooseOneEffect.ChooseOneOption("Deal 2 damage to target creature",
                             new DealDamageToTargetCreatureEffect(2), mode0Filter),
                     new ChooseOneEffect.ChooseOneOption("Deal 2 damage to target enchantment",

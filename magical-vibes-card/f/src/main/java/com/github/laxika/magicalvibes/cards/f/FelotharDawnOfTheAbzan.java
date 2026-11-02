@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TDM", collectorNumber = "184")
 public class FelotharDawnOfTheAbzan extends Card {
@@ -23,7 +25,7 @@ public class FelotharDawnOfTheAbzan extends Card {
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                         "a nonland permanent"),
                 "Sacrifice a nonland permanent?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, sacrificeThenCounters);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeThenCounters);
         addEffect(EffectSlot.ON_ATTACK, sacrificeThenCounters);
     }
 }

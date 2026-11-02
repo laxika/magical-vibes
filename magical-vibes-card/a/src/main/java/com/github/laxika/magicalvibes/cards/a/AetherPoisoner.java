@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ import java.util.Set;
 public class AetherPoisoner extends Card {
 
     public AetherPoisoner() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(2),

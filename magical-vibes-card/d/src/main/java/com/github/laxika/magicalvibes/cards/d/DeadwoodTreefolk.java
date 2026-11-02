@@ -40,7 +40,7 @@ public class DeadwoodTreefolk extends Card {
                         new CardNotPredicate(new CardIsSelfPredicate()))))
                 .targetGraveyard(true)
                 .build();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnAnotherCreature);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnAnotherCreature);
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), returnAnotherCreature);
     }
 }

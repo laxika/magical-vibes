@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTC", collectorNumber = "188")
 @CardRegistration(set = "C20", collectorNumber = "5")
@@ -17,7 +19,7 @@ public class CazurRuthlessStalker extends Card {
     private static final String PARTNER_NAME = "Ukkima, Stalking Shadow";
 
     public CazurRuthlessStalker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(PARTNER_NAME),
                 "Have target player put " + PARTNER_NAME + " into their hand from their library?",
                 null,

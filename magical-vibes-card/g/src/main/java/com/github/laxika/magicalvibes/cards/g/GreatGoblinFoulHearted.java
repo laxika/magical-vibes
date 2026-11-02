@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOC", collectorNumber = "105")
 public class GreatGoblinFoulHearted extends Card {
 
     public GreatGoblinFoulHearted() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmassGoblinsEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new AmassGoblinsEffect(3));
         addEffect(EffectSlot.ON_ATTACK, new AmassGoblinsEffect(3));
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,

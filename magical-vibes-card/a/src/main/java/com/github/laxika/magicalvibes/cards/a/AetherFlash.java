@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,7 +18,7 @@ public class AetherFlash extends Card {
         // Whenever a creature enters, this enchantment deals 2 damage to it.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new DealDamageToTargetCreatureEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new SourceIsCreature(), new DealDamageToSourceEffect(2)));
     }
 }

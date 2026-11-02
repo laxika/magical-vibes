@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -20,11 +21,11 @@ public class PyrewoodGearhulk extends Card {
         var otherCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
 
         // Other creatures you control get +2/+2 and gain vigilance and menace until end of turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostAllOwnCreaturesEffect(2, 2, otherCreatures));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantKeywordEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(2, 2, otherCreatures));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.MENACE), GrantScope.OWN_CREATURES, otherCreatures));
 
         // Damage can't be prevented this turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DamageCantBePreventedThisTurnEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DamageCantBePreventedThisTurnEffect());
     }
 }

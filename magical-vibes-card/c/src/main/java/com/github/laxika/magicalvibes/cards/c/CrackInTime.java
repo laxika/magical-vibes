@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "16")
 @CardRegistration(set = "WHO", collectorNumber = "336")
@@ -22,7 +24,7 @@ public class CrackInTime extends Card {
         ExileTargetPermanentUntilSourceLeavesEffect exileEffect =
                 new ExileTargetPermanentUntilSourceLeavesEffect();
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exileEffect)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), exileEffect)
                 .addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, exileEffect);
     }
 }

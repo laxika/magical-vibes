@@ -13,13 +13,15 @@ import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "77")
 @CardRegistration(set = "MKM", collectorNumber = "398")
 public class BarbedServitor extends Card {
 
     public BarbedServitor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SuspectEffect(GrantScope.SELF));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(GrantScope.SELF));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)));
 

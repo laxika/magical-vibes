@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.SuspectTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "81")
 @CardRegistration(set = "SPM", collectorNumber = "261")
@@ -17,7 +19,7 @@ public class JJonahJameson extends Card {
 
     public JJonahJameson() {
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SuspectTargetCreatureEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectTargetCreatureEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.MENACE),

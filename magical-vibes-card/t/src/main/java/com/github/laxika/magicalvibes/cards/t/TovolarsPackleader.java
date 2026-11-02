@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ import java.util.Set;
 public class TovolarsPackleader extends Card {
 
     public TovolarsPackleader() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, wolfTokens());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), wolfTokens());
         addEffect(EffectSlot.ON_ATTACK, wolfTokens());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new PreviousActivePlayerCastTwoOrMoreSpellsLastTurn(), new TransformSelfEffect()));

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "14")
 @CardRegistration(set = "LTC", collectorNumber = "98")
@@ -18,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class GreyHostReinforcements extends Card {
 
     public GreyHostReinforcements() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileGraveyardCardsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileGraveyardCardsEffect(
                 0,
                 GraveyardExileScope.TARGET_PLAYER_ALL_MATCHING,
                 null,
@@ -28,7 +30,7 @@ public class GreyHostReinforcements extends Card {
                 false,
                 new CardTypePredicate(CardType.CREATURE),
                 false));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(3));
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -32,7 +31,7 @@ public class AlharuSolemnRitualist extends Card {
                 "Target must be another creature");
 
         // When Alharu enters, put a +1/+1 counter on each of up to two other target creatures.
-        target(otherCreature, 0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        target(otherCreature, 0, 2).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         // Whenever a nontoken creature you control with a +1/+1 counter on it dies, create a 1/1

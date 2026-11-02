@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SephirothPlanetsHeir extends Card {
 
     public SephirothPlanetsHeir() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllCreaturesEffect(-2, -2,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS), new PutCountersOnSourceEffect(1, 1, 1));

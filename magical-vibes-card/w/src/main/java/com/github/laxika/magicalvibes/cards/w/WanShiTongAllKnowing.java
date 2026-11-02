@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
@@ -28,7 +27,7 @@ public class WanShiTongAllKnowing extends Card {
 
     public WanShiTongAllKnowing() {
         target(TargetFilters.nonlandPermanent())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(1));
         addTrigger(new TriggerCondition(Triggers.putIntoLibrary(Triggers.NONTOKEN, ObjectRelation.ANOTHER)),
                 TriggerOptions.ONE_OR_MORE, spiritToken());

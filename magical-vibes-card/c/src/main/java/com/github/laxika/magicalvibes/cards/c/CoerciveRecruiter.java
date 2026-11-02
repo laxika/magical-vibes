@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -26,7 +25,7 @@ public class CoerciveRecruiter extends Card {
         // Whenever this creature or another Pirate you control enters, gain control of target
         // creature until end of turn. Untap that creature. Until end of turn, it gains haste and
         // becomes a Pirate in addition to its other types.
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, gainControl());
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), gainControl());
         target(TargetFilters.creature()).addTrigger(Triggers.enters(Triggers.CREATURE,
                 ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PIRATE), gainControl()));

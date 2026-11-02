@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ToluzCleverConductor extends Card {
 
     public ToluzCleverConductor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawDiscardAndConniveEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawDiscardAndConniveEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new ExileDiscardedCardFromGraveyardEffect(true));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }

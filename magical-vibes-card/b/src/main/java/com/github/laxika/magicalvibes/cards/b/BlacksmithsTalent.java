@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +43,7 @@ public class BlacksmithsTalent extends Card {
                 null, null, List.of(CardSubtype.EQUIPMENT), Set.of(), Set.of(),
                 false, false, swordEffects, List.of(new EquipActivatedAbility("{2}")),
                 false, false, false, 0, Set.of());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, swordToken);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), swordToken);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

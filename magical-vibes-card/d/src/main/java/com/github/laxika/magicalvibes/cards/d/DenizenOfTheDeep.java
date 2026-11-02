@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "80")
 @CardRegistration(set = "P02", collectorNumber = "35")
@@ -21,7 +22,7 @@ public class DenizenOfTheDeep extends Card {
 
     public DenizenOfTheDeep() {
         // Return all other creatures you control to their owners' hands.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.allPermanentsMatching(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.allPermanentsMatching(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate(),

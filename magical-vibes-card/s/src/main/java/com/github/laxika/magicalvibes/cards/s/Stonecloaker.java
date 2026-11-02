@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PLC", collectorNumber = "19")
 @CardRegistration(set = "DDN", collectorNumber = "53")
@@ -17,11 +18,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class Stonecloaker extends Card {
 
     public Stonecloaker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
                 new ReturnPermanentControlledByPlayerToHandEffect(
-                        new PermanentIsCreaturePredicate(), "creature"),
-                TriggerMode.INDEPENDENT);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new PermanentIsCreaturePredicate(), "creature"));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, false));
     }
 }

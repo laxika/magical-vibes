@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,12 +22,12 @@ public class ArchangelOfWrath extends Card {
         addStaticEffect(new KickerEffect("{B}"));
         addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
 
-        targetWhenKicked(null, 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new Kicked(), new DealDamageToAnyTargetEffect(2)), TriggerMode.INDEPENDENT);
+        targetWhenKicked(null, 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                new ConditionalEffect(new Kicked(), new DealDamageToAnyTargetEffect(2)));
 
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{R}"), null, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
                         new ConditionalEffect(new RepeatedAdditionalCostPaid("{R}"),
-                                new DealDamageToAnyTargetEffect(2)), TriggerMode.INDEPENDENT);
+                                new DealDamageToAnyTargetEffect(2)));
     }
 }

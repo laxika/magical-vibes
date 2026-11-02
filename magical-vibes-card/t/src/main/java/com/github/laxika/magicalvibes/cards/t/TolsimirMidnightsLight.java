@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockTriggeringAttackerEf
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ import java.util.Set;
 public class TolsimirMidnightsLight extends Card {
 
     public TolsimirMidnightsLight() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 CardType.CREATURE, 1, "Voja Fenstalker", 5, 5,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.WOLF), Set.of(Keyword.TRAMPLE), Set.of(), false, false,

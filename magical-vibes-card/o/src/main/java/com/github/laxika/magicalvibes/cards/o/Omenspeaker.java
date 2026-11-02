@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M19", collectorNumber = "64")
 @CardRegistration(set = "THS", collectorNumber = "57")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class Omenspeaker extends Card {
 
     public Omenspeaker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
     }
 }

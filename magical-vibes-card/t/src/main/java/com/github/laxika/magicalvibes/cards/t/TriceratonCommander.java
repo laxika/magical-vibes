@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +34,7 @@ public class TriceratonCommander extends Card {
         addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(1, 1, otherDinosaur));
         addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.OWN_CREATURES, otherDinosaur));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 new XValue(), "Dinosaur Soldier", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.DINOSAUR, CardSubtype.SOLDIER), Set.of(), Set.of()));
     }

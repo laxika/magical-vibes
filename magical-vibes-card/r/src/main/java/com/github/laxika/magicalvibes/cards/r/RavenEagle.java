@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "116")
 public class RavenEagle extends Card {
 
     public RavenEagle() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 ExileGraveyardCardCreateTokenIfCreatureEffect.upToOne(CreateTokenEffect.ofClueToken(1)));
         addEffect(EffectSlot.ON_ATTACK,
                 ExileGraveyardCardCreateTokenIfCreatureEffect.upToOne(CreateTokenEffect.ofClueToken(1)));

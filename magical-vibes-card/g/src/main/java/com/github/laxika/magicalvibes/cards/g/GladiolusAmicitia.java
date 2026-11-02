@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -28,7 +27,7 @@ public class GladiolusAmicitia extends Card {
 
     public GladiolusAmicitia() {
         // When Gladiolus Amicitia enters, search your library for a land card, put it onto the battlefield tapped, then shuffle.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryEffect(new CardTypePredicate(CardType.LAND),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
 

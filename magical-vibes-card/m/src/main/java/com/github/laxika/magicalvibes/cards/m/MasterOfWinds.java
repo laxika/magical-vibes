@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,8 +27,8 @@ import java.util.List;
 public class MasterOfWinds extends Card {
 
     public MasterOfWinds() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
 
         CardAnyOfPredicate instantSorceryOrWizard = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

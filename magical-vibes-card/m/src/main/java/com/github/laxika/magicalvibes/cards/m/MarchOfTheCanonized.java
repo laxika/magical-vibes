@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ import java.util.Set;
 public class MarchOfTheCanonized extends Card {
 
     public MarchOfTheCanonized() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 new XValue(), "Vampire", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of()));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(

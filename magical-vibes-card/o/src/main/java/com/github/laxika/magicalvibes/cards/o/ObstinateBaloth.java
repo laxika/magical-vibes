@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M11", collectorNumber = "188")
 @CardRegistration(set = "BRO", collectorNumber = "187")
@@ -12,7 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ObstinateBaloth extends Card {
 
     public ObstinateBaloth() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(4));
         addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT, new EnterBattlefieldOnDiscardEffect());
     }
 }

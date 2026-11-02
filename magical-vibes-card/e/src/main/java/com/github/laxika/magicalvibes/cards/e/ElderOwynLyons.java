@@ -32,7 +32,7 @@ public class ElderOwynLyons extends Card {
                 .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                 .targetGraveyard(true)
                 .build();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnArtifact);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnArtifact);
         addTrigger(Triggers.dies(ObjectRelation.THIS), returnArtifact);
     }
 }

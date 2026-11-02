@@ -18,7 +18,7 @@ public class CaptainMarvelShootingStar extends Card {
 
     public CaptainMarvelShootingStar() {
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffect())
                 .addEffect(EffectSlot.ON_ATTACK,
                         new ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffect());

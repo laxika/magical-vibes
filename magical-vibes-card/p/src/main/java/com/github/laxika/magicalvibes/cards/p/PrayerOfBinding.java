@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "502")
 @CardRegistration(set = "DMU", collectorNumber = "28")
@@ -13,8 +14,8 @@ public class PrayerOfBinding extends Card {
 
     public PrayerOfBinding() {
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
     }
 }

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -41,7 +43,7 @@ public class MoiraBrownGuideAuthor extends Card {
                                 questCountersAmongPermanentsYouControl,
                                 questCountersAmongPermanentsYouControl,
                                 GrantScope.EQUIPPED_CREATURE))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, wastelandSurvivalGuide);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), wastelandSurvivalGuide);
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),

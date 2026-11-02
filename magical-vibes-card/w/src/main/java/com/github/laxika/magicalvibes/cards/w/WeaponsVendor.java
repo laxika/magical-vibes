@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "40")
 public class WeaponsVendor extends Card {
@@ -24,7 +26,7 @@ public class WeaponsVendor extends Card {
                 "Target must be an Equipment you control")).bindEffect(attach);
         target(TargetFilters.creatureYouControl()).bindEffect(attach);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)),
                 new MayPayManaEffect(

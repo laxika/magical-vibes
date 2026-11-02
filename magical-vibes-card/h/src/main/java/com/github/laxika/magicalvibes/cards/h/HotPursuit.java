@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,8 +32,8 @@ public class HotPursuit extends Card {
 
     public HotPursuit() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SuspectEffect(GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(GrantScope.TARGET))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GoadTargetCreatureUntilSourceLeavesEffect());
 
         PermanentPredicate goadedOrSuspectedCreature = new PermanentAllOfPredicate(List.of(

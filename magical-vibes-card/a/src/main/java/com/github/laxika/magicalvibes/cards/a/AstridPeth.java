@@ -21,7 +21,7 @@ import java.util.List;
 public class AstridPeth extends Card {
 
     public AstridPeth() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofFoodToken(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofFoodToken(1));
         addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofFoodToken(1));
         addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(

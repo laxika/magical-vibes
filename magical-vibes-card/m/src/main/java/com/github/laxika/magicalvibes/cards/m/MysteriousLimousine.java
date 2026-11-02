@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class MysteriousLimousine extends Card {
 
         ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect exile =
                 new ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect(anotherCreature);
-        target(targetFilter, 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exile);
+        target(targetFilter, 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), exile);
         addEffect(EffectSlot.ON_ATTACK, exile);
 
         addActivatedAbility(new ActivatedAbility(

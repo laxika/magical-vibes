@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * ON_ENTER_BATTLEFIELD: the controller searches their library for up to a configured number of
+ * When this enters: the controller searches their library for up to a configured number of
  * cards matching the effect's filter, exiling each one tracked "with" the source permanent, then
  * shuffles. The actual exile and shuffle are driven by
  * {@link com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService} via the

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -33,7 +32,7 @@ public class ScourgeOfValkas extends Card {
         // Whenever this creature or another Dragon you control enters, it deals X damage to any
         // target, where X is the number of Dragons you control. The count resolves on resolution,
         // so the entering Dragon (already on the battlefield) counts itself.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, dragonDamage());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), dragonDamage());
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON), dragonDamage()));
 

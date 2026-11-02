@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DoubleOtherOwnCreaturesPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,8 +17,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GodEternalRhonas extends Card {
 
     public GodEternalRhonas() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DoubleOtherOwnCreaturesPowerEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DoubleOtherOwnCreaturesPowerEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(

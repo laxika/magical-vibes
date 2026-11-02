@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class RobobrainWarMind extends Card {
                 )),
                 CountScope.CONTROLLER
         );
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(artifactCreaturesYouControl));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(artifactCreaturesYouControl));
 
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(3),

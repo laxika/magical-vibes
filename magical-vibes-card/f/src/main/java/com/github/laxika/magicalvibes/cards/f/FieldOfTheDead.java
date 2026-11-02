@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
@@ -31,7 +30,7 @@ public class FieldOfTheDead extends Card {
 
         // Whenever this land enters, if you control seven or more lands with different names, create
         // a 2/2 black Zombie creature token.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, landfall);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), landfall);
 
         // Whenever another land you control enters, use the same condition and token effect.
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), landfall);

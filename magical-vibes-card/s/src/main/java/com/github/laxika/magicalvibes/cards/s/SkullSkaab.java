@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOW", collectorNumber = "248")
 @CardRegistration(set = "DBL", collectorNumber = "515")
 public class SkullSkaab extends Card {
 
     public SkullSkaab() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
         addEffect(EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
                 CreateTokenEffect.blackZombie(1));

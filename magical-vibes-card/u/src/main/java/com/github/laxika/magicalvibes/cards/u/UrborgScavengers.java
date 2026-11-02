@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MAT", collectorNumber = "15")
 @CardRegistration(set = "MAT", collectorNumber = "65")
@@ -14,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWith
 public class UrborgScavengers extends Card {
 
     public UrborgScavengers() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetCardFromGraveyardPutCounterOnSourceEffect());
         addEffect(EffectSlot.ON_ATTACK,
                 new ExileTargetCardFromGraveyardPutCounterOnSourceEffect());

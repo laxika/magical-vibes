@@ -19,7 +19,7 @@ public class AshlingRekindled extends Card {
 
         MayEffect discardAndDraw = new MayEffect(
                 new DiscardAndDrawCardEffect(), "Discard a card to draw a card?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, discardAndDraw);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), discardAndDraw);
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), discardAndDraw);
 
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,

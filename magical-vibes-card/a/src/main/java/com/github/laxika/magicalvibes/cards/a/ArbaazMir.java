@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -24,7 +23,7 @@ public class ArbaazMir extends Card {
     public ArbaazMir() {
         // Whenever Arbaaz Mir or another nontoken historic permanent you control enters,
         // Arbaaz Mir deals 1 damage to each opponent and you gain 1 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggerEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), triggerEffect());
         addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

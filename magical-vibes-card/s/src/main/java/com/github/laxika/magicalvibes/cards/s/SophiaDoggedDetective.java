@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -50,7 +52,7 @@ public class SophiaDoggedDetective extends Card {
             Set.of(CardSupertype.LEGENDARY));
 
     public SophiaDoggedDetective() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, TINY);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TINY);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

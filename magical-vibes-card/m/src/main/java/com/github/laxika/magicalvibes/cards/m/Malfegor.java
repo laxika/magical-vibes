@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CON", collectorNumber = "117")
 @CardRegistration(set = "IMA", collectorNumber = "205")
@@ -16,7 +17,7 @@ public class Malfegor extends Card {
 
         // When Malfegor enters, discard your hand. Each opponent sacrifices a creature of their
         // choice for each card discarded this way.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect());
     }
 }

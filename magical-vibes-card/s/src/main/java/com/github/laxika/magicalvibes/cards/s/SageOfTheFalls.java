@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -23,7 +22,7 @@ public class SageOfTheFalls extends Card {
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "You may draw a card. If you do, discard a card.");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loot);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), loot);
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN)), loot));

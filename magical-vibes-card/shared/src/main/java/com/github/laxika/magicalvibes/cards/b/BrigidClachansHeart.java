@@ -28,7 +28,7 @@ public class BrigidClachansHeart extends Card {
                 List.of(CardSubtype.KITHKIN));
 
         // Whenever this creature enters or transforms into Brigid, Clachan's Heart, create a 1/1 green and white Kithkin creature token.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, kithkinToken);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), kithkinToken);
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), kithkinToken);
 
         // At the beginning of your first main phase, you may pay {G}. If you do, transform Brigid.

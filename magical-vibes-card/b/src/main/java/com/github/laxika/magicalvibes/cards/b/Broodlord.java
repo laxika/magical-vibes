@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class Broodlord extends Card {
         // Ravenous — this creature enters with X +1/+1 counters on it. If X is 5 or more,
         // draw a card when it enters.
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect(1)));
 
         // Brood Telepathy — when this creature enters, distribute X +1/+1 counters among any
@@ -43,6 +44,6 @@ public class Broodlord extends Card {
                 false, false, true, otherCreature, false, false);
         targetUpTo(new XValue(), new PermanentPredicateTargetFilter(
                 otherCreature, "Target must be another creature you control"), 99)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, distribution, TriggerMode.INDEPENDENT);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, distribution);
     }
 }

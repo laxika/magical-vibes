@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +17,7 @@ import java.util.List;
 public class NightbladeBrigade extends Card {
 
     public NightbladeBrigade() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(1));
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
         addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());

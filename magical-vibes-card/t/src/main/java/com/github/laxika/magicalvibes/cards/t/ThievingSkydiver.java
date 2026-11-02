@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
@@ -16,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,10 +34,10 @@ public class ThievingSkydiver extends Card {
                         new PermanentManaValueAtMostXPredicate()
                 )),
                 "Target must be an artifact with mana value X or less"
-        ), 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new Kicked(),
                         new GainControlOfTargetEffect(ControlDuration.PERMANENT)))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ConditionalEffect(new Kicked(), new ConditionalEffect(new TargetPermanentMatches(
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)),
                                 new AttachTargetToSourcePermanentEffect())));

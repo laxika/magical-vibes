@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndCreateTokensByMilledCardTypeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class OldRutstein extends Card {
                     CreateTokenEffect.ofBloodToken(1));
 
     public OldRutstein() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, MILL_AND_CREATE_TOKENS);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), MILL_AND_CREATE_TOKENS);
         addEffect(EffectSlot.UPKEEP_TRIGGERED, MILL_AND_CREATE_TOKENS);
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.PutOpponentOwnedExiledCardInt
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -55,7 +56,7 @@ public class ProcessingPlant extends Card {
     public ProcessingPlant() {
         addStaticEffect(new EntersTappedEffect());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutOpponentOwnedExiledCardIntoGraveyardEffect(),
                 new ConditionalEffect(new EventValueAtLeast(1),
                         new UntapPermanentsEffect(TapUntapScope.SELF)),

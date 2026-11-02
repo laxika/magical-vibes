@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FRF", collectorNumber = "23")
 @CardRegistration(set = "PIO", collectorNumber = "324")
@@ -23,7 +24,7 @@ public class SagesReverie extends Card {
                 new PermanentIsAuraAttachedToCreaturePredicate(), CountScope.CONTROLLER);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(aurasAttachedToCreatures))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(aurasAttachedToCreatures))
                 .addStaticEffect(new AttachedBoostEffect(
                         aurasAttachedToCreatures, aurasAttachedToCreatures, GrantScope.ENCHANTED_CREATURE));
     }

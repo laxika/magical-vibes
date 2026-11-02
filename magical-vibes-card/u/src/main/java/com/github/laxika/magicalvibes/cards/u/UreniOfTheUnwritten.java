@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class UreniOfTheUnwritten extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.DRAGON)
                 )));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, revealDragon);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), revealDragon);
         addEffect(EffectSlot.ON_ATTACK, revealDragon);
     }
 }

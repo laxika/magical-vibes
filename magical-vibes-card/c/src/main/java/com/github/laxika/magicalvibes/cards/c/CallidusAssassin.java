@@ -2,8 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToOneTargetPermanentEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,8 @@ public class CallidusAssassin extends Card {
         // "You may have this creature enter tapped as a copy of any creature on the battlefield"
         addStaticEffect(new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", null, null, Set.of(), List.of(), null, null,
-                false, null, Set.of(), List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(destroyAbility))),
+                false, null, Set.of(), List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                        destroyAbility)),
                 false, true, null, Set.of(), Set.of(), false, true, Set.of(), false, false, null, false, false));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
@@ -62,6 +61,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 
@@ -74,7 +75,7 @@ import static java.util.Map.entry;
 /**
  * The single source of truth for {@link TargetPolarity}: which board the AI should aim a
  * permanent-targeting spell or ETB effect at. Every permanent-targeting effect that appears
- * in a card's SPELL or ON_ENTER_BATTLEFIELD slot must classify to a non-null polarity —
+ * in a card's SPELL or "when this enters" abilities must classify to a non-null polarity —
  * {@code TargetPolarityGuardTest} enforces this over the whole card pool, so a new effect
  * shape cannot silently fall into {@code AiTargetSelector}'s own-battlefield-first fallback
  * (the bug family behind Quicksilver Geyser bouncing the AI's own artifact and Stun tapping
@@ -94,14 +95,14 @@ public class TargetPolarityClassifier {
     }
 
     /**
-     * Card-level polarity over the ON_ENTER_BATTLEFIELD slot and the spell ability, collapsed by
+     * Card-level polarity over the "when this enters" abilities and the spell ability, collapsed by
      * priority: removal beats damage beats other harm beats beneficial beats neutral.
      * This mirrors (and must preserve) the branch order {@code chooseTarget} routed with
      * before the consolidation. Returns null when no effect classifies.
      */
     public TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
         TargetPolarity best = null;
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             best = higherPriority(best, classify(gameData, effect, aiPlayerId));
         }
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {

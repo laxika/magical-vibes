@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RTR", collectorNumber = "1")
 @CardRegistration(set = "SLD", collectorNumber = "1377")
@@ -18,7 +19,7 @@ public class AngelOfSerenity extends Card {
         // battlefield and/or creature cards from graveyards.
         // When this creature leaves the battlefield, return the exiled cards to their owners' hands.
         // Each exiled card is registered for the separate leaves-the-battlefield ability.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetCreaturesUntilSourceLeavesEffect(3, true, false, true));
     }
 }

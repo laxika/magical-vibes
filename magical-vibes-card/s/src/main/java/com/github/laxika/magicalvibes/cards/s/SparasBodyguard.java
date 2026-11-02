@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ import java.util.List;
 public class SparasBodyguard extends Card {
 
     public SparasBodyguard() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChooseCardFromHandToPerpetuallyGrantStaticEffect(
                         new CardTypePredicate(CardType.CREATURE),
                         new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)),

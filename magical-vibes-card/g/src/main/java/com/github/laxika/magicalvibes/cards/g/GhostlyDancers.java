@@ -24,7 +24,7 @@ import java.util.Set;
 public class GhostlyDancers extends Card {
 
     public GhostlyDancers() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return an enchantment card from your graveyard to your hand",
                         ReturnCardFromGraveyardEffect.builder()

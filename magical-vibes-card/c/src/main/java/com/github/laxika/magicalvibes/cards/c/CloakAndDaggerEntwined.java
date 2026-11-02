@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -48,8 +49,8 @@ public class CloakAndDaggerEntwined extends Card {
                         "Exile the chosen creature.", exileCreature)
         )));
 
-        opponentTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, revealHand);
-        creatureTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, choice);
+        opponentTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), revealHand);
+        creatureTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), choice);
         registerEffectTargetIndex(exileFromHand, opponentTarget.getIndex());
         registerEffectTargetIndex(exileCreature, creatureTarget.getIndex());
 

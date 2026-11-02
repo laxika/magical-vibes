@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfReturnAtNextUpkeepWithHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YSOS", collectorNumber = "29")
 public class SunderingSentinel extends Card {
@@ -15,10 +17,10 @@ public class SunderingSentinel extends Card {
     public SunderingSentinel() {
         setStartingIntensity(2);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToAnyTargetEffect(new SourceIntensity()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(new SourceIntensity()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new IntensifySourceCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(new SourceIntensity()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new IntensifySourceCardEffect(1));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ExileSelfReturnAtNextUpkeepWithHasteEffect());

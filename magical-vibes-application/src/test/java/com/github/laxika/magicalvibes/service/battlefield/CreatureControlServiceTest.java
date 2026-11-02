@@ -23,7 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +57,7 @@ class CreatureControlServiceTest {
     @Test
     void changingControlSchedulesEchoAgain() {
         Card card = createCreatureCard("Echo creature");
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect("{2}{R}"));
         Permanent creature = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(creature);

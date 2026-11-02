@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M19", collectorNumber = "107")
 @CardRegistration(set = "SLD", collectorNumber = "161")
@@ -18,8 +20,8 @@ public class LilianasContract extends Card {
 
     public LilianasContract() {
         // When this enchantment enters, you draw four cards and you lose 4 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(4));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(4));
 
         // At the beginning of your upkeep, if you control four or more Demons with different names,
         // you win the game.

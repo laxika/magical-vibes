@@ -22,7 +22,7 @@ public class FearOfSleepParalysis extends Card {
                 new TapPermanentsEffect(TapUntapScope.TARGET),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, eerie)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), eerie)
                 .addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), eerie)
                 .addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
         addStaticEffect(new StunCountersCantBeRemovedFromOpponentsPermanentsEffect());

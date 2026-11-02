@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "KTK", collectorNumber = "200")
 @CardRegistration(set = "CP3", collectorNumber = "5")
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class SiegeRhino extends Card {
 
     public SiegeRhino() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));
     }
 }

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "TMC", collectorNumber = "8")
@@ -17,7 +19,7 @@ public class EndlessFootAssault extends Card {
 
     public EndlessFootAssault() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{W}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}{W}")));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new CreateTokensAttackingEachOpponentEffect(

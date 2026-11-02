@@ -28,8 +28,8 @@ import com.github.laxika.magicalvibes.cards.t.TheFirstSliver;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -79,8 +81,8 @@ public class SliverWeftwinder extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
         addStaticEffect(AlternativeCostForSpellsEffect.warp("{3}", sliverCard));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                SequenceEffect.of(randomSliverConjure(), new DrawCardEffect(1)),
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                SequenceEffect.of(randomSliverConjure(), new DrawCardEffect(1))),
                 GrantScope.ALL_OWN_CREATURES,
                 sliverCreature));
     }

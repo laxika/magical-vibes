@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class RoostOfDrakes extends Card {
 
     public RoostOfDrakes() {
         addStaticEffect(new KickerEffect("{2}{U}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), DRAKE_TOKEN));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(), DRAKE_TOKEN));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new KickedSpellCastTriggerEffect(List.of(DRAKE_TOKEN)));
     }

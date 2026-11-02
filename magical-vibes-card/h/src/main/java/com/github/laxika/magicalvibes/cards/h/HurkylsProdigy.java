@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBRO", collectorNumber = "4")
 public class HurkylsProdigy extends Card {
 
     public HurkylsProdigy() {
         CreateTokenEffect powerstone = CreateTokenEffect.ofPowerstoneToken(new Fixed(1));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, powerstone);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), powerstone);
         addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
                 "{2}",
                 SequenceEffect.of(

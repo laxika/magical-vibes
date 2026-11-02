@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class DefendersOfHumanity extends Card {
                 List.of(CardSubtype.ASTARTES, CardSubtype.WARRIOR),
                 Set.of(Keyword.VIGILANCE), Set.of());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, astartesWarriors);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), astartesWarriors);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class StrongholdArena extends Card {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{W}"), true, 1));
 
         // Each paid kicker gains 3 life when Stronghold Arena enters, as one life gain event.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(new Sum(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(new Sum(List.of(
                 new FixedIfCondition(new Kicked(), 3, 0),
                 new Scaled(new RepeatedAdditionalCostCount("{W}"), 3)))));
 

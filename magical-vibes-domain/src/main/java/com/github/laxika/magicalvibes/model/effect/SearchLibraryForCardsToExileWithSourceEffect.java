@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * ON_ENTER_BATTLEFIELD: the controller searches their library for up to {@code maxCount} cards
+ * When this enters: the controller searches their library for up to {@code maxCount} cards
  * matching {@code filter}, exiles each one tracked "with" the source permanent (via
  * {@code GameData.exiledCards} / {@code sourcePermanentId}), then shuffles.
  *

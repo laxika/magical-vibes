@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Dinrova Horror — {4}{U}{B} Creature — Horror 4/4.
@@ -27,7 +28,7 @@ public class DinrovaHorror extends Card {
         // who discards (so an opponent-caused discard applies Loxodon Smiter's replacement).
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Target must be a permanent"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetPermanentToHandThenEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnTargetPermanentToHandThenEffect(
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
                         ThenEffectRecipient.TARGET_OWNER_AS_TARGET));
     }

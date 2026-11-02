@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +41,7 @@ public class ImmardTheStormcleaver extends Card {
                         new RemoveCounterFromSourceThenEffect(CounterType.CHARGE, removalMode))));
 
         var triggeredCounterMode = new ChooseOneAtResolutionEffect(counterMode);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggeredCounterMode);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), triggeredCounterMode);
         addEffect(EffectSlot.ON_ATTACK, triggeredCounterMode);
     }
 }

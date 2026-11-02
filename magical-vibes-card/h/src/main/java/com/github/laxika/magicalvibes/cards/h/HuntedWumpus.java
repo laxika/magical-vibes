@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "269")
 @CardRegistration(set = "9ED", collectorNumber = "248")
@@ -12,6 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HuntedWumpus extends Card {
 
     public HuntedWumpus() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new OpponentMayPlayCreatureEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new OpponentMayPlayCreatureEffect());
     }
 }

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffe
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIC", collectorNumber = "30")
 @CardRegistration(set = "FIC", collectorNumber = "138")
@@ -21,11 +23,11 @@ public class TataruTaru extends Card {
 
     public TataruTaru() {
         // When Tataru Taru enters, you draw a card and target opponent may draw a card.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, TargetOpponentMayDrawCardEffect.ofChosenTarget());
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), TargetOpponentMayDrawCardEffect.ofChosenTarget());
 
         // Whenever an opponent draws a card, if it isn't that player's turn, create a tapped
         // Treasure token. This ability triggers only once each turn.

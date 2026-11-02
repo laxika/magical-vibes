@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "231")
@@ -24,7 +26,7 @@ public class KefkaCourtMage extends Card {
 
         EachPlayerDiscardsOneThenDrawsForEachCardTypeEffect discardTrigger =
                 new EachPlayerDiscardsOneThenDrawsForEachCardTypeEffect();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, discardTrigger);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), discardTrigger);
         addEffect(EffectSlot.ON_ATTACK, discardTrigger);
 
         addActivatedAbility(new ActivatedAbility(

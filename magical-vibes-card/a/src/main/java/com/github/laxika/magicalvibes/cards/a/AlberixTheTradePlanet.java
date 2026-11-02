@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +18,7 @@ import java.util.List;
 public class AlberixTheTradePlanet extends Card {
 
     public AlberixTheTradePlanet() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(5, false));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTopCardsToSourceEffect(5, false));
 
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

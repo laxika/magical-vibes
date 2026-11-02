@@ -40,7 +40,7 @@ public class YumaProudProtector extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER)));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SACRIFICE_LAND_TO_DRAW);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SACRIFICE_LAND_TO_DRAW);
         addEffect(EffectSlot.ON_ATTACK, SACRIFICE_LAND_TO_DRAW);
 
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN),

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * Aura with 'enchant creature put onto the battlefield with [this].' Put target creature card from
  * a graveyard onto the battlefield under your control and attach this enchantment to it."
  *
- * <p>Place in {@code ON_ENTER_BATTLEFIELD}. Targets any graveyard
+ * <p>Place in a "when this enters" ability. Targets any graveyard
  * ({@link GraveyardSearchScope#ALL_GRAVEYARDS});
  * the shared ETB graveyard-target flow chooses the card as the trigger goes on the stack. Resolution
  * re-checks that the source is still on the battlefield (intervening-if), turns it into an Aura,

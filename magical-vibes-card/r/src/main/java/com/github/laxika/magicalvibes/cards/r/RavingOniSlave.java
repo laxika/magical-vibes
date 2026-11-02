@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -23,7 +22,7 @@ public class RavingOniSlave extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
                 new LoseLifeEffect(3)
         );
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, lifeLoss);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), lifeLoss);
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), lifeLoss);
     }
 }

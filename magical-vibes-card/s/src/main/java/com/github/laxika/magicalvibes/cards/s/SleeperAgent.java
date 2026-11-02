@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "178")
 @CardRegistration(set = "USG", collectorNumber = "159")
@@ -18,7 +20,7 @@ public class SleeperAgent extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect());
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new TargetPlayerGainsControlOfSourceCreatureEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
     }
 }

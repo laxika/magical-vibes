@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class FieldTestedFryingPan extends Card {
     public FieldTestedFryingPan() {
         // When this Equipment enters, create a Food token, then create a 1/1 Halfling token and
         // attach this Equipment to it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 CreateTokenEffect.ofFoodToken(1),
                 new LivingWeaponEffect(new CreateTokenEffect(
                         "Halfling", 1, 1, CardColor.WHITE,

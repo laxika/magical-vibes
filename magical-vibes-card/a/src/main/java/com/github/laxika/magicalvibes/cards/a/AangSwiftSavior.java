@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetCreatureOrSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class AangSwiftSavior extends Card {
         ));
         target(new PermanentPredicateTargetFilter(anotherCreature,
                 "Target must be another creature"), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AirbendTargetCreatureOrSpellEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AirbendTargetCreatureOrSpellEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -27,8 +28,8 @@ public class PrimalAdversary extends Card {
                 null, Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT
         );
         targetUpTo(new XValue(), TargetFilters.landYouControl(), 100)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, animateLands);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), animateLands);
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PayManaAnyNumberOfTimesPutCountersOnSelfEffect("{1}{G}", CounterType.PLUS_ONE_PLUS_ONE,
                         animateLands));
     }

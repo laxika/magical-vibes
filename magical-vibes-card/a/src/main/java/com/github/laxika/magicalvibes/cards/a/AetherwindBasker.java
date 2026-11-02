@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class AetherwindBasker extends Card {
     public AetherwindBasker() {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(creaturesYouControl));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(creaturesYouControl));
         addEffect(EffectSlot.ON_ATTACK, new EnergyCountersEffect(creaturesYouControl));
 
         addActivatedAbility(new ActivatedAbility(

@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "728")
@@ -37,7 +39,8 @@ public class Themberchaud extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER);
 
         // When Themberchaud enters, he deals damage to each other creature without flying and each player.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MassDamageEffect(mountains, true, false, otherNonflyingCreature));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MassDamageEffect(mountains, true, false, otherNonflyingCreature));
 
         // Exert: "You may exert this creature as it attacks. When you do, it gains flying until end of turn."
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class UrzaLordHighArtificer extends Card {
                 List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl))),
                 List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, constructToken);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), constructToken);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class FlaringCinder extends Card {
                 new DiscardAndDrawCardEffect(),
                 "Discard a card to draw a card?"
         );
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, rummage);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), rummage);
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardMinManaValuePredicate(4, true),
                 List.of(rummage)

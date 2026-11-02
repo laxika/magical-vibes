@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ import java.util.Set;
 public class UnassumingSage extends Card {
 
     public UnassumingSage() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayPayManaEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayManaEffect(
                 "{2}",
                 new CreateTokenAttachedToSourceEffect(sorcererRoleToken()),
                 "Pay {2} to create a Sorcerer Role token?"));

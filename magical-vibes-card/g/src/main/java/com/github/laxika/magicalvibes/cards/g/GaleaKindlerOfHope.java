@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,8 +33,8 @@ public class GaleaKindlerOfHope extends Card {
                 new SpellCastTriggerEffect(
                         new CardSubtypePredicate(CardSubtype.EQUIPMENT),
                         List.of(new GrantTriggeredAbilityToCastSpellEffect(
-                                EffectSlot.ON_ENTER_BATTLEFIELD,
-                                AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl())),
+                                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                                AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl()))),
                         new StackEntryCastFromZonePredicate(Zone.LIBRARY)));
     }
 }

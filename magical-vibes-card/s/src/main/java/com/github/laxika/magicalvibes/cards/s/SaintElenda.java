@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -19,7 +21,7 @@ import java.util.Set;
 public class SaintElenda extends Card {
 
     public SaintElenda() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DraftFromSpellbookEffect.conjureIntoHand(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DraftFromSpellbookEffect.conjureIntoHand(
                 List.of(
                         new DraftFromSpellbookEffect.SpellbookCard("M21", "17"),
                         new DraftFromSpellbookEffect.SpellbookCard("DOM", "22"),

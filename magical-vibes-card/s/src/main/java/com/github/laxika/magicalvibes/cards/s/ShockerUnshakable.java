@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SPM", collectorNumber = "89")
 @CardRegistration(set = "OM1", collectorNumber = "83")
@@ -23,7 +24,7 @@ public class ShockerUnshakable extends Card {
 
         DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(2);
         target(TargetFilters.creature()).bindEffect(creatureDamage);
-        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS),
                 creatureDamage,
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }

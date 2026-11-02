@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YONE", collectorNumber = "4")
 public class NornsFetchling extends Card {
@@ -26,7 +27,7 @@ public class NornsFetchling extends Card {
         SeekLibraryToHandEffect seekNonland = new SeekLibraryToHandEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ConditionalEffect(new OpponentPoisoned(3),
                         new MayEffect(seekNonland, "Seek a nonland card instead?", conjurePlains), false),
                 new ConditionalEffect(new NotCondition(new OpponentPoisoned(3)), conjurePlains, false)

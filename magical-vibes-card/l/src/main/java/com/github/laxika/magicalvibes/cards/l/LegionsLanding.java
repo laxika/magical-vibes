@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class LegionsLanding extends Card {
         setBackFaceCard(new AdantoTheFirstFort());
 
         // When Legion's Landing enters, create a 1/1 white Vampire creature token with lifelink.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect("Vampire", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.VAMPIRE), Set.of(Keyword.LIFELINK), Set.of()));
 

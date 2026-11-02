@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class SpecimenFreighter extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SPACECRAFT))
                 )),
                 "Target must be a non-Spacecraft creature"
-        ), 0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target());
+        ), 0, 2).addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

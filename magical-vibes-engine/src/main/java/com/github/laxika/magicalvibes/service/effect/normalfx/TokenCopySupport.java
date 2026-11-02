@@ -1132,7 +1132,13 @@ public class TokenCopySupport {
                     continue;
                 }
                 if (ability instanceof TriggeredAbility triggered && LegacySlots.slotOf(ability) == null) {
-                    tokenCard.addTriggeredAbility(triggered);
+                    // The token's added abilities are its own objects on the stack, not part of the copied card's
+                    // "when this enters" ability (CR 603.3).
+                    tokenCard.addTriggeredAbility(triggered.withEffects(triggered.effects().stream()
+                            .map(registration -> new EffectRegistration(registration.effect(),
+                                    com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT,
+                                    registration.simultaneousWithPrevious()))
+                            .toList()));
                     continue;
                 }
                 EffectSlot slot = LegacySlots.slotOf(ability);

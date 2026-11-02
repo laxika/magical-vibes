@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECL", collectorNumber = "257")
 public class GatheringStone extends Card {
@@ -26,7 +28,7 @@ public class GatheringStone extends Card {
         // hand. If you don't, you may put it into your graveyard.
         LookAtTopCardMayRevealMatchingToHandEffect topCard =
                 new LookAtTopCardMayRevealMatchingToHandEffect(chosenType, true);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, topCard);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), topCard);
         addEffect(EffectSlot.UPKEEP_TRIGGERED, topCard);
     }
 }

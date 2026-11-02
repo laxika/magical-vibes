@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class RimewallProtector extends Card {
         PermanentAnyOfPredicate giantOrWizardPermanent = new PermanentAnyOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.GIANT),
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PerpetuallyGrantKeywordToMatchingCardsEffect(
                         giantOrWizardCard, giantOrWizardPermanent, Set.of(Keyword.WARD),
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.aura;
 
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -396,7 +398,7 @@ public class AuraAttachmentService {
                 .filter(permanent -> permanent.getCard().getId().equals(auraCard.getId()))
                 .findFirst().orElse(null);
         if (sourceAura != null && sourceAura.getChosenPermanentId() != null
-                && auraCard.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                && auraCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect.class::isInstance)
                 && !sourceAura.getChosenPermanentId().equals(host.getId())) {
             return false;

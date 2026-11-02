@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -50,7 +52,7 @@ public class OverlordOfTheHauntwoods extends Card {
                 false,
                 0,
                 Set.of());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, everywhere);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), everywhere);
         addEffect(EffectSlot.ON_ATTACK, everywhere);
 
         addStaticEffect(new ConditionalEffect(

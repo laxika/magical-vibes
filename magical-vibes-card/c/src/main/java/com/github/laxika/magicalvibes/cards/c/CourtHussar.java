@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DIS", collectorNumber = "22")
 @CardRegistration(set = "GK2", collectorNumber = "5")
@@ -19,9 +20,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class CourtHussar extends Card {
 
     public CourtHussar() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
-                new NotCondition(new ColorSpentToCast(ManaColor.WHITE)), new SacrificeSelfEffect()), TriggerMode.INDEPENDENT);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, ConditionalEffect.unless(
+                new NotCondition(new ColorSpentToCast(ManaColor.WHITE)), new SacrificeSelfEffect()));
     }
 }

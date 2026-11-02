@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,7 +50,7 @@ public class SanctuaryWarden extends Card {
                         new RemoveCounterFromChosenOwnPermanentEffect(COUNTERED_CREATURE_OR_PLANESWALKER),
                         ConditionalEffect.unless(new EventValueAtLeast(1), drawAndCreateCitizen)),
                 "Remove a counter from a creature or planeswalker you control?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, removeCounterAndReward);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), removeCounterAndReward);
         addEffect(EffectSlot.ON_ATTACK, removeCounterAndReward);
     }
 }

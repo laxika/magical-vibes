@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOB", collectorNumber = "147")
 @CardRegistration(set = "HOC", collectorNumber = "147")
@@ -25,7 +27,7 @@ public class BifurMelodicRider extends Card {
         target(TargetFilters.creature());
         PutCounterOnTargetPermanentEffect counter =
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, counter);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), counter);
         addEffect(EffectSlot.ON_ATTACK, counter);
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantingPermanentAwareEffect;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
@@ -60,6 +61,18 @@ public class GrantedTriggeredAbilitySupport {
         return grantedTriggeredAbilities(gameData, permanent, staticBonus,
                 ability -> LegacySlots.slotOf(ability) == slot).stream()
                 .map(ability -> ability.effects().getFirst().effect())
+                .toList();
+    }
+
+    /**
+     * The effects of the abilities with {@code trigger} that other permanents' static abilities grant
+     * {@code permanent}, as it is now: "creatures you control have 'when this creature enters, …'".
+     */
+    public List<CardEffect> grantedTriggerEffects(GameData gameData, Permanent permanent, Trigger trigger) {
+        return grantedTriggeredAbilities(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null),
+                ability -> ability.hasTrigger(trigger)).stream()
+                .flatMap(ability -> ability.effects().stream().map(EffectRegistration::effect))
                 .toList();
     }
 

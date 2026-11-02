@@ -10,13 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "211")
 public class BumiUnleashed extends Card {
 
     public BumiUnleashed() {
         target(TargetFilters.landYouControl())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EarthbendTargetLandEffect(4));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(4));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));

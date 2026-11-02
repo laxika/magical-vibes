@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DonnaNoble extends Card {
 
     public DonnaNoble() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Donna Noble with another unpaired creature you control?"));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

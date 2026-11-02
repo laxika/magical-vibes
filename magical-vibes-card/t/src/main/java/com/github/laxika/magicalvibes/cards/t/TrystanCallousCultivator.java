@@ -24,7 +24,7 @@ public class TrystanCallousCultivator extends Card {
     public TrystanCallousCultivator() {
         setBackFaceCard(new TrystanPenitentCuller());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, millThenGainLife());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), millThenGainLife());
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), millThenGainLife());
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new MayPayManaEffect("{B}", new TransformSelfEffect(),

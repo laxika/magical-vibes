@@ -27,7 +27,7 @@ re-check them with a grep before acting on them.
 | 10b | Switch the pilot to the pipeline, convert its cards, delete its slots | done |
 | 11 | Creature-death triggers and self-inclusion | done |
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
-| 12b | `ON_ENTER_BATTLEFIELD` | open |
+| 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | open |
 | 14 | Trigger options replace trigger-only wrapper effects | open |
 | 15 | Effects read the trigger event (repeatable) | open |
@@ -2995,7 +2995,8 @@ registered ability used).
 **For later steps.**
 
 - 12b: the 65 "this or another" cards above merge their `ON_ENTER_BATTLEFIELD` copy into the ability with
-  `THIS_OR_ANOTHER_YOU_CONTROL`; the 20 plain-wording cards need their relation checked. The source's own enters
+  `THIS_OR_ANOTHER_YOU_CONTROL`; the 20 plain-wording cards need their relation checked. (12b deferred both to step
+  14; see its Findings.) The source's own enters
   abilities and `triggerEnteringObservers` both run at `collectEntersTriggers`, so 12b can move them together and keep
   the old order (its own below the others').
 - Cleanup: `TriggerCollectionService.checkAllyTokenEntersTriggers` only collects boons.
@@ -3031,6 +3032,116 @@ registered ability used).
   …; 1,400 tests). The failures are the same tests that fail at HEAD (checked in a HEAD worktree): mock wiring in the
   mock-wired classes and the known ones in the two architecture tests.
 - AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 11.
+- The full suite was not run here.
+
+### Step 12b
+
+`ON_ENTER_BATTLEFIELD` is gone from `EffectSlot`, and with it the last zone-change constant: step 12 is done. Every
+"when this enters" ability is a triggered ability with the real trigger `Triggers.enters(ObjectRelation.THIS)`
+(`enters(null, THIS)`, any zone, any cause).
+
+**Authoring.**
+
+- `addTrigger(Triggers.enters(ObjectRelation.THIS), effect)`, on the card or a target group
+  (`target(filter).addTrigger(…)`); grants take `new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), effect)`.
+- New: `Triggers.enters(ObjectRelation)`; `Card.addTrigger(Trigger, TriggerMode, CardEffect...)` and
+  `SpellTarget.addTrigger(Trigger, TriggerMode, CardEffect...)` for the 77 `INDEPENDENT` registrations;
+  `Card.addSimultaneousTrigger(Trigger, CardEffect...)` for the 6 `addSimultaneousEffects` ones;
+  `Card.getTriggerEffectRegistrations(Trigger)` (registrations with their modes); `Permanent.getGrantedTriggerEffects(Trigger)`
+  (temporary, then persistent abilities); `GrantedTriggeredAbilitySupport.grantedTriggerEffects` /
+  `TriggerCollectionService.grantedTriggerEffects` (abilities other permanents' statics grant).
+- `Card.getTriggerEffects(Trigger)` and the new registrations view read a per-trigger index built with the card's
+  slot index (derived, rebuilt when the abilities change; no new copied state). `isSimultaneousWithPrevious` now also
+  walks the abilities with a real trigger.
+- `TriggerMode.INDEPENDENT` stays on the registration, not in `TriggerOptions`: it isn't a multiplicity. The enters
+  collector still pools a card's plain "when this enters" abilities into one stack object that shares its targets,
+  as the slot collector did, and `INDEPENDENT` keeps one its own. Per CR 603.3 every ability is its own stack object;
+  pooling is the old collector's grouping, which step 15 (or whichever step puts the own enters abilities through
+  `TriggeredAbilityStackService`) replaces by merging what the card text says is one ability and dropping the mode.
+
+**The engine.**
+
+- The own enters abilities are still put on the stack where the slot collector ran,
+  `EtbTriggerService.processCreatureETBEffects`, now reading them by trigger: the card's
+  (`getTriggerEffects`/`getTriggerEffectRegistrations`), the ones granted for a duration (`getGrantedTriggerEffects`),
+  the perpetual entry grants (`perpetualEnterEffectsByCardId`, unchanged) and those other permanents grant. Its
+  grouping, the may/modal/evoke/graveyard-target splits, `EtbEffectResolver` and the suppression checks are unchanged.
+  They are put on the stack before the abilities that see the permanent enter, as before.
+- `RulesEventPipeline.triggerEnteringObservers` skips the `enters(THIS)` trigger (CR 603.6a makes the newcomer a
+  candidate, and `TriggerMatcher` would match its own entry), and batch-close matching already skips every enters
+  trigger but the token watches. The moving-object path never matches an enters trigger. So the own abilities reach
+  the stack once, only through `EtbTriggerService`.
+- The 57 engine, 23 AI, 2 networking and 4 test-fixture readers of the slot read the trigger
+  (`scripts/step12b-readers.py`); the writers (evoke's `SacrificeSelfIfEvokedEffect`, offspring and blitz grants,
+  Specialize, the perpetual "becomes an Island" draw, the conjured duplicate's drain, the hand-cast offspring copy)
+  add the trigger by hand. `PermanentRemovalService`'s "returns through a leaves trigger" check reads the enters,
+  trains and turned-face-up effects.
+- `PermanentCopierService` (a copy of a permanent with chosen independent modes) also rebuilds the
+  mode-conditional effects of abilities with a real trigger.
+- `GrantTriggeredAbilityEffectHandler`'s per-grant once-each-turn key rebuilt the grant from its slot, which a real
+  trigger doesn't have; it keeps the ability's trigger now (`LegacySlots.withEffect`).
+- `TokenCopySupport`: a token copy's added triggered abilities are objects of their own (CR 603.3). A slot ability was
+  added `INDEPENDENT`; a real-trigger one was added as it was, so an added "when this enters" ability joined the copied
+  card's own pooled object. It is added with `INDEPENDENT` registrations now (Aggressive Biomancy, below).
+
+**Cards.** `scripts/step12b-enters-triggers.py` converted 4,783 card classes, 3 card tests, 13 application tests,
+1 AI test and the `DeclaredEtbTargets` fixture: `addEffect`, chained target-group `addEffect`, `addSimultaneousEffects`,
+`LegacySlots.triggered` (nested ones first: Jewel Mine Overseer conjures a card with an enters ability),
+`GrantTriggeredAbilityEffect`, `GrantTriggeredAbilityToCastSpellEffect`, and `getEffects`/`getEffectRegistrations` in
+tests, one ability per registration, so the collector sees the same registrations in the same order. `MANUAL`:
+Huntmaster of the Fells (a helper that took the slot; its two effects are now one ability, the object the collector
+made of them), Mirkwood Elk (a helper shared with `ON_ATTACK`), Rope-Line Attendant (a perpetual hand grant inside the
+enters registration). `TriggeredAbilityTest` used the slot as an arbitrary legacy slot and uses
+`ON_SELF_BECOMES_UNTAPPED` now. `scripts/step12b-docs.py` rewrote agent-docs and the skills (820 lines);
+`ARCHITECTURE.md` and the implement-card skill describe the pooling and `INDEPENDENT` by hand.
+
+**Not done here, for step 14.** 12a's Findings left 12b the "this or another" cards: 60 cards say "this
+[permanent] or another [type] you control enters" and still have an `enters(THIS)` copy beside an `ANOTHER_YOU_CONTROL`
+ability (`scripts/step12b-self-or-another-scan.py` lists them with their wording; 31 have no restriction beyond the
+trigger's filter and the same effect on both halves). Merging them into one `THIS_OR_ANOTHER_YOU_CONTROL` ability was
+tried and reverted: the merged ability is collected by the self-or-ally watches, whose `@CollectsWatchTrigger`
+handlers are keyed by watch and effect class, so the effects the ally watches bind (Verdant Sun's Avatar's
+toughness-based life gain) lost their handler, and the source's own entry took the other path's target flow; 37 tests
+in 13 classes failed. The two halves still behave as the one Oracle ability (one entry can't meet both), as step 11's
+split death cards do. Step 14, which replaces the wrappers and the per-watch bindings, merges them with step 11's 32,
+and checks the "plain wording" cards 12a listed whose "another" relation excludes a source that could match.
+
+**For later steps.**
+
+- Step 14/15: the own enters abilities are the last zone-change abilities collected outside
+  `TriggeredAbilityStackService`; they read their wrappers in `EtbEffectResolver` and `processCreatureETBEffects`
+  (`OncePerTurnTriggerEffect`, kicked/cast/evoked/prowl intervening ifs, `ChooseOneAtTriggerTimeEffect`).
+- Dash's `ReturnSelfToHandIfDashCostPaidEffect` and blitz's haste/sacrifice riders (step 8's markers) are now
+  `enters(THIS)` abilities that `EtbEffectResolver` drops; the keyword family that moves them must keep reading them
+  from the trigger (`CardChoiceHandlerService` adds the granted blitz riders the same way).
+- Engine and AI code checks `getTriggerEffects(Triggers.enters(ObjectRelation.THIS))` where it checked the slot
+  (modal enters abilities, targets, AI value). Once the abilities are grouped by ability, these should read abilities.
+
+**Tests changed.**
+
+- `TriggerPipelineTest`: two new tests, a "when this enters" ability triggers once for its own entry and not for
+  another permanent's (CR 603.6a, the observer pipeline skips it), and a card's plain enters abilities share one stack
+  object while an `INDEPENDENT` one is its own.
+- `TriggeredAbilityTest`: the arbitrary second legacy slot is `ON_SELF_BECOMES_UNTAPPED`.
+- By script: `CardAbilitiesTest`, `ETBTokenTargetServiceTest`, `EtbTriggerServiceTest`, `BattlefieldPlacementServiceTest`,
+  `SpellCastingServiceTest`, `TargetLegalityServiceTest`, `ValidTargetServiceTest`, `StackEntryTargetGroupsTest`,
+  `CardViewFactoryTest`, `CreatureControlServiceTest`, `InstantCategoryClassifierTest`, `TargetPolarityGuardTest`,
+  `TheBookOfVileDarknessTest`, `EnduranceTest`, `CacklingCounterpartTest` add or read the trigger instead of the slot.
+
+**Test runs.**
+
+- Card: every test class of a converted card and every card test that constructs one (7,695 classes): 4 failures. Aggressive Biomancy's copied Merchant of Secrets lost
+  its draw with the fight target (the `TokenCopySupport` cause above, fixed). Blood Age Muster's
+  `canTriggerAgainOnALaterTurn` conjures a random spellbook card and passes on a rerun. Wildgrove Summoner's
+  `seekingAnimatedForestsTriggersCardsPutIntoHandFromLibrary` and Signature Spells'
+  `seekingBeforeExilingTriggersCardsPutIntoHandFromLibraryAbilities` fail the same way at HEAD (`2f7a5cdd00`, checked
+  with the change stashed): a 12a regression in the "put into your hand from your library" watch for seek, left for a
+  separate fix. After the fix, the token-copy cards' and the 31 merge candidates' classes and every test constructing
+  them (441 classes) pass.
+- Application: the pipeline, model, copy, freeze and architecture tests and every changed or mock-wired service test
+  (85 classes, 1,185 tests): 111 failures, exactly the tests that fail at HEAD (same classes run with the change
+  stashed): mock wiring and the known architecture/simulation-copy ones.
+- AI: the whole module (1,620 tests), the same 10 failures as steps 7 to 12a.
 - The full suite was not run here.
 
 ## Prompt

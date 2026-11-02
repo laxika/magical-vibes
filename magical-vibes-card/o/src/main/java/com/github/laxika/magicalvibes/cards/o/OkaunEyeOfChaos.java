@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "380")
 public class OkaunEyeOfChaos extends Card {
@@ -15,7 +17,7 @@ public class OkaunEyeOfChaos extends Card {
     private static final String ZNDRSPLT = "Zndrsplt, Eye of Wisdom";
 
     public OkaunEyeOfChaos() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(ZNDRSPLT),
                 "Have target player put Zndrsplt into their hand from their library?",
                 null,

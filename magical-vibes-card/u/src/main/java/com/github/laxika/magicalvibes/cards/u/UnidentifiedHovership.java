@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -27,7 +26,7 @@ public class UnidentifiedHovership extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentToughnessAtMostPredicate(5))),
                 "Target must be a creature with toughness 5 or less"), 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentAndTrackWithSourceEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ManifestDreadEffect());
         addActivatedAbility(new ActivatedAbility(

@@ -276,6 +276,14 @@ public final class Triggers {
         return new ZoneChangeTrigger(relation, filter, Set.of(), Zone.COMMAND, Set.of());
     }
 
+    /**
+     * "When [object] enters" (CR 603.6a): {@code enters(ObjectRelation.THIS)} for "when this creature enters", from any
+     * zone and in any way.
+     */
+    public static ZoneChangeTrigger enters(ObjectRelation relation) {
+        return enters(null, relation);
+    }
+
     /** "Whenever [a filter permanent] enters" (CR 603.6a). */
     public static ZoneChangeTrigger enters(PermanentPredicate filter, ObjectRelation relation) {
         return new ZoneChangeTrigger(relation, filter, Set.of(), Zone.BATTLEFIELD, Set.of());

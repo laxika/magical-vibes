@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOneCountersOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "192")
 public class OmnivorousFlytrap extends Card {
@@ -26,7 +28,7 @@ public class OmnivorousFlytrap extends Card {
                                 new DoublePlusOneCountersOnTargetCreatureEffect())));
 
         target(TargetFilters.creature(), 1, 2)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, deliriumAbility)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), deliriumAbility)
                 .addEffect(EffectSlot.ON_ATTACK, deliriumAbility);
     }
 }

@@ -9,14 +9,16 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "232")
 public class SyrVondamTheLucent extends Card {
 
     public SyrVondamTheLucent() {
         var otherCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, otherCreatures));
         addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(1, 0, otherCreatures));
         addEffect(EffectSlot.ON_ATTACK,

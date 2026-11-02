@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ import java.util.Set;
 public class OgreChitterlord extends Card {
 
     public OgreChitterlord() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ratTrigger());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ratTrigger());
         addEffect(EffectSlot.ON_ATTACK, ratTrigger());
     }
 

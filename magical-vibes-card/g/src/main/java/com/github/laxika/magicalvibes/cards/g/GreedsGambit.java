@@ -27,7 +27,7 @@ import java.util.Set;
 public class GreedsGambit extends Card {
 
     public GreedsGambit() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DrawCardEffect(3),
                 new GainLifeEffect(6),
                 new CreateTokenEffect(3, "Bat", 2, 1, CardColor.BLACK,

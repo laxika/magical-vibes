@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.testutil;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -163,7 +164,7 @@ final class DeclaredEtbTargets {
             return;
         }
         IllegalStateException firstRejection = null;
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (effect.targetSpec().targetPredicate() == null) {
                 continue;
             }
@@ -184,7 +185,7 @@ final class DeclaredEtbTargets {
 
     /** The ETB mode a modal enters-the-battlefield ability picks at cast time via {@code mode}, or null. */
     private static ChooseOneEffect.ChooseOneOption modalEtbOption(Card card, int mode) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (effect instanceof ChooseOneEffect choice && mode >= 0 && mode < choice.options().size()) {
                 return choice.options().get(mode);
             }
@@ -194,7 +195,7 @@ final class DeclaredEtbTargets {
 
     /** The card's target groups that belong to its enter-the-battlefield ability (or to no ability). */
     private static List<TargetGroup> etbTargetGroups(Card card) {
-        List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
+        List<CardEffect> etbEffects = card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS));
         return card.getTargetGroups().stream()
                 .filter(group -> card.getEffectsBoundToTargetGroup(group.getIndex()).stream()
                         .allMatch(effect -> etbEffects.stream().anyMatch(etb -> etb == effect)))
@@ -450,7 +451,7 @@ final class DeclaredEtbTargets {
 
     private static boolean auraWithEtbTargetGroup(Card card) {
         return card.isAuraThatRequiresAttachment() && card.getTargetGroups().size() == 2
-                && card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                && card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                 .anyMatch(effect -> card.getEffectTargetIndex(effect) == 1);
     }
 

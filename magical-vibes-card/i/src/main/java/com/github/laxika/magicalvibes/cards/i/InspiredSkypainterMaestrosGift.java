@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class InspiredSkypainterMaestrosGift extends Card {
         setBackFaceCard(new MaestrosGift());
 
         // When this creature enters, it becomes prepared.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, BecomePreparedEffect.triggerOnly());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), BecomePreparedEffect.triggerOnly());
 
         // Whenever one or more creature tokens you control deal combat damage to a player, this
         // creature becomes prepared.

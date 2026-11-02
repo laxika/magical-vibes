@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOW", collectorNumber = "50")
 @CardRegistration(set = "DBL", collectorNumber = "317")
 public class CemeteryIlluminator extends Card {
 
     public CemeteryIlluminator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileAnyGraveyardCardAndImprintOnSourceEffect());
         addEffect(EffectSlot.ON_ATTACK,
                 new ExileAnyGraveyardCardAndImprintOnSourceEffect());

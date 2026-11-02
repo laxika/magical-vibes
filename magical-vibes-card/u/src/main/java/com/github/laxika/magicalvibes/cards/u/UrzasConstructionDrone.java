@@ -20,7 +20,7 @@ import java.util.List;
 public class UrzasConstructionDrone extends Card {
 
     public UrzasConstructionDrone() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new ConjureCardNamedIntoLibraryEffect("ATQ", "83a", 1),
                 new ConjureCardNamedIntoLibraryEffect("ATQ", "84a", 1),
                 new ConjureCardNamedIntoLibraryEffect("ATQ", "85a", 1)));

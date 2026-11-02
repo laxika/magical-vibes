@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BIG", collectorNumber = "18")
 public class OmenpathJourney extends Card {
 
     public OmenpathJourney() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryForCardsToExileWithSourceEffect(
                         new CardTypePredicate(CardType.LAND), 5, true));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

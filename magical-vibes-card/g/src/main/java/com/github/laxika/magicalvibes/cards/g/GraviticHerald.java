@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantWarpToChosenCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
@@ -12,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,9 +24,9 @@ public class GraviticHerald extends Card {
                 new CardIsPermanentPredicate(),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                 new CardMaxManaValuePredicate(3)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SeekEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SeekEffect(
                 nonlandPermanentManaValueThreeOrLess, true));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantWarpToChosenCardUntilEndOfTurnEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantWarpToChosenCardUntilEndOfTurnEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(2));
     }
 }

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class StoneGiantOfHighPass extends Card {
         CreateTokenEffect stoneBoulder = new CreateTokenEffect(
                 "Stone Boulder", 3, 1, null,
                 List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), Set.of(CardType.ARTIFACT));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, stoneBoulder);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), stoneBoulder);
         addEffect(EffectSlot.ON_ATTACK, stoneBoulder);
 
         addActivatedAbility(new ActivatedAbility(

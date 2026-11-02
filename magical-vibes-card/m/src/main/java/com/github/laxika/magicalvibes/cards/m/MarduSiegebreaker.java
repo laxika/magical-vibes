@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "TDM", collectorNumber = "206")
@@ -26,8 +28,7 @@ public class MarduSiegebreaker extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 targetFilter,
                 "Target must be another creature you control"
-        ), 0, 1).addEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
+        ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetPermanentUntilSourceLeavesEffect(false, targetFilter));
 
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenCopiesOfExiledCardAttackingOpponentsEffect());

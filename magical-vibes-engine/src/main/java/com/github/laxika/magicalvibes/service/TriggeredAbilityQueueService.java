@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
@@ -2791,7 +2793,7 @@ public class TriggeredAbilityQueueService {
             ExileCardsFromGraveyardEffect enterExile = pending.effects().stream()
                     .filter(ExileCardsFromGraveyardEffect.class::isInstance)
                     .map(ExileCardsFromGraveyardEffect.class::cast)
-                    .filter(exile -> pending.sourceCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).contains(exile))
+                    .filter(exile -> pending.sourceCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).contains(exile))
                     .findFirst()
                     .orElse(null);
             if (enterExile != null) {

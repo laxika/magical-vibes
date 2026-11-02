@@ -18,7 +18,7 @@ public class IllusionsOfGrandeur extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{2}"));
 
         // When this enchantment enters, you gain 20 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(20));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(20));
 
         // When this enchantment leaves the battlefield, you lose 20 life.
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new LoseLifeEffect(20));

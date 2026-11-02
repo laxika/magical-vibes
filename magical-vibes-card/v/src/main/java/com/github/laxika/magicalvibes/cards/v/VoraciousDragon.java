@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.DevouredCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CON", collectorNumber = "75")
 @CardRegistration(set = "DDG", collectorNumber = "56")
@@ -22,7 +23,7 @@ public class VoraciousDragon extends Card {
 
         // When this creature enters, it deals damage to any target equal to twice the number of
         // Goblins it devoured. (DealDamageToAnyTargetEffect declares its own any-target spec.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToAnyTargetEffect(new Scaled(new DevouredCreaturesOfSubtype(CardSubtype.GOBLIN), 2)));
     }
 }

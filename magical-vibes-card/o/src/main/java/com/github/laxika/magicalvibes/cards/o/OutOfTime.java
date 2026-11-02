@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.PhaseOutAllCreaturesUntilSour
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH2", collectorNumber = "23")
 @CardRegistration(set = "WHO", collectorNumber = "209")
@@ -17,9 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class OutOfTime extends Card {
 
     public OutOfTime() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PhaseOutAllCreaturesUntilSourceLeavesEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));

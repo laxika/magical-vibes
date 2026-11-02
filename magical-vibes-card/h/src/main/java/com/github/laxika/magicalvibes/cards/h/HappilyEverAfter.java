@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,9 +24,9 @@ import java.util.List;
 public class HappilyEverAfter extends Card {
 
     public HappilyEverAfter() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GainLifeEffect(new Fixed(5), GainLifeRecipient.EACH_PLAYER));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachPlayerDrawsCardEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachPlayerDrawsCardEffect(1));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new AllOf(List.of(
                         new ColorsAmongControlledPermanentsAtLeast(5),

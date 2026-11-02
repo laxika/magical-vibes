@@ -28,7 +28,7 @@ public class KorvoldFaeCursedKing extends Card {
             new DrawCardEffect());
 
     public KorvoldFaeCursedKing() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SACRIFICE_ANOTHER_PERMANENT);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SACRIFICE_ANOTHER_PERMANENT);
         addEffect(EffectSlot.ON_ATTACK, SACRIFICE_ANOTHER_PERMANENT);
 
         addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL), SACRIFICE_TRIGGER);

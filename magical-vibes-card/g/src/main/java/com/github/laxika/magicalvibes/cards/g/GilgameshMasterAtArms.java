@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "139")
 @CardRegistration(set = "FIN", collectorNumber = "338")
@@ -19,7 +21,7 @@ public class GilgameshMasterAtArms extends Card {
                         6,
                         new CardSubtypePredicate(CardSubtype.EQUIPMENT),
                         new AttachOneOfEquipmentToSamuraiEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, search);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), search);
         addEffect(EffectSlot.ON_ATTACK, search);
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AmbrosiaWhiteheart extends Card {
 
     public AmbrosiaWhiteheart() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new ReturnPermanentControlledByPlayerToHandEffect(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         "permanent"

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardAndImpri
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ import java.util.Set;
 public class CemeteryProtector extends Card {
 
     public CemeteryProtector() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileAnyGraveyardCardAndImprintOnSourceEffect());
 
         CardSharesCardTypeWithImprintedCardPredicate sharedType =

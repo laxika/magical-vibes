@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -36,10 +38,10 @@ public class TownRazerTyrant extends Card {
                 nonbasicLandYouDoNotControl,
                 "Target must be a nonbasic land you don't control"
         ))
-        .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        .addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantStaticEffectToTargetEffect(
                         new LosesAllNonManaAbilitiesEffect(GrantScope.SELF)))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantStaticEffectToTargetEffect(new GrantTriggeredAbilityEffect(
                                 EffectSlot.UPKEEP_TRIGGERED,
                                 new ForcedCostOrElseEffect(

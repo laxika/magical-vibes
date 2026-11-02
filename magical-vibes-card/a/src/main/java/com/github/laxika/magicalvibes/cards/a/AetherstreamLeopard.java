@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AER", collectorNumber = "103")
 public class AetherstreamLeopard extends Card {
 
     public AetherstreamLeopard() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(1));
 
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 ConditionalEffect.unless(new ControllerEnergyAtLeast(1),

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class YannikScavengingSentinel extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player."));
         registerEffectTargetIndex(partnerWith, partnerTarget.getIndex());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, partnerWith);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), partnerWith);
 
         var anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -48,7 +49,7 @@ public class YannikScavengingSentinel extends Card {
                         CounterType.PLUS_ONE_PLUS_ONE, new EventValue(), null);
         var counterTargets = target(TargetFilters.creature(), 0, 99);
         registerEffectTargetIndex(distributeCounters, counterTargets.getIndex());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExilePermanentYouControlAndTrackWithSourceEffect(anotherCreature, distributeCounters, true));
     }
 }

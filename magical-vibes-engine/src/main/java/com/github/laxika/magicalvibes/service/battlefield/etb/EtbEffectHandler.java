@@ -22,7 +22,7 @@ public interface EtbEffectHandler {
 
     /**
      * @param ctx    the trigger-time context (entering card, controller, cast flags, modal index)
-     * @param effect the raw effect from the {@code ON_ENTER_BATTLEFIELD} slot
+     * @param effect the raw effect of a "when this enters" ability
      * @return the resolved effect to queue, or {@code null} to drop the trigger
      */
     CardEffect resolve(EtbEffectContext ctx, CardEffect effect);

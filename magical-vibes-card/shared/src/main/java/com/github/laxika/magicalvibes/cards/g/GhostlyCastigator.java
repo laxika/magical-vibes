@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
  * Ghostly Castigator — back face of Covetous Castaway.
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControl
 public class GhostlyCastigator extends Card {
 
     public GhostlyCastigator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null, 3),
                         "Shuffle the targeted cards into your library?"));
 

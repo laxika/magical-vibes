@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DeathMatch extends Card {
 
     public DeathMatch() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.atTriggerTime(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.atTriggerTime(
                 new SourceIsCreature(), new MayEffect(new BoostTargetCreatureEffect(-3, -3),
                 "Have target creature get -3/-3 until end of turn?")));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),

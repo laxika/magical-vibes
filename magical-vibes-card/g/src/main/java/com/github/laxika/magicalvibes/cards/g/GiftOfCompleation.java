@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class GiftOfCompleation extends Card {
 
     public GiftOfCompleation() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), incubatorToken());
         addTrigger(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.PHYREXIAN),

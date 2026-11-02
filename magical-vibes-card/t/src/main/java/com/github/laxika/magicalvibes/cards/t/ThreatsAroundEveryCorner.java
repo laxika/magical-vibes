@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class ThreatsAroundEveryCorner extends Card {
 
     public ThreatsAroundEveryCorner() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ManifestDreadEffect.forController());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ManifestDreadEffect.forController());
         addTrigger(Triggers.enters(null, ObjectRelation.ANY),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

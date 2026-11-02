@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class GrenzoCrookedJailer extends Card {
                 "Target must be an opponent");
 
         target(opponentFilter)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new HeistTargetLibraryEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new HeistTargetLibraryEffect())
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new HeistTargetLibraryEffect());
 
         addStaticEffect(new AlternativeCostForSpellsEffect(

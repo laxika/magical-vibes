@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class LudevicNecrogenius extends Card {
     public LudevicNecrogenius() {
         setBackFaceCard(new OlagLudevicsHubris());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(1, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(1, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.ON_ATTACK, new MillEffect(1, MillRecipient.CONTROLLER));
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ import java.util.Set;
 public class PizzaFaceGastromancer extends Card {
 
     public PizzaFaceGastromancer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
 
         PermanentPredicate artifactOrCreature = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),

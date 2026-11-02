@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class KolaghanTheStormsFury extends Card {
 
     public KolaghanTheStormsFury() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{B}{R}"))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnSelfToHandIfDashCostPaidEffect());
 
         // Whenever a Dragon you control attacks, creatures you control get +1/+0 until end of turn.
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,

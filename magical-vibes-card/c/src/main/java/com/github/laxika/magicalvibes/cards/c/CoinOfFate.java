@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.OpponentChoosesOneOfActivatedExiledCreatureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "15")
@@ -17,7 +18,7 @@ import java.util.List;
 public class CoinOfFate extends Card {
 
     public CoinOfFate() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{W}",

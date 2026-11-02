@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +36,7 @@ public class BonnyPallClearcutter extends Card {
                         landsYouControl, landsYouControl))),
                 List.of(), false, false, true, 0, Set.of());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, beau);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), beau);
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 SequenceEffect.of(
                         new DrawCardEffect(),

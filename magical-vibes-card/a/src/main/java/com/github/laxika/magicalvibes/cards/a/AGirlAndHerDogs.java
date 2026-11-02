@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithChosenNameEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class AGirlAndHerDogs extends Card {
 
     public AGirlAndHerDogs() {
         CreateTokenWithChosenNameEffect createNamedDog = new CreateTokenWithChosenNameEffect(DOG_TOKEN);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, createNamedDog);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), createNamedDog);
         addEffect(EffectSlot.UPKEEP_TRIGGERED, createNamedDog);
 
         PermanentCount legendaryCreatures = new PermanentCount(

@@ -19,7 +19,7 @@ public class UlrichOfTheKrallenhorde extends Card {
         setBackFaceCard(new UlrichUncontestedAlpha());
 
         target(TargetFilters.creature());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(4, 4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(4, 4));
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), new BoostTargetCreatureEffect(4, 4));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

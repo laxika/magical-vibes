@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "35")
 @CardRegistration(set = "NCC", collectorNumber = "136")
@@ -13,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 public class DoggedDetective extends Card {
 
     public DoggedDetective() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SurveilEffect(2));
         addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_DRAWS_SECOND_CARD,
                 new MayEffect(
                         new ReturnSourceCardFromGraveyardToOwnerHandEffect(),

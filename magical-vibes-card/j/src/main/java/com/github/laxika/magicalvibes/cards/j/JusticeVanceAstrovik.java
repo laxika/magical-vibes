@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -25,7 +24,7 @@ public class JusticeVanceAstrovik extends Card {
                                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         "Target must be a nonland, nontoken permanent"), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target());
         addTrigger(Triggers.putIntoHandFrom(Zone.BATTLEFIELD, Triggers.NONLAND, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new PutCountersOnSourceEffect(1, 1, 1));
     }

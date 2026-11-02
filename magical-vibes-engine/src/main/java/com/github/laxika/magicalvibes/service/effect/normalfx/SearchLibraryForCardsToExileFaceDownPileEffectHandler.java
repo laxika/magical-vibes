@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * ON_ENTER_BATTLEFIELD: the controller searches their library for N cards, exiles them face down as
+ * When this enters: the controller searches their library for N cards, exiles them face down as
  * a pile tracked "with" the source permanent, shuffles that pile, then shuffles their library. The
  * repeated pick, the exile, and both shuffles are driven by
  * {@code LibraryChoiceHandlerService} via {@link LibrarySearchDestination#EXILE_FACE_DOWN_PILE}.

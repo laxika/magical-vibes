@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterTransformSourceAtNextUpkeepEffect;
@@ -26,7 +25,7 @@ public class AangAtTheCrossroads extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardMaxManaValuePredicate(4)
                 )));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, creatureWithManaValueAtMostFour);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), creatureWithManaValueAtMostFour);
 
         addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new RegisterTransformSourceAtNextUpkeepEffect());

@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -16,7 +17,7 @@ public class KeymasterRogue extends Card {
 
     public KeymasterRogue() {
         addStaticEffect(new CantBeBlockedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BouncePermanentOnUpkeepEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BouncePermanentOnUpkeepEffect(
                 BouncePermanentOnUpkeepEffect.Scope.SOURCE_CONTROLLER,
                 Set.of(new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

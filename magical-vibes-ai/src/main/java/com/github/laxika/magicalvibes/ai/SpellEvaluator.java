@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
@@ -62,6 +61,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -361,7 +361,7 @@ public class SpellEvaluator {
 
             baseValue += evaluateEffects(gameData, card, card.getCastingCostsAndSpellEffects(),
                     aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
-            baseValue += evaluateEffects(gameData, card, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+            baseValue += evaluateEffects(gameData, card, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                     aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
 
             // Aura evaluation
@@ -427,7 +427,7 @@ public class SpellEvaluator {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isDrawEffect(effect)) return true;
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (isDrawEffect(effect)) return true;
         }
         return false;
@@ -520,7 +520,7 @@ public class SpellEvaluator {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isLifeGainEffect(effect)) return true;
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (isLifeGainEffect(effect)) return true;
         }
         return false;
@@ -543,7 +543,7 @@ public class SpellEvaluator {
         double value = boardEvaluator.creatureCardScore(gameData, card, aiPlayerId);
 
         // Add ETB effect value
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             value += evaluateEtbEffect(gameData, card, effect, aiPlayerId, opponentId);
         }
 
@@ -1002,7 +1002,7 @@ public class SpellEvaluator {
                         AmountContext.forEstimation(aiPlayerId));
             }
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE) {
                 tokenCount += amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                         AmountContext.forEstimation(aiPlayerId));
@@ -1515,7 +1515,7 @@ public class SpellEvaluator {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isRemovalEffect(effect)) return true;
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (isRemovalEffect(effect)) return true;
         }
         return false;

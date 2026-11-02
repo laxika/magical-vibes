@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "213")
 public class CourtOfIre extends Card {
 
     public CourtOfIre() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalReplacementEffect(
                 new ControllerIsMonarch(),
                 new DealDamageToAnyTargetEffect(2),

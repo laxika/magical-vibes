@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class Sarcomancy extends Card {
 
     public Sarcomancy() {
         // When this enchantment enters, create a 2/2 black Zombie creature token.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect("Zombie", 2, 2, CardColor.BLACK,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect("Zombie", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));
 
         // At the beginning of your upkeep, if there are no Zombies on the battlefield,

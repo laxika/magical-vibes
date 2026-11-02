@@ -43,7 +43,7 @@ public class Jerren extends Card {
     public Jerren() {
         setBackFaceCard(new OrmendahlTheCorrupter());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DEATH_REWARD);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DEATH_REWARD);
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.HUMAN), DEATH_REWARD));
 

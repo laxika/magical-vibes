@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * ON_ENTER_BATTLEFIELD: the controller searches their library for {@code count} cards, exiles them
+ * When this enters: the controller searches their library for {@code count} cards, exiles them
  * face down as a pile tracked "with" the source permanent, shuffles that pile, then shuffles their
  * library.
  *

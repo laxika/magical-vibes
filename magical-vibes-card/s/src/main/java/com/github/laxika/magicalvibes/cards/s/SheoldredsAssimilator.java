@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfExiledCardI
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YONE", collectorNumber = "10")
 public class SheoldredsAssimilator extends Card {
@@ -17,7 +19,7 @@ public class SheoldredsAssimilator extends Card {
         CardEffect graveyardTrigger = graveyardTrigger();
         var graveyardTarget = target(
                 new GraveyardCardPredicateTargetFilter(null, GraveyardSearchScope.ALL_GRAVEYARDS), 0, 1);
-        graveyardTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, graveyardTrigger);
+        graveyardTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), graveyardTrigger);
         graveyardTarget.addEffect(EffectSlot.ON_ATTACK, graveyardTrigger);
     }
 

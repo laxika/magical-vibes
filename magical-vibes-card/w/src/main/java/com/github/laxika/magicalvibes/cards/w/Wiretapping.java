@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.FirstDrawStepDrawOnlyTriggerE
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "65")
 public class Wiretapping extends Card {
 
     public Wiretapping() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(5, true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ImprintFromTopCardsEffect(5, true));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new FirstDrawStepDrawOnlyTriggerEffect(SequenceEffect.of(
                 new DrawCardEffect(1),
                 new ConditionalEffect(new CardsInHandAtLeast(9),

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenE
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOM", collectorNumber = "245")
 @CardRegistration(set = "MOM", collectorNumber = "312")
@@ -21,7 +23,7 @@ public class KroxaAndKunoros extends Card {
                 .targetGraveyard(true)
                 .build();
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new ExileNCardsFromGraveyardThenEffect(5, returnCreature),
                 "Exile five cards from your graveyard?"));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(

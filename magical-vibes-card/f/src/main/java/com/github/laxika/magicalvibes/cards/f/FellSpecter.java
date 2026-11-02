@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M19", collectorNumber = "96")
 public class FellSpecter extends Card {
@@ -19,7 +21,7 @@ public class FellSpecter extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
 
         // Whenever an opponent discards a card, that player loses 2 life.
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER));

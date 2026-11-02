@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.EnteringPermanentDealsDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "665")
@@ -21,10 +23,10 @@ public class LavabellySliver extends Card {
         // Sliver creatures you control have "When this creature enters, it deals 1 damage to target
         // player or planeswalker and you gain 1 life."
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                 new SequenceEffect(List.of(
                         new EnteringPermanentDealsDamageToTargetPlayerOrPlaneswalkerEffect(1, PlayerRelation.ANY),
-                        new GainLifeEffect(1))),
+                        new GainLifeEffect(1)))),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }

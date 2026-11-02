@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CouncilDilemmaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayVoteAdditionalTimeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "10")
 @CardRegistration(set = "NCC", collectorNumber = "109")
 public class TivitSellerOfSecrets extends Card {
 
     public TivitSellerOfSecrets() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CouncilDilemmaEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CouncilDilemmaEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new CouncilDilemmaEffect());
         addStaticEffect(new MayVoteAdditionalTimeEffect());
     }

@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.g.GiantSecrets;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachAurasToSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YWOE", collectorNumber = "26")
 public class StormkeldCurator extends Card {
@@ -13,7 +14,7 @@ public class StormkeldCurator extends Card {
     public StormkeldCurator() {
         setBackFaceCard(new GiantSecrets());
         addCastingOption(new AdventureCast("{X}{U}{U}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new AttachAurasToSourceEffect(false, false, Integer.MAX_VALUE, false));
     }
 

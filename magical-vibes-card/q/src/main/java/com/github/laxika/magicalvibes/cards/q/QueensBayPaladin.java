@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "115")
 @CardRegistration(set = "LCI", collectorNumber = "368")
@@ -24,7 +26,7 @@ public class QueensBayPaladin extends Card {
                 .loseLifeEqualToManaValue(true)
                 .build();
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnVampire);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnVampire);
         addEffect(EffectSlot.ON_ATTACK, returnVampire);
     }
 }

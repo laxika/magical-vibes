@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanent
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class LatticeLibrary extends Card {
     public LatticeLibrary() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.STUDY, new XValue()));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, createFractalWithStudyCounters());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), createFractalWithStudyCounters());
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(
                 1,

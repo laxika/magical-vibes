@@ -55,6 +55,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -424,7 +426,7 @@ class AiTargetSelector {
             return chooseMultiTargets(gameData, card, aiPlayerId) != null;
         }
         if (EffectResolution.needsTarget(card.getCastingCostsAndSpellEffects(),
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), false, false)) {
+                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), false, false)) {
             return chooseTarget(gameData, card, aiPlayerId) != null;
         }
         return true;
@@ -753,7 +755,7 @@ class AiTargetSelector {
                 result.add(effect);
             }
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (card.getEffectTargetIndex(effect) == targetIndex) {
                 result.add(effect);
             }
@@ -988,7 +990,7 @@ class AiTargetSelector {
         if (targetValidationService.checkEffectTargets(card.getCastingCostsAndSpellEffects(), ctx).isPresent()) {
             return false;
         }
-        if (targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), ctx).isPresent()) {
+        if (targetValidationService.checkEffectTargets(card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), ctx).isPresent()) {
             return false;
         }
         return hasPossibleCastTimeCreatureType(gameData, card, target);
@@ -1058,7 +1060,7 @@ class AiTargetSelector {
             if (spec.admits(TargetPredicate.Kind.EXILED_CARD)) result.add(TargetType.EXILE);
         }
         List<CardEffect> baseEtbEffects = EffectResolution.resolveEffects(
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), false, null);
+                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), false, null);
         for (CardEffect effect : baseEtbEffects) {
             TargetSpec spec = effect.targetSpec();
             if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);

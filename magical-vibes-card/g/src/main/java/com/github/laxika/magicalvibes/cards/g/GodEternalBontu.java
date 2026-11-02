@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromExileIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
@@ -21,7 +20,7 @@ public class GodEternalBontu extends Card {
 
     public GodEternalBontu() {
         PermanentPredicate otherPermanent = new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SacrificeAnyNumberOfPermanentsThenDrawPerSacrificedEffect(otherPermanent));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new MayEffect(

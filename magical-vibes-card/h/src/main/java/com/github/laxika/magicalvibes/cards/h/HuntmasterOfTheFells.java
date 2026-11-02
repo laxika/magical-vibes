@@ -30,17 +30,12 @@ public class HuntmasterOfTheFells extends Card {
     public HuntmasterOfTheFells() {
         setBackFaceCard(new RavagerOfTheFells());
 
-        addWolfAndLifeTrigger(EffectSlot.ON_ENTER_BATTLEFIELD);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), wolfToken(), new GainLifeEffect(2));
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), wolfToken(), new GainLifeEffect(2));
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Huntmaster.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
-    }
-
-    private void addWolfAndLifeTrigger(EffectSlot slot) {
-        addEffect(slot, wolfToken());
-        addEffect(slot, new GainLifeEffect(2));
     }
 
     private static CreateTokenEffect wolfToken() {

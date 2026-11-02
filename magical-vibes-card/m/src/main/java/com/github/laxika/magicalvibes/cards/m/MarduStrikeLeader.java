@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPaidEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +20,7 @@ public class MarduStrikeLeader extends Card {
 
     public MarduStrikeLeader() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{B}"))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ReturnSelfToHandIfDashCostPaidEffect());
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
                 1, "Warrior", 2, 1, CardColor.BLACK, List.of(CardSubtype.WARRIOR),
                 Set.of(), Set.of()

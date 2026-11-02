@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsDoubleFacedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -31,8 +33,8 @@ public class TheGoldenGearColossus extends Card {
 
     public TheGoldenGearColossus() {
         target(OTHER_DOUBLE_FACED_ARTIFACT, 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TransformTargetPermanentEffect())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CREATE_GNOMES)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TransformTargetPermanentEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), CREATE_GNOMES)
                 .addEffect(EffectSlot.ON_ATTACK, new TransformTargetPermanentEffect())
                 .addEffect(EffectSlot.ON_ATTACK, CREATE_GNOMES);
     }

@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class AggressiveBiomancy extends Card {
                 null,
                 Set.of(),
                 false,
-                List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(fightEffect))),
+                List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), fightEffect)),
                 List.of(),
                 false,
                 false,
@@ -46,6 +47,6 @@ public class AggressiveBiomancy extends Card {
 
         target(TargetFilters.creatureYouControl()).addSpellEffect(copyEffect);
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, fightEffect);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), fightEffect);
     }
 }

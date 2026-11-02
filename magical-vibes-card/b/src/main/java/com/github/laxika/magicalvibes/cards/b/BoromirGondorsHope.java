@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class BoromirGondorsHope extends Card {
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.HUMAN),
                         new CardTypePredicate(CardType.ARTIFACT))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, search);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), search);
         addEffect(EffectSlot.ON_ATTACK, search);
     }
 }

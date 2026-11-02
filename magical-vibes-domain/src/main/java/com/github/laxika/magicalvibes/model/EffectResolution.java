@@ -51,6 +51,8 @@ import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -218,7 +220,7 @@ public final class EffectResolution {
      * Computes the set of target types from a list of effects.
      *
      * @param spellEffects the SPELL slot effects (resolved or unresolved)
-     * @param etbEffects   the ON_ENTER_BATTLEFIELD slot effects (may be empty)
+     * @param etbEffects   the "when this enters" effects (may be empty)
      * @param isAura       whether the card is an aura
      * @param isEnchantPlayer whether the card is a player-enchanting aura (curse)
      * @return the set of target types these effects can target
@@ -476,7 +478,7 @@ public final class EffectResolution {
         if (!isTargetlessPermanentSpell(card) || card.getCastingOption(BestowCast.class).isPresent()) {
             return false;
         }
-        List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
+        List<CardEffect> etbEffects = card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS));
         return !card.getTargetGroups().isEmpty()
                 || !computeAllowedTargets(List.of(), etbEffects, false, false).isEmpty()
                 || etbEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
@@ -569,7 +571,7 @@ public final class EffectResolution {
      */
     public static boolean hasColorSpentCondition(Card card) {
         return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
-                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), card.getStaticEffects())
+                        card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), card.getStaticEffects())
                 .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesColorSpentMana);
     }
@@ -603,7 +605,7 @@ public final class EffectResolution {
      */
     public static boolean hasColorManaPairsSpentToCastAmount(Card card) {
         return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
-                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), card.getStaticEffects())
+                        card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), card.getStaticEffects())
                 .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesColorManaPairsSpentToCast);
     }
@@ -658,7 +660,7 @@ public final class EffectResolution {
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
         return java.util.stream.Stream.of(card.getCastingCostsAndSpellEffects(),
-                        card.getEffects(EffectSlot.ON_SELF_CAST), card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                        card.getEffects(EffectSlot.ON_SELF_CAST), card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                         card.getStaticEffects())
                 .flatMap(List::stream)
                 .anyMatch(EffectResolution::effectUsesManaSpentToCast);

@@ -25,7 +25,7 @@ public class GrubStoriedMatriarch extends Card {
                 .targetGraveyard(true)
                 .upTo(true)
                 .build();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnGoblin);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnGoblin);
         addTrigger(Triggers.transformsToFrontFace(ObjectRelation.THIS), returnGoblin);
 
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,

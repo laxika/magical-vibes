@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
@@ -28,7 +27,7 @@ public class SpellQueller extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryMaxManaValuePredicate(4),
                 "Target spell's mana value must be 4 or less."
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetSpellUntilSourceLeavesEffect());
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetSpellUntilSourceLeavesEffect());
 
         // When this creature leaves the battlefield, the exiled card's owner may cast that card
         // without paying its mana cost.

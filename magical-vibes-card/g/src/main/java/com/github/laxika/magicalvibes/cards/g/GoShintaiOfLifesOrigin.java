@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -31,7 +30,7 @@ import java.util.Set;
 public class GoShintaiOfLifesOrigin extends Card {
 
     public GoShintaiOfLifesOrigin() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, shrineToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), shrineToken());
 
         addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(

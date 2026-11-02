@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCo
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DST", collectorNumber = "143")
 public class Spellbinder extends Card {
 
     public Spellbinder() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExileFromHandToImprintEffect(new CardTypePredicate(CardType.INSTANT), "an instant card"),
                         "You may exile an instant card from your hand."));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

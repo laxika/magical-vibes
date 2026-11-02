@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "73")
 public class SidequestCardCollection extends Card {
@@ -18,7 +20,7 @@ public class SidequestCardCollection extends Card {
     public SidequestCardCollection() {
         setBackFaceCard(new MagickedCard());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(
                         new DrawCardEffect(3),
                         new DiscardEffect(2, DiscardRecipient.CONTROLLER)));

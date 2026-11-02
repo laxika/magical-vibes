@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -41,17 +43,17 @@ public class ClashOfRealities extends Card {
                 new DealDamageToTargetCreatureEffect(3, NON_SPIRIT_CREATURE),
                 "Have this Spirit deal 3 damage to target non-Spirit creature?");
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                spiritAbility, GrantScope.ALL_PERMANENTS, SPIRIT));
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                spiritAbility), GrantScope.ALL_PERMANENTS, SPIRIT));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                spiritAbility, GrantScope.SELF, SPIRIT));
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                spiritAbility), GrantScope.SELF, SPIRIT));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(
                         new DealDamageToTargetCreatureEffect(3, SPIRIT_CREATURE),
-                        "Have this creature deal 3 damage to target Spirit creature?"),
+                        "Have this creature deal 3 damage to target Spirit creature?")),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 NON_SPIRIT_CREATURE));
     }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
@@ -13,7 +15,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -909,7 +910,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (CardEffect effect : card.getCastingCostsAndSpellEffects()) {
             if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (isSingleEffectRemoval(effect)) return CombatRelevance.REMOVAL;
         }
 
@@ -960,7 +961,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (CardEffect effect : spell.getCastingCostsAndSpellEffects()) {
             if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
-        for (CardEffect effect : spell.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : spell.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
         return false;
@@ -2845,7 +2846,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * enter-the-battlefield effects (useful for prioritizing draw-first casting).
      */
     private boolean hasCardDrawEtb(Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+        for (CardEffect effect : card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))) {
             if (effect instanceof CardDrawingEffect) {
                 return true;
             }

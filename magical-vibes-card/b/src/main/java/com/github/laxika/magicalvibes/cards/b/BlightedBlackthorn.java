@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ECL", collectorNumber = "90")
 public class BlightedBlackthorn extends Card {
@@ -16,7 +18,7 @@ public class BlightedBlackthorn extends Card {
         MayEffect blight = new MayEffect(
                 new BlightEffect(2, SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))),
                 "Blight 2?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, blight);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), blight);
         addEffect(EffectSlot.ON_ATTACK, blight);
     }
 }

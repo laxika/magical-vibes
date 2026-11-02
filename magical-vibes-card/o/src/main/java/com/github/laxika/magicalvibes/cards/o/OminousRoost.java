@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatches
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class OminousRoost extends Card {
                 List.of(
                         StaticAbility.of(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                         new PermanentHasKeywordPredicate(Keyword.FLYING), "creatures with flying"))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, birdToken);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), birdToken);
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new CastFromGraveyardTriggerEffect(List.of(birdToken)));
     }

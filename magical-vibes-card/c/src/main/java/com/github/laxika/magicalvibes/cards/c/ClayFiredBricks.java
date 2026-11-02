@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -18,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,13 +28,13 @@ public class ClayFiredBricks extends Card {
     public ClayFiredBricks() {
         setBackFaceCard(new CosmiumKiln());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SearchLibraryEffect(
                 new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.BASIC),
                         new CardTypePredicate(CardType.LAND),
                         new CardSubtypePredicate(CardSubtype.PLAINS))),
                 LibrarySearchDestination.HAND));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{W}{W}",

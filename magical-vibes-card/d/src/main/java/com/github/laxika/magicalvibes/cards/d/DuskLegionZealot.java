@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "70")
 @CardRegistration(set = "A25", collectorNumber = "89")
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 public class DuskLegionZealot extends Card {
 
     public DuskLegionZealot() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(1));
     }
 }

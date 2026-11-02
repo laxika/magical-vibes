@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -33,7 +32,7 @@ public class HazezonTamar extends Card {
                 List.of(CardSubtype.SAND, CardSubtype.WARRIOR), Set.of(), Set.of(), false, false,
                 List.of(), List.of(), false, false, false, 0, Set.of());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new RegisterDelayedCreateTokenAtNextUpkeepEffect(sandWarrior));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ExileAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(

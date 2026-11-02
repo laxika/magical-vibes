@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsThenDrawPerTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -19,7 +18,7 @@ public class GuildSummit extends Card {
     public GuildSummit() {
         // When this enchantment enters, you may tap any number of untapped Gates you control.
         // Draw a card for each Gate tapped this way.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new TapAnyNumberOfPermanentsThenDrawPerTappedEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.GATE)));
 

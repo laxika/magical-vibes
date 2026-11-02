@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "216")
 @CardRegistration(set = "MM3", collectorNumber = "207")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 public class BurningTreeEmissary extends Card {
 
     public BurningTreeEmissary() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AwardManaEffect(ManaColor.RED));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AwardManaEffect(ManaColor.GREEN));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new AwardManaEffect(ManaColor.RED));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new AwardManaEffect(ManaColor.GREEN));
     }
 }

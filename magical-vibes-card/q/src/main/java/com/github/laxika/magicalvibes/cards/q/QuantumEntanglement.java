@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "607")
 public class QuantumEntanglement extends Card {
 
     public QuantumEntanglement() {
         SpellTarget creatureTarget = target(TargetFilters.creatureYouControl());
-        creatureTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mayFlicker());
+        creatureTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), mayFlicker());
         creatureTarget.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, mayFlicker());
     }
 

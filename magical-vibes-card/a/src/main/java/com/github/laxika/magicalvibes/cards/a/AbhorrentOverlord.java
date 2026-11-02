@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class AbhorrentOverlord extends Card {
 
     public AbhorrentOverlord() {
         // When this creature enters, create Harpies equal to your black devotion.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.BLACK),
                 "Harpy", 1, 1, CardColor.BLACK, List.of(CardSubtype.HARPY),
                 Set.of(Keyword.FLYING), Set.of()));

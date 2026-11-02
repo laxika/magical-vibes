@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class Jokulmorder extends Card {
         addStaticEffect(new EntersTappedEffect());
         addStaticEffect(DoesntUntapEffect.self());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ForcedCostOrElseEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ForcedCostOrElseEffect(
                 new SacrificeMultiplePermanentsCost(5, new PermanentIsLandPredicate()),
                 List.of(new SacrificeSelfEffect()),
                 true));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -29,14 +28,14 @@ public class CacophonyUnleashed extends Card {
 
     public CacophonyUnleashed() {
         // When this enchantment enters, if you cast it, destroy all nonenchantment creatures.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new WasCast(),
                 new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsEnchantmentPredicate()))))));
 
         // Whenever this enchantment or another enchantment you control enters, this enchantment
         // becomes a legendary 6/6 Nightmare God creature with menace and deathtouch until end of turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, animationEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), animationEffect());
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), animationEffect());
     }
 

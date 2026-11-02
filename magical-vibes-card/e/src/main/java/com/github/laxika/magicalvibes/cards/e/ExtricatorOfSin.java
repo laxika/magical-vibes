@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class ExtricatorOfSin extends Card {
 
         // When this creature enters, you may sacrifice another permanent. If you do, create a
         // 3/2 colorless Eldrazi Horror creature token.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         eldraziHorrorToken(),

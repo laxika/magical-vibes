@@ -15,13 +15,15 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBLB", collectorNumber = "24")
 public class EuruAcornScrounger extends Card {
 
     public EuruAcornScrounger() {
         // "When you do" is a reflexive trigger (CR 603.12), so the conjure goes on the stack after forage.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new ForageEffect(new QueueReflexiveAbilityEffect(
                         new ConjureCardToBattlefieldEffect("MH2", "153"))),
                 "Forage?"));

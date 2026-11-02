@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class RoadkillRodney extends Card {
 
     public RoadkillRodney() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}")));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{3}"),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{3}"))));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, mutagenToken());

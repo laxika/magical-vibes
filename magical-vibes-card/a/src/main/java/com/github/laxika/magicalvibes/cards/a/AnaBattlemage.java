@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
@@ -24,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -37,19 +38,17 @@ public class AnaBattlemage extends Card {
         targetWhenKicked(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ), 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new Kicked(), new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)),
-                TriggerMode.INDEPENDENT);
+        ), 0, 0, 1, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                new ConditionalEffect(new Kicked(), new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER)));
 
         targetWithDynamicCount(new RepeatedAdditionalCostCount("{1}{B}"), new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 )), "Target must be an untapped creature"), 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
                         new ConditionalEffect(new RepeatedAdditionalCostPaid("{1}{B}"),
                                 SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.TARGET),
-                                        new TargetCreatureDealsPowerDamageToControllerEffect())),
-                        TriggerMode.INDEPENDENT);
+                                        new TargetCreatureDealsPowerDamageToControllerEffect())));
     }
 }

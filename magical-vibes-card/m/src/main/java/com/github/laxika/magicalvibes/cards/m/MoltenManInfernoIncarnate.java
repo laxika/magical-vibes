@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -34,7 +33,7 @@ public class MoltenManInfernoIncarnate extends Card {
                 new CardSupertypePredicate(CardSupertype.BASIC),
                 new CardTypePredicate(CardType.LAND),
                 new CardSubtypePredicate(CardSubtype.MOUNTAIN)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SearchLibraryEffect(basicMountain, LibrarySearchDestination.BATTLEFIELD_TAPPED));
 
         PermanentCount mountains = new PermanentCount(

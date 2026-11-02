@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class AllSeeingArbiter extends Card {
         SequenceEffect drawTwoThenDiscard = SequenceEffect.of(
                 new DrawCardEffect(2),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, drawTwoThenDiscard);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), drawTwoThenDiscard);
         addEffect(EffectSlot.ON_ATTACK, drawTwoThenDiscard);
 
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new BoostTargetCreatureEffect(

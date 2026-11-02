@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOI", collectorNumber = "161")
 public class GibberingFiend extends Card {
 
     public GibberingFiend() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new Delirium(),

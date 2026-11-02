@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "233")
 public class Shroudstomper extends Card {
@@ -17,7 +19,7 @@ public class Shroudstomper extends Card {
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(2),
                 new DrawCardEffect(1));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, drain);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), drain);
         addEffect(EffectSlot.ON_ATTACK, drain);
     }
 }

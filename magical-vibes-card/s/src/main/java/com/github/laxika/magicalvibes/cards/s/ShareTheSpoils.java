@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFC", collectorNumber = "34")
 public class ShareTheSpoils extends Card {
 
     public ShareTheSpoils() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER));
         addEffect(EffectSlot.ON_PLAYER_LOSES_GAME,
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER));

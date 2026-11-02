@@ -18,7 +18,7 @@ public class Duplicity extends Card {
     public Duplicity() {
         // When this enchantment enters, exile the top five cards of your library face down.
         // toGraveyardOnControlLoss arms the control-loss watch that implements the last ability.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(5, true, true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTopCardsToSourceEffect(5, true, true));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect());
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentsThenEf
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "136")
 @CardRegistration(set = "PIO", collectorNumber = "197")
@@ -19,7 +20,7 @@ public class SylvanPrimordial extends Card {
     public SylvanPrimordial() {
         setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_OPPONENT_IF_ABLE);
         target(TargetFilters.noncreaturePermanentAnOpponentControls(), 0, 99)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DestroyTargetPermanentsThenEffect(new SearchLibraryEffect(
                                 new EventValue(),
                                 new CardSubtypePredicate(CardSubtype.FOREST),

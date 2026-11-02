@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /** Teferi's Tutelage — enchantment. */
 @CardRegistration(set = "M21", collectorNumber = "78")
@@ -19,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class TeferisTutelage extends Card {
 
     public TeferisTutelage() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
         // Whenever you draw a card, target opponent mills two cards. The opponent restriction is on the

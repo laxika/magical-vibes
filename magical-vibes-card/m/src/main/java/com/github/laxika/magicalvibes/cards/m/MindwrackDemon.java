@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOI", collectorNumber = "124")
 @CardRegistration(set = "DDQ", collectorNumber = "41")
@@ -16,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class MindwrackDemon extends Card {
 
     public MindwrackDemon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(4, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(4, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 ConditionalEffect.unless(new NotCondition(new Delirium()), new LoseLifeEffect(4)));
     }

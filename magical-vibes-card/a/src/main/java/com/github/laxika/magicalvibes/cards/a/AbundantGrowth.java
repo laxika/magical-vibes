@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
 @CardRegistration(set = "INR", collectorNumber = "184")
@@ -32,6 +33,6 @@ public class AbundantGrowth extends Card {
                         GrantScope.ENCHANTED_PERMANENT
                 ))
                 // When this Aura enters, draw a card.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
     }
 }

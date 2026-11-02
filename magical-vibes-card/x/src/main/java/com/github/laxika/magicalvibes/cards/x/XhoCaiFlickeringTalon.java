@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
 public class XhoCaiFlickeringTalon extends Card {
 
     public XhoCaiFlickeringTalon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReduceCastCostForNextMatchingSpellEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ReduceCastCostForNextMatchingSpellEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)), 1));
 
         ControlledPermanentPredicateTargetFilter targetFilter = TargetFilters.creatureYouControl();

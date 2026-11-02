@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetLandBecomesBasicLandTyp
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MH2", collectorNumber = "72")
 public class TideShaper extends Card {
@@ -24,7 +25,7 @@ public class TideShaper extends Card {
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
 
         targetWhenKicked(TargetFilters.land(), 0, 0, 1, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                         new Kicked(),
                         new TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect(CardSubtype.ISLAND)));
     }

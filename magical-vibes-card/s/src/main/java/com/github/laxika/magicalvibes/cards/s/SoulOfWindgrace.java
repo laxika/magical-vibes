@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class SoulOfWindgrace extends Card {
                         .build(),
                 "Put a land card from a graveyard onto the battlefield tapped under your control?"
         );
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnLand);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnLand);
         addEffect(EffectSlot.ON_ATTACK, returnLand);
 
         addActivatedAbility(new ActivatedAbility(

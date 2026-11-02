@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseLandOfEachBasicTypeThenDestroyEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SunderingTitan extends Card {
 
     public SunderingTitan() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseLandOfEachBasicTypeThenDestroyEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseLandOfEachBasicTypeThenDestroyEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ChooseLandOfEachBasicTypeThenDestroyEffect());
     }

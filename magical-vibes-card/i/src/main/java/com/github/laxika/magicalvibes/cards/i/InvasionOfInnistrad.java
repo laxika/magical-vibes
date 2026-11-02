@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.d.DelugeOfTheDead;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
 @CardRegistration(set = "INR", collectorNumber = "120")
@@ -17,7 +18,8 @@ public class InvasionOfInnistrad extends Card {
 
         // When this Siege enters, target creature an opponent controls gets -13/-13 until end of turn.
         // Flash / Siege defense / defeat→cast transformed are handled by oracle keywords + engine.
-        target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(-13, -13));
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new BoostTargetCreatureEffect(-13, -13));
     }
 
     @Override

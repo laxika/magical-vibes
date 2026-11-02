@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EOE", collectorNumber = "182")
 public class FamishedWorldsire extends Card {
@@ -18,7 +20,7 @@ public class FamishedWorldsire extends Card {
         // Ward {3}
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(3));
         addStaticEffect(new SacrificePermanentsAsEntersForCountersEffect(new PermanentIsLandPredicate(), 3));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 LookAtTopCardsEffect.mayPutAnyNumberMatchingOntoBattlefieldTappedShuffleRest(
                         new SourcePower(), new CardTypePredicate(CardType.LAND)));
     }

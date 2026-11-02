@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MID", collectorNumber = "104")
 @CardRegistration(set = "DBL", collectorNumber = "104")
@@ -15,7 +17,7 @@ public class GraveyardTrespasser extends Card {
     public GraveyardTrespasser() {
         setBackFaceCard(new GraveyardGlutton());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, exileFromGraveyard(1, false));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), exileFromGraveyard(1, false));
         addEffect(EffectSlot.ON_ATTACK, exileFromGraveyard(1, false));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessDiscardsEffect());
     }

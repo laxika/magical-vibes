@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTopCardsOfLibr
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -16,7 +18,7 @@ import java.util.List;
 public class JessieZaneFangbringer extends Card {
 
     public JessieZaneFangbringer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConjureCardIntoTopCardsOfLibraryEffect(JessieZaneFangbringer::conjuredAmbushViper, 6));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
@@ -27,7 +29,7 @@ public class JessieZaneFangbringer extends Card {
 
     private static Card conjuredAmbushViper() {
         Card card = new AmbushViper();
-        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
         return card;
     }
 }

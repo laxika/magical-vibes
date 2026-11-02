@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class MichelangeloMutantBFF extends Card {
     public MichelangeloMutantBFF() {
         addStaticEffect(new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
                 1, new PermanentHasCountersPredicate(CounterType.ANY)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mutagenToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), mutagenToken());
         addEffect(EffectSlot.ON_ATTACK, mutagenToken());
     }
 

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "XLN", collectorNumber = "191")
 @CardRegistration(set = "LCI", collectorNumber = "188")
@@ -23,7 +25,7 @@ public class GrowingRitesOfItlimoc extends Card {
         // When Growing Rites of Itlimoc enters, look at the top four cards of your library.
         // You may reveal a creature card from among them and put it into your hand.
         // Put the rest on the bottom of your library in any order.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4,
                         new CardTypePredicate(CardType.CREATURE)));
 

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MRD", collectorNumber = "195")
 @CardRegistration(set = "MB1", collectorNumber = "195")
@@ -11,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect;
 public class Leveler extends Card {
 
     public Leveler() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileControllerLibraryEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileControllerLibraryEffect());
     }
 }

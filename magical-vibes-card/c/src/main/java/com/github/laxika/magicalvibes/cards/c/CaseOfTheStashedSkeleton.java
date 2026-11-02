@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ import java.util.Set;
 public class CaseOfTheStashedSkeleton extends Card {
 
     public CaseOfTheStashedSkeleton() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(new CreateTokenEffect(
                 1, "Skeleton", 2, 1, CardColor.BLACK,
                 List.of(CardSubtype.SKELETON), Set.of(), Set.of()),
                 new SuspectEffect(GrantScope.TOKENS_CREATED_THIS_RESOLUTION)));

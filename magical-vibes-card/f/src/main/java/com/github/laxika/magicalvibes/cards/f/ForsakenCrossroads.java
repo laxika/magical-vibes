@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerIsStartingPlayer;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,9 +31,9 @@ public class ForsakenCrossroads extends Card {
 
         // When Forsaken Crossroads enters the battlefield, scry 1. If you weren't the starting
         // player, you may untap Forsaken Crossroads instead.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new ControllerIsStartingPlayer(), new ScryEffect(1)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new NotCondition(new ControllerIsStartingPlayer()),
                 new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
                         "Untap Forsaken Crossroads instead?", new ScryEffect(1))));

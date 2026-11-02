@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +43,7 @@ public class CandelaAegisOfAdagia extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a creature you control"
-        ), 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ReturnTargetCreatureToHandAndPerpetuallyBoostEffect(1, 1));
 
         addActivatedAbility(new ActivatedAbility(

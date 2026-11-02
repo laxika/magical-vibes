@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CemeteryDesecratorEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CemeteryDesecrator extends Card {
 
     public CemeteryDesecrator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CemeteryDesecratorEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CemeteryDesecratorEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CemeteryDesecratorEffect());
     }
 }

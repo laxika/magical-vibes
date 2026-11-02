@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -235,7 +236,7 @@ class EnduranceTest extends BaseCardTest {
         Permanent endurance = harness.addToBattlefieldAndReturn(player1, new Endurance());
         Card card = endurance.getCard();
         gd.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(card, player1.getId(),
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), endurance.getId(), card.getTargetFilter()));
+                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), endurance.getId(), card.getTargetFilter()));
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(ETBTokenTargetService.class)
                 .processNextETBTokenTargetTrigger(gd));
 

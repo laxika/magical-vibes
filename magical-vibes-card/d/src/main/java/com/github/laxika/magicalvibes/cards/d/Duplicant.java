@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
@@ -19,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class Duplicant extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                 )),
                 "Target must be a nontoken creature"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new ExileTargetPermanentAndImprintEffect(),
                 "Exile target nontoken creature?"
         ));

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +35,7 @@ public class IdrisSoulOfTheTARDIS extends Card {
                 new PermanentControlledBySourceControllerPredicate()));
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(), "Target must be an artifact you control"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect(true, artifactYouControl));
         addStaticEffect(new GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect());
         addStaticEffect(new BoostSelfEffect(

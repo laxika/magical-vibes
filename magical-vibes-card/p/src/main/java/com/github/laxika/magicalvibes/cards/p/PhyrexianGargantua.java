@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "9ED", collectorNumber = "153")
 @CardRegistration(set = "APC", collectorNumber = "48")
@@ -18,7 +19,7 @@ public class PhyrexianGargantua extends Card {
 
     public PhyrexianGargantua() {
         // When this creature enters, you draw two cards and you lose 2 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(2));
     }
 }

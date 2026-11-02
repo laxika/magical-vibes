@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -18,7 +17,7 @@ import java.util.List;
 public class SewerVeillanceCam extends Card {
 
     public SewerVeillanceCam() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target creature?"));
         target(TargetFilters.creature()).addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target creature?"));

@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GN3", collectorNumber = "11")
 @CardRegistration(set = "CMM", collectorNumber = "28")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class HeavenlyBlademaster extends Card {
 
     public HeavenlyBlademaster() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffect());
         AttachmentsOnSource attachments = new AttachmentsOnSource(true, true);
         addStaticEffect(new DynamicStaticBoostEffect(attachments, attachments,

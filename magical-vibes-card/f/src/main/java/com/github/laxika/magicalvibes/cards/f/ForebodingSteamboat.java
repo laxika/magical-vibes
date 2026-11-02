@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "MKC", collectorNumber = "28")
@@ -29,7 +31,7 @@ public class ForebodingSteamboat extends Card {
         ));
 
         // When this Vehicle enters, each player chooses two nontoken, non-Vehicle creatures they control.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new EachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesEffect(eligibleCreature, 2));
 
         // Whenever this Vehicle attacks, put a card exiled with it into its owner's graveyard. If you do, investigate.

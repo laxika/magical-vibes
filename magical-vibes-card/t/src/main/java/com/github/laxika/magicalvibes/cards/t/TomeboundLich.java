@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "219")
 @CardRegistration(set = "PIO", collectorNumber = "249")
 public class TomeboundLich extends Card {
 
     public TomeboundLich() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loot());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), loot());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, loot());
     }
 

@@ -13,12 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YMKM", collectorNumber = "17")
 public class GuildpactGreenwalker extends Card {
 
     public GuildpactGreenwalker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new ChooseCardFromHandAndApplyPerpetualPowerToughnessAndIncorporationEffect(
                         new CardTypePredicate(CardType.CREATURE), 4, 4, "{1}{G}"),
                 "Choose a creature card in your hand to perpetually incorporate {1}{G} and get +4/+4?"));

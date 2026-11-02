@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class AlphaDeathclaw extends Card {
 
         DestroyTargetPermanentEffect destroyTargetPermanent = new DestroyTargetPermanentEffect();
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, destroyTargetPermanent)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), destroyTargetPermanent)
                 .addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, destroyTargetPermanent);
     }
 }

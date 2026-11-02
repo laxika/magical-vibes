@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class CuratorBeastie extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsColorlessPredicate())),
                 2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ManifestDreadEffect.forController());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ManifestDreadEffect.forController());
         addEffect(EffectSlot.ON_ATTACK, ManifestDreadEffect.forController());
     }
 }

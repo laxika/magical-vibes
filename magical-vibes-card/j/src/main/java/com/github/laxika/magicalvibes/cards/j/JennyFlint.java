@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -36,7 +35,8 @@ public class JennyFlint extends Card {
     private static final String PARTNER_NAME = "Madame Vastra";
 
     public JennyFlint() {
-        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player")).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player")).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(PARTNER_NAME),
                 "Have target player put Madame Vastra into their hand from their library?",
                 null,

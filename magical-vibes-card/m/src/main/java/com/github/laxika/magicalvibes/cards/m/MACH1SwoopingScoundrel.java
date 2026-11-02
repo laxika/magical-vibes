@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "662")
 public class MACH1SwoopingScoundrel extends Card {
 
     public MACH1SwoopingScoundrel() {
         OncePerTurnTriggerEffect surveil = new OncePerTurnTriggerEffect(new SurveilEffect(1));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, surveil);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), surveil);
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, surveil);
     }
 }

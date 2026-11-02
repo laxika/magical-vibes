@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -22,9 +24,9 @@ public class Gloomdrifter extends Card {
         // this creature has "When this creature enters, nonblack creatures get -2/-2 until end of turn."
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new GrantTriggeredAbilityEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                         new BoostAllCreaturesEffect(-2, -2,
-                        new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))),
+                        new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))))),
                         GrantScope.SELF)));
     }
 }

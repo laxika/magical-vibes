@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ import java.util.List;
 public class AlchemistsTalent extends Card {
 
     public AlchemistsTalent() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofTappedTreasureToken(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTappedTreasureToken(2));
 
         ActivatedAbility treasureManaAbility = new ActivatedAbility(
                 true,

@@ -52,7 +52,7 @@ public class SephirothFabledSoldier extends Card {
     public SephirothFabledSoldier() {
         setBackFaceCard(new SephirothOneWingedAngel());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SACRIFICE_ANOTHER_AND_DRAW);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SACRIFICE_ANOTHER_AND_DRAW);
         addEffect(EffectSlot.ON_ATTACK, SACRIFICE_ANOTHER_AND_DRAW);
 
         target(OPPONENT_TARGET).addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER),

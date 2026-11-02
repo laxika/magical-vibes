@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class VoidmageHusher extends Card {
                         new StackEntryHasTargetPredicate(),
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.ACTIVATED_ABILITY)))),
                 "Target must be an activated ability."
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CounterSpellEffect());
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new CounterSpellEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new MayEffect(new SpellCastTriggerEffect(null, List.of(ReturnToHandEffect.self())),
                         "Return Voidmage Husher to its owner's hand?"));

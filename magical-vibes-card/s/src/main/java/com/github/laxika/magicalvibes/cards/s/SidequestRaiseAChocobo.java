@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,7 +27,7 @@ public class SidequestRaiseAChocobo extends Card {
     public SidequestRaiseAChocobo() {
         setBackFaceCard(new BlackChocobo());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, birdToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), birdToken());
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new ConditionalEffect(
                         new ControlsPermanentCount(4, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),

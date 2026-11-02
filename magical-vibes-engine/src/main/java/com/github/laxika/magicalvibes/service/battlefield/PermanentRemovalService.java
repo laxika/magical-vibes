@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
@@ -3588,14 +3587,14 @@ public class PermanentRemovalService {
             }
             pendingReturns = null;
         }
-        boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+        boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS))
                 .stream()
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                 .anyMatch(effect -> effect instanceof ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect same
                         && same.returnsOnSourceLeavesTrigger());
         // A leaves-the-battlefield ability triggers even when the enter-the-battlefield exile never happened
         // (CR 603.6c); Fiend Hunter's return ability is such an ability.
-        boolean hasLeavesTriggerExile = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+        boolean hasLeavesTriggerExile = removedPermanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS))
                 .stream()
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                 .anyMatch(effect -> effect instanceof ExileTargetPermanentUntilSourceLeavesEffect exile
@@ -3604,13 +3603,13 @@ public class PermanentRemovalService {
         // that goes on the stack even if the enters ability has not exiled anything yet (CR 603.6c).
         // Brain Maggot style "until" exiles return immediately with no ability on the stack, so they are not
         // included here.
-        boolean hasLeavesTriggerHandExile = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+        boolean hasLeavesTriggerHandExile = removedPermanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS))
                 .stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect hand
                         && hand.returnOnSourceLeave()
                         && hand.returnsOnSourceLeavesTrigger()
                         && hand.destination() == com.github.laxika.magicalvibes.model.effect.HandChoiceDestination.EXILE);
-        boolean hasLeavesTriggerExileAll = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+        boolean hasLeavesTriggerExileAll = removedPermanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS))
                 .stream()
                 .anyMatch(effect -> effect instanceof ExileAllPermanentsUntilSourceLeavesEffect exileAll
                         && exileAll.returnsOnSourceLeavesTrigger());
@@ -3625,11 +3624,11 @@ public class PermanentRemovalService {
             pendingReturns = List.of();
         }
 
-        boolean returnsThroughLeavesTrigger = java.util.stream.Stream.concat(java.util.stream.Stream.of(
-                        EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.ON_SELF_TRAINS)
-                .flatMap(slot -> removedPermanent.getCard().getEffects(slot).stream()),
-                        removedPermanent.getCard().getTriggerEffects(
-                                Triggers.turnedFaceUp(null, ObjectRelation.THIS)).stream()).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect
+        boolean returnsThroughLeavesTrigger = java.util.stream.Stream.of(
+                        removedPermanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
+                        removedPermanent.getCard().getEffects(EffectSlot.ON_SELF_TRAINS),
+                        removedPermanent.getCard().getTriggerEffects(Triggers.turnedFaceUp(null, ObjectRelation.THIS)))
+                .flatMap(List::stream).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect
                         || (effect instanceof MayEffect may ? may.wrapped() : effect)
                         instanceof ExileTargetPermanentUntilSourceLeavesEffect leaveTriggerExile
                         && leaveTriggerExile.returnsOnSourceLeavesTrigger()
@@ -3678,7 +3677,7 @@ public class PermanentRemovalService {
         }
         // CR 610.3d: several cards exiled by one source return at the same time when it leaves.
         boolean multipleExiledCards = pendingReturns.size() > 1;
-        boolean simultaneousReturn = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+        boolean simultaneousReturn = removedPermanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS))
                 .stream().anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileOwnNontokenCreaturesUntilSourceLeavesEffect
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect

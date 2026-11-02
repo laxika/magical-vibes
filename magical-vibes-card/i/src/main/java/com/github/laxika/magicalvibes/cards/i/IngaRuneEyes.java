@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CreaturesDiedThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -19,7 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class IngaRuneEyes extends Card {
 
     public IngaRuneEyes() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(3));
         addTrigger(Triggers.dies(ObjectRelation.THIS), ConditionalEffect.unless(
                 new CreaturesDiedThisTurnAtLeast(3), new DrawCardEffect(3)));
     }

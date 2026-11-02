@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WormfangManta extends Card {
 
     public WormfangManta() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SkipNextEffect(SkipKind.TURN));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextEffect(SkipKind.TURN));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ControllerExtraTurnEffect(1));
     }
 }

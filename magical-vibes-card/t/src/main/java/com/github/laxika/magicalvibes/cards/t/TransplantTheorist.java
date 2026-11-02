@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -20,7 +19,7 @@ import java.util.List;
 public class TransplantTheorist extends Card {
 
     public TransplantTheorist() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loot());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), loot());
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), loot());
 
         addActivatedAbility(new ActivatedAbility(

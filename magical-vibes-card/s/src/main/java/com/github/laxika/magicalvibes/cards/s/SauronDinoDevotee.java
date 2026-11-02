@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class SauronDinoDevotee extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, modal(anotherCreature));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), modal(anotherCreature));
         addEffect(EffectSlot.ON_ATTACK, modal(anotherCreature));
     }
 

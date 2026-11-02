@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -46,7 +48,7 @@ public class ZoralineCosmosCaller extends Card {
                 2,
                 new QueueReflexiveAbilityEffect(returnPermanent),
                 "Pay {W}{B} and 2 life to return target nonland permanent card with mana value 3 or less from your graveyard to the battlefield with a finality counter on it?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mayReturnPermanent);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), mayReturnPermanent);
         addEffect(EffectSlot.ON_ATTACK, mayReturnPermanent);
     }
 }

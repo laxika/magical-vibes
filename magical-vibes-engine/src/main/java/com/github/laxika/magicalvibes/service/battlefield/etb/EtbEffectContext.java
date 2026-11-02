@@ -9,8 +9,7 @@ import java.util.List;
 
 /**
  * Per-trigger context passed to {@link EtbEffectResolver} handlers when a creature's own
- * enter-the-battlefield ({@link com.github.laxika.magicalvibes.model.EffectSlot#ON_ENTER_BATTLEFIELD})
- * effects are resolved at trigger time.
+ * "when this enters" effects ({@code Triggers.enters(ObjectRelation.THIS)}) are resolved at trigger time.
  *
  * <p>Carries everything a handler may need to unwrap modal choices, materialise values, or evaluate
  * an intervening-if gate (CR 603.4):

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class BorborygmosAndFblthp extends Card {
                         new CardTypePredicate(CardType.LAND),
                         new DealDamageToTargetCreatureEffect(new Scaled(new EventValue(), 2)),
                         "land cards"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, drawAndDiscard);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), drawAndDiscard);
         addEffect(EffectSlot.ON_ATTACK, drawAndDiscard);
 
         addActivatedAbility(new ActivatedAbility(

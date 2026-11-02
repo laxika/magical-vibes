@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCC", collectorNumber = "8")
 @CardRegistration(set = "LCC", collectorNumber = "34")
@@ -22,8 +24,8 @@ public class XolatoyacTheSmilingFlood extends Card {
                 CardSubtype.ISLAND, CounterType.FLOOD);
 
         target(TargetFilters.land())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, putFloodCounter)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, grantIsland)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), putFloodCounter)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), grantIsland)
                 .addEffect(EffectSlot.ON_ATTACK, putFloodCounter)
                 .addEffect(EffectSlot.ON_ATTACK, grantIsland);
 

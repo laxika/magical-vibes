@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -55,7 +57,7 @@ public class SunTitan extends Card {
                         .build(),
                 "Return the targeted permanent card to the battlefield?"
         );
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnEffect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnEffect);
         addEffect(EffectSlot.ON_ATTACK, returnEffect);
     }
 }

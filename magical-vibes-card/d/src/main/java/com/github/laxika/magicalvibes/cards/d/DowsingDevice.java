@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.g.GeodeGrotto;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -34,7 +33,7 @@ public class DowsingDevice extends Card {
         CardEffect enterEffect = SequenceEffect.of(new BoostTargetCreatureEffect(1, 0),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), transformIfFourArtifacts);
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, enterEffect)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), enterEffect)
                 .addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), enterEffect);
     }
 

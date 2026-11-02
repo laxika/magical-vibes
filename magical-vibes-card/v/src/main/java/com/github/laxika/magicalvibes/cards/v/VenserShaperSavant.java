@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FUT", collectorNumber = "46")
 @CardRegistration(set = "V13", collectorNumber = "15")
@@ -15,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VenserShaperSavant extends Card {
 
     public VenserShaperSavant() {
-        target(TargetFilters.permanent()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        target(TargetFilters.permanent()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ReturnTargetSpellOrPermanentToHandEffect());
     }
 }

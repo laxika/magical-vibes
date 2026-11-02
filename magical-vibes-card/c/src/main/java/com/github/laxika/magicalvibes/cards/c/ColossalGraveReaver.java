@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ColossalGraveReaver extends Card {
 
     public ColossalGraveReaver() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MillEffect(3, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.ON_ATTACK,
                 new MillEffect(3, MillRecipient.CONTROLLER));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class HeapedHarvest extends Card {
 
     public HeapedHarvest() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, searchForBasicLand());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), searchForBasicLand());
         addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(searchForBasicLand()));
 
         addActivatedAbility(new ActivatedAbility(

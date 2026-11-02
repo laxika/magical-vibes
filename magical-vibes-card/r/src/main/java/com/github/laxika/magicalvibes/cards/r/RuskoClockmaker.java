@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class RuskoClockmaker extends Card {
 
     public RuskoClockmaker() {
         // When Rusko enters the battlefield, conjure a card named Midnight Clock onto the battlefield.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConjureCardToBattlefieldEffect("ELD", "54"));
 
         // Whenever you cast a noncreature spell, put an hour counter on each Midnight Clock you control.

@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class BrambleWurm extends Card {
 
     public BrambleWurm() {
         // When this creature enters, you gain 5 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(5));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(5));
 
         // {2}{G}, Exile this card from your graveyard: You gain 5 life.
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

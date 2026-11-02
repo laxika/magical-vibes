@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class VorinclexTheGrandEvolution extends Card {
     public VorinclexTheGrandEvolution() {
         setBackFaceCard(new TheGrandEvolution());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SearchLibraryEffect(
                 new Fixed(2),
                 new CardSubtypePredicate(CardSubtype.FOREST),
                 LibrarySearchDestination.HAND));

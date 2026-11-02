@@ -24,6 +24,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class TheRani extends Card {
 
     public TheRani() {
         target(new PermanentPredicateTargetFilter(ANOTHER_CREATURE, "Target must be another creature"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new CreateTokenAttachedToTargetEffect(markOfTheRaniToken(), PlayerRelation.ANY))
                 .addEffect(EffectSlot.ON_ATTACK,
                         new CreateTokenAttachedToTargetEffect(markOfTheRaniToken(), PlayerRelation.ANY));

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "166")
 @CardRegistration(set = "LGN", collectorNumber = "78")
@@ -13,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 public class PhageTheUntouchable extends Card {
 
     public PhageTheUntouchable() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseGameIfNotCastFromHandEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseGameIfNotCastFromHandEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE, new DestroyTargetPermanentEffect(true));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TargetPlayerLosesGameEffect(null));
     }

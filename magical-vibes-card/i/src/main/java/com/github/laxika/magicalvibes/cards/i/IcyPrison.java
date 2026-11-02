@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class IcyPrison extends Card {
                 // "When this enchantment enters, exile target creature."
                 // "When this enchantment leaves the battlefield, return the exiled card..."
                 // — the return is its own leaves-the-battlefield trigger.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true, true))
                 // "At the beginning of your upkeep, sacrifice this enchantment unless any player pays {3}."
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,

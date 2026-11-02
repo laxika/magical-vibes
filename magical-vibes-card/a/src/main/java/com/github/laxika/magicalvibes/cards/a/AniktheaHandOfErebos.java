@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -56,7 +58,7 @@ public class AniktheaHandOfErebos extends Card {
                         3,
                         Set.of(), false, false, null, false, false, false,
                         Set.of(CardType.CREATURE), false, false, false, true);
-        graveyardTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyEffect);
+        graveyardTarget.addTrigger(Triggers.enters(ObjectRelation.THIS), copyEffect);
         graveyardTarget.addEffect(EffectSlot.ON_ATTACK, copyEffect);
     }
 }

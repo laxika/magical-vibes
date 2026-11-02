@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -42,7 +44,7 @@ public class AvengersQuinjet extends Card {
                                 .targetGraveyard(true)
                                 .build())
         )));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, modes);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), modes);
         addEffect(EffectSlot.ON_ATTACK, modes);
 
         addActivatedAbility(new ActivatedAbility(

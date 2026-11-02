@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -33,7 +35,7 @@ public class ContagionDispenser extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("SOM", "47"));
 
     public ContagionDispenser() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ProliferateEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ProliferateEffect());
         addEffect(EffectSlot.ON_CONTROLLER_PROLIFERATES,
                 new OncePerTurnTriggerEffect(
                         new ConditionalEffect(new ControllerTurn(),

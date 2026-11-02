@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BLB", collectorNumber = "116")
 public class StarscapeCleric extends Card {
@@ -17,7 +19,7 @@ public class StarscapeCleric extends Card {
     public StarscapeCleric() {
         addStaticEffect(new KickerEffect("{2}{B}"));
         addStaticEffect(new CantBlockEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }

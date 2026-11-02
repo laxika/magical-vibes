@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.NoLongerGoadedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKC", collectorNumber = "14")
 @CardRegistration(set = "MKC", collectorNumber = "325")
 public class SereneSleuth extends Card {
 
     public SereneSleuth() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofClueToken(1));
 
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 CreateTokenEffect.ofClueToken(new PermanentCount(

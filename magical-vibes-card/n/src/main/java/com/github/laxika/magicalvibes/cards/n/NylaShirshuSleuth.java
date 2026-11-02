@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSource
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLE", collectorNumber = "109")
 @CardRegistration(set = "TLE", collectorNumber = "190")
@@ -26,7 +28,7 @@ public class NylaShirshuSleuth extends Card {
         EventValue manaValue = new EventValue();
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect(
                         creature,
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,

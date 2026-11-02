@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLaezelEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import lombok.RequiredArgsConstructor;
@@ -103,7 +104,7 @@ public class SpecializeLaezelEffectHandler implements NormalEffectHandlerBean {
                     + specialize.color());
         }
 
-        specialized.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, specializedTrigger);
+        specialized.addTrigger(Triggers.enters(ObjectRelation.THIS), specializedTrigger);
         source.exchangeCard(specialized);
         enqueueSpecializationTrigger(gameData, entry, specialized, specializedTrigger);
     }

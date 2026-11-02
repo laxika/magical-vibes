@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C16", collectorNumber = "18")
 public class FrenziedFugue extends Card {
@@ -24,7 +26,7 @@ public class FrenziedFugue extends Card {
                 new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
         addEffect(EffectSlot.UPKEEP_TRIGGERED, effect);
     }
 }

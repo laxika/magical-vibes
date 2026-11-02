@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,8 +30,8 @@ public class SunpearlKirin extends Card {
                 )),
                 "Target must be another nonland permanent you control"
         ), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                         new TargetPermanentMatches(new PermanentIsTokenPredicate()),
                         new TargetPermanentControllerDrawsCardEffect()));
     }

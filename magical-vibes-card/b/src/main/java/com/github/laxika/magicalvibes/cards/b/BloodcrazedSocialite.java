@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndBoostSel
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "96")
@@ -17,7 +19,7 @@ import java.util.List;
 public class BloodcrazedSocialite extends Card {
 
     public BloodcrazedSocialite() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofBloodToken(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofBloodToken(1));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SacrificePermanentAndBoostSelfEffect(
                         new PermanentAllOfPredicate(List.of(

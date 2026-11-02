@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ import java.util.List;
 public class TheFifteenthDoctor extends Card {
 
     public TheFifteenthDoctor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, millAndReturnArtifact());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), millAndReturnArtifact());
         addEffect(EffectSlot.ON_ATTACK, millAndReturnArtifact());
         addStaticEffect(new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
                 Keyword.IMPROVISE, new CardNotPredicate(new CardTypePredicate(CardType.ARTIFACT))));

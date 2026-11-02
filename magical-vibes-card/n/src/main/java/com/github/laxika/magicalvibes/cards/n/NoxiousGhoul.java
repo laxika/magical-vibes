@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -29,7 +28,7 @@ public class NoxiousGhoul extends Card {
         var debuff = new BoostAllCreaturesEffect(-1, -1, nonZombieCreature);
 
         // Whenever this creature or another Zombie enters, all non-Zombie creatures get -1/-1 until end of turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, debuff);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), debuff);
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ZOMBIE), debuff));

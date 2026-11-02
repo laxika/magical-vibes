@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M15", collectorNumber = "245")
 @CardRegistration(set = "M21", collectorNumber = "248")
@@ -16,7 +17,7 @@ public class RadiantFountain extends Card {
 
     public RadiantFountain() {
         // When Radiant Fountain enters the battlefield, you gain 2 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
 
         // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

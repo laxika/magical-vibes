@@ -10,13 +10,15 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "441")
 @CardRegistration(set = "FIN", collectorNumber = "556")
 public class UltimeciaTemporalThreat extends Card {
 
     public UltimeciaTemporalThreat() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(
                 TapUntapScope.ALL_CREATURES,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

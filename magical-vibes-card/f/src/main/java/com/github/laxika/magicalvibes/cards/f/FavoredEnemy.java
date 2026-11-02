@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteMostPrevalentCreatureTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -21,7 +20,7 @@ public class FavoredEnemy extends Card {
 
         target(TargetFilters.creatureYouControl());
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new FightTargetsEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new FightTargetsEffect());
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),

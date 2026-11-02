@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanent
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ import java.util.List;
 public class KassandraEagleBearer extends Card {
 
     public KassandraEagleBearer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SearchZonesForCardNamedToBattlefieldEffect.alwaysShuffling("The Spear of Leonidas"));
 
         PermanentAllOfPredicate legendaryEquipment = new PermanentAllOfPredicate(List.of(

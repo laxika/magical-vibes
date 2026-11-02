@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "7ED", collectorNumber = "162")
 @CardRegistration(set = "8ED", collectorNumber = "161")
@@ -15,6 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 public class SerpentWarrior extends Card {
 
     public SerpentWarrior() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LoseLifeEffect(3));
     }
 }

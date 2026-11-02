@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.BiolumeSerpent;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,7 +20,7 @@ public class BiolumeEgg extends Card {
         // Defender is loaded from Scryfall.
 
         // When this creature enters, scry 2.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(2));
 
         // When you sacrifice this creature, return it to the battlefield transformed under its
         // owner's control at the beginning of the next end step.

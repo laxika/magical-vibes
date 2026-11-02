@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALA", collectorNumber = "148")
 @CardRegistration(set = "2XM", collectorNumber = "180")
@@ -17,6 +18,6 @@ public class Skullmulcher extends Card {
         addStaticEffect(new DevourEffect(1));
 
         // When this creature enters, draw a card for each creature it devoured.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(new CreaturesDevoured()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(new CreaturesDevoured()));
     }
 }

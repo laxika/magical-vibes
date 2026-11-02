@@ -8,7 +8,7 @@ import java.util.List;
  * creature's power to any target." (Heart-Piercer Manticore's enter trigger; Ziatora, the
  * Incinerator adds a Treasure follow-up.)
  *
- * <p>Placed inside a {@link MayEffect} on {@code ON_ENTER_BATTLEFIELD} or another triggered
+ * <p>Placed inside a {@link MayEffect} in a "when this enters" or another triggered
  * ability. The original trigger is not targeted. If the controller accepts and sacrifices another
  * creature, the reflexive triggered ability is created and its target is chosen at that point.
  * The sacrificed creature's effective power is captured before it leaves the battlefield and the

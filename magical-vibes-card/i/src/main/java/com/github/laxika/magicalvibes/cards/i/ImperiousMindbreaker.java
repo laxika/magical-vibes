@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ImperiousMindbreaker extends Card {
 
     public ImperiousMindbreaker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Imperious Mindbreaker with another unpaired creature you control?"));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

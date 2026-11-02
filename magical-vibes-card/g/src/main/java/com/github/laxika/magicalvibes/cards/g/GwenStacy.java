@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class GwenStacy extends Card {
 
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardOfOwnLibraryEffect(true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTopCardOfOwnLibraryEffect(true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

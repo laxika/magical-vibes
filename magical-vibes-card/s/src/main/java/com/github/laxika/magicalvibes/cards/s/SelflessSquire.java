@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C21", collectorNumber = "103")
 @CardRegistration(set = "LTC", collectorNumber = "176")
@@ -15,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class SelflessSquire extends Card {
 
     public SelflessSquire() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, PreventDamageEffect.allToController());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), PreventDamageEffect.allToController());
         addEffect(EffectSlot.ON_CONTROLLER_DAMAGE_PREVENTED,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
     }

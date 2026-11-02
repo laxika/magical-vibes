@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,7 @@ public class TrostanisSummoner extends Card {
         // a 3/3 green Centaur creature token, and a 4/4 green Rhino creature token with trample.
         // The three tokens are one creation event, so a "first time you would create tokens" replacement
         // (Esix, Fractal Bloom) applies to all of them together.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect("Knight", 2, 2, CardColor.WHITE,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect("Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of())
                 .withSimultaneousTokens(List.of(
                         new CreateTokenEffect("Centaur", 3, 3, CardColor.GREEN,

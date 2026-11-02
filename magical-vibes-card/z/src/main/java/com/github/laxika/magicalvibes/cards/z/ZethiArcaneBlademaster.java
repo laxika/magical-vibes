@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "432")
@@ -24,7 +26,7 @@ public class ZethiArcaneBlademaster extends Card {
         CardTypePredicate instant = new CardTypePredicate(CardType.INSTANT);
         targetUpTo(new RepeatedAdditionalCostCount("{W/U}"),
                 new GraveyardCardPredicateTargetFilter(instant, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 100)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         ExileGraveyardCardsEffect.upToControllerGraveyardWithKickCounters(instant));
 
         addEffect(EffectSlot.ON_ATTACK,

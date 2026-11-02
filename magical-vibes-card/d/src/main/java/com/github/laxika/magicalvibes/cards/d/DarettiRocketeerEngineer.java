@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DFT", collectorNumber = "120")
 public class DarettiRocketeerEngineer extends Card {
@@ -30,7 +32,7 @@ public class DarettiRocketeerEngineer extends Card {
                 new PermanentIsArtifactPredicate(), returnArtifact, "an artifact", true, false);
         MayEffect ability = new MayEffect(sacrificeThenReturn, "Sacrifice an artifact?");
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ability);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ability);
         addEffect(EffectSlot.ON_ATTACK, ability);
     }
 }

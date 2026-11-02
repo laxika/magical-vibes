@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverything
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ import java.util.List;
 public class TheOneRing extends Card {
 
     public TheOneRing() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new WasCast(true), new GrantProtectionFromEverythingUntilNextTurnEffect()));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

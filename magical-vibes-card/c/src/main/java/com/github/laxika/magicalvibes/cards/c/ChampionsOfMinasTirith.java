@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.OpponentCantAttackSourceControllerThisCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "10")
 @CardRegistration(set = "LTC", collectorNumber = "94")
@@ -18,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentCantAttackSourceContr
 public class ChampionsOfMinasTirith extends Card {
 
     public ChampionsOfMinasTirith() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
 
         addEffect(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(new ControllerIsMonarch(), MayPayManaEffect.dynamic(

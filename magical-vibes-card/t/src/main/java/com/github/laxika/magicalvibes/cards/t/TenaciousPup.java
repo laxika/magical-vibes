@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -17,8 +18,8 @@ import java.util.List;
 public class TenaciousPup extends Card {
 
     public TenaciousPup() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(1));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "89")
 @CardRegistration(set = "PIP", collectorNumber = "405")
@@ -25,7 +27,7 @@ public class AgentFrankHorrigan extends Card {
         SequenceEffect proliferateTwice = SequenceEffect.of(
                 new ProliferateEffect(),
                 new ProliferateEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, proliferateTwice);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), proliferateTwice);
         addEffect(EffectSlot.ON_ATTACK, proliferateTwice);
     }
 }

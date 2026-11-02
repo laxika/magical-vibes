@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetNonlandPermanentAndCardWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheSpotLivingPortal extends Card {
 
     public TheSpotLivingPortal() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetNonlandPermanentAndCardWithSourceEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect());

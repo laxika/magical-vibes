@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +21,7 @@ public class ServoSchematic extends Card {
         CreateTokenEffect servo = new CreateTokenEffect(
                 1, "Servo", 1, 1, null,
                 List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, servo);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), servo);
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS), servo);
     }
 }

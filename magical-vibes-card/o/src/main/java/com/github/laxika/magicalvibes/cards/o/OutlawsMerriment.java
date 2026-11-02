@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,8 @@ public class OutlawsMerriment extends Card {
                         Set.of(Keyword.LIFELINK, Keyword.HASTE), List.of()),
                 token("Human Rogue", 1, 2, List.of(CardSubtype.HUMAN, CardSubtype.ROGUE),
                         Set.of(Keyword.HASTE),
-                        List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1)))))));
+                        List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                                new DealDamageToAnyTargetEffect(1)))))));
     }
 
     private static CreateTokenEffect token(String name, int power, int toughness,

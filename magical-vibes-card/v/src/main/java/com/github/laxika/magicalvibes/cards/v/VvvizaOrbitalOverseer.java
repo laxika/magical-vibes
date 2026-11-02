@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -46,7 +48,7 @@ public class VvvizaOrbitalOverseer extends Card {
             GrantScope.TOKENS_CREATED_THIS_RESOLUTION, EffectDuration.PERMANENT, null);
 
     public VvvizaOrbitalOverseer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DraftFromSpellbookEffect.conjureOntoBattlefield(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DraftFromSpellbookEffect.conjureOntoBattlefield(List.of(
                 AdagiaWindsweptBastion::new,
                 EvendoWakingHaven::new,
                 KavaronMemorialWorld::new,

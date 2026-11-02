@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -33,7 +32,7 @@ public class SuperMutantScavenger extends Card {
                 .targetGraveyard(true)
                 .upTo(true)
                 .build();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnAuraOrEquipment);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnAuraOrEquipment);
         addTrigger(Triggers.dies(ObjectRelation.THIS), returnAuraOrEquipment);
     }
 }

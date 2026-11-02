@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class RedemptionChoir extends Card {
                 .chooseAuraAttachment(true)
                 .build();
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Coven(), returnPermanent));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new Coven(), returnPermanent));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new Coven(), returnPermanent));
     }
 }

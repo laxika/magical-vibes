@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -10,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "XLN", collectorNumber = "135")
 public class BurningSunsAvatar extends Card {
@@ -29,6 +30,6 @@ public class BurningSunsAvatar extends Card {
         // Deals 3 damage to up to one target creature
         DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(3);
         target(TargetFilters.creature(), 0, 1).bindEffect(creatureDamage);
-        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD, opponentDamage, creatureDamage);
+        addSimultaneousTrigger(Triggers.enters(ObjectRelation.THIS), opponentDamage, creatureDamage);
     }
 }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNoAbilitiesPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class RuxaPatientProfessor extends Card {
                 .targetGraveyard(true)
                 .build();
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnCreature);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), returnCreature);
         addEffect(EffectSlot.ON_ATTACK, returnCreature);
         PermanentHasNoAbilitiesPredicate noAbilities = new PermanentHasNoAbilitiesPredicate();
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, noAbilities));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.g.GrandmotherRaviSengir;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class InvasionOfUlgrotha extends Card {
                                 new PermanentIsBattlePredicate())),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any other target")).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                "Target must be any other target")).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(new DealDamageToAnyTargetEffect(3), new GainLifeEffect(3)));
     }
 

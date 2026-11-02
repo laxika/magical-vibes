@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AVR", collectorNumber = "61")
 @CardRegistration(set = "C14", collectorNumber = "114")
@@ -20,7 +21,7 @@ public class InfiniteReflection extends Card {
         ))
                 // When this Aura enters attached to a creature, each other nontoken creature you
                 // control becomes a copy of that creature.
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect())
                 // Nontoken creatures you control enter as a copy of enchanted creature.
                 .addStaticEffect(new CreaturesEnterAsCopyOfSourceEffect(true, true));

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.target;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -1454,7 +1456,7 @@ public class TargetLegalityService {
         }
         if (targetZone == Zone.STACK
                 || (spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
-                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                || card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()
                         .anyMatch(EffectResolution::targetsSpellOnStack))
                 && isSpellOnStack(gameData, targetId)) {
             TargetFilter stackTargetFilter = effectiveTargetFilter instanceof StackEntryPredicateTargetFilter
@@ -1476,7 +1478,7 @@ public class TargetLegalityService {
                 return Optional.of(handFilter.errorMessage());
             }
             Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
-                    spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                    spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                     card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
             if (needsTarget && !allowedTargets.contains(TargetType.HAND)) {
                 return Optional.of("This spell cannot target cards in hand");
@@ -1513,7 +1515,7 @@ public class TargetLegalityService {
                     .anyMatch(ChooseOneEffect.class::isInstance);
             if (!isModal) {
                 Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(
-                        spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                        spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                         card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
 
                 if (target != null && !allowedTargets.contains(TargetType.PERMANENT)
@@ -1689,7 +1691,7 @@ public class TargetLegalityService {
                                                         UUID controllerId, int xValue,
                                                         TargetFilter targetFilter) {
         if (!EffectResolution.computeAllowedTargets(
-                spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer()).contains(TargetType.PLAYER)) {
             return false;
         }
@@ -1728,7 +1730,7 @@ public class TargetLegalityService {
                                                   List<CardEffect> spellEffects, Permanent candidate,
                                                   UUID controllerId, int xValue, TargetFilter targetFilter) {
         if (!EffectResolution.computeAllowedTargets(
-                spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                spellEffects, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer()).contains(TargetType.PERMANENT)) {
             return false;
         }

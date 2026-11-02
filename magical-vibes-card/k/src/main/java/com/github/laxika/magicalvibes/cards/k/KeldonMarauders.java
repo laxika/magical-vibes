@@ -28,7 +28,7 @@ public class KeldonMarauders extends Card {
                 .addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(2)))
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))
                 .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));

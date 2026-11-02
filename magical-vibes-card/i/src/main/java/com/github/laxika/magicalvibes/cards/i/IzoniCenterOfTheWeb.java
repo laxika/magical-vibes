@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -37,7 +39,7 @@ public class IzoniCenterOfTheWeb extends Card {
                         new CollectEvidenceEffect(4),
                         new ConditionalEffect(new EventValueAtLeast(4), spiderTokens)),
                 "Collect evidence 4?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, collectEvidenceAndCreateSpiders);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), collectEvidenceAndCreateSpiders);
         addEffect(EffectSlot.ON_ATTACK, collectEvidenceAndCreateSpiders);
 
         addActivatedAbility(new ActivatedAbility(

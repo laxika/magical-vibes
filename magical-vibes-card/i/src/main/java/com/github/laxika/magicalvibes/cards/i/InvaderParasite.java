@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
@@ -17,7 +16,8 @@ public class InvaderParasite extends Card {
 
     public InvaderParasite() {
         // Imprint — When Invader Parasite enters the battlefield, exile target land.
-        target(TargetFilters.land()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndImprintEffect());
+        target(TargetFilters.land()).addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ExileTargetPermanentAndImprintEffect());
 
         // Whenever a land with the same name as the exiled card enters the battlefield
         // under an opponent's control, Invader Parasite deals 2 damage to that player.

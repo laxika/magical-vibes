@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanBasePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "744")
 public class MsMarvelElasticAlly extends Card {
@@ -16,7 +18,7 @@ public class MsMarvelElasticAlly extends Card {
     public MsMarvelElasticAlly() {
         // When Ms. Marvel enters, target creature gets +2/+0 until end of turn.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(2, 0));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0));
 
         // Whenever a creature you control with power greater than its base power deals combat
         // damage to a player, draw a card. This ability triggers only once each turn.

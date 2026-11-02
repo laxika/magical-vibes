@@ -49,6 +49,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -922,7 +924,7 @@ class SpellCastingServiceTest {
     }
 
     // =========================================================================
-    // ETB-only targeting (creature with ON_ENTER_BATTLEFIELD effects)
+    // ETB-only targeting (creature with "when this enters" effects)
     // =========================================================================
 
     @Nested
@@ -933,7 +935,7 @@ class SpellCastingServiceTest {
         @DisplayName("Creature with ETB targeting can be cast without a target")
         void creatureWithEtbCanBeCastWithoutTarget() {
             Card creature = createCreature("Sparkmage", "{1}{R}");
-            creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
+            creature.addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1));
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.RED, 2);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -949,7 +951,7 @@ class SpellCastingServiceTest {
         @DisplayName("Creature with ETB targeting rejects a target named while casting")
         void creatureWithEtbRejectsCastTimeTarget() {
             Card creature = createCreature("Sparkmage", "{1}{R}");
-            creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
+            creature.addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1));
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.RED, 2);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));

@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MRD", collectorNumber = "247")
 public class SpellweaverHelix extends Card {
 
     public SpellweaverHelix() {
         CardPredicate sorcery = new CardTypePredicate(CardType.SORCERY);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 ExileCardsFromGraveyardEffect.exactFromSingleGraveyard(2, sorcery, true),
                 "You may exile two target sorcery cards from a single graveyard."
         ));

@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class OverlordOfTheFloodpits extends Card {
         SequenceEffect drawTwoDiscardOne = SequenceEffect.of(
                 new DrawCardEffect(2),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, drawTwoDiscardOne);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), drawTwoDiscardOne);
         addEffect(EffectSlot.ON_ATTACK, drawTwoDiscardOne);
 
         addStaticEffect(new ConditionalEffect(

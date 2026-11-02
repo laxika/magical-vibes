@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,8 @@ import java.util.List;
 public class BlossomingTortoise extends Card {
 
     public BlossomingTortoise() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
         addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(

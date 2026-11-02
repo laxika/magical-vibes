@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardTypeToMatchingHandCardsEffect;
@@ -26,7 +25,7 @@ public class KamiOfTransmutation extends Card {
                         "Each permanent card in your hand perpetually becomes an enchantment in addition to its other types.",
                         new PerpetuallyGrantCardTypeToMatchingHandCardsEffect(
                                 CardType.ENCHANTMENT, new CardIsPermanentPredicate())))));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, choice);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), choice);
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), choice);
     }
 }

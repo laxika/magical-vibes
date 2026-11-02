@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsForRestOfGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class LifeOfTheParty extends Card {
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(creaturesYouControl, new Fixed(0)));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new CreateTokenCopyOfSourceForEachOtherPlayerEffect(
                         CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(false, List.of())),
                 new GoadCreatedPermanentsForRestOfGameEffect()));

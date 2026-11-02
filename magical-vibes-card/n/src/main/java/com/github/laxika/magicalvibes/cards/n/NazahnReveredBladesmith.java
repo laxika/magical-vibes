@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ import java.util.List;
 public class NazahnReveredBladesmith extends Card {
 
     public NazahnReveredBladesmith() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryAndConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SearchLibraryAndConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.EQUIPMENT),
                 LibrarySearchDestination.HAND,
                 new CardNamedPredicate("Hammer of Nazahn"),

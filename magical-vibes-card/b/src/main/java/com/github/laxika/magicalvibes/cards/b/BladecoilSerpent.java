@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggerMode;
@@ -17,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -24,15 +25,13 @@ import java.util.Set;
 public class BladecoilSerpent extends Card {
 
     public BladecoilSerpent() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DrawCardEffect(new ColorManaPairsSpentToCast(ManaColor.BLUE)), TriggerMode.INDEPENDENT);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DiscardEffect(new ColorManaPairsSpentToCast(ManaColor.BLACK), DiscardRecipient.EACH_OPPONENT),
-                TriggerMode.INDEPENDENT);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                new DrawCardEffect(new ColorManaPairsSpentToCast(ManaColor.BLUE)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                new DiscardEffect(new ColorManaPairsSpentToCast(ManaColor.BLACK), DiscardRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, SequenceEffect.of(
                 new BoostSelfEffect(new ColorManaPairsSpentToCast(ManaColor.RED), new Fixed(0)),
                 new ConditionalEffect(new ColorSpentToCast(ManaColor.RED, 2),
-                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.SELF))),
-                TriggerMode.INDEPENDENT);
+                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.SELF))));
     }
 }

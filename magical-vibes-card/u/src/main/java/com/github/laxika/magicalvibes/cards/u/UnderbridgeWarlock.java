@@ -16,12 +16,14 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YWOE", collectorNumber = "8")
 public class UnderbridgeWarlock extends Card {
 
     public UnderbridgeWarlock() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 CreateBoonEffect.atControllerEndStep(1,
                         new ConditionalEffect(new CreaturesDiedThisTurnAtLeast(3),
                                 SequenceEffect.of(

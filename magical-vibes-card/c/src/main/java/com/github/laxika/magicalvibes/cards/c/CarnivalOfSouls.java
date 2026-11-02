@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -20,7 +19,7 @@ public class CarnivalOfSouls extends Card {
         // enters as a creature (Opalescence).
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
                 SequenceEffect.of(new LoseLifeEffect(1), new AwardManaEffect(ManaColor.BLACK)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new SourceIsCreature(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new SourceIsCreature(),
                 SequenceEffect.of(new LoseLifeEffect(1), new AwardManaEffect(ManaColor.BLACK))));
     }
 }

@@ -2,17 +2,18 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DOM", collectorNumber = "249")
 @CardRegistration(set = "AFC", collectorNumber = "273")
 public class ZhalfirinVoid extends Card {
 
     public ZhalfirinVoid() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ScryEffect(1));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

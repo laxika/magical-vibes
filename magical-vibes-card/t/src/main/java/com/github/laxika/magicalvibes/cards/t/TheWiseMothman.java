@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheWiseMothman extends Card {
 
     public TheWiseMothman() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GiveEachPlayerRadCountersEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GiveEachPlayerRadCountersEffect(1));
         addEffect(EffectSlot.ON_ATTACK, new GiveEachPlayerRadCountersEffect(1));
         targetUpTo(new EventValue(), TargetFilters.creature(), 100)
                 .addTrigger(new TriggerCondition(Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY)),

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SHM", collectorNumber = "75")
 @CardRegistration(set = "MM2", collectorNumber = "91")
@@ -18,7 +19,7 @@ public class PuppeteerClique extends Card {
         // When this creature enters, put target creature card from an opponent's graveyard onto
         // the battlefield under your control. It gains haste. At the beginning of your next end
         // step, exile it.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(false));
     }
 }

@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class KoglaTheTitanApe extends Card {
 
     public KoglaTheTitanApe() {
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnteringCreatureFightsTargetCreatureEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new EnteringCreatureFightsTargetCreatureEffect());
 
         PermanentPredicate artifactOrEnchantmentDefendingPlayerControls = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

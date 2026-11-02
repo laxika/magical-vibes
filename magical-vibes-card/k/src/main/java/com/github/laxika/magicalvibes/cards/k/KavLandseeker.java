@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtNextTurnEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class KavLandseeker extends Card {
     );
 
     public KavLandseeker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, LANDER);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeCreatedPermanentsAtNextTurnEndStepEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), LANDER);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeCreatedPermanentsAtNextTurnEndStepEffect());
     }
 }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -41,7 +43,7 @@ public class SkysovereignConsulFlagship extends Card {
 
         DealDamageToTargetCreatureOrPlaneswalkerEffect damage =
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(3, targetRestriction);
-        target(targetFilter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, damage);
+        target(targetFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), damage);
         addEffect(EffectSlot.ON_ATTACK, damage);
 
         addActivatedAbility(new ActivatedAbility(

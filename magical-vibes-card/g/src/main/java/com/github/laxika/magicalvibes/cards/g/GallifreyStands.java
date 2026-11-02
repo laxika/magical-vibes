@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class GallifreyStands extends Card {
     private static final CardSubtype DOCTOR = CardSubtype.DOCTOR;
 
     public GallifreyStands() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ReturnCardsFromControllerGraveyardToHandEffect(
                         new CardSubtypePredicate(DOCTOR), new Fixed(Integer.MAX_VALUE), false));
 

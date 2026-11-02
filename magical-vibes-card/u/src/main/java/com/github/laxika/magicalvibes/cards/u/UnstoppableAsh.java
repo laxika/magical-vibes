@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MOR", collectorNumber = "137")
 public class UnstoppableAsh extends Card {
 
     public UnstoppableAsh() {
         // Champion a Treefolk or Warrior.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChampionCreatureEffect(CardSubtype.TREEFOLK, CardSubtype.WARRIOR));
 
         // Whenever a creature you control becomes blocked, it gets +0/+5 until end of turn.

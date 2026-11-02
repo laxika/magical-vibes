@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class ThancredWaters extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 anotherLegendaryPermanent,
                 "Target must be another legendary permanent you control"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantKeywordEffect(
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantKeywordEffect(
                 Set.of(Keyword.INDESTRUCTIBLE),
                 GrantScope.TARGET,
                 anotherLegendaryPermanent,

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "74")
 @CardRegistration(set = "WHO", collectorNumber = "679")
@@ -20,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class VislorTurlough extends Card {
 
     public VislorTurlough() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
                         new ChooseOpponentGainsControlOfSourceEffect(),
                         new GoadSourceCreatureWhileControllerControlsItEffect()),

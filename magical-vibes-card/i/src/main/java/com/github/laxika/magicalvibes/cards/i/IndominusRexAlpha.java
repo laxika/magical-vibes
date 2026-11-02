@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DiscardCreatureCardsAsEntersForKeywordCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -34,6 +35,6 @@ public class IndominusRexAlpha extends Card {
     public IndominusRexAlpha() {
         addStaticEffect(new DiscardCreatureCardsAsEntersForKeywordCountersEffect(
                 new CardTypePredicate(CardType.CREATURE), KEYWORD_COUNTERS));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(new AllCountersOnSource()));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(new AllCountersOnSource()));
     }
 }

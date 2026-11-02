@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendin
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ import java.util.List;
 public class EliteScaleguard extends Card {
 
     public EliteScaleguard() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BolsterEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BolsterEffect(2));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

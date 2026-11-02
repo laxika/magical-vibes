@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PutSourceFromCommandZoneOntoB
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ import java.util.List;
 public class DereviEmpyrialTactician extends Card {
 
     public DereviEmpyrialTactician() {
-        target(TargetFilters.permanent()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        target(TargetFilters.permanent()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new TapOrUntapTargetPermanentEffect(),
                         "You may tap or untap that permanent?"));
 

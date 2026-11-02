@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SeekLibraryToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDFT", collectorNumber = "12")
 public class ChompingMastasaur extends Card {
@@ -22,7 +24,7 @@ public class ChompingMastasaur extends Card {
                         new DealDamageToAnyTargetEffect(new LastDiscardedCardManaValue()), "a card"),
                 new SeekLibraryToHandEffect(nonlandCard));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, discardThenSeekAndDamage);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), discardThenSeekAndDamage);
         addEffect(EffectSlot.ON_ATTACK, discardThenSeekAndDamage);
     }
 }

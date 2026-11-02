@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M11", collectorNumber = "192")
 @CardRegistration(set = "M12", collectorNumber = "188")
@@ -30,7 +32,7 @@ public class PrimevalTitan extends Card {
                         new Fixed(2), new CardTypePredicate(CardType.LAND), LibrarySearchDestination.BATTLEFIELD_TAPPED),
                 "You may search your library for up to two land cards, put them onto the battlefield tapped, then shuffle."
         );
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, searchEffect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), searchEffect);
         addEffect(EffectSlot.ON_ATTACK, searchEffect);
     }
 }

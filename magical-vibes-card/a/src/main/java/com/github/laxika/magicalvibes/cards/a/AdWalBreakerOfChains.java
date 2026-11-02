@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ import java.util.List;
 public class AdWalBreakerOfChains extends Card {
 
     public AdWalBreakerOfChains() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LookAtTopCardsEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LookAtTopCardsEffect(
                 new Fixed(6),
                 new Fixed(1),
                 new CardAnyOfPredicate(List.of(

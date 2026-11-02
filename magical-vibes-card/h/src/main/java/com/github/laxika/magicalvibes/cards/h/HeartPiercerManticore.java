@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "138")
@@ -15,7 +16,7 @@ public class HeartPiercerManticore extends Card {
     public HeartPiercerManticore() {
         // When this creature enters, you may sacrifice another creature. When you do, this creature
         // deals damage equal to that creature's power to any target.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(),
                         "Sacrifice another creature?"));
 

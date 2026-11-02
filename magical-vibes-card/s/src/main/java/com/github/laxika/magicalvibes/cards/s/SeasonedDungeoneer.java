@@ -16,13 +16,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2505")
 public class SeasonedDungeoneer extends Card {
 
     public SeasonedDungeoneer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TakeInitiativeEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new TakeInitiativeEffect());
 
         PermanentPredicate eligibleTarget = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

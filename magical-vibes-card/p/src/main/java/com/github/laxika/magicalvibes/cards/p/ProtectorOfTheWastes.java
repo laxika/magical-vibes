@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class ProtectorOfTheWastes extends Card {
                 new PermanentIsEnchantmentPredicate()));
         target(new PermanentPredicateTargetFilter(artifactOrEnchantment,
                 "Target must be an artifact or enchantment"), 0, 2);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetPermanentEffect());
         addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, new ExileTargetPermanentEffect());
     }
 }

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOC", collectorNumber = "343")
 @CardRegistration(set = "MOC", collectorNumber = "45")
@@ -18,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class BitterthornNissasAnimus extends Card {
 
     public BitterthornNissasAnimus() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new LivingWeaponEffect());
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),

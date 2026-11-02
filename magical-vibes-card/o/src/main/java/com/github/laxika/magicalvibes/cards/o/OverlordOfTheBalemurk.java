@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -49,7 +51,7 @@ public class OverlordOfTheBalemurk extends Card {
                                         new CardTypePredicate(CardType.PLANESWALKER))))
                                 .build(),
                         "Return a non-Avatar creature card or a planeswalker card from your graveyard to your hand?"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, millThenReturn);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), millThenReturn);
         addEffect(EffectSlot.ON_ATTACK, millThenReturn);
 
         addStaticEffect(new ConditionalEffect(

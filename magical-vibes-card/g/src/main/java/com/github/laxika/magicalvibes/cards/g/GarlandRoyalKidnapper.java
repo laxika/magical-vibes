@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class GarlandRoyalKidnapper extends Card {
         target(new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerBecomesMonarchEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TargetPlayerBecomesMonarchEffect());
 
         PermanentPredicate creaturesYouControlButDontOwn = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

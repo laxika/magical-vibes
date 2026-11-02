@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -19,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "REX", collectorNumber = "12")
 @CardRegistration(set = "REX", collectorNumber = "37")
@@ -32,12 +35,12 @@ public class HenryWuInGenGeneticist extends Card {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.EXPLOIT, GrantScope.OWN_CREATURES, human));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new ExploitEffect(), "Sacrifice a creature?"),
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                new MayEffect(new ExploitEffect(), "Sacrifice a creature?")),
                 GrantScope.SELF));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new ExploitEffect(), "Sacrifice a creature?"),
+                new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                new MayEffect(new ExploitEffect(), "Sacrifice a creature?")),
                 GrantScope.OWN_CREATURES, human));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_EXPLOITS,

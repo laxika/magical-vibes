@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -26,7 +25,7 @@ public class LegateLaniusCaesarsAce extends Card {
 
     public LegateLaniusCaesarsAce() {
         PermanentIsCreaturePredicate creature = new PermanentIsCreaturePredicate();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new SacrificePermanentsEffect(
                         new Divided(
                                 new Sum(new PermanentCount(creature, CountScope.CONTROLLER), new Fixed(9)),

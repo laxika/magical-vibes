@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class CovetedJewel extends Card {
 
     public CovetedJewel() {
         // When this artifact enters, draw three cards.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(3));
 
         // {T}: Add three mana of any one color.
         addActivatedAbility(new ActivatedAbility(

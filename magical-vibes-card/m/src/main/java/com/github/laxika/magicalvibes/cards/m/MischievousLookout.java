@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect;
@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class MischievousLookout extends Card {
         addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 noncreatureNonAuraPermanent,
                 new GrantTriggeredAbilityToCastSpellEffect(
-                        EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new PerpetuallyBecomeCreatureEffect(2, 1, CardSubtype.RAT))));
+                        new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                        new PerpetuallyBecomeCreatureEffect(2, 1, CardSubtype.RAT)))));
     }
 }

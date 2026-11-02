@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class BlightTitan extends Card {
                         incubatorToken(),
                         new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                         CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, millAndIncubate);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), millAndIncubate);
         addEffect(EffectSlot.ON_ATTACK, millAndIncubate);
     }
 

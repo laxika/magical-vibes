@@ -17,13 +17,15 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "123")
 @CardRegistration(set = "LCI", collectorNumber = "338")
 public class StarvingRevenant extends Card {
 
     public StarvingRevenant() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SurveilThenEffect.direct(2, SequenceEffect.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SurveilThenEffect.direct(2, SequenceEffect.of(
                 new DrawCardEffect(new EventValue()),
                 new LoseLifeEffect(new Scaled(new EventValue(), 3), LoseLifeRecipient.CONTROLLER))));
 

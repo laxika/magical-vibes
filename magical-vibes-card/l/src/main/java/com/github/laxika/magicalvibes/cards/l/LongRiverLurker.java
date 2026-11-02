@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreatur
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,8 +33,8 @@ public class LongRiverLurker extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FROG)));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MakeCreatureUnblockableEffect())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MakeCreatureUnblockableEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new RegisterDelayedWatchedCreaturesCombatDamageEffect(
                                 List.of(new MayEffect(
                                         new FlickerEffect(

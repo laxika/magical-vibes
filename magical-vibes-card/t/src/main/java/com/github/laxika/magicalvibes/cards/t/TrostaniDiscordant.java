@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ public class TrostaniDiscordant extends Card {
 
     public TrostaniDiscordant() {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(2, "Soldier", 1, 1,
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(2, "Soldier", 1, 1,
                 CardColor.WHITE, List.of(CardSubtype.SOLDIER), Set.of(Keyword.LIFELINK), Set.of()));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new EachPlayerGainsControlOfOwnedCreaturesEffect());

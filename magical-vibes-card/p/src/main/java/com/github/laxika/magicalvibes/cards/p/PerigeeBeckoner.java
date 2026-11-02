@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -33,8 +32,8 @@ public class PerigeeBeckoner extends Card {
                 )),
                 "Target must be another creature you control"
         ))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(2, 0))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantEffectToTargetUntilEndOfTurnEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new BoostTargetCreatureEffect(2, 0))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(true))));
     }

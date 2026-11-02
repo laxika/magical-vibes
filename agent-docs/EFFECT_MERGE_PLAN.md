@@ -985,7 +985,7 @@ there). Widening any of these means wiring the consumer at the same time.
 - `TargetPolarityClassifier` (magical-vibes-ai) re-keys its single name entry from
   `GrantChosenKeywordToTargetEffect` to `GrantChosenKeywordEffect`. No `instanceof` branch was needed:
   the SELF form appears only in an activated ability and an `UPKEEP_TRIGGERED` slot, never in
-  SPELL / ON_ENTER_BATTLEFIELD, and the sibling `GrantProtectionChoiceUntilEndOfTurnEffect` entry has
+  SPELL / Triggers.enters(ObjectRelation.THIS), and the sibling `GrantProtectionChoiceUntilEndOfTurnEffect` entry has
   already been name-keyed across its own scopes since Step 8. `TargetPolarityGuardTest` passes.
 - **Nothing else.** Unlike Steps 8 and 9, no `@CollectsTrigger` collector is keyed on any of these
   nine classes — all five families live in SPELL / STATIC / activated-ability slots — so there was no
@@ -1314,7 +1314,7 @@ fallback to `controllerId` on a null `getTargetId()` is a strict generalization 
   already latently wrong for Aven Windreader; the merge would have extended it to every reveal card.
   Rather than leave it accidental, `LifeGainEffect` gained a `gainsNoLife()` default (the amount is
   `Fixed(0)`) and both presence checks now consult it. **Inert today**: `hasLifeGainEffect` scans
-  only `SPELL` / `ON_ENTER_BATTLEFIELD` and `InstantCategoryClassifier` only `SPELL`, while all
+  only `SPELL` / `Triggers.enters(ObjectRelation.THIS)` and `InstantCategoryClassifier` only `SPELL`, while all
   four rider-less reveals sit in activated abilities; Prophecy's rider is 1 and unaffected.
 
 **Deliberate deltas** (all log/prompt only)

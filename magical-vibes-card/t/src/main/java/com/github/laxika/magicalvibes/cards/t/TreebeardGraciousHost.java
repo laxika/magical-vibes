@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ import java.util.Set;
 public class TreebeardGraciousHost extends Card {
 
     public TreebeardGraciousHost() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodTokens());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), foodTokens());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.HALFLING, CardSubtype.TREEFOLK)),

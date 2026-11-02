@@ -31,6 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
@@ -357,7 +359,7 @@ public class CreatureControlService {
                 .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {
             for (var effect : java.util.stream.Stream.concat(
                     permanent.getCard().getStaticEffects().stream(),
-                    permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()).toList()) {
+                    permanent.getCard().getTriggerEffects(Triggers.enters(ObjectRelation.THIS)).stream()).toList()) {
                 if (effect instanceof RegisterEchoAtNextUpkeepEffect echo) {
                     gameData.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(),
                             echo.manaCost(), echo.dynamicManaCost(), echo.handCardCost(),

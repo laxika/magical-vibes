@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsMatchingToHandRestToBottomEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "8ED", collectorNumber = "293")
 @CardRegistration(set = "APC", collectorNumber = "133")
@@ -17,7 +18,7 @@ public class BrassHerald extends Card {
 
         // When Brass Herald enters, reveal the top four cards of your library. Put all creature cards
         // of the chosen type revealed this way into your hand and the rest on the bottom in any order.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RevealTopCardsMatchingToHandRestToBottomEffect(4));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealTopCardsMatchingToHandRestToBottomEffect(4));
 
         // Creatures of the chosen type get +1/+1 (all controllers, including Brass Herald itself).
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1, null, true));

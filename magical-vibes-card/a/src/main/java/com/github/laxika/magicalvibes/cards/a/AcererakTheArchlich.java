@@ -11,13 +11,15 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenUnles
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "87")
 @CardRegistration(set = "SLD", collectorNumber = "1784")
 public class AcererakTheArchlich extends Card {
 
     public AcererakTheArchlich() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ControllerHasCompletedDungeon(com.github.laxika.magicalvibes.model.Dungeon.TOMB_OF_ANNIHILATION)),
                 SequenceEffect.of(ReturnToHandEffect.self(), new VentureIntoDungeonEffect())));
         addEffect(EffectSlot.ON_ATTACK,

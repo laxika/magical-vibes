@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -40,7 +39,7 @@ public class GlacierGodmaw extends Card {
     );
 
     public GlacierGodmaw() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, LANDER);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), LANDER);
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE),

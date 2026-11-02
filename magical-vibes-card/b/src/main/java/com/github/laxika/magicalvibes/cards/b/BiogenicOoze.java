@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -23,7 +25,7 @@ public class BiogenicOoze extends Card {
                 "Ooze", 2, 2, CardColor.GREEN, List.of(CardSubtype.OOZE), Set.of(), Set.of());
 
         // When this creature enters, create a 2/2 green Ooze creature token.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, oozeToken);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), oozeToken);
 
         // At the beginning of your end step, put a +1/+1 counter on each Ooze you control.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

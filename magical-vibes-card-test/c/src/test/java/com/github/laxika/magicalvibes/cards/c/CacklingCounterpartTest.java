@@ -15,13 +15,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -400,7 +401,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         upToTwoCreature.target(
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "creature"),
                 0, 2
-        ).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(1));
+        ).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(1));
 
         harness.addToBattlefield(player1, upToTwoCreature);
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -441,7 +442,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         upToTwoCreature.target(
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "creature"),
                 0, 2
-        ).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(1));
+        ).addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(1));
 
         harness.addToBattlefield(player1, upToTwoCreature);
         harness.addToBattlefield(player2, new GrizzlyBears());

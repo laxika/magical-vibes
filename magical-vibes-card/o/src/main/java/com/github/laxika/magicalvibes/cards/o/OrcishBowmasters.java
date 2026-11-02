@@ -8,14 +8,16 @@ import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOC", collectorNumber = "19")
 @CardRegistration(set = "HOC", collectorNumber = "59")
 public class OrcishBowmasters extends Card {
 
     public OrcishBowmasters() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmassGoblinsEffect(1, CardSubtype.ORC));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new AmassGoblinsEffect(1, CardSubtype.ORC));
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,
                 new ExceptFirstDrawStepTriggerEffect(SequenceEffect.of(
                         new DealDamageToAnyTargetEffect(1),

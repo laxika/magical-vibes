@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public class ThreefoldThunderhulk extends Card {
                 List.of(CardSubtype.GNOME),
                 Set.of(),
                 Set.of(CardType.ARTIFACT));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, gnomeTokens);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), gnomeTokens);
         addEffect(EffectSlot.ON_ATTACK, gnomeTokens);
 
         addActivatedAbility(new ActivatedAbility(

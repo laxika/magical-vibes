@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
 
@@ -15,7 +17,7 @@ public class EtherealEscort extends Card {
     public EtherealEscort() {
         var lifelink = new ChooseCardFromHandAndApplyPerpetualKeywordEffect(
                 new CardTruePredicate(), Set.of(Keyword.LIFELINK));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, lifelink);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), lifelink);
         addEffect(EffectSlot.ON_ATTACK, lifelink);
     }
 }

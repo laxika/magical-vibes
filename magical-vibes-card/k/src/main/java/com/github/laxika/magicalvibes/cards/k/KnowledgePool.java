@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MBS", collectorNumber = "111")
 public class KnowledgePool extends Card {
 
     public KnowledgePool() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER));
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new KnowledgePoolCastTriggerEffect());
     }
 }

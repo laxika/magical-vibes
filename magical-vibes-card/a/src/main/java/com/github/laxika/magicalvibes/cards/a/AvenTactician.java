@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DTK", collectorNumber = "6")
 public class AvenTactician extends Card {
 
     public AvenTactician() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BolsterEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new BolsterEffect(1));
     }
 }

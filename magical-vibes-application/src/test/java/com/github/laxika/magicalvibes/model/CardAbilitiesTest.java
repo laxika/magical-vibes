@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -117,7 +119,7 @@ class CardAbilitiesTest {
 
         assertThat(card.getAbilities()).containsExactly(new StaticAbility(List.of(counters)));
         assertThat(card.getStaticEffects(Zone.BATTLEFIELD)).containsExactly(counters);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).isEmpty();
+        assertThat(card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS))).isEmpty();
     }
 
     @Test

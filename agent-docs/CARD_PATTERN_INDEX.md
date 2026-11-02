@@ -307,7 +307,7 @@
 | upkeep creates tokens for each opponent meeting a hand-size threshold | `CreateTokenEffect(new PlayersWithCardsInHandAtLeast(CountScope.OPPONENTS, threshold), ...)` |
 | attack trigger scales a defending-player sacrifice count by that player's poison counters | `k/KozilekCompleated.java` + `DefendingPlayerPoisonCounters` + `SacrificePermanentsEffect(..., DEFENDING_PLAYER)` |
 | attack trigger makes each player tied for most lands sacrifice two lands | `t/TectonicHellion.java` + `SacrificePermanentsEffect(2, PermanentIsLandPredicate, PLAYERS_WITH_MOST_LANDS)` |
-| ETB flips once for each opponent, resolving a separate win/loss branch for that opponent | `ON_ENTER_BATTLEFIELD FlipCoinForEachOpponentEffect(winEffect, lossEffect)` |
+| ETB flips once for each opponent, resolving a separate win/loss branch for that opponent | `Triggers.enters(ObjectRelation.THIS) FlipCoinForEachOpponentEffect(winEffect, lossEffect)` |
 | any number of target opponents; create one token for each creature they control | `CreateTokensForEachTargetPlayerCreatureEffect` + `target(opponent, 0, 99)` |
 | upkeep: each opponent chooses one of three results; controller and chooser share the result | `EachOpponentChoosesMasterOfCeremoniesEffect` |
 | each player chooses friend or foe; friends copy a creature they control, foes return one | `ZndrsplatsJudgmentEffect` |
@@ -584,7 +584,7 @@ When implementing a card, use these as the **best** test file to read for each c
 | Equipment with per-player life-loss counter trigger | `r/ReapersScythe.java` | `CONTROLLER_END_STEP_TRIGGERED` puts one soul counter per distinct player who lost life; `AttachedBoostEffect` scales the equipped creature and `GrantSubtypeEffect` adds Assassin |
 | Lord/anthem | `GloriousAnthemTest.java` | Covers static boost + removal |
 | Vanilla creature | (no test needed) | Empty body, no engine logic |
-| Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `ON_ENTER_BATTLEFIELD`, and put the dynamic mana rider in `ON_SELF_TAPPED_FOR_MANA` |
+| Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `Triggers.enters(ObjectRelation.THIS)`, and put the dynamic mana rider in `ON_SELF_TAPPED_FOR_MANA` |
 | ETB creates an Equipment token and attaches it to the source | `u/USAgentJohnWalker.java` | Use `CreateTokenAndAttachToSourceEffect(CreateTokenEffect.ofArtifactToken(...).withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(...)))))`; put the token's `EquipActivatedAbility` in its token ability list |
 | Equipment swap ability | `a/ArcanumThings.java` | Add the equipped-creature static effect, `EquipActivatedAbility`, and an activated ability with `EquipmentSwapEffect()` |
 

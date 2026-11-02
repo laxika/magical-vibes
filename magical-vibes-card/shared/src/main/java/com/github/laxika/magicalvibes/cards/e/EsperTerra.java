@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnCreatedPermanent;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNumberForCreatedPermanentEffect;
@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Map;
@@ -80,7 +82,7 @@ public class EsperTerra extends Card {
                 Set.of(),
                 false,
                 List.of(
-                        LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(
-                        SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep()))));
+                        new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), 
+                        SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep())));
     }
 }

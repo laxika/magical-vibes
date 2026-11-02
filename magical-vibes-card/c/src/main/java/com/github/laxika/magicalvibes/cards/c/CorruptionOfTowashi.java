@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class CorruptionOfTowashi extends Card {
 
     public CorruptionOfTowashi() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), incubatorToken());
         OncePerTurnTriggerEffect drawTrigger = OncePerTurnTriggerEffect.markOnAcceptance(
                 new MayEffect(new DrawCardEffect(1), "Draw a card?"));
         addTrigger(Triggers.transforms(null, ObjectRelation.YOU_CONTROL), drawTrigger);

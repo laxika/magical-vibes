@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDSK", collectorNumber = "28")
 public class ValiantEmberkin extends Card {
 
     public ValiantEmberkin() {
         var target = target(TargetFilters.creatureYouControl());
-        target.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        target.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PerpetuallyBoostTargetCreatureEffect(1, 0));
         target.addEffect(EffectSlot.ON_ATTACK,
                 new PerpetuallyBoostTargetCreatureEffect(1, 0));

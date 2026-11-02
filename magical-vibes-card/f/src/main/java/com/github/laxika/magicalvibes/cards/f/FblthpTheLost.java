@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WAR", collectorNumber = "50")
 @CardRegistration(set = "SLD", collectorNumber = "583")
@@ -16,8 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEf
 public class FblthpTheLost extends Card {
 
     public FblthpTheLost() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new EnteredFromZone(Zone.LIBRARY, true), new DrawCardEffect()));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new ShuffleSelfIntoOwnerLibraryEffect());
     }

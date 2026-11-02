@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,7 @@ public class RendmawCreakingNest extends Card {
                 new EachPlayerCreatesTokenEffect(birdToken()),
                 new GoadCreatedPermanentsForRestOfGameEffect());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, birdTokens);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), birdTokens);
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 SpellCastTriggerEffect.withAtLeastTwoCardTypes(List.of(birdTokens)));
         addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,

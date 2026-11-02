@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ public class BumiEclecticEarthbender extends Card {
 
     public BumiEclecticEarthbender() {
         target(TargetFilters.landYouControl())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EarthbendTargetLandEffect(1));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(1));
 
         PermanentAllOfPredicate landCreatures = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),

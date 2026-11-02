@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "218")
 @CardRegistration(set = "FIN", collectorNumber = "394")
@@ -25,7 +27,7 @@ public class EmetSelchUnsundered extends Card {
         SequenceEffect loot = SequenceEffect.of(
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loot);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), loot);
         addEffect(EffectSlot.ON_ATTACK, loot);
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(

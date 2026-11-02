@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentBlightsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -21,7 +20,7 @@ import java.util.List;
 public class HighPerfectMorcant extends Card {
 
     public HighPerfectMorcant() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachOpponentBlightsEffect(1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachOpponentBlightsEffect(1));
         addTrigger(Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ELF),

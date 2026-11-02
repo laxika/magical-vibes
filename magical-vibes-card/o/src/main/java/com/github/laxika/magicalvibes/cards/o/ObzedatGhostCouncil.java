@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GTC", collectorNumber = "182")
 @CardRegistration(set = "MM3", collectorNumber = "176")
@@ -22,8 +24,9 @@ public class ObzedatGhostCouncil extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
+                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new MayEffect(new ExileSelfReturnAtNextUpkeepWithHasteEffect(),

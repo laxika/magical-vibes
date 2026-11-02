@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ import java.util.List;
 public class HeroicFeast extends Card {
 
     public HeroicFeast() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
         targetUpTo(new EventValue(), TargetFilters.creatureYouControl(), 1000)
                 .addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));

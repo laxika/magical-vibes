@@ -29,7 +29,7 @@ import java.util.List;
 public class PartyDude extends Card {
 
     public PartyDude() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new EachPlayerCreatesTokenEffect(foodToken()));
 
         addActivatedAbility(new ActivatedAbility(

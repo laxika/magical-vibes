@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +22,7 @@ public class InfestationExpert extends Card {
     public InfestationExpert() {
         setBackFaceCard(new InfestedWerewolf());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CREATE_INSECT);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), CREATE_INSECT);
         addEffect(EffectSlot.ON_ATTACK, CREATE_INSECT);
     }
 

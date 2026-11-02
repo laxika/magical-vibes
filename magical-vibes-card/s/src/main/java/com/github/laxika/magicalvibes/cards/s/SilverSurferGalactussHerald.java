@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MSC", collectorNumber = "10")
 @CardRegistration(set = "MSC", collectorNumber = "293")
 public class SilverSurferGalactussHerald extends Card {
 
     public SilverSurferGalactussHerald() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchLibraryEffect(new CardNamedPredicate("Galactus, Devourer of Worlds"),
                         LibrarySearchDestination.HAND),
                 "Search your library for a card named Galactus, Devourer of Worlds?"));

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VOC", collectorNumber = "16")
 @CardRegistration(set = "VOC", collectorNumber = "54")
@@ -22,7 +24,7 @@ public class TiminYouthfulGeist extends Card {
     public TiminYouthfulGeist() {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                         new SearchTargetPlayerLibraryForNamedCardToHandEffect(PARTNER_NAME),
                         "Have target player put " + PARTNER_NAME + " into their hand from their library?",
                         null,

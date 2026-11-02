@@ -17,12 +17,13 @@ import com.github.laxika.magicalvibes.cards.t.TerrainGenerator;
 import com.github.laxika.magicalvibes.cards.u.UthrosTitanicGodcore;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ import java.util.List;
 public class EumidianLifeseed extends Card {
 
     public EumidianLifeseed() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DraftFromSpellbookEffect.draftIntoHand(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DraftFromSpellbookEffect.draftIntoHand(List.of(
                 AdagiaWindsweptBastion::new,
                 BlastZone::new,
                 CascadingCataracts::new,

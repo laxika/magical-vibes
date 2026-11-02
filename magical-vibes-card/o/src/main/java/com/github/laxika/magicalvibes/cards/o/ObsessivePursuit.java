@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -26,7 +28,7 @@ import java.util.List;
 public class ObsessivePursuit extends Card {
 
     public ObsessivePursuit() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 SequenceEffect.of(new LoseLifeEffect(1), CreateTokenEffect.ofClueToken(1).withInvestigate(false)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 SequenceEffect.of(new LoseLifeEffect(1), CreateTokenEffect.ofClueToken(1).withInvestigate(false)));

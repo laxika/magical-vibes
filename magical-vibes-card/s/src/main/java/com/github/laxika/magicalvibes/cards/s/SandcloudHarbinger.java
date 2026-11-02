@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YBLB", collectorNumber = "3")
 public class SandcloudHarbinger extends Card {
 
     public SandcloudHarbinger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConjureCardsIntoTopOfLibrariesEffect("AKH", "249", 3, 10));
 
         CardSubtypePredicate desert = new CardSubtypePredicate(CardSubtype.DESERT);

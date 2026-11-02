@@ -28,7 +28,7 @@ public class UltronTheAnnihilator extends Card {
     private static final LoseLifeEffect DRAIN = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
 
     public UltronTheAnnihilator() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ROBOT_TOKEN);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ROBOT_TOKEN);
         addEffect(EffectSlot.ON_ATTACK, ROBOT_TOKEN);
         addTrigger(Triggers.dies(null, ObjectRelation.YOU_OWN),
                 new TriggeringPermanentConditionalEffect(

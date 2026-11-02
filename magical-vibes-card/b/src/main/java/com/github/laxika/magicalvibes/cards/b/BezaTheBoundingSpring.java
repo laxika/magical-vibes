@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,16 +23,16 @@ public class BezaTheBoundingSpring extends Card {
 
     public BezaTheBoundingSpring() {
         // Beza's comparisons are resolution-time conditions, not intervening-if ETB gates.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new OpponentControlsMoreLands(),
                 CreateTokenEffect.ofTreasureToken(1)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new AnOpponentHasMoreLifeThanController(), new GainLifeEffect(4)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new OpponentControlsMoreCreatures(1),
                 new CreateTokenEffect(2, "Fish", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.FISH), Set.of(), Set.of())));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ConditionalEffect.unless(
                 new AnOpponentHasMoreCardsInHandThanController(), new DrawCardEffect(1)));
     }
 }

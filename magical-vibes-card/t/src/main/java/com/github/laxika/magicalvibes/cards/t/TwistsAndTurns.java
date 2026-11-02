@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.MycoidMaze;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
@@ -22,7 +21,7 @@ public class TwistsAndTurns extends Card {
 
         addStaticEffect(new ScryBeforeExploreReplacementEffect());
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExploreEffect(true));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ExploreEffect(true));
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 new ConditionalEffect(new ControlsPermanentCount(7, new PermanentIsLandPredicate()),
                         new TransformSelfEffect()));

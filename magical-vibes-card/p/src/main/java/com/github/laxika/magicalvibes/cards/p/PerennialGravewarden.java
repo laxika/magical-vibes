@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class PerennialGravewarden extends Card {
 
     public PerennialGravewarden() {
         // When this creature enters, it perpetually gets +1/+1.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PerpetuallyBoostSourceEffect(1, 1));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new PerpetuallyBoostSourceEffect(1, 1));
 
         // At the beginning of your end step, if a creature entered and a creature died this turn,
         // return this card from your graveyard to the battlefield tapped.

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -43,7 +45,7 @@ public class TitanOfLittjara extends Card {
                                 true)),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "Draw cards and discard a card?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, drawAndDiscard);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), drawAndDiscard);
         addEffect(EffectSlot.ON_ATTACK, drawAndDiscard);
     }
 }

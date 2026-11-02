@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfUnlessEscapedEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,8 +27,9 @@ import java.util.List;
 public class UroTitanOfNaturesWrath extends Card {
 
     public UroTitanOfNaturesWrath() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfUnlessEscapedEffect(), TriggerMode.INDEPENDENT);
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggerEffect(), TriggerMode.INDEPENDENT);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT,
+                new SacrificeSelfUnlessEscapedEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, triggerEffect());
         addEffect(EffectSlot.ON_ATTACK, triggerEffect());
 
         addCastingOption(new GraveyardCast(null, "{G}{G}{U}{U}", List.of(

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LTC", collectorNumber = "513")
 @CardRegistration(set = "LTC", collectorNumber = "557")
@@ -28,8 +30,8 @@ public class FellBeastOfMordor extends Card {
         var gainLife = new GainLifeEffect(counters);
 
         target(targetOpponent)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loseLife)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, gainLife)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), loseLife)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), gainLife)
                 .addEffect(EffectSlot.ON_ATTACK, loseLife)
                 .addEffect(EffectSlot.ON_ATTACK, gainLife);
     }

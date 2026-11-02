@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffe
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M14", collectorNumber = "199")
 @CardRegistration(set = "M15", collectorNumber = "206")
@@ -18,7 +20,7 @@ public class VerdantHaven extends Card {
         // When this Aura enters, you gain 2 life.
         // Whenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.
         target(TargetFilters.land())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2))
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2))
                 .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }
 }

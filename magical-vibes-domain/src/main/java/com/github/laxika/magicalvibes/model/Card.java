@@ -73,6 +73,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1831,6 +1832,26 @@ public class Card {
     }
 
     /**
+     * Adds a triggered ability like {@link #addTrigger(Trigger, CardEffect...)} whose registrations carry
+     * {@code triggerMode}. A "when this enters" ability marked {@link TriggerMode#INDEPENDENT} goes on the stack as an
+     * object of its own with its own targets; the card's other plain "when this enters" abilities share one, as the
+     * enters collector has always put them there, until the enters abilities are grouped by ability.
+     */
+    public void addTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
+        addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
+                Arrays.stream(effects).map(effect -> new EffectRegistration(effect, triggerMode)).toList()));
+    }
+
+    /**
+     * Adds a triggered ability with {@code trigger} whose effects happen at the same time, as
+     * {@link #addSimultaneousEffects} adds them: "it deals 1 damage to any target and 1 damage to you".
+     */
+    public void addSimultaneousTrigger(Trigger trigger, CardEffect... effects) {
+        addTriggeredAbility(new TriggeredAbility(trigger, TriggerOptions.DEFAULT,
+                simultaneousGroup(effects, TriggerMode.NORMAL, null)));
+    }
+
+    /**
      * Adds {@code ability} as it is, for an ability with several trigger conditions or simultaneous effects.
      * An ability with a {@link LegacySlotTrigger} is added the way its slot groups registrations instead.
      */
@@ -1884,13 +1905,17 @@ public class Card {
      * its "when this dies" effects.
      */
     public List<CardEffect> getTriggerEffects(Trigger trigger) {
-        List<CardEffect> effects = new ArrayList<>();
-        for (TriggeredAbility ability : getTriggeredAbilities()) {
-            if (ability.conditions().stream().anyMatch(condition -> condition.trigger().equals(trigger))) {
-                ability.effects().forEach(registration -> effects.add(registration.effect()));
-            }
-        }
-        return effects;
+        TriggerView view = slotIndex().byTrigger().get(trigger);
+        return view == null ? List.of() : view.effects();
+    }
+
+    /**
+     * The registrations of this card's triggered abilities that have {@code trigger} as one of their trigger
+     * conditions, in the order the abilities were added, with their trigger modes.
+     */
+    public List<EffectRegistration> getTriggerEffectRegistrations(Trigger trigger) {
+        TriggerView view = slotIndex().byTrigger().get(trigger);
+        return view == null ? List.of() : view.registrations();
     }
 
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
@@ -1900,8 +1925,8 @@ public class Card {
                 return reg.simultaneousWithPrevious();
             }
         }
-        for (SlotView view : slotIndex().views()) {
-            for (EffectRegistration reg : view.registrations()) {
+        for (TriggeredAbility ability : getTriggeredAbilities()) {
+            for (EffectRegistration reg : ability.effects()) {
                 if (reg.effect() == effect) {
                     return reg.simultaneousWithPrevious();
                 }
@@ -2093,6 +2118,10 @@ public class Card {
         return index;
     }
 
+    /** The registrations and effects of the abilities with one real trigger, in the order they were added. */
+    private record TriggerView(List<EffectRegistration> registrations, List<CardEffect> effects) {
+    }
+
     /**
      * One slot's view: the registrations and effects of its abilities in the order they were added,
      * and the slot's first triggered ability, which holds a Saga chapter's targets.
@@ -2107,20 +2136,29 @@ public class Card {
      * their copies can share it across threads; two threads that both build it build the same index.
      */
     private record SlotIndex(List<SlotView> views, List<StaticAbility> staticAbilities,
-                             List<CardEffect> staticEffects) {
+                             List<CardEffect> staticEffects, Map<Trigger, TriggerView> byTrigger) {
 
         static SlotIndex of(List<Ability> abilities) {
             Map<EffectSlot, List<TriggeredAbility>> bySlot = new TreeMap<>();
             List<StaticAbility> statics = new ArrayList<>();
             List<CardEffect> staticEffects = new ArrayList<>();
+            Map<Trigger, List<EffectRegistration>> registrationsByTrigger = new LinkedHashMap<>();
             for (Ability ability : abilities) {
                 if (ability instanceof StaticAbility statik) {
                     statics.add(statik);
                     staticEffects.addAll(statik.effects());
                 } else if (ability instanceof TriggeredAbility triggered && slotOf(triggered) != null) {
                     bySlot.computeIfAbsent(slotOf(triggered), slot -> new ArrayList<>()).add(triggered);
+                } else if (ability instanceof TriggeredAbility triggered) {
+                    triggered.conditions().stream().map(TriggerCondition::trigger).distinct().forEach(trigger ->
+                            registrationsByTrigger.computeIfAbsent(trigger, ignored -> new ArrayList<>())
+                                    .addAll(triggered.effects()));
                 }
             }
+            Map<Trigger, TriggerView> byTrigger = new LinkedHashMap<>();
+            registrationsByTrigger.forEach((trigger, registrations) -> byTrigger.put(trigger,
+                    new TriggerView(List.copyOf(registrations),
+                            registrations.stream().map(EffectRegistration::effect).toList())));
             List<SlotView> views = new ArrayList<>(bySlot.size());
             bySlot.forEach((slot, slotAbilities) -> {
                 List<EffectRegistration> registrations = new ArrayList<>();
@@ -2130,7 +2168,8 @@ public class Card {
                 views.add(new SlotView(slot, List.copyOf(registrations),
                         registrations.stream().map(EffectRegistration::effect).toList(), slotAbilities.getFirst()));
             });
-            return new SlotIndex(List.copyOf(views), List.copyOf(statics), List.copyOf(staticEffects));
+            return new SlotIndex(List.copyOf(views), List.copyOf(statics), List.copyOf(staticEffects),
+                    Collections.unmodifiableMap(byTrigger));
         }
 
         SlotView find(EffectSlot slot) {

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,6 +31,6 @@ public class BedlamReveler extends Card {
                         new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER)));
 
         // When this creature enters, discard your hand, then draw three cards.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardOwnHandThenDrawEffect(new Fixed(3)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DiscardOwnHandThenDrawEffect(new Fixed(3)));
     }
 }

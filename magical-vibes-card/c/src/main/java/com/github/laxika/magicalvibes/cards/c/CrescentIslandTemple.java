@@ -31,7 +31,7 @@ public class CrescentIslandTemple extends Card {
         PermanentCount shrinesYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SHRINE), CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, monkToken(CardType.CREATURE, shrinesYouControl));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), monkToken(CardType.CREATURE, shrinesYouControl));
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.SHRINE), monkToken()));
     }

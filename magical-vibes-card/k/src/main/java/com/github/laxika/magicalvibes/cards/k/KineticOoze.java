@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
@@ -22,6 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -40,9 +41,9 @@ public class KineticOoze extends Card {
         target(new PermanentPredicateTargetFilter(
                         artifactOrEnchantmentWithManaValueAtMostX,
                         "Target must be an artifact or enchantment with mana value X or less"), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ConditionalEffect(new SpellXAtLeast(5), new DrawCardEffect()));
 
         PermanentPredicate otherCreature = new PermanentAllOfPredicate(List.of(
@@ -50,7 +51,7 @@ public class KineticOoze extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         targetUpTo(new FixedIfCondition(new SpellXAtLeast(10), Integer.MAX_VALUE, 0),
                 new PermanentPredicateTargetFilter(otherCreature, "Targets must be other creatures"), Integer.MAX_VALUE)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ConditionalEffect(new SpellXAtLeast(10),
                                 new DoublePlusOneCountersOnTargetCreatureEffect()));
     }

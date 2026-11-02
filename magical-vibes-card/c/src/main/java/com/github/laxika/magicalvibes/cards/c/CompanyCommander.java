@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class CompanyCommander extends Card {
     public CompanyCommander() {
         // Command Section — When this creature enters, create a number of 1/1 white Soldier
         // creature tokens equal to the number of opponents you have.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 new Sum(new PlayersInGame(), new Fixed(-1)),
                 "Soldier", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.SOLDIER), Set.of(), Set.of()));

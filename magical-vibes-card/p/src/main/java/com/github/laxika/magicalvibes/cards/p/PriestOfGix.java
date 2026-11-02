@@ -2,15 +2,16 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "USG", collectorNumber = "150")
 @CardRegistration(set = "DDE", collectorNumber = "7")
 public class PriestOfGix extends Card {
 
     public PriestOfGix() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AwardManaEffect(ManaColor.BLACK, 3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new AwardManaEffect(ManaColor.BLACK, 3));
     }
 }

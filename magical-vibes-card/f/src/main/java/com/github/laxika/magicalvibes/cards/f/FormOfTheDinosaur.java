@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAbilityControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "RIX", collectorNumber = "103")
 public class FormOfTheDinosaur extends Card {
 
     public FormOfTheDinosaur() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SetLifeTotalEffect(15));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SetLifeTotalEffect(15));
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.simultaneous(

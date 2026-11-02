@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +35,7 @@ public class OverlordOfTheMistmoors extends Card {
         CreateTokenEffect insect = new CreateTokenEffect(
                 2, "Insect", 2, 1, CardColor.WHITE, List.of(CardSubtype.INSECT),
                 Set.of(Keyword.FLYING), Set.of());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, insect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), insect);
         addEffect(EffectSlot.ON_ATTACK, insect);
 
         addStaticEffect(new ConditionalEffect(

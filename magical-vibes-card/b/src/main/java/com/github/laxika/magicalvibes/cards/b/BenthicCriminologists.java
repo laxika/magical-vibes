@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "MKM", collectorNumber = "40")
 public class BenthicCriminologists extends Card {
@@ -16,7 +18,7 @@ public class BenthicCriminologists extends Card {
                 new SacrificePermanentThenEffect(
                         new PermanentIsArtifactPredicate(), new DrawCardEffect(1), "an artifact", false, false),
                 "Sacrifice an artifact?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, sacrificeArtifactToDraw);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), sacrificeArtifactToDraw);
         addEffect(EffectSlot.ON_ATTACK, sacrificeArtifactToDraw);
     }
 }

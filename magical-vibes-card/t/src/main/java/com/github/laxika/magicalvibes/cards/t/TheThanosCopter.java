@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -19,10 +21,10 @@ import java.util.List;
 public class TheThanosCopter extends Card {
 
     public TheThanosCopter() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect(
                         CardType.CREATURE, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect(
                         CardType.ARTIFACT, new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 

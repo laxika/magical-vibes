@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
@@ -18,7 +17,7 @@ public class AshioksErasure extends Card {
     public AshioksErasure() {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTruePredicate(), "Target must be a spell."))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetSpellUntilSourceLeavesEffect())
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetSpellUntilSourceLeavesEffect())
                 .addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true))
                 .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());

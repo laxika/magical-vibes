@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class LumberingWorldwagon extends Card {
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
                 "Search your library for a basic land card?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, searchBasicLand);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), searchBasicLand);
         addEffect(EffectSlot.ON_ATTACK, searchBasicLand);
 
         addActivatedAbility(new ActivatedAbility(

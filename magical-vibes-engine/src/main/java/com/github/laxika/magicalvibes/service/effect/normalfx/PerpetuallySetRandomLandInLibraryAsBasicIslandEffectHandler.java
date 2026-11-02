@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,6 +10,8 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallySetRandomLandInLibraryAsBasicIslandEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -59,7 +60,7 @@ public class PerpetuallySetRandomLandInLibraryAsBasicIslandEffectHandler impleme
             subtypes.add(CardSubtype.ISLAND);
         }
         modified.setSubtypes(subtypes);
-        modified.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(), TriggerMode.INDEPENDENT);
+        modified.addTrigger(Triggers.enters(ObjectRelation.THIS), TriggerMode.INDEPENDENT, new DrawCardEffect());
         String cardText = modified.getCardText();
         modified.setCardText((cardText == null || cardText.isBlank() ? "" : cardText + "\n") + GAINED_ABILITY);
         modified.freeze();

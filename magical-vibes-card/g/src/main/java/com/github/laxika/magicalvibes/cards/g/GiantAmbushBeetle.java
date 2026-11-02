@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "137")
 public class GiantAmbushBeetle extends Card {
@@ -14,7 +15,7 @@ public class GiantAmbushBeetle extends Card {
         // Haste is loaded from Scryfall. ETB: "you may have target creature block it this turn if able."
         // MustBlockSourceEffect(null) snapshots its source (this beetle) from the ETB stack entry.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new MayEffect(new MustBlockSourceEffect(null),
                                 "Have target creature block Giant Ambush Beetle this turn if able?"));
     }

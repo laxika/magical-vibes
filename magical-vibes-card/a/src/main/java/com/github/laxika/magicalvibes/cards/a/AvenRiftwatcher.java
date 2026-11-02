@@ -28,7 +28,7 @@ public class AvenRiftwatcher extends Card {
         addEffect(EffectSlot.ON_SELF_TIME_COUNTERS_REMOVED,
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new GainLifeEffect(2));
     }
 }

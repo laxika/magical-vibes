@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +31,7 @@ public class VernalSovereign extends Card {
                 List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl))),
                 List.of(), false, false, false, 0, Set.of()
         );
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, tokenEffect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), tokenEffect);
         addEffect(EffectSlot.ON_ATTACK, tokenEffect);
     }
 }

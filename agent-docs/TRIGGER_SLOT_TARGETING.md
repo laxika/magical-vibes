@@ -500,9 +500,9 @@ every permanent with this slot on the activating player's battlefield when the a
 ability is embalm/eternalize — `ActivatedAbility.isEmbalmOrEternalize()`; no conditional wrapper, the
 keyword gate is applied at the call site in `AbilityActivationService.completeGraveyardAbilityActivation`).
 
-## `ON_ENTER_BATTLEFIELD` targeted triggers
+## `Triggers.enters(ObjectRelation.THIS)` targeted triggers
 
-A targeted ETB (the card has a `TargetFilter` and a mandatory `ON_ENTER_BATTLEFIELD` effect, e.g.
+A targeted ETB (the card has a `TargetFilter` and a mandatory `Triggers.enters(ObjectRelation.THIS)` effect, e.g.
 Pierce Strider, Geralf's Messenger) chooses its targets **as the trigger is put on the stack**
 (CR 603.3d), never while the permanent spell is cast. A permanent spell whose only targets belong to
 its ETB abilities (`EffectResolution.targetsOnlyWithEtbAbilities`) takes no targets as it is cast —
@@ -655,7 +655,7 @@ group's filter. When a card has two differently-targeted abilities (e.g. Soulsti
 "target creature you control" plus a death trigger that targets any creature),
 `TriggeredAbilityQueueService.processNextDeathTriggerTarget` skips that filter unless one of the death
 trigger's own effects is bound to a declared target group (checked via `Card.getEffectTargetIndex`). So
-attach the ETB filter with `target(...).addEffect(ON_ENTER_BATTLEFIELD, …)` and add the death effect via
+attach the ETB filter with `target(...).addTrigger(Triggers.enters(ObjectRelation.THIS), …)` and add the death effect via
 plain `addTrigger(Triggers.dies(ObjectRelation.THIS), …)` (no `target(...)`); the ETB filter then does not leak into the death
 trigger.
 

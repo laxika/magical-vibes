@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,7 +27,7 @@ import java.util.List;
 public class OmnathLocusOfCreation extends Card {
 
     public OmnathLocusOfCreation() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
 
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ConditionalEffect.unless(
                 new NthAbilityResolutionThisTurn(1), new GainLifeEffect(4)),

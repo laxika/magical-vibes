@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
  * Card constructors use the target-first builder pattern:
  * <pre>
  * target(filter).addSpellEffect(effect);
- * target(filter).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+ * target(filter).addTrigger(Triggers.enters(ObjectRelation.THIS), effect);
  * </pre>
  * Each {@code target()} call declares a new target group. Effects added through it are resolved
  * using the objects chosen for that group.
@@ -95,6 +95,18 @@ public final class SpellTarget {
      */
     public SpellTarget addTrigger(TriggerCondition condition, TriggerOptions options, CardEffect... effects) {
         card.addTrigger(condition, options, effects);
+        for (CardEffect effect : effects) {
+            card.registerEffectTargetIndex(effect, this.index);
+        }
+        return this;
+    }
+
+    /**
+     * Adds a triggered ability whose registrations carry {@code triggerMode} ({@link Card#addTrigger(Trigger,
+     * TriggerMode, CardEffect...)}) and binds the effects to this group.
+     */
+    public SpellTarget addTrigger(Trigger trigger, TriggerMode triggerMode, CardEffect... effects) {
+        card.addTrigger(trigger, triggerMode, effects);
         for (CardEffect effect : effects) {
             card.registerEffectTargetIndex(effect, this.index);
         }

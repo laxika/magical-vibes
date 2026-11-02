@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -49,7 +48,7 @@ public class CatacombSifter extends Card {
             Set.of());
 
     public CatacombSifter() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ELDRAZI_SCION);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ELDRAZI_SCION);
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new ScryEffect(1));
     }
 }

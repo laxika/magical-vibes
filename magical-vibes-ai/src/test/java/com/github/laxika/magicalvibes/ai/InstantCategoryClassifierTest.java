@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +69,7 @@ class InstantCategoryClassifierTest {
             Card flashRemoval = new Card();
             flashRemoval.setType(CardType.CREATURE);
             flashRemoval.setKeywords(Set.of(Keyword.FLASH));
-            flashRemoval.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+            flashRemoval.addTrigger(Triggers.enters(ObjectRelation.THIS),
                     new DestroyTargetPermanentEffect(false, null));
 
             assertThat(InstantCategoryClassifier.classifyFlashCreature(flashRemoval))
@@ -81,7 +82,7 @@ class InstantCategoryClassifierTest {
             Card flashDraw = new Card();
             flashDraw.setType(CardType.CREATURE);
             flashDraw.setKeywords(Set.of(Keyword.FLASH));
-            flashDraw.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
+            flashDraw.addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
 
             assertThat(InstantCategoryClassifier.classifyFlashCreature(flashDraw))
                     .isEqualTo(InstantCategory.CARD_ADVANTAGE);

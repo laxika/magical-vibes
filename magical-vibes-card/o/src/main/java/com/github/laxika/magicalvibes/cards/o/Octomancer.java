@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,7 @@ public class Octomancer extends Card {
 
     public Octomancer() {
         addStaticEffect(new GiftEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new GiftPromised(),
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(octopusToken())));
 
         target(new PermanentPredicateTargetFilter(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.PlantTadpoles;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TurnTargetCreatureFaceDownEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -13,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class IllithidHarvester extends Card {
         target(new PermanentPredicateTargetFilter(
                 tappedNontokenCreature,
                 "Targets must be tapped nontoken creatures"
-        ), 0, 99).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        ), 0, 99).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new TurnTargetCreatureFaceDownEffect(tappedNontokenCreature, Set.of(CardSubtype.HORROR)));
     }
 

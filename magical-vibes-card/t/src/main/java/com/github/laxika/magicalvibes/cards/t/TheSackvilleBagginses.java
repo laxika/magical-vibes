@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -42,7 +41,7 @@ public class TheSackvilleBagginses extends Card {
 
     public TheSackvilleBagginses() {
         // "If you do" is part of the same ability, not a reflexive "when you do" trigger.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SacrificePermanentThenEffect(
                         ANOTHER_CREATURE_OR_ARTIFACT,
                         SequenceEffect.of(new DrawCardEffect(), CreateTokenEffect.ofTreasureToken(1)),

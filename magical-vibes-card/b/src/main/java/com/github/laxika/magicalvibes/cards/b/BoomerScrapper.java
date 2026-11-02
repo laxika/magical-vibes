@@ -29,7 +29,7 @@ public class BoomerScrapper extends Card {
     public BoomerScrapper() {
         SequenceEffect loseLifeAndCreateJunk = SequenceEffect.of(
                 new LoseLifeEffect(1), junkToken());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, loseLifeAndCreateJunk);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), loseLifeAndCreateJunk);
         addEffect(EffectSlot.ON_ATTACK, loseLifeAndCreateJunk);
         addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(

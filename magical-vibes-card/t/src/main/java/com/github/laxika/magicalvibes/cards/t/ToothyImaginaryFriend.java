@@ -19,7 +19,7 @@ public class ToothyImaginaryFriend extends Card {
     private static final String PIR = "Pir, Imaginative Rascal";
 
     public ToothyImaginaryFriend() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new SearchTargetPlayerLibraryForNamedCardToHandEffect(PIR),
                 "Have target player put Pir into their hand from their library?",
                 null,

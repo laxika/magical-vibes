@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "VIS", collectorNumber = "36")
 public class KnightOfTheMists extends Card {
@@ -19,7 +20,7 @@ public class KnightOfTheMists extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.KNIGHT),
                 "Target must be a Knight"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayPayManaEffect(
+        )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayManaEffect(
                 "{U}",
                 null,
                 "Pay {U}?",

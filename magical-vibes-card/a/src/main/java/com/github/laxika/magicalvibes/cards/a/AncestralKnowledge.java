@@ -17,7 +17,7 @@ public class AncestralKnowledge extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
 
         // No player target: the look falls back to the controller's own library.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LookAtTopCardsOfTargetLibraryEffect(10, TargetLibraryAction.MAY_EXILE_ANY_NUMBER));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new ShuffleLibraryEffect(false));

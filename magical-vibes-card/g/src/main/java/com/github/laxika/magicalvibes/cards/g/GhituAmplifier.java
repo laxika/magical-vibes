@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class GhituAmplifier extends Card {
     public GhituAmplifier() {
         addStaticEffect(new KickerEffect("{2}{U}"));
         targetWhenKicked(TargetFilters.creatureAnOpponentControls(), 0, 0, 1, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ConditionalEffect(new Kicked(), ReturnToHandEffect.target()));
 
         // Whenever you cast an instant or sorcery spell, this creature gets +2/+0 until end of turn.

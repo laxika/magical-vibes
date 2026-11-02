@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -27,8 +26,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BloodSpatterAnalysis extends Card {
 
     public BloodSpatterAnalysis() {
-        target(TargetFilters.creatureAnOpponentControls()).addEffect(
-                EffectSlot.ON_ENTER_BATTLEFIELD,
+        target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDamageToTargetCreatureEffect(3));
 
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY)), TriggerOptions.ONE_OR_MORE,

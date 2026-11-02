@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardCreateTokenIfLand
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ public class BruseTarlRovingRancher extends Card {
         var topCardEffect = new ExileTopCardCreateTokenIfLandOrMayCastUntilNextTurnEffect(
                 new CreateTokenEffect("Ox", 2, 2, CardColor.WHITE, List.of(CardSubtype.OX),
                         Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, topCardEffect);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), topCardEffect);
         addEffect(EffectSlot.ON_ATTACK, topCardEffect);
     }
 }

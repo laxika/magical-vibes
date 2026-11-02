@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyAndDealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -21,7 +20,7 @@ public class BalinLoremaster extends Card {
         MayEffect ability = new MayEffect(
                 new DiscardOwnHandThenDrawThatManyAndDealDamageEffect(new ControllerHasEnduringStory()),
                 "Discard your hand and draw that many cards?");
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ability);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), ability);
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DWARF),

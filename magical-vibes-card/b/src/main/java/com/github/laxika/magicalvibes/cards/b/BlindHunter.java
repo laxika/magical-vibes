@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -21,9 +20,9 @@ public class BlindHunter extends Card {
 
     public BlindHunter() {
         target(anyPlayer())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2));
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.THIS), new HauntEffect());
         target(anyPlayer())
                 .addTrigger(Triggers.dies(ObjectRelation.HAUNTED),

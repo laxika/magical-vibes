@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTargetCreatureCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "YDFT", collectorNumber = "22")
 public class HighwayReaver extends Card {
 
     public HighwayReaver() {
         addStaticEffect(new MaxSpeedFreeFirstUnearthEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PerpetuallyGrantUnearthToTargetCreatureCardEffect());
         addEffect(EffectSlot.ON_ATTACK,
                 new PerpetuallyGrantUnearthToTargetCreatureCardEffect());

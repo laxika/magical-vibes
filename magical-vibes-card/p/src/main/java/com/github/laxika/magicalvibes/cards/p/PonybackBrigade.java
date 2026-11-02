@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +17,7 @@ public class PonybackBrigade extends Card {
     public PonybackBrigade() {
         CreateTokenEffect goblins = new CreateTokenEffect(
                 3, "Goblin", 1, 1, CardColor.RED, List.of(CardSubtype.GOBLIN), Set.of(), Set.of());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, goblins);
+        addTrigger(Triggers.enters(ObjectRelation.THIS), goblins);
         addMorph("{2}{R}{W}{B}");
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), goblins);
     }

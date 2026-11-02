@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FDN", collectorNumber = "34")
 @CardRegistration(set = "FDN", collectorNumber = "305")
@@ -15,7 +16,7 @@ public class CuratorOfDestinies extends Card {
 
     public CuratorOfDestinies() {
         addStaticEffect(new CantBeCounteredEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new RevealTopCardsAndSeparateEffect(5, CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, true));
     }
 }

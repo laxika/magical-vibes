@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "56")
 @CardRegistration(set = "LCI", collectorNumber = "363")
@@ -18,8 +20,8 @@ public class TheEverflowingWell extends Card {
     public TheEverflowingWell() {
         setBackFaceCard(new TheMyriadPools());
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(2));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, MillRecipient.CONTROLLER));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new GraveyardCardThreshold(8, new CardIsPermanentPredicate()),
                 new TransformSelfEffect()));

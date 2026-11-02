@@ -32,7 +32,7 @@ public class AangAirbendingMaster extends Card {
         ));
         target(new PermanentPredicateTargetFilter(anotherCreature,
                 "Target must be another creature"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AirbendTargetPermanentEffect());
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new AirbendTargetPermanentEffect());
 
         addTrigger(Triggers.leavesBattlefieldWithoutDying(Triggers.CREATURE, ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new ExperienceCountersEffect(1));
