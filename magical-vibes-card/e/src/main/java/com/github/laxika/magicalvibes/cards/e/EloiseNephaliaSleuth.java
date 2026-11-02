@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,9 +17,7 @@ public class EloiseNephaliaSleuth extends Card {
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), CreateTokenEffect.ofClueToken(1));
 
         // Whenever you sacrifice a token, surveil 1.
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsTokenPredicate(),
-                        new SurveilEffect(1)));
+        addTrigger(Triggers.sacrificed(new PermanentIsTokenPredicate(), ObjectRelation.YOU_CONTROL),
+                new SurveilEffect(1));
     }
 }

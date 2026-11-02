@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -46,10 +45,7 @@ public class BiotechSpecialist extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsArtifactPredicate(),
-                        new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER)
-                ));
+        )).addTrigger(Triggers.sacrificed(new PermanentIsArtifactPredicate(), ObjectRelation.YOU_CONTROL),
+                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
     }
 }

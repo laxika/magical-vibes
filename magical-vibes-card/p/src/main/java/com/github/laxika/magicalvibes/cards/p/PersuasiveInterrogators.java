@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -24,10 +23,9 @@ public class PersuasiveInterrogators extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        )).addTrigger(Triggers.sacrificed(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                        new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)
-                ));
+                        ObjectRelation.YOU_CONTROL),
+                new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER));
     }
 }

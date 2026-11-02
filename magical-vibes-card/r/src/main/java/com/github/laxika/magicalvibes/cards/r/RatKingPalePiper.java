@@ -5,13 +5,17 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,10 +35,14 @@ public class RatKingPalePiper extends Card {
             Set.of());
 
     public RatKingPalePiper() {
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), RAT_TOKEN);
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate()), RAT_TOKEN));
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.leavesBattlefield(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                                ObjectRelation.ANOTHER_YOU_CONTROL)),
+                new TriggerCondition(Triggers.leavesBattlefield(ObjectRelation.THIS))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(RAT_TOKEN))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

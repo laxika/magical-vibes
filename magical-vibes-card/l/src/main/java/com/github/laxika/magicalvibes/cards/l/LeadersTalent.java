@@ -9,16 +9,16 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -51,12 +51,13 @@ public class LeadersTalent extends Card {
                         new NotCondition(new SourceClassLevelAtLeast(3)))),
                 "This Class must be level 2."));
 
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.ANY),
-                        new ConditionalEffect(
-                                new SourceClassLevelAtLeast(2),
-                                new GainLifeEffect(2))));
+        addTrigger(Triggers.leavesBattlefield(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasCountersPredicate(CounterType.ANY))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
+                new GainLifeEffect(2));
 
         addTrigger(Triggers.youCastSpell(), SpellCastTriggerEffect.withIntervening(
                 null,

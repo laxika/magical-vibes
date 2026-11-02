@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,18 +24,14 @@ import java.util.Set;
 public class SavraQueenOfTheGolgari extends Card {
 
     public SavraQueenOfTheGolgari() {
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        creatureOfColor(CardColor.BLACK),
-                        new MayPayLifeEffect(2,
-                                new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
-                                        SacrificeRecipient.EACH_OPPONENT),
-                                "Pay 2 life?")));
+        addTrigger(Triggers.sacrificed(creatureOfColor(CardColor.BLACK), ObjectRelation.YOU_CONTROL),
+                new MayPayLifeEffect(2,
+                        new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
+                                SacrificeRecipient.EACH_OPPONENT),
+                        "Pay 2 life?"));
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        creatureOfColor(CardColor.GREEN),
-                        new MayEffect(new GainLifeEffect(2), "Gain 2 life?")));
+        addTrigger(Triggers.sacrificed(creatureOfColor(CardColor.GREEN), ObjectRelation.YOU_CONTROL),
+                new MayEffect(new GainLifeEffect(2), "Gain 2 life?"));
     }
 
     private static PermanentAllOfPredicate creatureOfColor(CardColor color) {

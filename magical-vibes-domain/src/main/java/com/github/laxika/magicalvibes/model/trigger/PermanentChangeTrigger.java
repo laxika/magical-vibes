@@ -27,6 +27,11 @@ public record PermanentChangeTrigger(ObjectRelation relation, PermanentPredicate
         changes = Collections.unmodifiableSet(EnumSet.copyOf(changes));
     }
 
+    /** This trigger with {@code changed} as what the permanent must be. */
+    public PermanentChangeTrigger withFilter(PermanentPredicate changed) {
+        return new PermanentChangeTrigger(relation, changed, changes);
+    }
+
     /** Whether the game looks back in time for it: phasing out (CR 603.10b). */
     public boolean looksBack() {
         return changes.equals(Set.of(PermanentChange.PHASED_OUT));

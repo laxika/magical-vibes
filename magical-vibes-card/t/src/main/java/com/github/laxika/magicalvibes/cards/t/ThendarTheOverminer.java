@@ -9,12 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,14 +28,13 @@ import java.util.Set;
 public class ThendarTheOverminer extends Card {
 
     public ThendarTheOverminer() {
-        CardPredicate nonbasicLand = new CardAllOfPredicate(List.of(
-                new CardTypePredicate(CardType.LAND),
-                new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC))));
-        addTrigger(Triggers.dies(Triggers.LAND, ObjectRelation.ANY),
-                new TriggeringCardConditionalEffect(
-                        nonbasicLand,
-                        new ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect(
-                                Wastes::new, Set.of(CardType.LAND))));
+        var nonbasicLand = new PermanentAllOfPredicate(List.of(new PermanentIsLandPredicate(),
+                new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))));
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(Triggers.LAND, nonbasicLand)),
+                        ObjectRelation.ANY),
+                new ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect(
+                        Wastes::new, Set.of(CardType.LAND)));
 
         PermanentPredicate tappedCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

@@ -10,8 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,10 +23,11 @@ public class NornsInquisitor extends Card {
 
     public NornsInquisitor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), incubatorToken());
-        addTrigger(Triggers.transforms(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PHYREXIAN),
-                        new PutCounterOnReferencedPermanentEffect(
-                                PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.transforms(
+                        new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN),
+                        ObjectRelation.YOU_CONTROL),
+                new PutCounterOnReferencedPermanentEffect(
+                        PermanentReference.TRIGGERING, CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     private static CreateTokenEffect incubatorToken() {

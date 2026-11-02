@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "146")
@@ -32,9 +34,11 @@ public class AthreosGodOfPassage extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.creatureDies(ObjectRelation.YOU_OWN),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
-                        new ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect(3)));
+        )).addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
+                        ObjectRelation.YOU_OWN),
+                new ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect(3));
     }
 }

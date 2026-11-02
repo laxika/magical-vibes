@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,14 +21,12 @@ public class RavenousSquirrel extends Card {
 
     public RavenousSquirrel() {
         // Whenever you sacrifice an artifact or creature, put a +1/+1 counter on this creature.
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
-                                new PermanentIsCreaturePredicate()
-                        )),
-                        new PutCountersOnSourceEffect(1, 1, 1)
-                ));
+                                new PermanentIsCreaturePredicate())),
+                        ObjectRelation.YOU_CONTROL),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         // {1}{B}{G}, Sacrifice an artifact or creature: You gain 1 life and draw a card.
         addActivatedAbility(new ActivatedAbility(

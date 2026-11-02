@@ -131,7 +131,7 @@ combat damage step is processed.
 | `Triggers.enchantedPlayerDealtDamage()` | `TriggerCollectionService.checkEnchantedPlayerDealtDamageTriggers` + `DamageTriggerCollectorService.handleEnchantedPlayerDealtDamage` | Damage (non-targeting) |
 | `Triggers.transforms(null, ObjectRelation.EQUIPPED)` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
 | `ON_EQUIPMENT_ATTACHED_TO_CREATURE` | `TriggerCollectionService.checkEquipmentAttachedTriggers` (non-targeting; called by `EquipSupport.attachEquipment` and for permanents entering already attached) | Attachment |
-| `Triggers.transforms(null, ObjectRelation.YOU_CONTROL)` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; supports `TriggeringCardConditionalEffect` against the transformed face) | Transform |
+| `Triggers.transforms(null, ObjectRelation.YOU_CONTROL)` | `AnimationSupport.fireAllyPermanentTransformTriggers` → `TriggerCollectionService.checkAllyPermanentTransformsTriggers` (non-targeting; the trigger's filter is judged on the transformed face) | Transform |
 | `Triggers.creatureDies(YOU_CONTROL)` (targeting variants) | `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) | Death |
 | `Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (targeting variants) | `DeathTriggerCollectorService.handleArtifactGraveyardControllerConditional` / `handleArtifactGraveyardReturnUnlessDamage` | Spell target; the latter carries the exact graveyard card id and uses the source permanent snapshot |
 | `Triggers.postcombatMainPhase(ActivePlayer.YOU)` (graveyard-targeting variants) | `StepTriggerService.handlePostcombatMainTriggers` | Spell graveyard target |
@@ -283,7 +283,7 @@ non–any-target flavour; any-target effects use the same `DrawTriggerAnyTarget`
 `Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN)` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
 `Triggers.dies(Triggers.NONTOKEN, ObjectRelation.ANY)` (Liability; fires for nontoken permanents entering any player's graveyard and bakes the graveyard owner as the trigger's target),
 `Triggers.dies(null, ObjectRelation.YOU_OWN)` (Scrapheap; fires for any permanent, including tokens, entering the graveyard owned by the slot's controller),
-`Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (non-targeting effects use the direct stack path; `TriggeringArtifactControllerConditionalEffect` uses the spell-target pipeline),
+`Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)` (non-targeting effects use the direct stack path; a declared target, "an artifact you control" (`ObjectRelation.YOU_CONTROL`) included, uses the spell-target pipeline),
 `Triggers.dies(Triggers.ENCHANTMENT, ObjectRelation.ANY)` (Femeref Enchantress; fires on every permanent with the slot
 whenever an enchantment is put into a graveyard from the battlefield — checked in `PermanentRemovalService`),
 `Triggers.dies(Triggers.LAND, ObjectRelation.ANY)` (Dingus Egg; fires on every permanent with the slot

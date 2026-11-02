@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
@@ -23,8 +22,9 @@ public class MartyrsBond extends Card {
                 new PermanentSharesCardTypeWithSourcePermanentPredicate(),
                 SacrificeRecipient.EACH_OPPONENT);
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS), sacrificeMatchingType);
-        addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentIsLandPredicate()), sacrificeMatchingType));
+        addTrigger(Triggers.dies(
+                        new PermanentNotPredicate(new PermanentIsLandPredicate()),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                sacrificeMatchingType);
     }
 }

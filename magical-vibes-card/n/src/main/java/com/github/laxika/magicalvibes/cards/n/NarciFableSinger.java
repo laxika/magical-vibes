@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,10 +17,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class NarciFableSinger extends Card {
 
     public NarciFableSinger() {
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsEnchantmentPredicate(),
-                        new DrawCardEffect(1)));
+        addTrigger(Triggers.sacrificed(new PermanentIsEnchantmentPredicate(), ObjectRelation.YOU_CONTROL),
+                new DrawCardEffect(1));
         addTrigger(Triggers.finalChapterAbilityResolves(),
                 SequenceEffect.of(
                         new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT),

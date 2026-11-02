@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -32,7 +31,6 @@ public class AlBhedSalvagers extends Card {
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 DRAIN);
-        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new TriggeringArtifactControllerConditionalEffect(DRAIN));
+        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL), DRAIN);
     }
 }

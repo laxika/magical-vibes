@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class OutpostSiege extends Card {
                         new ExileTopCardMayPlayThisTurnEffect(1, false)));
 
         addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new ConditionalEffect(new SourceHasChosenMode(DRAGONS),
-                        new DealDamageToAnyTargetEffect(1)));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceHasChosenMode(DRAGONS)),
+                new DealDamageToAnyTargetEffect(1));
     }
 }

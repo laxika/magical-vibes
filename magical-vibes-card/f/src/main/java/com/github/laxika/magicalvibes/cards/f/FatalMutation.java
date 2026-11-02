@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,9 +14,7 @@ public class FatalMutation extends Card {
 
     public FatalMutation() {
         target(TargetFilters.creature())
-                .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.ANY),
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentIsHostOfSourceAuraPredicate(),
-                                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true)));
+                .addTrigger(Triggers.turnedFaceUp(new PermanentIsHostOfSourceAuraPredicate(), ObjectRelation.ANY),
+                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true));
     }
 }

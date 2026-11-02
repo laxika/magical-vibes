@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.b.BearerOfOverwhelmingTruths;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,10 +17,8 @@ public class DaringSleuth extends Card {
         setBackFaceCard(new BearerOfOverwhelmingTruths());
 
         // When you sacrifice a Clue, transform this creature.
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                        new TransformSelfEffect()));
+        addTrigger(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.CLUE), ObjectRelation.YOU_CONTROL),
+                new TransformSelfEffect());
     }
 
     @Override

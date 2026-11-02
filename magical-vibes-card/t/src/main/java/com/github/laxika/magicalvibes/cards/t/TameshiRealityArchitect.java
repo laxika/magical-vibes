@@ -8,16 +8,16 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,10 +26,12 @@ import java.util.List;
 public class TameshiRealityArchitect extends Card {
 
     public TameshiRealityArchitect() {
-        addTrigger(Triggers.putIntoHandFrom(Zone.BATTLEFIELD, null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.putIntoHandFrom(
+                        Zone.BATTLEFIELD,
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
-                        new OncePerTurnTriggerEffect(new DrawCardEffect())));
+                        ObjectRelation.ANY),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new DrawCardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

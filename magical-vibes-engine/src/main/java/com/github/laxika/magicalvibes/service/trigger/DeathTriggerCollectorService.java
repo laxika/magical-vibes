@@ -81,7 +81,6 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -96,7 +95,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLife
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileIfHadCounterElseReturnWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
@@ -188,7 +186,6 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -1364,26 +1361,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = EnchantedPermanentLeavesConditionalEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
-    boolean handleEnchantedPermanentLeavesConditional(TriggerMatchContext match,
-            EnchantedPermanentLeavesConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
-        boolean matches = conditional.permanentFilter() == null || predicateEvaluationService.matchesCardPredicate(
-                epl.leavingPermanent().getCard(), conditional.permanentFilter(), null);
-        if (!matches) {
-            return false;
-        }
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(conditional.resolvedEffects())
-        ));
-        logEnchantedPermanentLTB(match);
-        return true;
-    }
-
     @CollectsWatchTrigger(value = EnchantedControllerSacrificesCreatureOnLeaveEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
     boolean handleEnchantedControllerSacrificesCreatureOnLeave(TriggerMatchContext match,
             EnchantedControllerSacrificesCreatureOnLeaveEffect effect, TriggerContext ctx) {
@@ -1544,7 +1521,19 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
-        CardEffect triggerEffect = conditional.wrapped();
+        return handleArtifactGraveyardDefault(match, conditional.wrapped(), ctx);
+    }
+
+    /**
+     * "Whenever an artifact [you control] is put into a graveyard from the battlefield": the effect is bound to the
+     * artifact's counters (and does nothing without any) and mana value, and its target is chosen as it goes on the
+     * stack (CR 603.3d).
+     */
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleArtifactGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
+        CardEffect triggerEffect = effect;
         if (triggerEffect instanceof ArtifactGraveyardCountersAwareEffect aware) {
             if (ag.artifactCounters().isEmpty()) {
                 return false;
@@ -1576,7 +1565,7 @@ public class DeathTriggerCollectorService {
 
         boolean playerTargetOnly = !triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
         // "up to one target" (minimum 0): the controller may decline by choosing themselves.
-        int targetIndex = match.permanent().getCard().getEffectTargetIndex(conditional);
+        int targetIndex = match.permanent().getCard().getEffectTargetIndex(match.rawEffect());
         boolean optionalTarget = targetIndex >= 0
                 && targetIndex < match.permanent().getCard().getTargetGroups().size()
                 && match.permanent().getCard().getTargetGroups().get(targetIndex).getMinTargets() == 0;
@@ -1586,22 +1575,6 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard().getTargetFilter(), 0, match.permanent().getId(),
                 new Permanent(match.permanent()), optionalTarget, null, null, match.controllerId(),
                 null, null));
-        logArtifactGraveyard(match);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleArtifactGraveyardDefault(TriggerMatchContext match,
-            CardEffect effect, TriggerContext ctx) {
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        ));
         logArtifactGraveyard(match);
         return true;
     }
@@ -1648,35 +1621,12 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleLandGraveyardConditional(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.AnyLandGraveyard land = (TriggerContext.AnyLandGraveyard) ctx;
-        if (!predicateEvaluationService.matchesCardPredicate(
-                land.landCard(), conditional.predicate(), match.permanent().getCard().getId(),
-                match.gameData(), land.landControllerId())) {
-            return true;
-        }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
-                null,
-                match.permanent().getId()
-        );
-        entry.setTriggeringPermanentControllerId(land.landControllerId());
-        match.gameData().stack.add(entry);
-        logLandGraveyard(match);
-        return true;
-    }
-
+    /** The land's controller rides along for "that land's controller" (Thendar, the Overminer). */
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleLandGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        match.gameData().stack.add(new StackEntry(
+        TriggerContext.AnyLandGraveyard land = (TriggerContext.AnyLandGraveyard) ctx;
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -1684,7 +1634,9 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        entry.setTriggeringPermanentControllerId(land.landControllerId());
+        match.gameData().stack.add(entry);
         logLandGraveyard(match);
         return true;
     }
@@ -1866,26 +1818,16 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
+    @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleOpponentPermanentGraveyardConditional(TriggerMatchContext match,
-            TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
-        TriggerContext.OpponentPermanentGraveyard opg = (TriggerContext.OpponentPermanentGraveyard) ctx;
-        Permanent dyingPermanent = opg.dyingPermanent();
-        if (dyingPermanent == null
-                || !predicateEvaluationService.matchesPermanentPredicate(
-                        dyingPermanent, effect.predicate(), FilterContext.of(match.gameData())
-                                .withSourceControllerId(match.controllerId())
-                                .withSourcePermanentId(match.permanent().getId()))) {
-            return false;
-        }
-
+    boolean handleOpponentPermanentGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.wrapped())),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
@@ -2065,54 +2007,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = TriggeringPermanentControllerConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleAnyPermanentGraveyardControllerConditional(TriggerMatchContext match,
-            TriggeringPermanentControllerConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
-        if (!match.controllerId().equals(apg.dyingControllerId())) {
-            return false;
-        }
-
-        CardEffect resolved = conditional.wrapped();
-        boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
-        if (oncePerTurn) {
-            if (match.gameData().oncePerTurnTriggersFiredThisTurn.contains(match.permanent().getId())) {
-                return false;
-            }
-            resolved = ((OncePerTurnTriggerEffect) resolved).wrapped();
-        }
-
-        if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(),
-                    new ArrayList<>(List.of(resolved))));
-            if (oncePerTurn) {
-                match.gameData().oncePerTurnTriggersFiredThisTurn.add(match.permanent().getId());
-            }
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-            return true;
-        }
-
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolved)),
-                null,
-                match.permanent().getId()
-        ));
-        if (oncePerTurn) {
-            match.gameData().oncePerTurnTriggersFiredThisTurn.add(match.permanent().getId());
-        }
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (controller's permanent put into graveyard from battlefield)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAnyPermanentGraveyardDefault(TriggerMatchContext match,
@@ -2170,26 +2064,6 @@ public class DeathTriggerCollectorService {
         log.info("Game {} - {} triggers (nontoken permanent put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
-    }
-
-    /**
-     * A permanent-characteristic filter on a nontoken-to-graveyard trigger is judged against the permanent as it
-     * last existed on the battlefield, so an animated land that dies still counts as a creature.
-     */
-    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleAllyNontokenPermanentGraveyardConditional(TriggerMatchContext match,
-            TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
-        if (death.dyingPermanent() == null || !predicateEvaluationService.matchesPermanentPredicate(
-                death.dyingPermanent(), effect.predicate(), FilterContext.of(match.gameData())
-                        .withSourceCardId(match.permanent().getCard().getId())
-                        .withSourcePermanentId(match.permanent().getId())
-                        .withSourcePermanentSnapshot(match.permanent())
-                        .withSourceControllerId(match.controllerId()))) {
-            return false;
-        }
-        return handleAllyNontokenPermanentGraveyardDefault(match, effect.wrapped(), ctx);
     }
 
     @CollectsWatchTrigger(value = CardEffect.class,
@@ -2250,24 +2124,6 @@ public class DeathTriggerCollectorService {
         return handleAllyPermanentGraveyardDefault(match,
                 new RegisterDelayedReturnCurseAttachedToPlayerEffect(
                         death.dyingCard().getId(), match.controllerId()), ctx);
-    }
-
-    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleAllyPermanentGraveyardConditional(TriggerMatchContext match,
-            TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
-        if (death.dyingPermanent() == null || !predicateEvaluationService.matchesPermanentPredicate(
-                death.dyingPermanent(), effect.predicate(), FilterContext.of(match.gameData())
-                        .withSourceCardId(match.permanent().getCard().getId())
-                        .withSourcePermanentId(match.permanent().getId())
-                        .withSourcePermanentSnapshot(match.permanent())
-                        .withSourceControllerId(match.controllerId()))) {
-            return false;
-        }
-        return handleAllyPermanentGraveyardDefault(match, effect.wrapped(), ctx);
     }
 
     @CollectsWatchTrigger(value = CardEffect.class,

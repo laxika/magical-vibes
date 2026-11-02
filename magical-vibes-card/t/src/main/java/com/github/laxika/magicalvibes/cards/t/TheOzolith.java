@@ -8,13 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveAllCountersFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutLeavingCreatureCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "237")
 @CardRegistration(set = "SLD", collectorNumber = "1741")
@@ -23,10 +25,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheOzolith extends Card {
 
     public TheOzolith() {
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.ANY),
-                        new PutLeavingCreatureCountersOnSourceEffect()));
+        addTrigger(Triggers.leavesBattlefield(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.CREATURE,
+                                new PermanentHasCountersPredicate(CounterType.ANY))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutLeavingCreatureCountersOnSourceEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature"))

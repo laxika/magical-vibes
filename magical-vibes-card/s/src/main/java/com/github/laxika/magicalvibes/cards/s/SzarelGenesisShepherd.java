@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -37,11 +35,10 @@ public class SzarelGenesisShepherd extends Card {
 
         target(new ControlledPermanentPredicateTargetFilter(anotherCreatureYouControl,
                 "Target must be another creature you control"), 0, 1)
-                .addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                        new ConditionalTriggeringPermanentEffect(
-                                new ControllerTurn(),
+                .addTrigger(Triggers.sacrificed(
                                 anotherNontokenPermanent,
-                                PutCounterOnTargetPermanentEffect.upToOneTarget(
-                                        CounterType.PLUS_ONE_PLUS_ONE, new SourcePower())));
+                                ObjectRelation.ANOTHER_YOU_CONTROL).onlyDuringYourTurn(),
+                        PutCounterOnTargetPermanentEffect.upToOneTarget(
+                                CounterType.PLUS_ONE_PLUS_ONE, new SourcePower()));
     }
 }

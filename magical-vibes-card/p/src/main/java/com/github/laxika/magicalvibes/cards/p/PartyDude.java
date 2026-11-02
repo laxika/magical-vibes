@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -53,9 +54,8 @@ public class PartyDude extends Card {
                 "This Class must be level 2."));
 
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.OPPONENT_CONTROLS),
-                new ConditionalEffect(
-                        new SourceClassLevelAtLeast(2),
-                        new DrawCardEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
+                new DrawCardEffect());
 
         target(TargetFilters.attackingCreature(), 0, 1)
                 .addTrigger(Triggers.youAttackPlayer(),

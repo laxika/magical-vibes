@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,13 +32,12 @@ public class MarthaJones extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
         target(new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"), 0, 1)
-                .addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                        new TriggeringPermanentConditionalEffect(
+                .addTrigger(Triggers.sacrificed(
                                 new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                                SequenceEffect.of(
+                                ObjectRelation.YOU_CONTROL),
+                        SequenceEffect.of(
                                         new MakeCreatureUnblockableEffect(true),
                                         new MakeCreatureUnblockableEffect()
-                                )
-                        ));
+                                ));
     }
 }

@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCardPutIntoHandFromLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostMatchingHandCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,10 +20,11 @@ import java.util.List;
 public class KithkinBrinefarer extends Card {
 
     public KithkinBrinefarer() {
-        addTrigger(Triggers.putIntoHandFrom(Zone.LIBRARY, null, ObjectRelation.YOU_OWN),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.KITHKIN),
-                        new ConjureDuplicateOfCardPutIntoHandFromLibraryEffect()));
+        addTrigger(Triggers.putIntoHandFrom(
+                        Zone.LIBRARY,
+                        new PermanentHasSubtypePredicate(CardSubtype.KITHKIN),
+                        ObjectRelation.YOU_OWN),
+                new ConjureDuplicateOfCardPutIntoHandFromLibraryEffect());
         addTrigger(Triggers.youAttack(),
                 new PerpetuallyBoostMatchingHandCardsEffect(
                         new CardAllOfPredicate(List.of(

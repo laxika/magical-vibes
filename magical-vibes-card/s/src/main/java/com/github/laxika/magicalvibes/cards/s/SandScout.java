@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,8 +33,9 @@ public class SandScout extends Card {
         // Whenever one or more land cards are put into your graveyard from anywhere, create a 1/1
         // red, green, and white Sand Warrior creature token. This ability triggers only once each turn.
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.LAND_CARD, ObjectRelation.YOU_OWN),
-                new OncePerTurnTriggerEffect(new CreateTokenEffect("Sand Warrior", 1, 1,
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CreateTokenEffect("Sand Warrior", 1, 1,
                         CardColor.RED, Set.of(CardColor.RED, CardColor.GREEN, CardColor.WHITE),
-                        List.of(CardSubtype.WARRIOR))));
+                        List.of(CardSubtype.WARRIOR)));
     }
 }

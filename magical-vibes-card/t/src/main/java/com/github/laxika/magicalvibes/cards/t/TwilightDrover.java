@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,10 +21,10 @@ import java.util.List;
 public class TwilightDrover extends Card {
 
     public TwilightDrover() {
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsTokenPredicate(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.leavesBattlefield(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentIsTokenPredicate())),
+                        ObjectRelation.ANOTHER),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

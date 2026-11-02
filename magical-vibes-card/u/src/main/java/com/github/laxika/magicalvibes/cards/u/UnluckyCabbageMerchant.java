@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,17 +27,15 @@ public class UnluckyCabbageMerchant extends Card {
 
     public UnluckyCabbageMerchant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.FOOD),
-                        new MayEffect(
-                                SequenceEffect.of(
-                                        new SearchLibraryEffect(CardPredicateUtils.basicLand(),
-                                                LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                                        new PutTargetPermanentIntoLibraryNFromTopEffect(
-                                                new CardsInLibrary(CountScope.ANY_PLAYER), true),
-                                        new ShuffleLibraryEffect(false)),
-                                "Search your library for a basic land card?")));
+        addTrigger(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.FOOD), ObjectRelation.YOU_CONTROL),
+                new MayEffect(
+                        SequenceEffect.of(
+                                new SearchLibraryEffect(CardPredicateUtils.basicLand(),
+                                        LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                                new PutTargetPermanentIntoLibraryNFromTopEffect(
+                                        new CardsInLibrary(CountScope.ANY_PLAYER), true),
+                                new ShuffleLibraryEffect(false)),
+                        "Search your library for a basic land card?"));
     }
 
     private static CreateTokenEffect foodToken() {

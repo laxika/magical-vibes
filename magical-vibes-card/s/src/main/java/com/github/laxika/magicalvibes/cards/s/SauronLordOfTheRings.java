@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RingTemptsYouEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,8 +30,7 @@ public class SauronLordOfTheRings extends Card {
                 .mandatory(true)
                 .build());
 
-        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCommanderPredicate(), new RingTemptsYouEffect()));
+        addTrigger(Triggers.dies(new PermanentIsCommanderPredicate(), ObjectRelation.OPPONENT_CONTROLS),
+                new RingTemptsYouEffect());
     }
 }

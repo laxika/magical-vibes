@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,13 +24,12 @@ import java.util.List;
 public class ForgehammerCenturion extends Card {
 
     public ForgehammerCenturion() {
-        addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentIsArtifactPredicate()
-                        )),
-                        new PutCountersOnSelfEffect(CounterType.OIL)));
+                                new PermanentIsArtifactPredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.OIL));
 
         target(TargetFilters.creature()).addTrigger(Triggers.attacks(), new MayEffect(
                 ConditionalEffect.unless(new SourceCounterThreshold(2, CounterType.OIL),

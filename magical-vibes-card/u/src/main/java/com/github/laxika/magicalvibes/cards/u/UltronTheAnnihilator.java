@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -29,12 +28,12 @@ public class UltronTheAnnihilator extends Card {
     public UltronTheAnnihilator() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ROBOT_TOKEN);
         addTrigger(Triggers.attacks(), ROBOT_TOKEN);
-        addTrigger(Triggers.dies(null, ObjectRelation.YOU_OWN),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
-                        DRAIN));
+                        ObjectRelation.YOU_OWN),
+                DRAIN);
         addTrigger(Triggers.putIntoGraveyardFromAnywhereButBattlefield(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.YOU_OWN),
                 DRAIN);
     }

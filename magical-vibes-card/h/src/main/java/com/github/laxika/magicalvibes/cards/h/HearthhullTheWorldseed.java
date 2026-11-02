@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -58,10 +57,8 @@ public class HearthhullTheWorldseed extends Card {
                 "{1}, {T}, Sacrifice a land: Draw two cards. You may play an additional land this turn."
         ).withRequiredSourceCounters(CounterType.CHARGE, 2));
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsLandPredicate(),
-                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.sacrificed(new PermanentIsLandPredicate(), ObjectRelation.YOU_CONTROL),
+                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),

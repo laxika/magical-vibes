@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -157,31 +156,21 @@ class DeathTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Uses the dying permanent snapshot for conditional opponent-permanent triggers")
-    void usesDyingPermanentSnapshotForConditionalOpponentPermanentTrigger() {
+    @DisplayName("Puts an opponent-permanent ability's effect on the stack once the pipeline matched it")
+    void putsOpponentPermanentAbilityOnStack() {
         Card watcherCard = createCreature("Watcher", 1, 3);
         Permanent watcher = new Permanent(watcherCard);
         Card dyingCard = createArtifact("Bountied Artifact");
         Permanent dyingPermanent = new Permanent(dyingCard);
-        dyingPermanent.setCounterCount(CounterType.BOUNTY, 1);
-        var effect = new TriggeringPermanentConditionalEffect(
-                new PermanentHasCountersPredicate(CounterType.BOUNTY),
-                SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect()));
+        var effect = SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect());
         var context = new TriggerContext.OpponentPermanentGraveyard(
                 dyingCard, PLAYER2_ID, PLAYER2_ID, dyingPermanent);
-        when(predicateEvaluationService.matchesPermanentPredicate(
-                eq(dyingPermanent), eq(effect.predicate()),
-                org.mockito.ArgumentMatchers.any(com.github.laxika.magicalvibes.model.filter.FilterContext.class)))
-                .thenReturn(true);
 
-        assertThat(svc.handleOpponentPermanentGraveyardConditional(
+        assertThat(svc.handleOpponentPermanentGraveyardDefault(
                 match(watcher, PLAYER1_ID, effect), effect, context)).isTrue();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect.wrapped());
-        verify(predicateEvaluationService).matchesPermanentPredicate(
-                eq(dyingPermanent), eq(effect.predicate()),
-                org.mockito.ArgumentMatchers.any(com.github.laxika.magicalvibes.model.filter.FilterContext.class));
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
     }
 
     // ── "when this dies" handlers ──────────────────────────────────────────────
@@ -596,59 +585,6 @@ class DeathTriggerCollectorServiceTest {
     }
 
     // ── ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD handlers ─────────────
-
-    @Nested
-    @DisplayName("handleEnchantedPermanentLeavesConditional")
-    class EnchantedPermanentLeavesConditional {
-
-        @Test
-        @DisplayName("Fires when filter matches")
-        void firesWhenFilterMatches() {
-            Card aura = createEnchantment("Conditional Aura");
-            var filter = new CardTypePredicate(CardType.CREATURE);
-            var conditional = new EnchantedPermanentLeavesConditionalEffect(filter, List.of(new DrawCardEffect(2)));
-            Card creature = createCreature("Leaving", 2, 2);
-            Permanent leavingPerm = new Permanent(creature);
-            Permanent auraPerm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm, PLAYER1_ID);
-
-            when(predicateEvaluationService.matchesCardPredicate(creature, filter, null)).thenReturn(true);
-
-            assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve()).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("Does not fire when filter does not match")
-        void doesNotFireWhenFilterDoesNotMatch() {
-            Card aura = createEnchantment("Conditional Aura");
-            var filter = new CardTypePredicate(CardType.CREATURE);
-            var conditional = new EnchantedPermanentLeavesConditionalEffect(filter, List.of(new DrawCardEffect(2)));
-            Card artifact = createArtifact("Leaving Artifact");
-            Permanent leavingPerm = new Permanent(artifact);
-            Permanent auraPerm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm, PLAYER1_ID);
-
-            when(predicateEvaluationService.matchesCardPredicate(artifact, filter, null)).thenReturn(false);
-
-            assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Fires unconditionally when filter is null")
-        void firesWhenFilterNull() {
-            Card aura = createEnchantment("Open Aura");
-            var conditional = new EnchantedPermanentLeavesConditionalEffect(null, List.of(new DrawCardEffect(1)));
-            Permanent leavingPerm = new Permanent(createCreature("Any", 2, 2));
-            Permanent auraPerm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm, PLAYER1_ID);
-
-            assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isTrue();
-            assertThat(gd.stack).hasSize(1);
-        }
-    }
 
     @Nested
     @DisplayName("handleEnchantedPermanentLeavesDefault")

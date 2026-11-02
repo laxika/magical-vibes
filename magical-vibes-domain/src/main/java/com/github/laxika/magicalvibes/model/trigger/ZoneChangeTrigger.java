@@ -59,6 +59,16 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
         return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, player, duringYourTurn);
     }
 
+    /** This trigger with {@code moved} as what the moving object must be. */
+    public ZoneChangeTrigger withFilter(PermanentPredicate moved) {
+        return new ZoneChangeTrigger(relation, moved, from, to, excludedTo, causes, causedBy, duringYourTurn);
+    }
+
+    /** This trigger, for a move during any turn. */
+    public ZoneChangeTrigger anyTurn() {
+        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, false);
+    }
+
     /** This trigger, for a move during its controller's turn only. */
     public ZoneChangeTrigger onlyDuringYourTurn() {
         return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, true);

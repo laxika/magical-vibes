@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,11 +21,11 @@ public class AstridPeth extends Card {
     public AstridPeth() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofFoodToken(1));
         addTrigger(Triggers.attacks(), CreateTokenEffect.ofFoodToken(1));
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD))),
-                        new ExploreEffect()));
+                        ObjectRelation.YOU_CONTROL),
+                new ExploreEffect());
     }
 }

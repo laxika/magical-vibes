@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death) |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes; run 2, creature death; run 3a, other zone and permanent changes but "another object enters") |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -577,7 +577,8 @@ classes, `TriggerMode` and `LegacyTriggerOptions`.
 **Done when:** no triggered ability's effects contain a trigger-only wrapper, those classes and
 `TriggerMode` are gone, and the converted cards' tests fail exactly as at the baseline.
 
-This step was split, with the user, by family, as step 13 was. Each run converts every wrapper kind of one
+This step was split, with the user, by family, as step 13 was; run 3 was split again into 3a and 3b, with the user,
+because of its size (690 abilities). Each run converts every wrapper kind of one
 family's abilities, makes that family's collectors read options and filters instead, and deletes the wrapper classes
 no other family still uses. The order:
 
@@ -585,7 +586,8 @@ no other family still uses. The order:
 |---|---|
 | 1 | The source's own zone changes (step 10's pilot): dies, sacrificed, leaves the battlefield, put into a graveyard, milled, all `ObjectRelation.THIS` |
 | 2 | Creature death (step 11's `CreatureDeathWatch`), with the 32 "this or another [restricted] creature" cards merged |
-| 3 | The other zone changes and the permanent changes (step 12a's `ZoneChangeWatch`), with their split "this or another" cards merged |
+| 3a | The other zone changes and the permanent changes (step 12a's `ZoneChangeWatch`) but "another object enters", with their split "this or another" cards merged |
+| 3b | "Another object enters" (step 12a part 2's entering watches) |
 | 4 | The source's own enters abilities (step 12b's `EtbTriggerService`), with the 60 "this or another" enters cards merged |
 | 5 to 15 | Step 13's families 1 to 11, in its order |
 | 16 | What no family owns: the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the `onlyIfSacrificed` flags, and the wrapper classes left |
@@ -4518,7 +4520,7 @@ was re-rendered with `--keep-baseline`.
 ### Step 14
 
 Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes, run 2
-the creature-death family.
+the creature-death family, run 3a the other zone and permanent changes but "another object enters".
 
 #### Run 1: the source's own zone changes
 
@@ -4709,6 +4711,136 @@ last-known power as it triggers and again as it resolves. No card test changed.
   `TriggerCollectionServiceTest`, `DeathTriggerCollectorServiceTest` and the `…WatchTest` classes (272 tests): only
   `DeathTriggerCollectorServiceTest`'s 6 mock-wired cases fail, as at HEAD (checked in a HEAD worktree).
 - AI: the whole module (1,620 tests), the same 10 failures as before.
+- The full suite was not run here.
+
+#### Run 3a: other objects' zone changes and permanent changes
+
+Run 3 was split, with the user, into 3a (this run: every `ZoneChangeWatch` but the "another object enters" ones) and
+3b ("whenever [an object] enters", 471 abilities in 453 card classes, step 12a part 2's entering watches). Every
+sacrifice, put-into-a-graveyard, leaves-the-battlefield, exile, returned-to-hand, library, mill, leaves-a-graveyard,
+command-zone, phasing, transform and turned-face-up ability of another object (and the source's own transform and
+face-up ones) is free of trigger-only wrappers but the six kept below, and the split "this or another" cards of the
+family are one ability each.
+
+**Authoring.**
+
+- A restriction on the object that moved is the trigger's filter: the restriction where the watched trigger's filter
+  is `null` (`Triggers.sacrificed(new PermanentHasSubtypePredicate(FOOD), YOU_CONTROL)`), `AllOf(X, restriction)` where
+  it is `X` (`Triggers.dies(AllOf(Triggers.NONTOKEN, HasSubtype(CURSE)), YOU_OWN)`). A card predicate becomes its
+  permanent form, as in run 2 (`CardTypePredicate(LAND)` → `PermanentIsLandPredicate`, `CardIsHistoricPredicate` →
+  `PermanentIsHistoricPredicate`, …).
+- "A permanent / an artifact you control" is the relation: `TriggeringPermanentControllerConditionalEffect` became
+  `YOU_CONTROL` (`.another` `ANOTHER_YOU_CONTROL`) on `dies(null, ANY)`, and
+  `TriggeringArtifactControllerConditionalEffect` `YOU_CONTROL` / `ANOTHER_YOU_CONTROL` (its "nontoken" flag the
+  `NONTOKEN` filter) on `dies(ARTIFACT, ANY)`.
+- "During your turn" is `.onlyDuringYourTurn()`; on a permanent change, which has none, "if it's your turn" is the
+  intervening-if option `ControllerTurn` (Jeering Instigator). Any other intervening "if" is
+  `TriggerOptions.withInterveningIf` (Class levels, Outpost Siege's mode, Moonshadow's and Bloodchief Ascension's
+  counters, Nihilith's suspend, Lurking Skirge, Defiled Crypt's door); `OncePerTurnTriggerEffect` (and `.keyed`) is
+  `ONCE_EACH_TURN`, `.markOnAcceptance` `DO_ONLY_ONCE_EACH_TURN` (CR 603.2h, checked), `OnceOnlyTriggerEffect` `ONCE`.
+  `ConditionalEffect.unless` and `ConditionalEffect(SourceCardInGraveyard, …)` stay effects.
+- "This [permanent] or another [restricted] one" is one `TriggeredAbility` with two trigger conditions, the source's
+  own (unchanged, collected by the pilot path) and the other one's (collected by its watch): Zone of Flame, Resourceful
+  Defense ("if it had counters on it" is now the `THIS` condition's filter too), Nadier's Nightblade, Costume Closet,
+  Vela the Night-Clad, Splinter the Mentor, Slayer's Bounty, Scrap Trawler, Slagstone Refinery, Rat King, Esoteric
+  Duplicator. Long Feng's "another creature you control or a land you control" is `dies(AnyOf(CREATURE, LAND),
+  ANOTHER_YOU_CONTROL)` beside its `dies(LAND, THIS)`.
+
+**The engine.**
+
+- `ZoneChangeWatch.of` finds the watch of a narrowed trigger: an exact key first, then the key with the filter's first
+  `AllOf` part, then (unless `CreatureDeathWatch.collects` claims a dies trigger: a creature, nontoken creature or
+  creature-or-planeswalker filter, or "one or more artifacts and/or creatures"; never an owner or `ENCHANTED`
+  relation) the key with no filter, and for `onlyDuringYourTurn()` the key without it (the matcher checks it). New
+  keys: `dies(null, YOU_CONTROL)` on `ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`, `dies(ARTIFACT, YOU_CONTROL)`
+  and `dies(ARTIFACT, ANOTHER_YOU_CONTROL)` on `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`.
+  `ZoneChangeTrigger.withFilter` / `anyTurn` and `PermanentChangeTrigger.withFilter` are new; `abilitiesOf` uses the
+  same lookup, so the scheme collector (My Champion Stands Supreme) reads its narrowed trigger and judges the filter.
+- A temporary engine test (deleted) dumped every card ability's watch before and after the conversion: all kept their
+  watch but five. Vat of Rebirth, Long Feng, Exuberant Fuseling and Graha Tia ("another … you control") moved from the
+  any-permanent watch to `ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`, Sly Requisitioner ("a nontoken
+  artifact you control") to the artifact watch; their effects are handled the same there (their card tests pass).
+  Exuberant Fuseling and Graha Tia say "another"/"other": their wrapper nesting had left the source out, so they are
+  `ANOTHER_YOU_CONTROL`, not the `YOU_CONTROL` their controller wrapper suggests.
+- The watch bodies and handlers stop reading the wrappers. Where a wrapper handler did more than filter, that is now the
+  plain effect's path: "whenever you sacrifice" binds the sacrificed card and its mana value, targets a graveyard
+  return and puts "you may" / "you may pay" on the stack for every effect (its `MayEffect`, `MayPayManaEffect` and
+  `ConditionalEffect` handlers are gone; no unwrapped card used them); the artifact-graveyard default binds counters
+  and mana value and routes declared targets (the controller wrapper's handler keeps only Urza's Miter's checks); the
+  land-graveyard default carries the land's controller; the opponent-permanent-graveyard watch got a default (its only
+  handler was the wrapper's). Deleted handlers: the sacrifice, opponent-sacrifice, nontoken/ally/your/opponent
+  permanent-graveyard, any-permanent controller, land, enchanted-leaves, any-creature-sacrificed once-each-turn, card
+  and creature-card graveyard and hand-from-library wrapper handlers; the leaves, returned-to-hand, graveyard-creature,
+  graveyard-land and face-up/transform bodies' inline unwrapping.
+- The pipeline's limit reaches the bodies: `TriggerMatchContext.markSourceOncePerTurnOnAcceptance` is set from
+  `DO_ONLY_ONCE_EACH_TURN` (Riveteers Ascendancy, Screeching Scorchbeast). The face-up filter context names the
+  watcher's permanent (Salt Road Ambushers' "another").
+- Deleted: `EnchantedPermanentLeavesConditionalEffect`, `ConditionalTriggeringPermanentEffect`.
+
+**Cards.** `scripts/step14-zone-change-scan.py` lists the family's abilities and wrappers (`--all` for every ability),
+`scripts/step14-zone-change-watches.py` groups them by watch. `scripts/step14-zone-change-options.py` (per letter
+module) converted 176 card classes, following local variables to their one definition; its `AFTER` table merges four
+"this or another" cards and fixes long lines, its `MERGE` set merges seven more. Long Feng (a comment between
+arguments) and Projektor Inspector (a helper shared with its enters half; its face-up half is converted, the enters
+half keeps its wrapper for 3b) were converted by hand. `scripts/step14-zone-change-docs.py` rewrote 61 agent-docs rows;
+the implement-card and review-card skills and `ARCHITECTURE.md` were edited by hand.
+
+**Kept for later runs.**
+
+- Urza's Miter: "if it wasn't sacrificed", which no trigger option says (`TriggeringArtifactControllerConditionalEffect`
+  stays for it).
+- Crawling Sensation: "the first time one or more land cards are put into your graveyard each turn" counts events
+  before the source entered (`OncePerTurnTriggerEffect.firstLandGraveyardEvent`).
+- Trail of Mystery: "if it's a creature" about the turned-up permanent, read from the stack entry as it resolves.
+- Disa the Restless: `CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate` has no permanent form; it would be
+  `putIntoGraveyardFromAnywhereButBattlefield`, which no watch of its kind keys.
+- Corruption of Towashi and Oasis of Renewal: one "once each turn" shared with an enters half, for 3b / run 4
+  (Oasis keeps the leave-graveyard card-conditional handler for that).
+- Psychomancer: its halves are a target group's chain with a third, handler-level exile half
+  (`SelfExiledFromBattlefieldEffect`, step 15).
+- Al Bhed Salvagers and Susurian Voidborn keep their creature and artifact halves: the creature half excludes
+  artifacts, so no death triggers both.
+
+**For run 3b.** The entering bodies still read `TriggeringCardConditionalEffect`, `TriggeringPermanentConditionalEffect`,
+`OncePerTurnTriggerEffect` and intervening-if `ConditionalEffect`s (`unwrapTriggeringCardConditional`, the entry
+handlers in `EnterTriggerCollectorService`); `ZoneChangeWatch.of` already finds a narrowed entering trigger's watch.
+Enters halves left wrapped beside a converted half: Projektor Inspector, Perimeter Enforcer, Case of the Pilfered Proof,
+Corruption of Towashi (one "do this only once each turn" with its transform half). Oasis of Renewal's limit is shared
+with its own enters abilities (run 4).
+
+**Behaviour changes.** None intended. A filter on a card that died is judged on the permanent as it last existed,
+where the wrappers read the printed card for some watches (Yomiji's "legendary", "artifact or creature"), as runs 1 and
+2 did. The five cards above are collected by a neighbouring watch, with the same result.
+
+**Tests changed.**
+
+- `TriggerPipelineTest`: five new tests through the engine: a sacrifice ability narrowed by a filter keeps its watch and
+  triggers only for a matching permanent; a sacrifice ability's "you may" goes on the stack (CR 603.5, checked); an
+  "artifact you control" ability ignores an opponent's artifact; an ability of a `THIS` and an `ANOTHER_YOU_CONTROL`
+  condition with one filter triggers for another permanent and for its own departure; a "leaves your graveyard during
+  your turn" ability triggers only during it.
+- `MiscTriggerCollectorServiceTest` (mock-wired): the may and may-pay sacrifice cases now reach the default handler;
+  "skips a false intervening condition" (the pipeline checks it now), Disa's dead creature-card-graveyard handler case
+  and the targeted-conditional case's wrapper were removed or unwrapped.
+- `DeathTriggerCollectorServiceTest` (mock-wired): the enchanted-leaves conditional cases are gone with their handler;
+  the opponent-permanent filter case tests the new default (the filter is the matcher's now).
+
+**Test runs.**
+
+- Card: the test class of every converted card, of the kept cards and of the plain cards of the watches whose
+  handlers changed, and every card test that constructs one (338 classes, 3,079 tests): first run 2 failures, Oasis of
+  Renewal's, which still needed the leave-graveyard card-conditional handler (restored); after the merges and the
+  restore, the classes of the changed cards (20 classes) and Oasis pass. Vela the Night-Clad, Rat King, Slagstone
+  Refinery and Esoteric Duplicator have no card test; `TriggerPipelineTest` covers the two-condition shape.
+- Application: `TriggerPipelineTest`, `LegacyTriggerBindingsTest`, `CardAbilitiesTest`, `ZoneChangeTriggerTest`,
+  `TriggeredAbilityTest`, `TriggerConditionTest`, `TriggerOptionsTest`, `ZoneChangeRulesEventTest`,
+  `RulesEventLogTest`, `CardFreezeTest`, `MiscTriggerTest`, `ActionTriggerTest`, `GrantedAbilitiesTest`,
+  `TriggerCollectionServiceTest`, `DeathTriggerCollectorServiceTest`, `MiscTriggerCollectorServiceTest`,
+  `EnterTriggerCollectorServiceTest`, the `…WatchTest` and architecture classes (388 tests): only
+  `DeathTriggerCollectorServiceTest`'s 6 mock-wired cases fail, as at HEAD.
+- AI: the whole module (1,620 tests), the same 10 failures as before.
+- `magical-vibes-webservice`'s `CardBrowserServiceTest` doesn't compile (`CardCatalog.findLoadedPrintingByName`); this
+  run touches neither module.
 - The full suite was not run here.
 
 ## Prompt

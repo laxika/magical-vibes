@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -42,12 +42,18 @@ public class SkirkDrillSergeant extends Card {
                 DRILL_SERGEANT_ABILITY);
         // A noncreature Goblin permanent that dies is not a creature, so it reaches this card through the
         // ally and opponent permanent slots instead (CR 700.4: "dies" means put into a graveyard from the battlefield).
-        TriggeringPermanentConditionalEffect noncreatureGoblinDies = new TriggeringPermanentConditionalEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
-                        new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
-                DRILL_SERGEANT_ABILITY);
-        addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER_YOU_CONTROL), noncreatureGoblinDies);
-        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS), noncreatureGoblinDies);
+        CardEffect noncreatureGoblinDies = DRILL_SERGEANT_ABILITY;
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
+                                new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                noncreatureGoblinDies);
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
+                                new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
+                        ObjectRelation.OPPONENT_CONTROLS),
+                noncreatureGoblinDies);
     }
 }

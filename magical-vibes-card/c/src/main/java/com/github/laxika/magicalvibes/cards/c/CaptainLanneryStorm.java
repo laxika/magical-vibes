@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +22,9 @@ public class CaptainLanneryStorm extends Card {
 
     public CaptainLanneryStorm() {
         addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(
                         new PermanentHasSubtypePredicate(CardSubtype.TREASURE),
-                        new BoostSelfEffect(1, 0)
-                ));
+                        ObjectRelation.YOU_CONTROL),
+                new BoostSelfEffect(1, 0));
     }
 }

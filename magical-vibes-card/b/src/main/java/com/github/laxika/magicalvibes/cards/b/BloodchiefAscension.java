@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZEN", collectorNumber = "82")
@@ -27,9 +28,8 @@ public class BloodchiefAscension extends Card {
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Bloodchief Ascension?")));
         addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.OPPONENT_OWNS),
-                new ConditionalEffect(
-                        new SourceCounterThreshold(3, CounterType.QUEST),
-                        new MayEffect(new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER, true),
-                                "Have that player lose 2 life?")));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(3, CounterType.QUEST)),
+                new MayEffect(new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER, true),
+                        "Have that player lose 2 life?"));
     }
 }

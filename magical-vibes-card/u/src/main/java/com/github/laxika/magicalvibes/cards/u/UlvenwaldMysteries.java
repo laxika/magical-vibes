@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,12 +25,9 @@ public class UlvenwaldMysteries extends Card {
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), CreateTokenEffect.ofClueToken(1));
 
         // Whenever you sacrifice a Clue, create a 1/1 white Human Soldier creature token.
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                        new CreateTokenEffect("Human Soldier", 1, 1,
-                                CardColor.WHITE, List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER),
-                                Set.of(), Set.of())
-                ));
+        addTrigger(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.CLUE), ObjectRelation.YOU_CONTROL),
+                new CreateTokenEffect("Human Soldier", 1, 1,
+                        CardColor.WHITE, List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER),
+                        Set.of(), Set.of()));
     }
 }

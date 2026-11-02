@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -22,12 +21,12 @@ import java.util.List;
 public class BodyDropper extends Card {
 
     public BodyDropper() {
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+        addTrigger(Triggers.sacrificed(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
-                        new PutCountersOnSourceEffect(1, 1, 1)
-                ));
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSourceEffect(1, 1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

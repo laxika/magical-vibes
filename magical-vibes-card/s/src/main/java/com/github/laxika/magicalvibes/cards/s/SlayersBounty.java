@@ -4,17 +4,20 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.LookAtCreatureCardsInTargetPlayerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -50,11 +53,11 @@ public class SlayersBounty extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new LookAtCreatureCardsInTargetPlayerHandEffect());
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                        draftFromSpellbook()));
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), draftFromSpellbook());
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.CLUE),
+                                ObjectRelation.ANOTHER_YOU_CONTROL)),
+                new TriggerCondition(Triggers.sacrificed(ObjectRelation.THIS))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(draftFromSpellbook()))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

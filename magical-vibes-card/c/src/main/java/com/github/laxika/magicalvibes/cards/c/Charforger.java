@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -29,13 +28,12 @@ public class Charforger extends Card {
                 "Phyrexian Goblin", 1, 1, CardColor.RED,
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN), Set.of(), Set.of(CardType.CREATURE)));
 
-        addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentIsArtifactPredicate()
-                        )),
-                        new PutCountersOnSelfEffect(CounterType.OIL)));
+                                new PermanentIsArtifactPredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.OIL));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

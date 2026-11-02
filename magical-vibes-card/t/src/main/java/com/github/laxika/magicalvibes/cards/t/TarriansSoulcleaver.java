@@ -2,16 +2,15 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,13 +23,12 @@ public class TarriansSoulcleaver extends Card {
 
     public TarriansSoulcleaver() {
         addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.ARTIFACT),
-                                new CardTypePredicate(CardType.CREATURE)
-                        )),
-                        new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.dies(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsCreaturePredicate())),
+                        ObjectRelation.ANY),
+                new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

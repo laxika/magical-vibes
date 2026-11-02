@@ -4,15 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,9 +29,11 @@ public class CrawlingInfestation extends Card {
 
         // Whenever one or more creature cards are put into your graveyard from anywhere during your
         // turn, create a 1/1 green Insect creature token. This ability triggers only once each turn.
-        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_OWN),
-                new OncePerTurnTriggerEffect(new ConditionalEffect(new ControllerTurn(),
-                        new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.INSECT), Set.of(), Set.of()))));
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(
+                        Triggers.NONTOKEN_CREATURE,
+                        ObjectRelation.ANOTHER_YOU_OWN).onlyDuringYourTurn(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new CreateTokenEffect("Insect", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.INSECT), Set.of(), Set.of()));
     }
 }

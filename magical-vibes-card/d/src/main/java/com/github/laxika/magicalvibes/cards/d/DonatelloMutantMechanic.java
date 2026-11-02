@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -67,8 +66,9 @@ public class DonatelloMutantMechanic extends Card {
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED));
 
-        target(artifactOrCreatureYouControlTarget, 0, 1).addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new TriggeringArtifactControllerConditionalEffect(
-                        new PutCountersOnTargetForEachLeavingSourceCountersEffect(artifactOrCreatureYouControl)));
+        target(artifactOrCreatureYouControlTarget, 0, 1).addTrigger(Triggers.dies(
+                        Triggers.ARTIFACT,
+                        ObjectRelation.YOU_CONTROL),
+                new PutCountersOnTargetForEachLeavingSourceCountersEffect(artifactOrCreatureYouControl));
     }
 }

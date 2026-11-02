@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 /** Back face of Ratchet, Field Medic. */
 public class RatchetRescueRacer extends Card {
@@ -22,9 +25,10 @@ public class RatchetRescueRacer extends Card {
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 
-        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new OncePerTurnTriggerEffect(
-                        new TriggeringArtifactControllerConditionalEffect(
-                                new TransformSelfEffect(), false, true)));
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(Triggers.ARTIFACT, Triggers.NONTOKEN)),
+                        ObjectRelation.YOU_CONTROL),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                new TransformSelfEffect());
     }
 }

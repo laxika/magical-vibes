@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "81")
 @CardRegistration(set = "MMA", collectorNumber = "74")
@@ -23,11 +25,14 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BridgeFromBelow extends Card {
 
     public BridgeFromBelow() {
-        addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.YOU_OWN),
-                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                new TriggeringCardConditionalEffect(
-                        new CardNotPredicate(new CardIsTokenPredicate()),
-                        new ConditionalEffect(new SourceCardInGraveyard(), CreateTokenEffect.blackZombie(1))));
+        addTrigger(new TriggerCondition(Triggers.dies(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                                ObjectRelation.YOU_OWN),
+                        AbilityZones.GRAVEYARD),
+                TriggerOptions.DEFAULT,
+                new ConditionalEffect(new SourceCardInGraveyard(), CreateTokenEffect.blackZombie(1)));
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.OPPONENT_OWNS),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new ConditionalEffect(new SourceCardInGraveyard(), new ExileSourceCardFromGraveyardEffect()));

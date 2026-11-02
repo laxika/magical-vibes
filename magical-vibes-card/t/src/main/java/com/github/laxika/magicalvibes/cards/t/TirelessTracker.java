@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,10 +32,7 @@ public class TirelessTracker extends Card {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), CreateTokenEffect.ofClueToken(1));
 
         // Whenever you sacrifice a Clue, put a +1/+1 counter on this creature.
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                        new PutCountersOnSourceEffect(1, 1, 1)
-                ));
+        addTrigger(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.CLUE), ObjectRelation.YOU_CONTROL),
+                new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

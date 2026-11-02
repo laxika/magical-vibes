@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -24,10 +23,10 @@ import java.util.List;
 public class EvendoBrushrazer extends Card {
 
     public EvendoBrushrazer() {
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
-                        new ExileTopCardsToSourceEffect(1, false)));
+                        ObjectRelation.YOU_CONTROL),
+                new ExileTopCardsToSourceEffect(1, false));
 
         addStaticEffect(new ConditionalEffect(
                         new ControllerSacrificedNontokenPermanentThisTurn(),

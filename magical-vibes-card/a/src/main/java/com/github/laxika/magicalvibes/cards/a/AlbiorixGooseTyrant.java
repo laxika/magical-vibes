@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,8 +20,7 @@ public class AlbiorixGooseTyrant extends Card {
         addCastingOption(new AdventureCast("{G}{U}"));
 
         PerpetuallyBoostCardEffect sacrificeBoost = new PerpetuallyBoostCardEffect(this, 1, 1);
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(new PermanentIsTokenPredicate(), sacrificeBoost));
+        addTrigger(Triggers.sacrificed(new PermanentIsTokenPredicate(), ObjectRelation.YOU_CONTROL), sacrificeBoost);
         addTrigger(new TriggerCondition(Triggers.sacrificed(Triggers.TOKEN, ObjectRelation.YOU_CONTROL),
                 AbilityZones.EXILE), TriggerOptions.DEFAULT, sacrificeBoost);
     }

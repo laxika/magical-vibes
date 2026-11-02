@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantGraveyardAbilityToSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -45,10 +44,8 @@ public class EffluenceDevourer extends Card {
                         + "where X is this card's power. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED);
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new PerpetuallyGrantGraveyardAbilityToSourceCardEffect(oozeAbility)));
+        addTrigger(Triggers.sacrificed(new PermanentIsCreaturePredicate(), ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
+                new PerpetuallyGrantGraveyardAbilityToSourceCardEffect(oozeAbility));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(

@@ -7,12 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,16 +24,18 @@ public class SoulcatchersAerie extends Card {
         // "Whenever a Bird is put into your graveyard from the battlefield": the graveyard's owner, not
         // the permanent's controller, counts. A token is owned by its creator, so tokens use the
         // controller-based slot.
-        addTrigger(Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.BIRD)),
-                        new PutCountersOnSelfEffect(CounterType.FEATHER)));
-        addTrigger(Triggers.dies(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.BIRD),
-                                new CardIsTokenPredicate())),
-                        new PutCountersOnSelfEffect(CounterType.FEATHER)));
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.NONTOKEN,
+                                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.BIRD)))),
+                        ObjectRelation.YOU_OWN),
+                new PutCountersOnSelfEffect(CounterType.FEATHER));
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.BIRD),
+                                new PermanentIsTokenPredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.FEATHER));
         addStaticEffect(new StaticBoostEffect(
                 1,
                 1,

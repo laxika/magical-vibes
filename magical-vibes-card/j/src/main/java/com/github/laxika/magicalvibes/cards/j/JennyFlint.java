@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -49,13 +48,11 @@ public class JennyFlint extends Card {
         ));
         target(new PermanentPredicateTargetFilter(anotherCreatureYouControl,
                 "Target must be another creature you control"))
-                .addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                        new TriggeringPermanentConditionalEffect(
+                .addTrigger(Triggers.sacrificed(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                                        new PermanentHasSubtypePredicate(CardSubtype.FOOD)
-                                )),
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
-                        ));
+                                        new PermanentHasSubtypePredicate(CardSubtype.FOOD))),
+                                ObjectRelation.YOU_CONTROL),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

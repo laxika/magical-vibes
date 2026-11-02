@@ -68,9 +68,9 @@ public class ScavengersTalent extends Card {
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"));
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL), new ConditionalEffect(
-                new SourceClassLevelAtLeast(2),
-                new MillEffect(2, MillRecipient.TARGET_PLAYER)));
+        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
+                new MillEffect(2, MillRecipient.TARGET_PLAYER));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new ConditionalEffect(
                 new SourceClassLevelAtLeast(3),

@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "BOK", collectorNumber = "81")
 @CardRegistration(set = "UMA", collectorNumber = "112")
@@ -21,9 +23,9 @@ public class ShireiShizosCaretaker extends Card {
         // The power check reads the dying permanent's last-known power, so a creature shrunk to 1 or
         // less before it died qualifies. The delayed return is gated on this exact Shirei permanent
         // still being on the battlefield at the end step.
-        addTrigger(Triggers.creatureDies(ObjectRelation.YOU_OWN),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentPowerAtMostPredicate(1),
-                        RegisterDelayedReturnDyingCreatureUnderControlEffect.optionalWhileSourceRemains()));
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentPowerAtMostPredicate(1))),
+                        ObjectRelation.YOU_OWN),
+                RegisterDelayedReturnDyingCreatureUnderControlEffect.optionalWhileSourceRemains());
     }
 }

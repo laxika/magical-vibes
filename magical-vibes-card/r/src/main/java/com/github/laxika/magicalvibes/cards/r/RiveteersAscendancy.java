@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "216")
@@ -23,11 +23,10 @@ public class RiveteersAscendancy extends Card {
                 .targetGraveyard(true)
                 .enterTapped(true)
                 .build();
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                OncePerTurnTriggerEffect.markOnAcceptance(new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCreaturePredicate(),
-                        new MayEffect(returnCreature,
-                                "Return target creature card with lesser mana value from your graveyard "
-                                        + "to the battlefield tapped?"))));
+        addTrigger(Triggers.sacrificed(new PermanentIsCreaturePredicate(), ObjectRelation.YOU_CONTROL),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
+                new MayEffect(returnCreature,
+                        "Return target creature card with lesser mana value from your graveyard "
+                                + "to the battlefield tapped?"));
     }
 }

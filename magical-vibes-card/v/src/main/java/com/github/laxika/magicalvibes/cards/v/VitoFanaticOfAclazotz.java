@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,10 +25,10 @@ import java.util.Set;
 public class VitoFanaticOfAclazotz extends Card {
 
     public VitoFanaticOfAclazotz() {
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
-                        new SequenceEffect(List.of(
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SequenceEffect(List.of(
                                 new ConditionalEffect(new NthAbilityResolutionThisTurn(1),
                                         new GainLifeEffect(2)),
                                 new ConditionalEffect(new NthAbilityResolutionThisTurn(2),
@@ -40,6 +39,6 @@ public class VitoFanaticOfAclazotz extends Card {
                                                 Set.of(CardColor.WHITE, CardColor.BLACK),
                                                 List.of(CardSubtype.VAMPIRE, CardSubtype.DEMON),
                                                 Set.of(Keyword.FLYING), Set.of()))
-                        ))));
+                        )));
     }
 }

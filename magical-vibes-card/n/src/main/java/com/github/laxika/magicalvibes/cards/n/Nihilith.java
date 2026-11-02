@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,12 +20,13 @@ public class Nihilith extends Card {
 
     public Nihilith() {
         // Only while suspended: the ability functions from exile.
-        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.OPPONENT_OWNS),
-                AbilityZones.EXILE), TriggerOptions.DEFAULT,
-                new ConditionalEffect(
-                        new SourceCardSuspended(),
-                        new MayEffect(new RemoveTimeCounterFromExiledCardEffect(getId()),
-                                "Remove a time counter from Nihilith?")));
+        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(
+                                Triggers.NONTOKEN,
+                                ObjectRelation.OPPONENT_OWNS),
+                        AbilityZones.EXILE),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardSuspended()),
+                new MayEffect(new RemoveTimeCounterFromExiledCardEffect(getId()),
+                        "Remove a time counter from Nihilith?"));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{B}",

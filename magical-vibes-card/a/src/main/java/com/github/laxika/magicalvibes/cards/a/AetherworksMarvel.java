@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AetherworksMarvelEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,8 +19,7 @@ import java.util.List;
 public class AetherworksMarvel extends Card {
 
     public AetherworksMarvel() {
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
-                new TriggeringPermanentControllerConditionalEffect(new EnergyCountersEffect(1)));
+        addTrigger(Triggers.dies(null, ObjectRelation.YOU_CONTROL), new EnergyCountersEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

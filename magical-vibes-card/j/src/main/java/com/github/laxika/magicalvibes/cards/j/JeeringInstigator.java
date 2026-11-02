@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -33,10 +33,10 @@ public class JeeringInstigator extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another creature"))
                 .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                        new ConditionalEffect(new ControllerTurn(),
+                        TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
                         SequenceEffect.of(
                                 new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
                                 new UntapPermanentsEffect(TapUntapScope.TARGET),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))));
+                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
     }
 }

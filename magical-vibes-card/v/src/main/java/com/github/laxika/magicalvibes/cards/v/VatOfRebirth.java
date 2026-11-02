@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,14 +23,12 @@ import java.util.List;
 public class VatOfRebirth extends Card {
 
     public VatOfRebirth() {
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
-                new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.ARTIFACT),
-                                new CardTypePredicate(CardType.CREATURE)
-                        )),
-                        TriggeringPermanentControllerConditionalEffect.another(
-                                new PutCountersOnSelfEffect(CounterType.OIL))));
+        addTrigger(Triggers.dies(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsCreaturePredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.OIL));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

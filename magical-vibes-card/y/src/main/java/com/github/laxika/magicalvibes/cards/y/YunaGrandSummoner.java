@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WhenYouNextCastCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -36,12 +35,10 @@ public class YunaGrandSummoner extends Card {
                 "{T}: Add one mana of any color. When you next cast a creature spell this turn, that creature enters with two additional +1/+1 counters on it."
         ));
 
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.ANY),
-                        new MayEffect(
+        addTrigger(Triggers.dies(new PermanentHasCountersPredicate(CounterType.ANY), ObjectRelation.ANY),
+                new MayEffect(
                                 new PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect(),
                                 "Put that many +1/+1 counters on target creature?"
-                        )));
+                        ));
     }
 }

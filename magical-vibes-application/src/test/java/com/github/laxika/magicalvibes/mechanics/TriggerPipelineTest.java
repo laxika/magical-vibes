@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.mechanics;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoonlitWake;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -461,6 +463,94 @@ class TriggerPipelineTest extends BaseCardTest {
 
         // CR 603.2c: the two tokens enter in one event.
         onlyTriggerOf(watcher);
+    }
+
+    @Test
+    @CardUsed(Ornithopter.class)
+    void aSacrificeAbilityNarrowedByAFilterTriggersOnlyForAMatchingPermanent() {
+        Permanent watcher = battlefieldCreatureWith(
+                Triggers.sacrificed(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), DRAW);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        harness.sacrifice(bears);
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+        harness.sacrifice(thopter);
+
+        // "Whenever you sacrifice another artifact": the filter is judged on the artifact as it last existed.
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+    }
+
+    @Test
+    void aSacrificeAbilitysYouMayGoesOnTheStackAndIsChosenAsItResolves() {
+        MayEffect mayDraw = new MayEffect(DRAW, "Draw a card?");
+        Permanent watcher = battlefieldCreatureWith(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
+                mayDraw);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.sacrifice(bears);
+
+        // CR 603.5: an optional triggered ability goes on the stack; its controller chooses as it resolves.
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(mayDraw);
+    }
+
+    @Test
+    @CardUsed(Ornithopter.class)
+    void anArtifactGraveyardAbilityOfAnArtifactYouControlIgnoresAnOpponentsArtifact() {
+        Permanent watcher = battlefieldCreatureWith(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL),
+                DRAW);
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, theirs));
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mine));
+
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+    }
+
+    @Test
+    void anAbilityOfTwoConditionsTriggersForItsOwnDepartureAndAnotherPermanentsByTheSameFilter() {
+        PermanentHasCountersPredicate hadCounters = new PermanentHasCountersPredicate(CounterType.ANY);
+        Card card = new GrizzlyBears();
+        card.addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.leavesBattlefield(hadCounters, ObjectRelation.THIS)),
+                new TriggerCondition(Triggers.leavesBattlefield(hadCounters, ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(DRAW))));
+        Permanent watcher = harness.addToBattlefieldAndReturn(player1, card);
+        Permanent plain = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent countered = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        countered.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, plain));
+        assertThat(triggersOf(card)).isEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, countered));
+        assertThat(triggersOf(card)).hasSize(1);
+        harness.passBothPriorities();
+
+        watcher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, watcher));
+
+        // "Whenever a permanent you control leaves the battlefield, if it had counters on it": this one too.
+        assertThat(triggersOf(card)).hasSize(1);
+    }
+
+    @Test
+    void aGraveyardLeavesAbilityLimitedToYourTurnTriggersOnlyDuringIt() {
+        Permanent watcher = battlefieldCreatureWith(
+                new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN).onlyDuringYourTurn()),
+                TriggerOptions.ONE_OR_MORE, DRAW);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        harness.forceActivePlayer(player2);
+        harness.inMutationScope(() -> moveCard(player1, first, Zone.GRAVEYARD, Zone.HAND));
+        assertThat(triggersOf(watcher.getCard())).isEmpty();
+        harness.forceActivePlayer(player1);
+        harness.inMutationScope(() -> moveCard(player1, second, Zone.GRAVEYARD, Zone.HAND));
+
+        assertThat(onlyTriggerOf(watcher.getCard()).getEffectsToResolve()).containsExactly(DRAW);
     }
 
     /** Moves {@code card} straight between two of {@code player}'s zone lists, which report the move. */

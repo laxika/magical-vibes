@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,8 +28,10 @@ import java.util.List;
 public class FaridEnterprisingSalvager extends Card {
 
     public FaridEnterprisingSalvager() {
-        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                new TriggeringArtifactControllerConditionalEffect(scrapToken(), false, true));
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(Triggers.ARTIFACT, Triggers.NONTOKEN)),
+                        ObjectRelation.YOU_CONTROL),
+                scrapToken());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

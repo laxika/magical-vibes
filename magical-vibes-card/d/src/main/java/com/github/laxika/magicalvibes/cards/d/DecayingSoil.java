@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "127")
 public class DecayingSoil extends Card {
@@ -27,10 +29,13 @@ public class DecayingSoil extends Card {
         var threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
-                        new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_OWN),
-                        new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()),
+                        new TriggeredAbility(Triggers.dies(
+                                        new PermanentAllOfPredicate(List.of(
+                                                Triggers.CREATURE,
+                                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                                        ObjectRelation.YOU_OWN),
                                 new MayPayManaEffect("{1}", new ReturnTriggeringCardToOwnerHandEffect(),
-                                        "Pay {1} to return that card to your hand?"))),
+                                        "Pay {1} to return that card to your hand?")),
                         GrantScope.SELF)));
     }
 }

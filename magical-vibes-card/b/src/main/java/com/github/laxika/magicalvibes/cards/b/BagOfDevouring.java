@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnUpToNCardsExiledWithSou
 import com.github.laxika.magicalvibes.model.effect.RollD10Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -35,9 +34,8 @@ public class BagOfDevouring extends Card {
                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(anotherNontokenArtifactOrCreature,
-                        new ExileSacrificedPermanentWithSourceEffect()));
+        addTrigger(Triggers.sacrificed(anotherNontokenArtifactOrCreature, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new ExileSacrificedPermanentWithSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

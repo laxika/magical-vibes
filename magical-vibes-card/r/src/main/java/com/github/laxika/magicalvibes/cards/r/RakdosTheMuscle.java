@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,10 +20,8 @@ import java.util.List;
 public class RakdosTheMuscle extends Card {
 
     public RakdosTheMuscle() {
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                new PermanentIsCreaturePredicate(),
-                new ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect()));
+        addTrigger(Triggers.sacrificed(new PermanentIsCreaturePredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
+                new ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

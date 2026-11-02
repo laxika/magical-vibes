@@ -5,16 +5,19 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,14 +42,12 @@ public class CostumeCloset extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addTrigger(Triggers.leavesBattlefield(
-                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentIsModifiedPredicate())),
-                        ObjectRelation.THIS),
-                new PutCountersOnSourceEffect(1, 1, 1));
-
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsModifiedPredicate(),
-                        new PutCountersOnSourceEffect(1, 1, 1)));
+        // "A modified creature you control", this artifact included once it is one.
+        var modifiedCreature = new PermanentAllOfPredicate(List.of(Triggers.CREATURE,
+                new PermanentIsModifiedPredicate()));
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.leavesBattlefield(modifiedCreature, ObjectRelation.THIS)),
+                new TriggerCondition(Triggers.leavesBattlefield(modifiedCreature, ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(new PutCountersOnSourceEffect(1, 1, 1)))));
     }
 }

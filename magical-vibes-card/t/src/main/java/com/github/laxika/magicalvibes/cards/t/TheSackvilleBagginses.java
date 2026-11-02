@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -48,9 +47,9 @@ public class TheSackvilleBagginses extends Card {
                         "another creature or artifact", false, false),
                 "Sacrifice another creature or artifact?"));
 
-        target(OPPONENT_TARGET).addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        target(OPPONENT_TARGET).addTrigger(Triggers.sacrificed(
                         new PermanentIsTokenPredicate(),
-                        new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)));
+                        ObjectRelation.YOU_CONTROL),
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
     }
 }

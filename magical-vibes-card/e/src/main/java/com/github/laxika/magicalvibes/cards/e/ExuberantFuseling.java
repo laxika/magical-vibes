@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,13 +23,11 @@ public class ExuberantFuseling extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new PutCountersOnSelfEffect(CounterType.OIL));
         addStaticEffect(new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
                         new Fixed(0), GrantScope.SELF));
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentIsArtifactPredicate()
-                        )),
-                        new TriggeringPermanentControllerConditionalEffect(
-                                new PutCountersOnSelfEffect(CounterType.OIL))));
+                                new PermanentIsArtifactPredicate())),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.OIL));
     }
 }

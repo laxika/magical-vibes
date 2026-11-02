@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -42,17 +42,19 @@ public class YumaProudProtector extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SACRIFICE_LAND_TO_DRAW);
         addTrigger(Triggers.attacks(), SACRIFICE_LAND_TO_DRAW);
 
-        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN),
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.DESERT),
-                        new CreateTokenEffect(
-                                1,
-                                "Plant Warrior",
-                                4,
-                                2,
-                                CardColor.GREEN,
-                                List.of(CardSubtype.PLANT, CardSubtype.WARRIOR),
-                                Set.of(Keyword.REACH),
-                                Set.of())));
+        addTrigger(Triggers.putIntoGraveyardFromAnywhere(
+                        new PermanentAllOfPredicate(List.of(
+                                Triggers.NONTOKEN,
+                                new PermanentHasSubtypePredicate(CardSubtype.DESERT))),
+                        ObjectRelation.ANOTHER_YOU_OWN),
+                new CreateTokenEffect(
+                        1,
+                        "Plant Warrior",
+                        4,
+                        2,
+                        CardColor.GREEN,
+                        List.of(CardSubtype.PLANT, CardSubtype.WARRIOR),
+                        Set.of(Keyword.REACH),
+                        Set.of()));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,15 +23,15 @@ public class SaltRoadAmbushers extends Card {
     public SaltRoadAmbushers() {
         addMorph("{3}{G}{G}");
         addStaticEffect(new PutCountersOnTurnFaceUpEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false));
-        addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.turnedFaceUp(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),
                                 new PermanentIsCreaturePredicate())),
-                        new PutCounterOnReferencedPermanentEffect(
-                                PermanentReference.TRIGGERING,
-                                CounterType.PLUS_ONE_PLUS_ONE,
-                                new Fixed(2),
-                                new PermanentIsCreaturePredicate())));
+                        ObjectRelation.YOU_CONTROL),
+                new PutCounterOnReferencedPermanentEffect(
+                        PermanentReference.TRIGGERING,
+                        CounterType.PLUS_ONE_PLUS_ONE,
+                        new Fixed(2),
+                        new PermanentIsCreaturePredicate()));
     }
 }

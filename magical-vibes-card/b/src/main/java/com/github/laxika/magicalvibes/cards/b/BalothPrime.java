@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,13 +30,11 @@ public class BalothPrime extends Card {
         addStaticEffect(new EntersTappedEffect());
         addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsLandPredicate(),
-                        SequenceEffect.of(
-                                new CreateTokenEffect(1, "Beast", 4, 4, CardColor.GREEN,
-                                        List.of(CardSubtype.BEAST), Set.of(), Set.of(), true),
-                                new UntapPermanentsEffect(TapUntapScope.SELF))));
+        addTrigger(Triggers.sacrificed(new PermanentIsLandPredicate(), ObjectRelation.YOU_CONTROL),
+                SequenceEffect.of(
+                        new CreateTokenEffect(1, "Beast", 4, 4, CardColor.GREEN,
+                                List.of(CardSubtype.BEAST), Set.of(), Set.of(), true),
+                        new UntapPermanentsEffect(TapUntapScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

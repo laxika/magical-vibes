@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,11 +34,8 @@ public class YgraEaterOfAll extends Card {
                 ),
                 GrantScope.ALL_CREATURES
         ));
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.FOOD),
-                        new PutCountersOnSourceEffect(1, 1, 2)
-                ));
+        addTrigger(Triggers.dies(new PermanentHasSubtypePredicate(CardSubtype.FOOD), ObjectRelation.ANY),
+                new PutCountersOnSourceEffect(1, 1, 2));
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessSacrificesEffect(new PermanentHasSubtypePredicate(CardSubtype.FOOD), "Food"));
     }

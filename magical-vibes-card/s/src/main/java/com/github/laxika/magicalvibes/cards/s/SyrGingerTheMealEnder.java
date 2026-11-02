@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,9 +30,8 @@ public class SyrGingerTheMealEnder extends Card {
                 new OpponentControlsPermanent(new PermanentIsPlaneswalkerPredicate()),
                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.HASTE), GrantScope.SELF)));
 
-        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                TriggeringArtifactControllerConditionalEffect.another(
-                        SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1))));
+        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
+                SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

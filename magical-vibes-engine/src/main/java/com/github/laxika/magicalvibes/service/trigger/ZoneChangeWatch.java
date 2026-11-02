@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
@@ -63,9 +66,11 @@ public enum ZoneChangeWatch {
     /** "Whenever a creature is put into an opponent's graveyard from the battlefield", from the graveyard. */
     GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD(
             in(Zone.GRAVEYARD, Triggers.creatureDies(ObjectRelation.OPPONENT_OWNS))),
-    /** "Whenever an artifact is put into a graveyard from the battlefield". */
+    /** "Whenever an artifact [you control, another artifact you control] is put into a graveyard from the battlefield". */
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(
-            battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY))),
+            battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY)),
+            battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL)),
+            battlefield(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL))),
     /** "Whenever an enchantment is put into a graveyard from the battlefield". */
     ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(
             battlefield(Triggers.dies(Triggers.ENCHANTMENT, ObjectRelation.ANY))),
@@ -82,10 +87,11 @@ public enum ZoneChangeWatch {
     ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(
             battlefield(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS))),
     /**
-     * "Whenever a permanent is put into a graveyard from the battlefield". The collector judges whether the
-     * permanent's own move counts, by its effects' wrappers.
+     * "Whenever a permanent is put into a graveyard from the battlefield", where the collector leaves the source's own
+     * move out, and "a permanent you control", where it doesn't.
      */
-    ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(battlefield(Triggers.dies(null, ObjectRelation.ANY))),
+    ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(battlefield(Triggers.dies(null, ObjectRelation.ANY)),
+            battlefield(Triggers.dies(null, ObjectRelation.YOU_CONTROL))),
     /** "Whenever a nontoken permanent is put into a graveyard from the battlefield". */
     ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(
             battlefield(Triggers.dies(Triggers.NONTOKEN, ObjectRelation.ANY))),
@@ -520,7 +526,8 @@ public enum ZoneChangeWatch {
     public List<TriggeredAbility> abilitiesOf(Card card) {
         return card.getTriggeredAbilities().stream()
                 .filter(ability -> ability.conditions().stream().anyMatch(condition -> keys.stream()
-                        .anyMatch(key -> key.trigger().equals(condition.trigger()))))
+                        .anyMatch(key -> key.trigger().equals(condition.trigger())
+                                || of(ability, condition.trigger(), key.zone()) == this)))
                 .toList();
     }
 
@@ -538,10 +545,66 @@ public enum ZoneChangeWatch {
 
     /**
      * The watch whose collector puts {@code ability} on the stack when its trigger condition {@code trigger}
-     * triggers it from {@code zone}, or {@code null} when no zone-change slot collector of step 12a does.
+     * triggers it from {@code zone}, or {@code null} when no zone-change slot collector of step 12a does. A trigger
+     * that narrows a watched one down by its filter ("whenever you sacrifice a Food", "another nontoken creature
+     * card you own with mana value 3 or less") belongs to the watch of the trigger it narrows: the filter
+     * {@code AllOf(X, …)} to the watch of filter {@code X}, any other filter to the watch of no filter, unless
+     * {@link CreatureDeathWatch} collects it.
      */
     public static ZoneChangeWatch of(TriggeredAbility ability, Trigger trigger, Zone zone) {
-        return BY_KEY.get(new Key(trigger, zone, ability.options().multiplicity()));
+        return ofNarrowed(ability, trigger, zone);
+    }
+
+    private static ZoneChangeWatch ofFiltered(TriggeredAbility ability, Trigger trigger, Zone zone) {
+        TriggerMultiplicity multiplicity = ability.options().multiplicity();
+        ZoneChangeWatch exact = BY_KEY.get(new Key(trigger, zone, multiplicity));
+        if (exact != null) {
+            return exact;
+        }
+        PermanentPredicate filter = filterOf(trigger);
+        if (filter == null) {
+            return null;
+        }
+        if (filter instanceof PermanentAllOfPredicate allOf && !allOf.predicates().isEmpty()) {
+            ZoneChangeWatch narrowed = BY_KEY.get(new Key(withFilter(trigger, allOf.predicates().getFirst()), zone,
+                    multiplicity));
+            if (narrowed != null) {
+                return narrowed;
+            }
+        }
+        if (trigger instanceof ZoneChangeTrigger move && CreatureDeathWatch.collects(move, multiplicity)) {
+            return null;
+        }
+        return BY_KEY.get(new Key(withFilter(trigger, null), zone, multiplicity));
+    }
+
+    /**
+     * {@link #of}, also for a trigger that narrows a watched one down to its controller's turn ("whenever one or more
+     * cards leave your graveyard during your turn"): the watch of the trigger without that restriction, which the
+     * trigger pipeline checks.
+     */
+    private static ZoneChangeWatch ofNarrowed(TriggeredAbility ability, Trigger trigger, Zone zone) {
+        ZoneChangeWatch watch = ofFiltered(ability, trigger, zone);
+        if (watch == null && trigger instanceof ZoneChangeTrigger move && move.duringYourTurn()) {
+            watch = ofFiltered(ability, move.anyTurn(), zone);
+        }
+        return watch;
+    }
+
+    private static PermanentPredicate filterOf(Trigger trigger) {
+        return switch (trigger) {
+            case ZoneChangeTrigger move -> move.filter();
+            case PermanentChangeTrigger change -> change.filter();
+            default -> null;
+        };
+    }
+
+    private static Trigger withFilter(Trigger trigger, PermanentPredicate filter) {
+        return switch (trigger) {
+            case ZoneChangeTrigger move -> move.withFilter(filter);
+            case PermanentChangeTrigger change -> change.withFilter(filter);
+            default -> trigger;
+        };
     }
 
     private static Key battlefield(Trigger trigger) {

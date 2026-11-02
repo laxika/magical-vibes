@@ -4,14 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.MoveAnyNumberOfCountersFromTargetPermanentToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,12 +28,13 @@ public class ResourcefulDefense extends Card {
         PutCountersOnTargetForEachLeavingSourceCountersEffect transferCounters =
                 new PutCountersOnTargetForEachLeavingSourceCountersEffect(new PermanentTruePredicate());
         var targetPermanentYouControl = target(TargetFilters.permanentYouControl());
-        targetPermanentYouControl.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.ANY)),
-                transferCounters);
-        targetPermanentYouControl.addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.ANY), transferCounters));
+        // "A permanent you control ... if it had counters on it", this one included: one ability with two trigger
+        // conditions and the same filter, judged on the permanent as it last existed (CR 603.10a).
+        var hadCounters = new PermanentHasCountersPredicate(CounterType.ANY);
+        targetPermanentYouControl.addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.leavesBattlefield(hadCounters, ObjectRelation.THIS)),
+                new TriggerCondition(Triggers.leavesBattlefield(hadCounters, ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(transferCounters))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

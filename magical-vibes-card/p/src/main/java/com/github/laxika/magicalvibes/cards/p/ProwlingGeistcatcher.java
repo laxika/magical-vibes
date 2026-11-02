@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ExileSacrificedPermanentWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -25,10 +24,8 @@ public class ProwlingGeistcatcher extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        anotherCreature,
-                        new ExileSacrificedPermanentWithSourceEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.sacrificed(anotherCreature, ObjectRelation.ANOTHER_YOU_CONTROL),
+                new ExileSacrificedPermanentWithSourceEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new ReturnAllCardsExiledWithSourceEffect(true));

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,9 +22,9 @@ public class PiperWrightPublickReporter extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 CreateTokenEffect.ofClueToken(new EventValue()));
 
-        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        target(TargetFilters.creatureYouControl()).addTrigger(Triggers.sacrificed(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                        ObjectRelation.YOU_CONTROL),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

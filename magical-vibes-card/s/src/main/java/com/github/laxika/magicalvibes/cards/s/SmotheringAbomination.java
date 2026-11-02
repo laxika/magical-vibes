@@ -2,12 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,8 +17,7 @@ public class SmotheringAbomination extends Card {
     public SmotheringAbomination() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.CREATURE), new DrawCardEffect()));
+        addTrigger(Triggers.sacrificed(new PermanentIsCreaturePredicate(), ObjectRelation.YOU_CONTROL),
+                new DrawCardEffect());
     }
 }

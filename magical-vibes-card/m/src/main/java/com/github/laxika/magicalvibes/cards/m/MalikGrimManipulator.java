@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -21,10 +20,8 @@ public class MalikGrimManipulator extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffect());
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.OPPONENT_CONTROLS),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCreaturePredicate(),
-                        CreateTokenEffect.ofTreasureToken(1)));
+        addTrigger(Triggers.sacrificed(new PermanentIsCreaturePredicate(), ObjectRelation.OPPONENT_CONTROLS),
+                CreateTokenEffect.ofTreasureToken(1));
     }
 
     private static PlayerPredicateTargetFilter opponentTarget() {

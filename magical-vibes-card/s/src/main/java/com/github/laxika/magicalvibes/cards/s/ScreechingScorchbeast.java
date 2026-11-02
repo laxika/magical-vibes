@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForNonlandCardsMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerRadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,9 +31,9 @@ public class ScreechingScorchbeast extends Card {
                 new EventValue(), "Zombie Mutant", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.ZOMBIE, CardSubtype.MUTANT), Set.of(), Set.of());
         addTrigger(new TriggerCondition(Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY)),
-                TriggerOptions.ONE_OR_MORE,
-                OncePerTurnTriggerEffect.markOnAcceptance(new MayEffect(
+                TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
+                new MayEffect(
                         new CreateTokensForNonlandCardsMilledEffect(zombieMutant),
-                        "Create that many Zombie Mutant tokens?")));
+                        "Create that many Zombie Mutant tokens?"));
     }
 }

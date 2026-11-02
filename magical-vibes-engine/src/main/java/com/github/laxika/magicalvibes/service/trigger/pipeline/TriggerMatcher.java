@@ -126,6 +126,10 @@ final class TriggerMatcher {
         FilterContext context = event.change() == PermanentChange.PHASED_OUT ? null : FilterContext.of(gameData)
                 .withSourceCardId(candidate.sourceCard().getId())
                 .withSourceControllerId(candidate.controllerId());
+        if (context != null && source != null) {
+            // "Another permanent you control is turned face up": the watcher is the filter's source.
+            context = context.withSourcePermanentId(source.getId()).withSourcePermanentSnapshot(source);
+        }
         return predicates.matchesPermanentPredicate(changed, trigger.filter(), context);
     }
 

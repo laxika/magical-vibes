@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -28,16 +27,15 @@ public class SanguineStatuette extends Card {
 
         // Whenever you sacrifice a Blood token, you may have this artifact become a 3/3 Vampire
         // artifact creature with haste until end of turn.
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(
                         new PermanentAllOfPredicate(List.of(
-                        new PermanentIsTokenPredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD))),
-                        new MayEffect(
+                                new PermanentIsTokenPredicate(),
+                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD))),
+                        ObjectRelation.YOU_CONTROL),
+                new MayEffect(
                                 new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.VAMPIRE),
                                         Set.of(Keyword.HASTE), null, Set.of(CardType.ARTIFACT)),
                                 "have this artifact become a 3/3 Vampire artifact creature with haste?"
-                        )
-                ));
+                        ));
     }
 }

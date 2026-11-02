@@ -3,13 +3,18 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "175")
 @CardRegistration(set = "KLR", collectorNumber = "267")
@@ -25,8 +30,9 @@ public class ScrapTrawler extends Card {
                 .targetGraveyard(true)
                 .dynamicMaxManaValue(new SourceManaValueMinusOne())
                 .build();
-        addTrigger(Triggers.dies(ObjectRelation.THIS), returnArtifact);
-        addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
-                TriggeringArtifactControllerConditionalEffect.another(returnArtifact));
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL)),
+                new TriggerCondition(Triggers.dies(ObjectRelation.THIS))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(returnArtifact))));
     }
 }

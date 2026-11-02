@@ -44,9 +44,8 @@ public class AdvancedReconstruction extends Card {
                 "this Class is level 1"));
 
         addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
-                TriggerOptions.ONE_OR_MORE, new ConditionalEffect(
-                new SourceCounterThreshold(1, CounterType.LEVEL),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)));
+                TriggerOptions.ONE_OR_MORE.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

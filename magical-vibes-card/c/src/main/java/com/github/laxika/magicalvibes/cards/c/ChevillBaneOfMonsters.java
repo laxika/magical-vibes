@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -46,9 +45,9 @@ public class ChevillBaneOfMonsters extends Card {
                         new PermanentHasCountersPredicate(CounterType.BOUNTY))),
                 new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY)));
 
-        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_CONTROLS),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.dies(
                         new PermanentHasCountersPredicate(CounterType.BOUNTY),
-                        SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect())));
+                        ObjectRelation.OPPONENT_CONTROLS),
+                SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect()));
     }
 }

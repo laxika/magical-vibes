@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -32,12 +31,9 @@ public class TitaniaProtectorOfArgoth extends Card {
                 .targetGraveyard(true)
                 .build());
 
-        addTrigger(Triggers.dies(null, ObjectRelation.ANY),
-                new TriggeringCardConditionalEffect(
-                        new CardTypePredicate(CardType.LAND),
-                        new TriggeringPermanentControllerConditionalEffect(
-                                new CreateTokenEffect("Elemental", 5, 3,
-                                        CardColor.GREEN, List.of(CardSubtype.ELEMENTAL),
-                                        Set.of(), Set.of()))));
+        addTrigger(Triggers.dies(new PermanentIsLandPredicate(), ObjectRelation.YOU_CONTROL),
+                new CreateTokenEffect("Elemental", 5, 3,
+                        CardColor.GREEN, List.of(CardSubtype.ELEMENTAL),
+                        Set.of(), Set.of()));
     }
 }

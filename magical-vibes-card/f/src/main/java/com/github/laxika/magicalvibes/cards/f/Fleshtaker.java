@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -26,16 +25,12 @@ public class Fleshtaker extends Card {
 
     public Fleshtaker() {
         // Whenever you sacrifice another creature, you gain 1 life and scry 1.
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
+        addTrigger(Triggers.sacrificed(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
-                        new SequenceEffect(List.of(
-                                new GainLifeEffect(1),
-                                new ScryEffect(1)
-                        ))
-                ));
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new SequenceEffect(List.of(new GainLifeEffect(1), new ScryEffect(1))));
 
         // {1}, Sacrifice another creature: This creature gets +2/+2 until end of turn.
         addActivatedAbility(new ActivatedAbility(

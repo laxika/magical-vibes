@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,27 +21,12 @@ import java.util.List;
 public class TransformTriggerCollectorService {
 
     private final GameLogService gameLogService;
-    private final PredicateEvaluationService predicateEvaluationService;
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_TRANSFORMS)
     private boolean handleAllyPermanentTransform(TriggerMatchContext match, CardEffect effect,
                                                   TriggerContext context) {
         TriggerContext.PermanentTransforms transforms = (TriggerContext.PermanentTransforms) context;
         CardEffect resolved = effect;
-        if (effect instanceof TriggeringCardConditionalEffect conditional
-                && !predicateEvaluationService.matchesCardPredicate(
-                        transforms.transformedCard(), conditional.predicate(), null,
-                        match.gameData(), match.controllerId())) {
-            return false;
-        } else if (effect instanceof TriggeringCardConditionalEffect conditional) {
-            resolved = conditional.wrapped();
-        }
-
-        if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-            if (!predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
-                    transforms.transformedPermanent(), conditional.predicate())) return false;
-            resolved = conditional.wrapped();
-        }
         Card sourceCard = match.permanent().getCard();
         StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -54,9 +37,8 @@ public class TransformTriggerCollectorService {
                 null,
                 match.permanent().getId());
         trigger.setTriggeringPermanentId(transforms.transformedPermanent().getId());
-        trigger.setMarkSourceOncePerTurnOnAcceptance(match.rawEffect() instanceof
-                com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect once
-                && once.markOnAcceptance());
+        trigger.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance()
+                || match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance());
         match.gameData().enqueueTrigger(trigger);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when an ally permanent transforms",

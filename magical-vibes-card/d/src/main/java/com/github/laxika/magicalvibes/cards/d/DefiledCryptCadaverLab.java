@@ -8,14 +8,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,9 +37,9 @@ public class DefiledCryptCadaverLab extends Card {
         CreateTokenEffect horrorToken = new CreateTokenEffect(1, "Horror", 2, 2,
                 CardColor.BLACK, List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT));
         addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
-                TriggerOptions.ONE_OR_MORE,
-                new OncePerTurnTriggerEffect(
-                        new ConditionalEffect(new SourceRoomDoorUnlocked(0), horrorToken, true)));
+                TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN)
+                        .withInterveningIf(new SourceRoomDoorUnlocked(0)),
+                horrorToken);
 
         ReturnCardFromGraveyardEffect returnCreature = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

@@ -6,10 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -19,10 +18,9 @@ import java.util.Set;
 public class LurkingSkirge extends Card {
 
     public LurkingSkirge() {
-        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_OWNS),
-                new TriggeringPermanentConditionalEffect(new PermanentIsCreaturePredicate(), new ConditionalEffect(
-                new SourceIsEnchantment(),
+        addTrigger(Triggers.dies(new PermanentIsCreaturePredicate(), ObjectRelation.OPPONENT_OWNS),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
                 new BecomeCreatureEffect(3, 2,
-                        List.of(CardSubtype.PHYREXIAN, CardSubtype.IMP), Set.of(Keyword.FLYING)))));
+                        List.of(CardSubtype.PHYREXIAN, CardSubtype.IMP), Set.of(Keyword.FLYING)));
     }
 }

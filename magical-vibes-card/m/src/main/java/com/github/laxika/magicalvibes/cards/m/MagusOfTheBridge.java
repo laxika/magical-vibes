@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "92")
 public class MagusOfTheBridge extends Card {
@@ -18,13 +20,14 @@ public class MagusOfTheBridge extends Card {
         // Whenever a nontoken creature is put into your graveyard from the battlefield, create a
         // Zombie. The destination-based slot is keyed to the graveyard owner rather than the
         // creature's last controller, excludes tokens, and also sees this creature's own death.
-        addTrigger(Triggers.dies(Triggers.NONTOKEN, ObjectRelation.YOU_OWN),
-                new TriggeringPermanentConditionalEffect(new PermanentIsCreaturePredicate(), CREATE_ZOMBIE));
+        addTrigger(Triggers.dies(
+                        new PermanentAllOfPredicate(List.of(Triggers.NONTOKEN, new PermanentIsCreaturePredicate())),
+                        ObjectRelation.YOU_OWN),
+                CREATE_ZOMBIE);
 
         // When a creature is put into an opponent's graveyard from the battlefield, exile this
         // creature.
-        addTrigger(Triggers.dies(null, ObjectRelation.OPPONENT_OWNS),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCreaturePredicate(), new ExileSelfEffect()));
+        addTrigger(Triggers.dies(new PermanentIsCreaturePredicate(), ObjectRelation.OPPONENT_OWNS),
+                new ExileSelfEffect());
     }
 }

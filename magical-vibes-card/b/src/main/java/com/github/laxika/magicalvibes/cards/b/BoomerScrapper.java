@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,10 +29,8 @@ public class BoomerScrapper extends Card {
                 new LoseLifeEffect(1), junkToken());
         addTrigger(Triggers.enters(ObjectRelation.THIS), loseLifeAndCreateJunk);
         addTrigger(Triggers.attacks(), loseLifeAndCreateJunk);
-        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsTokenPredicate(),
-                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+        addTrigger(Triggers.leavesBattlefield(new PermanentIsTokenPredicate(), ObjectRelation.ANOTHER_YOU_CONTROL),
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     private static CreateTokenEffect junkToken() {

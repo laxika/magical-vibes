@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
+
+import java.util.Set;
 
 /**
  * Which of the old creature-death slot collectors puts a "whenever [an object] dies" ability on the stack, now that
@@ -78,6 +81,28 @@ public enum CreatureDeathWatch {
             return ALLY_ARTIFACT_OR_CREATURE;
         }
         return relation.youControl() ? ALLY : ANY;
+    }
+
+    /** Relations no creature-death collector reads: "put into your graveyard", "enchanted creature". */
+    private static final Set<ObjectRelation> OWNER_OR_ENCHANTED = Set.of(ObjectRelation.YOU_OWN,
+            ObjectRelation.ANOTHER_YOU_OWN, ObjectRelation.OPPONENT_OWNS, ObjectRelation.ENCHANTED);
+
+    /**
+     * Whether a dies {@code trigger} with a filter is one of these collectors' rather than a
+     * {@link ZoneChangeWatch}'s: its filter names a creature ("another Zombie you control", "a nontoken creature
+     * with power 2 or less", "a creature or planeswalker you control"), or "one or more artifacts and/or creatures".
+     * "Whenever an artifact or creature you control is put into a graveyard" for each one is a zone-change watch's.
+     */
+    static boolean collects(ZoneChangeTrigger trigger, TriggerMultiplicity multiplicity) {
+        if (trigger.to() != Zone.GRAVEYARD || !trigger.from().equals(Set.of(Zone.BATTLEFIELD))
+                || !trigger.causes().isEmpty() || trigger.filter() == null
+                || OWNER_OR_ENCHANTED.contains(trigger.relation())) {
+            return false;
+        }
+        PermanentPredicate base = base(trigger.filter());
+        return Triggers.CREATURE.equals(base) || Triggers.NONTOKEN_CREATURE.equals(base)
+                || Triggers.CREATURE_OR_PLANESWALKER.equals(base)
+                || (Triggers.ARTIFACT_OR_CREATURE.equals(base) && multiplicity == TriggerMultiplicity.ONE_OR_MORE);
     }
 
     /**

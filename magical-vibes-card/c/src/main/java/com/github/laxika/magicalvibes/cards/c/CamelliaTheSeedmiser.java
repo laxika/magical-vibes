@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -35,12 +34,12 @@ public class CamelliaTheSeedmiser extends Card {
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)));
 
-        addTrigger(new TriggerCondition(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL)),
+        addTrigger(new TriggerCondition(Triggers.sacrificed(
+                                new PermanentHasSubtypePredicate(CardSubtype.FOOD),
+                                ObjectRelation.YOU_CONTROL)),
                 TriggerOptions.ONE_OR_MORE,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.FOOD),
-                        new CreateTokenEffect("Squirrel", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.SQUIRREL), Set.of(), Set.of())));
+                new CreateTokenEffect("Squirrel", 1, 1, CardColor.GREEN,
+                        List.of(CardSubtype.SQUIRREL), Set.of(), Set.of()));
 
         PermanentPredicate otherSquirrels = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL),

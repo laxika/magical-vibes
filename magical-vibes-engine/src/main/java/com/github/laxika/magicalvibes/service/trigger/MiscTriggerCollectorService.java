@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardsAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensForNonlandCardsMilledEffect;
@@ -92,7 +91,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -409,21 +407,6 @@ public class MiscTriggerCollectorService {
 
     // ── ON_ALLY_PERMANENT_SACRIFICED ───────────────────────────────────
 
-    @CollectsWatchTrigger(value = MayPayManaEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
-    private boolean handleSacrificeMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
-        TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        MayPayManaEffect boundMayPay = (MayPayManaEffect) mayPay.boundToSacrificedPermanent(as.sacrificedCard());
-        match.gameData().queueMayAbility(match.permanent().getCard(), as.sacrificingPlayerId(), boundMayPay, null);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
-    private boolean handleSacrificeMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        match.gameData().queueMayAbility(match.permanent().getCard(), as.sacrificingPlayerId(), may);
-        return true;
-    }
-
     @CollectsWatchTrigger(value = MayEffect.class,
             watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
     private boolean handleOpponentNontokenPermanentSacrificeMay(TriggerMatchContext match,
@@ -447,46 +430,6 @@ public class MiscTriggerCollectorService {
                 null, match.permanent().getId());
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
-    }
-
-    @CollectsWatchTrigger(value = OncePerTurnTriggerEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
-    private boolean handleAnyCreatureSacrificedOncePerTurn(TriggerMatchContext match,
-            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
-        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(
-                match.gameData(), match.permanent(), effect);
-        if (resolved == null) {
-            return false;
-        }
-
-        if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolved)),
-                    match.permanent().getId()));
-        } else {
-            match.gameData().enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(resolved)),
-                    null,
-                    match.permanent().getId()));
-        }
-        OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ConditionalEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
-    private boolean handleSacrificeConditional(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        if (conditional.interveningIf()
-                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-        return handleSacrificeDefault(match, conditional, ctx);
     }
 
     @CollectsWatchTrigger(value = PutCountersOnSourceEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
@@ -518,31 +461,6 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
-    private boolean handleSacrificeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
-        TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    match.permanent().getCard(), as.sacrificingPlayerId(),
-                    new ArrayList<>(List.of(effect)), match.permanent().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-            return true;
-        }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                as.sacrificingPlayerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        );
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        match.gameData().enqueueTrigger(entry);
         return true;
     }
 
@@ -635,38 +553,20 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
-    private boolean handleSacrificePermanentConditional(TriggerMatchContext match,
-            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
+    /**
+     * "Whenever you sacrifice a [filter] permanent": the trigger pipeline has matched the permanent. The effect is
+     * bound to the sacrificed card or its mana value, a "you may" goes on the stack and is chosen as it resolves
+     * (CR 603.5), and "do this only once each turn" is used up by an accepted graveyard return.
+     */
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
+    private boolean handleSacrificeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        if (as.sacrificedCard() == null) {
-            return false;
-        }
-        Permanent sacrificedPermanent = as.sacrificedPermanent() != null ? as.sacrificedPermanent()
-                : match.gameData().simultaneousDyingPermanents.values().stream()
-                .filter(permanent -> permanent.getCard().getId().equals(as.sacrificedCard().getId()))
-                .findFirst().orElse(null);
-        if (sacrificedPermanent == null && match.permanent().getCard().getId().equals(as.sacrificedCard().getId())) {
-            sacrificedPermanent = match.permanent();
-        }
-        if (sacrificedPermanent == null) {
-            sacrificedPermanent = new Permanent(as.sacrificedCard());
-        }
-        if (!predicateEvaluationService.matchesPermanentPredicate(
-                        sacrificedPermanent, conditional.predicate(),
-                        new FilterContext(null, match.permanent().getCard().getId(),
-                                match.controllerId(), null, match.permanent(), null)
-                                .withSourceCardId(match.permanent().getCard().getId())
-                                .withSourceControllerId(match.controllerId())
-                                .withSourcePermanentSnapshot(match.permanent()))) {
-            return false;
-        }
         String cardName = match.permanent().getCard().getName();
-        CardEffect wrapped = conditional.wrapped();
-        if (wrapped instanceof SacrificedPermanentCardAwareEffect cardAware) {
+        CardEffect wrapped = effect;
+        if (as.sacrificedCard() != null && wrapped instanceof SacrificedPermanentCardAwareEffect cardAware) {
             wrapped = cardAware.boundToSacrificedPermanent(as.sacrificedCard());
         }
-        if (wrapped instanceof SacrificedPermanentManaValueAwareEffect manaValueAware) {
+        if (as.sacrificedCard() != null && wrapped instanceof SacrificedPermanentManaValueAwareEffect manaValueAware) {
             wrapped = manaValueAware.boundToSacrificedPermanentManaValue(
                     as.sacrificedCard().getManaValue());
         }
@@ -675,8 +575,7 @@ public class MiscTriggerCollectorService {
                 && returnEffect.targetGraveyard()) {
             // The card is targeted as the trigger is put on the stack (CR 603.3d), so the may choice
             // comes at resolution. "Do this only once each turn" is used up only by an accepted return.
-            boolean markOnAcceptance = match.rawEffect() instanceof OncePerTurnTriggerEffect once
-                    && once.markOnAcceptance();
+            boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(wrapped)),
                     null, 0, 0, 0, null, false, null, match.permanent().getId(), markOnAcceptance));
@@ -705,7 +604,8 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         );
         triggerEntry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        if (wrapped instanceof SacrificedPermanentCardAwareEffect) {
+        triggerEntry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        if (as.sacrificedCard() != null && wrapped instanceof SacrificedPermanentCardAwareEffect) {
             // CR 400.7: the trigger refers to this stay in the graveyard; if the card leaves and returns before
             // the trigger resolves, it is a new object the trigger no longer finds.
             triggerEntry.setTriggeringCardId(as.sacrificedCard().getId());
@@ -715,87 +615,6 @@ public class MiscTriggerCollectorService {
         match.gameData().enqueueTrigger(triggerEntry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on matching permanent sacrifice", match.gameData().id, cardName);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ConditionalTriggeringPermanentEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED)
-    private boolean handleConditionalSacrificePermanent(TriggerMatchContext match,
-            ConditionalTriggeringPermanentEffect conditional, TriggerContext ctx) {
-        TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        if (as.sacrificedCard() == null
-                || !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
-        Permanent sacrificedPermanent = as.sacrificedPermanent() != null ? as.sacrificedPermanent()
-                : match.gameData().simultaneousDyingPermanents.values().stream()
-                .filter(permanent -> permanent.getCard().getId().equals(as.sacrificedCard().getId()))
-                .findFirst().orElse(null);
-        if (sacrificedPermanent == null && match.permanent().getCard().getId().equals(as.sacrificedCard().getId())) {
-            sacrificedPermanent = match.permanent();
-        }
-        if (sacrificedPermanent == null) {
-            sacrificedPermanent = new Permanent(as.sacrificedCard());
-        }
-        if (!predicateEvaluationService.matchesPermanentPredicate(
-                sacrificedPermanent, conditional.predicate(),
-                new FilterContext(null, match.permanent().getCard().getId(),
-                        match.controllerId(), null, match.permanent(), null)
-                        .withSourceCardId(match.permanent().getCard().getId())
-                        .withSourceControllerId(match.controllerId())
-                        .withSourcePermanentSnapshot(match.permanent()))) {
-            return false;
-        }
-
-        CardEffect wrapped = new ConditionalEffect(conditional.condition(), conditional.wrapped());
-        if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    match.permanent().getCard(), as.sacrificingPlayerId(),
-                    new ArrayList<>(List.of(wrapped)), match.permanent().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-            return true;
-        }
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                as.sacrificingPlayerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(wrapped)),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = TriggeringPermanentConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_OPPONENT_PERMANENT_SACRIFICED)
-    private boolean handleOpponentSacrificePermanentConditional(TriggerMatchContext match,
-            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.OpponentPermanentSacrificed sacrificed =
-                (TriggerContext.OpponentPermanentSacrificed) ctx;
-        if (sacrificed.sacrificedCard() == null
-                || !predicateEvaluationService.matchesPermanentPredicate(
-                new Permanent(sacrificed.sacrificedCard()), conditional.predicate(),
-                new FilterContext(null, match.permanent().getCard().getId(),
-                        match.controllerId(), null, match.permanent(), match.permanent().getId()))) {
-            return false;
-        }
-
-        CardEffect wrapped = conditional.wrapped();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(wrapped)),
-                sacrificed.sacrificingPlayerId(),
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 
@@ -2023,20 +1842,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleCardPutIntoGraveyardConditional(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
-            return false;
-        }
-        if (!predicateEvaluationService.matchesCardPredicate(cardPut.card(), conditional.predicate(), null,
-                match.gameData(), match.controllerId())) {
-            return false;
-        }
-        return handleCardPutIntoGraveyardDefault(match, conditional, ctx);
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class,
                     watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     @CollectsWatchTrigger(value = CardEffect.class,
@@ -2277,59 +2082,6 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-    }
-
-    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleAllyCreatureCardPutIntoGraveyardConditional(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
-                || creatureCard.sourceZone() == Zone.BATTLEFIELD
-                || !predicateEvaluationService.matchesCardPredicate(
-                creatureCard.creatureCard(), conditional.predicate(),
-                match.permanent().getCard().getId(), match.gameData(),
-                creatureCard.graveyardOwnerId())) {
-            return false;
-        }
-
-        return enqueueConditionalCreatureCardGraveyardTrigger(match, conditional, creatureCard);
-    }
-
-    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
-    private boolean handleCreatureCardPutIntoGraveyardConditional(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
-                || !predicateEvaluationService.matchesCardPredicate(
-                creatureCard.creatureCard(), conditional.predicate(),
-                match.permanent().getCard().getId(), match.gameData(),
-                creatureCard.graveyardOwnerId())) {
-            return false;
-        }
-
-        return enqueueConditionalCreatureCardGraveyardTrigger(match, conditional, creatureCard);
-    }
-
-    private boolean enqueueConditionalCreatureCardGraveyardTrigger(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional,
-            TriggerContext.CreatureCardPutIntoGraveyard creatureCard) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringCardId(creatureCard.creatureCard().getId());
-        entry.setTriggeringCardGraveyardEntryVersion(
-                match.gameData().graveyardEntryVersion(creatureCard.creatureCard().getId()));
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers for matching creature card entering a graveyard",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
     }
 
     @CollectsWatchTrigger(value = PerpetuallyGrantTriggeredAbilityEffect.class,
@@ -2767,9 +2519,6 @@ public class MiscTriggerCollectorService {
             CreateTokensForNonlandCardsMilledEffect effect, TriggerContext ctx) {
         TriggerContext.NonlandCardsMilled milled = (TriggerContext.NonlandCardsMilled) ctx;
         CardEffect queuedEffect = match.rawEffect();
-        if (queuedEffect instanceof OncePerTurnTriggerEffect oncePerTurn) {
-            queuedEffect = oncePerTurn.wrapped();
-        }
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -2780,9 +2529,7 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setEventValue(milled.nonlandCardCount());
-        if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
-            entry.setMarkSourceOncePerTurnOnAcceptance(true);
-        }
+        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on nonland cards milled (create tokens)",
@@ -3783,6 +3530,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    /**
+     * Oasis of Renewal's "the first time one or more land cards leave your graveyard each turn", which keeps its
+     * wrappers until its enters abilities move (effect-slot-refactor.md step 14, run 4).
+     */
     @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
             watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleConditionalControllerCardsLeaveGraveyard(TriggerMatchContext match,
@@ -3846,24 +3597,11 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = TriggeringCardConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
-    boolean handleControllerCardPutIntoHandFromLibraryConditional(TriggerMatchContext match,
-            TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.ControllerCardPutIntoHandFromLibrary moved)
-                || !predicateEvaluationService.matchesCardPredicate(
-                moved.card(), conditional.predicate(), null, match.gameData(), match.controllerId())) {
-            return false;
-        }
-        return enqueueControllerCardPutIntoHandFromLibraryTrigger(match, conditional, moved.card());
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_CONTROLLER_CARD_PUT_INTO_HAND_FROM_LIBRARY)
     boolean handleControllerCardPutIntoHandFromLibrary(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        if (effect instanceof TriggeringCardConditionalEffect
-                || !(ctx instanceof TriggerContext.ControllerCardPutIntoHandFromLibrary moved)) {
+        if (!(ctx instanceof TriggerContext.ControllerCardPutIntoHandFromLibrary moved)) {
             return false;
         }
         return enqueueControllerCardPutIntoHandFromLibraryTrigger(match, effect, moved.card());

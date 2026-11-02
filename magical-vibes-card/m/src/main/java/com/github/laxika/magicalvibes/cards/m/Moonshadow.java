@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,11 +21,11 @@ public class Moonshadow extends Card {
     public Moonshadow() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.MINUS_ONE_MINUS_ONE, new Fixed(6)));
 
-        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(Triggers.PERMANENT_CARD,
-                ObjectRelation.ANOTHER_YOU_OWN)),
-                TriggerOptions.ONE_OR_MORE,
-                new ConditionalEffect(
-                        new SourceCounterThreshold(1, CounterType.MINUS_ONE_MINUS_ONE),
-                        new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)));
+        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFromAnywhere(
+                                Triggers.PERMANENT_CARD,
+                                ObjectRelation.ANOTHER_YOU_OWN)),
+                TriggerOptions.ONE_OR_MORE
+                        .withInterveningIf(new SourceCounterThreshold(1, CounterType.MINUS_ONE_MINUS_ONE)),
+                new RemoveCounterFromSourceEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
     }
 }

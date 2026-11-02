@@ -6,14 +6,18 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,10 +27,14 @@ import java.util.List;
 public class SplinterTheMentor extends Card {
 
     public SplinterTheMentor() {
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), mutagenToken());
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentNotPredicate(new PermanentIsTokenPredicate()), mutagenToken()));
+        addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.leavesBattlefield(
+                                new PermanentAllOfPredicate(List.of(
+                                        Triggers.CREATURE,
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                                ObjectRelation.ANOTHER_YOU_CONTROL)),
+                new TriggerCondition(Triggers.leavesBattlefield(ObjectRelation.THIS))),
+                TriggerOptions.DEFAULT, List.of(new EffectRegistration(mutagenToken()))));
     }
 
     private static CreateTokenEffect mutagenToken() {

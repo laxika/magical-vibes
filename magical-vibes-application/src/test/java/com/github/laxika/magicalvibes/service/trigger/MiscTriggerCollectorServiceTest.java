@@ -706,22 +706,6 @@ class MiscTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("skips a false intervening condition")
-        void skipsFalseInterveningCondition() {
-            Permanent perm = createPermanent("Tolls of War");
-            var effect = new ConditionalEffect(new ControllerTurn(), new BoostSelfEffect(1, 1));
-            var ctx = new TriggerContext.AllySacrificed(player1Id, null);
-            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
         @DisplayName("uses sacrificingPlayerId as ability controller, not permanent controller")
         void usesSacrificingPlayerIdAsController() {
             Permanent perm = createPermanent("Blood Artist");
@@ -739,7 +723,7 @@ class MiscTriggerCollectorServiceTest {
     // ===== ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER) =====
 
     @Nested
-    @DisplayName("ON_ALLY_PERMANENT_SACRIFICED - targeted conditional trigger")
+    @DisplayName("ON_ALLY_PERMANENT_SACRIFICED - targeted trigger")
     class SacrificeTargetedConditional {
 
         @Test
@@ -749,14 +733,8 @@ class MiscTriggerCollectorServiceTest {
             Card clue = createCard("Clue");
             clue.setType(CardType.ARTIFACT);
             clue.setSubtypes(List.of(CardSubtype.CLUE));
-            var effect = new TriggeringPermanentConditionalEffect(
-                    new PermanentHasSubtypePredicate(CardSubtype.CLUE),
-                    new MillEffect(3, MillRecipient.TARGET_PLAYER));
+            var effect = new MillEffect(3, MillRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.AllySacrificed(player1Id, clue);
-
-            when(predicateEvaluationService.matchesPermanentPredicate(
-                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
-                    .thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -768,7 +746,7 @@ class MiscTriggerCollectorServiceTest {
             var pending = gd.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
             assertThat(pending.controllerId()).isEqualTo(player1Id);
             assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
-            assertThat(pending.effects()).containsExactly(effect.wrapped());
+            assertThat(pending.effects()).containsExactly(effect);
         }
     }
 
@@ -1629,34 +1607,6 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-    }
-
-    @Test
-    @DisplayName("conditional non-battlefield creature trigger keeps the triggering card")
-    void conditionalNonBattlefieldCreatureTriggerKeepsTriggeringCard() {
-        Permanent perm = createPermanent("Disa the Restless");
-        Card triggeringCard = createCard("Lhurgoyf");
-        triggeringCard.setType(CardType.CREATURE);
-        triggeringCard.setSubtypes(List.of(CardSubtype.LHURGOYF));
-        var predicate = new CardSubtypePredicate(CardSubtype.LHURGOYF);
-        var effect = new TriggeringCardConditionalEffect(predicate,
-                new ReturnTriggeringCardFromGraveyardToBattlefieldEffect());
-        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(triggeringCard, player1Id, Zone.LIBRARY);
-        when(predicateEvaluationService.matchesCardPredicate(
-                eq(triggeringCard), eq(predicate), eq(perm.getCard().getId()), eq(gd), eq(player1Id)))
-                .thenReturn(true);
-
-        boolean result = registry.dispatch(
-                match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
-                effect, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve())
-                .containsExactly(effect.wrapped());
-        assertThat(gd.stack.getLast().getTriggeringCardId())
-                .isEqualTo(triggeringCard.getId());
     }
 
     @Test

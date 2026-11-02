@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,14 +28,11 @@ public class ScouringSwarm extends Card {
                 7, new CardTypePredicate(CardType.LAND));
         PermanentIsLandPredicate sacrificedLand = new PermanentIsLandPredicate();
 
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(sacrificedLand,
-                        ConditionalEffect.unless(sevenLandCards,
-                                CreateTokenCopyOfSourceEffect.tapped(1))));
-        addTrigger(Triggers.sacrificed(null, ObjectRelation.YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(sacrificedLand,
-                        ConditionalEffect.unless(new NotCondition(sevenLandCards),
-                                new CreateTokenEffect(1, "Insect", 1, 1, CardColor.BLACK,
-                                        List.of(CardSubtype.INSECT), Set.of(Keyword.FLYING), Set.of(), true))));
+        addTrigger(Triggers.sacrificed(sacrificedLand, ObjectRelation.YOU_CONTROL),
+                ConditionalEffect.unless(sevenLandCards, CreateTokenCopyOfSourceEffect.tapped(1)));
+        addTrigger(Triggers.sacrificed(sacrificedLand, ObjectRelation.YOU_CONTROL),
+                ConditionalEffect.unless(new NotCondition(sevenLandCards),
+                        new CreateTokenEffect(1, "Insect", 1, 1, CardColor.BLACK,
+                                List.of(CardSubtype.INSECT), Set.of(Keyword.FLYING), Set.of(), true)));
     }
 }

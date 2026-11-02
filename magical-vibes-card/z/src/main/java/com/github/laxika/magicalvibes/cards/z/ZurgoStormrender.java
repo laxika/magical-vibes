@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -33,10 +32,13 @@ public class ZurgoStormrender extends Card {
         PermanentAllOfPredicate nonattackingToken = new PermanentAllOfPredicate(List.of(
                 new PermanentIsTokenPredicate(),
                 new PermanentNotPredicate(new PermanentIsAttackingPredicate())));
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(attackingToken, new DrawCardEffect(1)));
-        addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new TriggeringPermanentConditionalEffect(nonattackingToken,
-                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)));
+        addTrigger(Triggers.leavesBattlefield(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, attackingToken)),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new DrawCardEffect(1));
+        addTrigger(Triggers.leavesBattlefield(
+                        new PermanentAllOfPredicate(List.of(Triggers.CREATURE, nonattackingToken)),
+                        ObjectRelation.ANOTHER_YOU_CONTROL),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }
 }
