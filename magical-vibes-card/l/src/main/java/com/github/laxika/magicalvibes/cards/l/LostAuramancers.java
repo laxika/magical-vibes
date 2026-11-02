@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -26,11 +25,9 @@ public class LostAuramancers extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.TIME)),
-                new MayEffect(
-                        new SearchLibraryEffect(new CardTypePredicate(CardType.ENCHANTMENT),
-                                LibrarySearchDestination.BATTLEFIELD),
-                        "Search your library for an enchantment card?")));
+        addTrigger(Triggers.dies(
+                        new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.TIME)),
+                        ObjectRelation.THIS),
+                new MayEffect(new SearchLibraryEffect(new CardTypePredicate(CardType.ENCHANTMENT), LibrarySearchDestination.BATTLEFIELD), "Search your library for an enchantment card?"));
     }
 }

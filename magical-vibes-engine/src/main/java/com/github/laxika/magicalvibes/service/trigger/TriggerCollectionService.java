@@ -192,7 +192,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureT
 import com.github.laxika.magicalvibes.model.effect.LeavingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingCreatureCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherInstantsAndSorceriesCastCountEffect;
 import com.github.laxika.magicalvibes.model.effect.StormEffect;
@@ -237,7 +236,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
-import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
@@ -255,7 +253,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCr
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureAttachmentsAwareEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasNonlandCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactTapTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCombatDamageTriggerEffect;
@@ -12475,19 +12472,6 @@ public class TriggerCollectionService {
     // ── Death / leaves-battlefield triggers ───────────────────────────
 
     /**
-     * {@code effect}, a "when this dies" or "when you sacrifice this" effect of {@code dyingCard}, with its
-     * creature-death conditional taken off, or {@code null} when that conditional keeps it from triggering. The
-     * trigger pipeline's {@code LegacyTriggerBindings} reads these abilities' wrappers through it until step 14 of
-     * effect-slot-refactor.md turns them into trigger options.
-     */
-    public CardEffect unwrapSelfDeathConditional(GameData gameData, Card dyingCard, Permanent dyingPermanent,
-                                                 UUID controllerId, boolean wasCreature, boolean wasLand,
-                                                 CardEffect effect) {
-        return unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId, null,
-                wasCreature, wasLand);
-    }
-
-    /**
      * {@code effect}, a "when this dies" effect of {@code dyingCard}, bound to the card that died, the Auras and
      * Equipment that were attached to it and its graveyard incarnation (CR 400.7, CR 603.10a).
      */
@@ -12502,27 +12486,6 @@ public class TriggerCollectionService {
             bound = bindDyingCreatureAttachments(bound, DyingCreatureAttachmentSnapshot.of(attachments));
         }
         return bindSourceCardInGraveyardVersion(gameData, bound, dyingCardId);
-    }
-
-    /**
-     * Whether a "when this dies" effect of {@code dyingCard} passes its death intervening "if" (CR 603.4) and, for
-     * "put into your graveyard from the battlefield", went to its controller's graveyard.
-     */
-    public boolean passesSelfDeathFilters(GameData gameData, Card dyingCard, Permanent dyingPermanent,
-                                          UUID controllerId, boolean wasCreature, CardEffect effect) {
-        UUID dyingCardId = dyingPermanent != null ? dyingPermanent.getOriginalCard().getId() : dyingCard.getId();
-        Permanent source = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
-        if (!passesDeathInterveningIf(gameData, source, controllerId, effect, wasCreature)) {
-            return false;
-        }
-        return !(effect instanceof com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect)
-                || controllerId.equals(gameQueryService.findGraveyardOwnerById(gameData, dyingCardId));
-    }
-
-    /** Whether {@code effect}'s intervening "if", if it has one, is true for {@code source}. */
-    public boolean passesSelfInterveningIf(GameData gameData, Permanent source, UUID controllerId,
-                                           CardEffect effect) {
-        return passesInterveningIf(gameData, source, controllerId, effect);
     }
 
     /**
@@ -16747,18 +16710,6 @@ public class TriggerCollectionService {
     private CardEffect unwrapCreatureDeathConditional(CardEffect effect, Card dyingCard, Permanent dyingPermanent,
                                                       GameData gameData, UUID controllerId, Permanent watcher,
                                                       Boolean wasCreature, Boolean wasLand) {
-        if (effect instanceof DyingPermanentWasCreatureConditionalEffect conditional) {
-            if (!Boolean.TRUE.equals(wasCreature)) {
-                return null;
-            }
-            effect = conditional.wrapped();
-        }
-        if (effect instanceof DyingPermanentWasNonlandCreatureConditionalEffect conditional) {
-            if (!Boolean.TRUE.equals(wasCreature) || Boolean.TRUE.equals(wasLand)) {
-                return null;
-            }
-            effect = conditional.wrapped();
-        }
         if (effect instanceof TriggeringCardConditionalEffect conditional) {
             if (conditional.predicate() instanceof CardTypePredicate typePredicate
                     && typePredicate.cardType() == CardType.LAND && Boolean.TRUE.equals(wasLand)) {
@@ -16972,38 +16923,6 @@ public class TriggerCollectionService {
     private boolean passesInterveningIf(GameData gameData, Permanent source, UUID controllerId,
                                         CardEffect effect) {
         return passesInterveningIf(gameData, source, controllerId, effect, null, null);
-    }
-
-    private boolean passesDeathInterveningIf(GameData gameData, Permanent source, UUID controllerId,
-                                             CardEffect effect, boolean wasCreature) {
-        if (!(effect instanceof ConditionalEffect conditional) || !conditional.interveningIf()) {
-            return true;
-        }
-        ConditionContext context = ConditionContext.forPermanent(source, controllerId);
-        return deathConditionIsMet(gameData, conditional.condition(), context, wasCreature);
-    }
-
-    private boolean deathConditionIsMet(GameData gameData, Condition condition,
-                                        ConditionContext context, boolean wasCreature) {
-        if (condition instanceof SourceIsCreature) {
-            return wasCreature;
-        }
-        if (condition instanceof NotCondition not) {
-            return !deathConditionIsMet(gameData, not.inner(), context, wasCreature);
-        }
-        if (condition instanceof AllOf allOf) {
-            return allOf.conditions().stream()
-                    .allMatch(inner -> deathConditionIsMet(gameData, inner, context, wasCreature));
-        }
-        if (condition instanceof AllConditions allConditions) {
-            return allConditions.conditions().stream()
-                    .allMatch(inner -> deathConditionIsMet(gameData, inner, context, wasCreature));
-        }
-        if (condition instanceof AnyOf anyOf) {
-            return anyOf.conditions().stream()
-                    .anyMatch(inner -> deathConditionIsMet(gameData, inner, context, wasCreature));
-        }
-        return conditionEvaluationService.isMet(gameData, condition, context);
     }
 
     private boolean passesInterveningIf(GameData gameData, Permanent source, UUID controllerId,

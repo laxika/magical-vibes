@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -28,7 +26,6 @@ public class NadiersNightblade extends Card {
                         new PermanentIsTokenPredicate(), drainOpponentAndGainLife));
         // "a token you control leaves the battlefield" includes this token itself: a leaves-the-battlefield
         // ability looks back in time (CR 603.10a).
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                ConditionalEffect.atTriggerTime(new SourceIsToken(), drainOpponentAndGainLife));
+        addTrigger(Triggers.leavesBattlefield(Triggers.TOKEN, ObjectRelation.THIS), drainOpponentAndGainLife);
     }
 }

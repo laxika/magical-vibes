@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,7 +31,8 @@ public class WorkshopWarchief extends Card {
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Rhino Warrior", 4, 4, CardColor.GREEN,
                 List.of(CardSubtype.RHINO, CardSubtype.WARRIOR), Set.of(), Set.of()));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForAlternateCost(), new DrawCardEffect(1)));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new DrawCardEffect(1));
     }
 }

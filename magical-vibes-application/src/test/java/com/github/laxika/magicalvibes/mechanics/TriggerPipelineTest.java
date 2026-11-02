@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -14,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -21,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -156,6 +160,58 @@ class TriggerPipelineTest extends BaseCardTest {
         });
 
         assertThat(triggersOf(card)).hasSize(1);
+    }
+
+    @Test
+    void aLimitCoversEveryTriggerConditionOfTheAbility() {
+        Card card = new GrizzlyBears();
+        card.addTriggeredAbility(new TriggeredAbility(List.of(
+                new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.HAND, ObjectRelation.THIS)),
+                new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, ObjectRelation.THIS))),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                List.of(new EffectRegistration(DRAW, TriggerMode.NORMAL))));
+        harness.setHand(player1, List.of(card));
+
+        harness.inMutationScope(() -> {
+            moveCard(player1, card, Zone.HAND, Zone.GRAVEYARD);
+            moveCard(player1, card, Zone.GRAVEYARD, Zone.LIBRARY);
+            moveCard(player1, card, Zone.LIBRARY, Zone.GRAVEYARD);
+        });
+
+        // "This ability triggers only once each turn" is about the one ability, whichever condition it met.
+        assertThat(triggersOf(card)).hasSize(1);
+    }
+
+    @Test
+    void aWhenThisDiesFilterIsJudgedOnThePermanentAsItLastExisted() {
+        ZoneChangeTrigger diesWithCounter = Triggers.dies(
+                new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE), ObjectRelation.THIS);
+        Permanent countered = battlefieldCreatureWith(diesWithCounter, DRAW);
+        countered.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent plain = battlefieldCreatureWith(diesWithCounter, DRAW);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, countered));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, plain));
+
+        // CR 603.10a: the counter left the game with the creature, but the ability looks back at it.
+        assertThat(onlyTriggerOf(countered.getCard()).getEffectsToResolve()).containsExactly(DRAW);
+        assertThat(triggersOf(plain.getCard())).isEmpty();
+    }
+
+    @Test
+    void aWhenThisDiesIfItWasACreatureFilterReadsTheTypesItDiedWith() {
+        ZoneChangeTrigger diesAsCreature = Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS);
+        Permanent creature = battlefieldCreatureWith(diesAsCreature, DRAW);
+        Card enchantment = new Opalescence();
+        enchantment.addTrigger(diesAsCreature, DRAW);
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player1, enchantment);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd,
+                noncreature));
+
+        assertThat(triggersOf(creature.getCard())).hasSize(1);
+        assertThat(triggersOf(enchantment)).isEmpty();
     }
 
     @Test
@@ -338,7 +394,11 @@ class TriggerPipelineTest extends BaseCardTest {
     }
 
     private List<Card> zone(Player player, Zone zone) {
-        return zone == Zone.HAND ? gd.playerHands.get(player.getId()) : gd.playerGraveyards.get(player.getId());
+        return switch (zone) {
+            case HAND -> gd.playerHands.get(player.getId());
+            case LIBRARY -> gd.playerDecks.get(player.getId());
+            default -> gd.playerGraveyards.get(player.getId());
+        };
     }
 
     private Permanent battlefieldCreatureWith(ZoneChangeTrigger trigger, CardEffect effect) {

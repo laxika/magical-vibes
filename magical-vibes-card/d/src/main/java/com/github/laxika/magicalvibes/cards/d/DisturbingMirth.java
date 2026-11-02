@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -35,7 +34,6 @@ public class DisturbingMirth extends Card {
                         false,
                         false),
                 "Sacrifice another enchantment or creature?"));
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS),
-                new SacrificeOnlyEffect(ManifestDreadEffect.forController()));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), ManifestDreadEffect.forController());
     }
 }

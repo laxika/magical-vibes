@@ -17,7 +17,8 @@ import java.util.Set;
  * @param relation how the moving object relates to the ability's source
  * @param filter   what the moving object must be, as it last existed on the battlefield for a departure
  *                 (CR 603.10a), or {@code null} for any object: "a nontoken creature". The source of a
- *                 "this or another" relation matches whatever it was.
+ *                 "this or another" relation matches whatever it was. For {@code THIS} it is a condition on
+ *                 the source as it last existed: "when this creature dies, if it had a -1/-1 counter on it".
  * @param from     the zones it may leave; empty for any zone, including from outside the game
  * @param to       the zone it must go to, or {@code null} for any
  * @param excludedTo the zones it must not go to: {@code GRAVEYARD} for "leaves the battlefield without dying"

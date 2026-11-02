@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.MoveAnyNumberOfCountersFromTargetPermanentToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,8 +28,8 @@ public class ResourcefulDefense extends Card {
                 new PutCountersOnTargetForEachLeavingSourceCountersEffect(new PermanentTruePredicate());
         var targetPermanentYouControl = target(TargetFilters.permanentYouControl());
         targetPermanentYouControl.addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new ConditionalEffect(
-                        new SourceCounterThreshold(1, CounterType.ANY), transferCounters));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.ANY)),
+                transferCounters);
         targetPermanentYouControl.addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.ANY), transferCounters));

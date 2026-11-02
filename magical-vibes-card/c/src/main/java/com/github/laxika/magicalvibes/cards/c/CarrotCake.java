@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -22,7 +21,7 @@ public class CarrotCake extends Card {
 
     public CarrotCake() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), rabbitAndScry());
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(rabbitAndScry()));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), rabbitAndScry());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

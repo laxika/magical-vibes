@@ -29,7 +29,7 @@ re-check them with a grep before acting on them.
 | 12a | The rest of the zone-change family, except `ON_ENTER_BATTLEFIELD` | done |
 | 12b | `ON_ENTER_BATTLEFIELD` | done |
 | 13 | Remaining event families (repeatable) | done (runs 1 to 11b: every family; `EffectSlot` has no constant) |
-| 14 | Trigger options replace trigger-only wrapper effects | open |
+| 14 | Trigger options replace trigger-only wrapper effects | in progress (repeatable by family: run 1, the source's own zone changes) |
 | 15 | Effects read the trigger event (repeatable) | open |
 | 16 | Delete `EffectSlot` and the legacy paths | open |
 
@@ -576,6 +576,21 @@ classes, `TriggerMode` and `LegacyTriggerOptions`.
 
 **Done when:** no triggered ability's effects contain a trigger-only wrapper, those classes and
 `TriggerMode` are gone, and the converted cards' tests fail exactly as at the baseline.
+
+This step was split, with the user, by family, as step 13 was. Each run converts every wrapper kind of one
+family's abilities, makes that family's collectors read options and filters instead, and deletes the wrapper classes
+no other family still uses. The order:
+
+| Run | Family |
+|---|---|
+| 1 | The source's own zone changes (step 10's pilot): dies, sacrificed, leaves the battlefield, put into a graveyard, milled, all `ObjectRelation.THIS` |
+| 2 | Creature death (step 11's `CreatureDeathWatch`), with the 32 "this or another [restricted] creature" cards merged |
+| 3 | The other zone changes and the permanent changes (step 12a's `ZoneChangeWatch`), with their split "this or another" cards merged |
+| 4 | The source's own enters abilities (step 12b's `EtbTriggerService`), with the 60 "this or another" enters cards merged |
+| 5 to 15 | Step 13's families 1 to 11, in its order |
+| 16 | What no family owns: the may-unwrapping, `TriggerMode`, `ConditionalEffect`'s `interveningIf` / `triggerTimeOnly` flags, the `onlyIfSacrificed` flags, and the wrapper classes left |
+
+Mark the step `done` only after run 16.
 
 ### Step 15: Effects read the trigger event (repeatable)
 
@@ -4498,6 +4513,110 @@ was re-rendered with `--keep-baseline`.
   `PlanechaseServiceTest`'s two source-less planeswalking cases, and the known ones in `CardImmutabilityArchTest`,
   `SimulationCopyCompletenessTest` and `CardEffectTargetingConsistencyTest`.
 - AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 run 11a.
+- The full suite was not run here.
+
+### Step 14
+
+Step 14 is repeatable by family (its section has the order). Run 1 converted the source's own zone changes.
+
+#### Run 1: the source's own zone changes
+
+Every "when this dies / is sacrificed / leaves the battlefield / is put into a graveyard from … / is milled" ability
+(`ObjectRelation.THIS`, step 10's pilot) is free of trigger-only wrappers, and `LegacyTriggerOptions` is gone: the
+pilot path reads only the ability's `TriggerOptions` and its trigger's filter.
+
+**Authoring.**
+
+- A condition on the object as it last existed is the trigger's filter: `Triggers.dies(Triggers.CREATURE,
+  ObjectRelation.THIS)` ("if it was a creature"), `dies(new PermanentHasCountersPredicate(…), THIS)` ("if it had a
+  counter on it"), `dies(new PermanentIsEnchantedPredicate(), THIS)`, `dies(new PermanentOwnedBySourceControllerPredicate(),
+  THIS)` ("is put into your graveyard"), `leavesBattlefield(Triggers.TOKEN, THIS)`. Such a condition can't change
+  before the ability resolves (CR 603.10a, checked), so a filter behaves as the intervening "if" (CR 603.4, checked)
+  would. `ObjectRelation.thisAlwaysMatches()` no longer includes `THIS`: a `THIS` trigger's filter is about the source.
+- Any other intervening "if" is `TriggerOptions.DEFAULT.withInterveningIf(condition)`, through the new
+  `Card.addTrigger(Trigger, TriggerOptions, CardEffect...)` and `SpellTarget.addTrigger(Trigger, TriggerOptions,
+  CardEffect...)`.
+- An Oracle ability with two trigger conditions and a limit is one `TriggeredAbility` with both conditions, so the limit
+  (keyed by the ability) covers both: Oni-Cult Anvil ("one or more artifacts you control leave … during your turn …
+  only once each turn") and Minthara of the Absolute ("one or more permanents you control leave … only once each
+  turn"), whose two halves shared the unkeyed `OncePerTurnTriggerEffect` mark before. `ZoneChangeWatch.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN`
+  gained the key `leavesBattlefield(Triggers.ARTIFACT, ANOTHER_YOU_CONTROL).onlyDuringYourTurn()` for Anvil's other
+  condition (the watch body passes a plain effect through).
+- Deleted: `DyingPermanentWasCreatureConditionalEffect`, `DyingPermanentWasNonlandCreatureConditionalEffect`,
+  `SacrificeOnlyEffect` (and its handler; `Triggers.sacrificed(THIS)` already says it),
+  `DrawCardIfDyingSourceHadCounterEffect` (Promising Duskmage: a filter and `DrawCardEffect(1)`), and
+  `TriggerCollectionService`'s `unwrapSelfDeathConditional`, `passesSelfDeathFilters`, `passesSelfInterveningIf`,
+  `passesDeathInterveningIf` and `deathConditionIsMet` (whose `SourceIsCreature` special case became the `CREATURE`
+  filter).
+
+**The engine.** `TriggerMatcher.relatesToItself` applies a `THIS` trigger's filter (`ownFilterMatches`): card types
+from the last-known card (as the old `wasCreature` / `wasLand` read them; a layered query would read the game after
+the departure), Auras and Equipment from the departure's `attachments`, power and toughness from the last-known
+values, anything else through `PredicateEvaluationService` with the source as its own source (owner, combat damage
+dealt this turn, modified), as the old `TriggeringPermanentConditionalEffect` unwrapping did.
+`TriggeredAbilityStackService.triggerBound` hands the authored effect, wrapped in the option's intervening "if", to
+`LegacyTriggerBindings`; "triggers only once each turn" (no extra copies, Clara Oswald) is read from the limit.
+Triumph of Saint Katherine's "only from its controller's graveyard" check moved from `passesSelfDeathFilters` into
+`LegacyTriggerBindings.dies` (a handler concern, step 15's). The shadow reporter reports the raw effect (dead code: no
+slot is left to shadow). The two engine-built blitz abilities (`SpellCastingService` for a granted blitz,
+`CardChoiceHandlerService` for a perpetual one) use the option.
+
+**Cards.** `scripts/step14-pilot-options.py` (run per letter module; `scripts/step14-pilot-scan.py` lists the
+abilities with their Oracle text) converted 69 card classes. `new ConditionalEffect(c, x)` became the intervening-if
+option, except `SourceIsCreature` / `NotCondition(SourceIsToken)` (filters `CREATURE` / `NONTOKEN`) and
+`SourceCardInGraveyard` (below); `ConditionalEffect.atTriggerTime`, `TriggeringPermanentConditionalEffect`,
+`TriggeringCardConditionalEffect(LAND)` and the `DyingPermanentWas…` wrappers became filters; `SacrificeOnlyEffect`
+was dropped. Its `MANUAL` table holds Oni-Cult Anvil, Minthara and Syr Vondam, Sunstar Exemplar ("dies … while its
+power is 4 or greater": `dies(new PermanentPowerAtLeastPredicate(4), THIS)`; its exile half keeps the
+`ConditionalEffect`, now bound to the target group with `bindEffect`). The last two kept their wrapper in a local
+variable, which the first pass of the script didn't follow; the card tests caught them. `scripts/step14-pilot-docs.py`
+rewrote agent-docs (14 rows); the implement-card and review-card skills were edited by hand.
+
+**Behaviour changes.**
+
+- Gamekeeper, Academy Rector and Antique Collector's perpetual grant ("you may exile it / shuffle it … if you do") wrap
+  their effect in `ConditionalEffect(SourceCardInGraveyard, …)`. That isn't an intervening "if" (no "if" follows the
+  trigger condition, CR 603.4), so the condition is no longer checked as the ability triggers, only on resolution: the
+  ability now triggers when the card didn't reach the graveyard and does nothing. Their `interveningIf` flag is still
+  `true` but no reader of the dies path looks at it any more (the leaves handlers still do); run 16 deletes the flag.
+- Old-Growth Troll's and Bronzehide Lion's "was a creature" is judged on the card types they died with, not by a
+  layered `isCreature` query after the death.
+- Nothing else changes: the other conversions read the same conditions at the same times.
+
+**Kept as they were, for later runs.**
+
+- Blitz's "when this creature dies, draw a card" is the intervening-if option `CastForAlternateCost` on a printed
+  ability (the permanent has the ability only as long as its blitz cost was paid, **CR 702.152a**, checked), as the
+  `ConditionalEffect` was.
+- Mongrel Pack's "dies during combat" is a trigger condition, kept as the intervening-if option `DuringCombat`: the
+  ability resolves in the same combat step, so the second check doesn't change anything.
+- Handler-level trigger conditions in `LegacyTriggerBindings` stay for step 15: `SelfExiledFromBattlefieldEffect` /
+  `SelfExiledWhileActivatingCraftAbilityEffect` (and the intervening "if" they read from their wrapped
+  `ConditionalEffect`), Brood of Cockroaches' "put into your graveyard", Triumph of Saint Katherine's graveyard check,
+  Cathedral Membrane's "during combat".
+- The "this or another" cards keep their split `THIS` halves (now with filters or options) beside their other-object
+  halves: Zone of Flame, Resourceful Defense, Nadier's Nightblade, Costume Closet, Long Feng. Runs 2 to 4 merge them
+  once their family's watches read filters.
+- The `onlyIfSacrificed` flags on `DrawCardEffect`, `GainLifeEffect`, `DiscardEffect`, `DealDamageToAnyTargetEffect`,
+  `SearchLibraryEffect`, `SequenceEffect` and `onlyTriggersOnSacrifice()` are unused by cards but still read by
+  `TriggerCollectionService` and a few handlers; run 16 deletes them.
+
+**Tests changed.** `TriggerPipelineTest`: three new tests through the engine, a limit covers every trigger condition of
+its ability, a `THIS` filter ("had a +1/+1 counter") is judged on the permanent as it last existed, and an "if it was a
+creature" filter reads the types it died with (an enchantment doesn't trigger it); its `zone` helper also reads the
+library. No other test changed.
+
+**Test runs.**
+
+- Card: the test class of every card with an ability of this family plus Triumph of Saint Katherine, Brood of
+  Cockroaches and Riveteers Provocateur (1,052 classes): first run 7 failures in three classes (Oni-Cult Anvil's
+  unwatched filtered condition; Minthara and Syr Vondam, whose variables the script missed), then all passing.
+- Application: `TriggerPipelineTest`, `LegacyTriggerBindingsTest`, `CardAbilitiesTest`, `ZoneChangeTriggerTest`,
+  `TriggeredAbilityTest`, `TriggerConditionTest`, `TriggerOptionsTest`, `ZoneChangeRulesEventTest`, `RulesEventLogTest`,
+  `CardFreezeTest`, `MiscTriggerTest`, `ActionTriggerTest`, `SpellCastingServiceTest`, `GrantedAbilitiesTest` and the
+  ten `…WatchTest` classes: the only failures are `SpellCastingServiceTest`'s 10, which fail at HEAD.
+- AI: the whole module (1,620 tests): the same 10 failures as steps 7 to 13 (the four decision engines' modal, kicker
+  and Reign of Chaos cases, two `TargetPolarityGuardTest`).
 - The full suite was not run here.
 
 ## Prompt

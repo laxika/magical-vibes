@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAsAuraEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,8 +26,7 @@ public class BronzehideLion extends Card {
         ActivatedAbility auraAbility = new ActivatedAbility(false, "{G}{W}",
                 List.of(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE)),
                 "{G}{W}: Enchanted creature gains indestructible until end of turn.");
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentIsCreaturePredicate(),
-                new ReturnSourceAsAuraEffect(TargetFilters.creatureYouControl(), auraAbility)));
+        addTrigger(Triggers.dies(new PermanentIsCreaturePredicate(), ObjectRelation.THIS),
+                new ReturnSourceAsAuraEffect(TargetFilters.creatureYouControl(), auraAbility));
     }
 }

@@ -60,7 +60,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachAuraAttachedToDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardIfDyingSourceHadCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureAttachmentsAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
@@ -160,7 +159,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHa
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyingPermanentTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -246,8 +245,8 @@ import org.springframework.stereotype.Service;
  * ability waits for its targets or its mode, and decline an ability whose bound effect would do nothing or whose
  * handler checks an intervening "if" of its own.
  *
- * <p>{@link TriggeredAbilityStackService} calls it for an ability of one effect, after the options and the
- * trigger-only wrappers ({@link LegacyTriggerOptions}) let it trigger. A handler is chosen by the effect's class
+ * <p>{@link TriggeredAbilityStackService} calls it for an ability of one effect, after the ability's options let it
+ * trigger. A handler is chosen by the effect's class
  * as the collectors chose one: the class itself, then the class of the effect a {@link MayEffect},
  * {@link MayPayManaEffect} or {@link MayPayTapPermanentsEffect} wraps, then the event's default. Step 15 of the
  * refactor replaces the binding with effects that read the event stored on the stack entry, and removes this
@@ -405,6 +404,12 @@ public class LegacyTriggerBindings {
 
     /** "When this dies": the dying card, its attachments and its graveyard incarnation are bound first. */
     private boolean dies(Ctx c, CardEffect effect) {
+        if (effect instanceof ExileSourceCardFromGraveyardAndShuffleTopCardsEffect
+                && !c.controllerId().equals(gameQueryService.findGraveyardOwnerById(c.gameData(),
+                c.dyingPermanent() != null ? c.dyingPermanent().getOriginalCard().getId() : c.dyingCard().getId()))) {
+            // Triumph of Saint Katherine exiles itself and cards from its controller's library into one pile.
+            return false;
+        }
         CardEffect bound = triggerCollectionService.bindSelfDeathEffect(c.gameData(), c.dyingCard(),
                 c.dyingPermanent(), c.event().attachments(), effect);
         return dispatch(deathHandlers, c, bound, this::handleDeathDefault);
@@ -412,12 +417,6 @@ public class LegacyTriggerBindings {
 
     /** "When you sacrifice this": the death handlers. */
     private boolean sacrificed(Ctx c, CardEffect effect) {
-        if (effect instanceof SacrificeOnlyEffect) {
-            c.gameData().enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, c.dyingCard(),
-                    c.controllerId(), c.dyingCard().getName() + "'s ability", new ArrayList<>(List.of(effect))));
-            log.info("Game {} - {}'s sacrifice-only trigger fires", c.gameData().id, c.dyingCard().getName());
-            return true;
-        }
         return dispatch(deathHandlers, c, effect, this::handleDeathDefault);
     }
 
@@ -499,7 +498,6 @@ public class LegacyTriggerBindings {
         register(h, DrawCardForEachDyingSourceCounterEffect.class, this::handleDrawCardForEachDyingSourceCounter);
         register(h, ExileTopCardsForEachDyingCreatureCounterMayPlayUntilNextEndStepEffect.class,
                 this::handleExileTopCardsForEachDyingCreatureCounter);
-        register(h, DrawCardIfDyingSourceHadCounterEffect.class, this::handleDrawCardIfDyingSourceHadCounter);
         register(h, ExileIfHadCounterElseReturnWithCounterEffect.class,
                 this::handleExileIfHadCounterElseReturnWithCounter);
         register(h, RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect.class,
@@ -801,22 +799,6 @@ public class LegacyTriggerBindings {
                 c.controllerId(),
                 c.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect.boundToDyingCreatureCounterCount(counters)))
-        ));
-        return true;
-    }
-    private boolean handleDrawCardIfDyingSourceHadCounter(Ctx c, DrawCardIfDyingSourceHadCounterEffect effect) {
-        Permanent dyingPermanent = c.dyingPermanent();
-        if (dyingPermanent == null
-                || dyingPermanent.getCounterCount(effect.counterType()) < 1) {
-            return false;
-        }
-
-        c.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DrawCardEffect(1)))
         ));
         return true;
     }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -29,8 +28,9 @@ public class Chronozoa extends Card {
         addTrigger(Triggers.timeCountersRemovedFromThis(),
                 new ConditionalEffect(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME)),
                         new SacrificeSelfEffect()));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.TIME)),
-                new CreateTokenCopyOfSourceEffect(false, 2)));
+        addTrigger(Triggers.dies(
+                        new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.TIME)),
+                        ObjectRelation.THIS),
+                new CreateTokenCopyOfSourceEffect(false, 2));
     }
 }

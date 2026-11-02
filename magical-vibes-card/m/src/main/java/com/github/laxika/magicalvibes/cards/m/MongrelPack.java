@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DuringCombat;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,8 +20,8 @@ public class MongrelPack extends Card {
         // When this creature dies during combat, create four 1/1 green Dog creature tokens.
         // The intervening-if reads the current step, which is still a combat step when the death
         // trigger resolves.
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(new DuringCombat(),
-                new CreateTokenEffect(4, "Dog", 1, 1, CardColor.GREEN,
-                        List.of(CardSubtype.DOG), Set.of(), Set.of())));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new DuringCombat()),
+                new CreateTokenEffect(4, "Dog", 1, 1, CardColor.GREEN, List.of(CardSubtype.DOG), Set.of(), Set.of()));
     }
 }

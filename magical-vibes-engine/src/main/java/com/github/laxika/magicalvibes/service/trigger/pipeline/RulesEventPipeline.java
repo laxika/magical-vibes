@@ -57,7 +57,7 @@ import java.util.UUID;
  *
  * <p>Abilities still held in an {@code EffectSlot} are the slot collectors' business. For the slots a test puts in
  * shadow mode ({@link RulesObserver#shadowedSlots()}), the pipeline also works out what those abilities would
- * trigger once their family moves, reading their wrappers through {@link LegacyTriggerOptions}, and reports it to
+ * trigger once their family moves, and reports it to
  * the observer instead of the stack, so the shadow recorder can compare the two paths.
  */
 @Service
@@ -71,17 +71,14 @@ public class RulesEventPipeline {
 
     private final TriggerIndex triggerIndex;
     private final TriggeredAbilityStackService stackService;
-    private final LegacyTriggerOptions legacyTriggerOptions;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentRemovalService permanentRemovalService;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
-                              LegacyTriggerOptions legacyTriggerOptions,
                               @Lazy PredicateEvaluationService predicateEvaluationService,
                               @Lazy PermanentRemovalService permanentRemovalService) {
         this.triggerIndex = triggerIndex;
         this.stackService = stackService;
-        this.legacyTriggerOptions = legacyTriggerOptions;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentRemovalService = permanentRemovalService;
     }
@@ -316,12 +313,7 @@ public class RulesEventPipeline {
                     || TriggerMatcher.suppressedAsMoved(slot, registration.effect(), event)) {
                 continue;
             }
-            LegacyTriggerOptions.Resolved resolved = legacyTriggerOptions.resolve(gameData,
-                    LegacyTriggerBindings.kindOf(LegacySlotTriggers.of(slot, registration.effect())), event,
-                    candidate, registration.effect());
-            if (resolved != null) {
-                observer.wouldTrigger(slot, candidate.sourceCard(), List.of(resolved.effect()));
-            }
+            observer.wouldTrigger(slot, candidate.sourceCard(), List.of(registration.effect()));
         }
     }
 

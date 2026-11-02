@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -26,11 +25,10 @@ import java.util.Set;
 public class OtherworldlyEscort extends Card {
 
     public OtherworldlyEscort() {
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)),
-                new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                        CounterType.CHARGE, 4, null, Set.of(), false, false,
-                        List.of(CardSubtype.SPIRIT, CardSubtype.DETECTIVE))));
+        addTrigger(Triggers.dies(
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)),
+                        ObjectRelation.THIS),
+                new ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType.CHARGE, 4, null, Set.of(), false, false, List.of(CardSubtype.SPIRIT, CardSubtype.DETECTIVE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

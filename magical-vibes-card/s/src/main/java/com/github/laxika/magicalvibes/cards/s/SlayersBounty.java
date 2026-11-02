@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.LookAtCreatureCardsInTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -55,7 +54,7 @@ public class SlayersBounty extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),
                         draftFromSpellbook()));
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(draftFromSpellbook()));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), draftFromSpellbook());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

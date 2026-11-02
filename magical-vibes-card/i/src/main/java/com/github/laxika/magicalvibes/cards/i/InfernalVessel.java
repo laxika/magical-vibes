@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,9 +16,9 @@ import java.util.Set;
 public class InfernalVessel extends Card {
 
     public InfernalVessel() {
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON)),
-                new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE, 2, CardSubtype.DEMON, Set.of())));
+        addTrigger(Triggers.dies(
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON)),
+                        ObjectRelation.THIS),
+                new ReturnDyingCreatureToOwnerBattlefieldEffect(CounterType.PLUS_ONE_PLUS_ONE, 2, CardSubtype.DEMON, Set.of()));
     }
 }

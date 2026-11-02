@@ -102,6 +102,14 @@ public final class SpellTarget {
     }
 
     /**
+     * Adds a triggered ability with {@code trigger}, functioning from its default zones, and {@code options}
+     * ({@link Card#addTrigger(Trigger, TriggerOptions, CardEffect...)}) and binds the effects to this group.
+     */
+    public SpellTarget addTrigger(Trigger trigger, TriggerOptions options, CardEffect... effects) {
+        return addTrigger(new TriggerCondition(trigger), options, effects);
+    }
+
+    /**
      * Adds a triggered ability whose registrations carry {@code triggerMode} ({@link Card#addTrigger(Trigger,
      * TriggerMode, CardEffect...)}) and binds the effects to this group.
      */

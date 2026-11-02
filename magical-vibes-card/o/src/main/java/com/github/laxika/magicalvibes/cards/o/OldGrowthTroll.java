@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAsAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,9 +31,8 @@ public class OldGrowthTroll extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                 "Target must be a Forest you control");
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentIsCreaturePredicate(),
-                new ReturnSourceAsAuraEffect(forestYouControl)));
+        addTrigger(Triggers.dies(new PermanentIsCreaturePredicate(), ObjectRelation.THIS),
+                new ReturnSourceAsAuraEffect(forestYouControl));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,

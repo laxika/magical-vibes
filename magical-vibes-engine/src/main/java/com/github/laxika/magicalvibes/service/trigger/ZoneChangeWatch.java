@@ -156,9 +156,11 @@ public enum ZoneChangeWatch {
     /** "Whenever this creature or another creature you control leaves the battlefield without dying". */
     ON_SELF_OR_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING(battlefield(
             Triggers.leavesBattlefieldWithoutDying(Triggers.CREATURE, ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL))),
-    /** "Whenever another permanent you control leaves the battlefield during your turn". */
-    ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN(battlefield(
-            Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL).onlyDuringYourTurn())),
+    /** "Whenever another permanent (artifact) you control leaves the battlefield during your turn". */
+    ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN(
+            battlefield(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL).onlyDuringYourTurn()),
+            battlefield(Triggers.leavesBattlefield(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL)
+                    .onlyDuringYourTurn())),
     /** "Whenever another permanent you control leaves the battlefield". */
     ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD(
             battlefield(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER_YOU_CONTROL))),

@@ -3,9 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -29,8 +26,7 @@ public class VaultbornTyrant extends Card {
                         new PermanentAnyOfPredicate(List.of(new PermanentIsSourcePermanentPredicate(),
                                 new PermanentPowerAtLeastPredicate(4))),
                         SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect(1))));
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new ConditionalEffect(new NotCondition(new SourceIsToken()),
-                        new CreateTokenCopyOfSourceEffect(false, 1, Set.of(CardType.ARTIFACT))));
+        addTrigger(Triggers.dies(Triggers.NONTOKEN, ObjectRelation.THIS),
+                new CreateTokenCopyOfSourceEffect(false, 1, Set.of(CardType.ARTIFACT)));
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 
@@ -23,7 +24,8 @@ public class RiveteersRequisitioner extends Card {
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(1));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForAlternateCost(), new DrawCardEffect(1)));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new DrawCardEffect(1));
     }
 }

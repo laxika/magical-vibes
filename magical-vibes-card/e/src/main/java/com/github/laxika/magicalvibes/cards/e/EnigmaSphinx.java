@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardIntoLibraryNFromTopEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,9 +20,8 @@ public class EnigmaSphinx extends Card {
         // When this creature is put into your graveyard from the battlefield, put it into
         // your library third from the top (0-indexed position 2).
         // It goes to its owner's graveyard, so only the owner's ability can trigger.
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new TriggeringPermanentConditionalEffect(new PermanentOwnedBySourceControllerPredicate(),
-                        new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2)));
+        addTrigger(Triggers.dies(new PermanentOwnedBySourceControllerPredicate(), ObjectRelation.THIS),
+                new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2));
 
         // Cascade: when you cast this spell, dig the library until a nonland card with lesser
         // mana value, may cast it for free, rest to the bottom in a random order.

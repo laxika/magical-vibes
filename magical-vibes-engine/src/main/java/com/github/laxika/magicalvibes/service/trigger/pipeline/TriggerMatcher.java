@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,6 +9,15 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
@@ -19,6 +29,7 @@ import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.UUID;
 
@@ -104,7 +115,8 @@ final class TriggerMatcher {
     }
 
     /**
-     * Whether the moving object's own ability sees its own move. "When this dies" does. So does an ability whose
+     * Whether the moving object's own ability sees its own move. "When this dies" does, and "when this dies, if it
+     * was a creature" does when its filter matches the object as it last existed. So does an ability whose
      * object may be the source itself, as the object last existed on the battlefield (CR 603.10a): "whenever a
      * creature you control dies" on a creature that dies, or on an enchantment that was animated; "whenever this
      * or another creature dies" whatever it was.
@@ -118,7 +130,8 @@ final class TriggerMatcher {
             return false;
         }
         if (relation == ObjectRelation.THIS) {
-            return true;
+            return trigger.filter() == null || ownFilterMatches(gameData, predicates, trigger.filter(), candidate,
+                    event);
         }
         return event.leftBattlefield() && candidate.zone() == Zone.BATTLEFIELD && relation.includesThis()
                 && ownsAsTheRelationSays(gameData, relation, candidate, event)
@@ -212,6 +225,53 @@ final class TriggerMatcher {
         }
         Permanent moved = event.permanent() != null ? event.permanent() : new Permanent(event.card());
         return predicates.matchesPermanentPredicate(moved, trigger.filter(), null);
+    }
+
+    /**
+     * Whether the source's own move passes the filter of its "when this …" trigger: "when this creature dies, if it
+     * had a -1/-1 counter on it", "if it was a creature", "if it was enchanted". Such a condition is about the object
+     * as it last existed (CR 603.10a), which can't change before the ability resolves, so it is a filter rather than
+     * an intervening "if" checked again on resolution. Its card types are the ones its last-known card left with, its
+     * power and toughness the last-known ones, and its Auras and Equipment the ones attached as it left, those that
+     * left in the same event included. Anything else reads the game, with the source as its own source: who owns it,
+     * whether it dealt combat damage this turn.
+     */
+    private static boolean ownFilterMatches(GameData gameData, PredicateEvaluationService predicates,
+                                            PermanentPredicate filter, TriggerCandidate candidate,
+                                            ZoneChangeEvent event) {
+        Permanent moved = event.permanent() != null ? event.permanent() : new Permanent(event.card());
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceControllerId(candidate.controllerId())
+                .withSourceCardId(moved.getOriginalCard().getId())
+                .withSourcePermanentSnapshot(moved)
+                .withSourcePermanentId(moved.getId());
+        return lastKnownMatches(predicates, filter, moved, event.permanent() == null ? null : event.attachments(),
+                context);
+    }
+
+    private static boolean lastKnownMatches(PredicateEvaluationService predicates, PermanentPredicate predicate,
+                                            Permanent moved, DepartedAttachments attachments,
+                                            FilterContext context) {
+        return switch (predicate) {
+            case PermanentAllOfPredicate allOf -> allOf.predicates().stream()
+                    .allMatch(part -> lastKnownMatches(predicates, part, moved, attachments, context));
+            case PermanentAnyOfPredicate anyOf -> anyOf.predicates().stream()
+                    .anyMatch(part -> lastKnownMatches(predicates, part, moved, attachments, context));
+            case PermanentNotPredicate not -> !lastKnownMatches(predicates, not.predicate(), moved, attachments,
+                    context);
+            case PermanentIsCreaturePredicate ignored -> moved.getCard().hasType(CardType.CREATURE);
+            case PermanentIsLandPredicate ignored -> moved.getCard().hasType(CardType.LAND);
+            case PermanentIsEnchantedPredicate ignored when attachments != null ->
+                    !attachments.auraCardIds().isEmpty();
+            case PermanentIsEquippedPredicate ignored when attachments != null ->
+                    !attachments.equipmentPermanentIds().isEmpty();
+            default -> {
+                Boolean stats = moved.getLastKnownToughness() == null ? null
+                        : TriggerCollectionService.matchesDyingStats(predicate, moved.getLastKnownPower() != null
+                        ? moved.getLastKnownPower() : moved.getEffectivePower(), moved.getLastKnownToughness());
+                yield stats != null ? stats : predicates.matchesPermanentPredicate(moved, predicate, context);
+            }
+        };
     }
 
     /**

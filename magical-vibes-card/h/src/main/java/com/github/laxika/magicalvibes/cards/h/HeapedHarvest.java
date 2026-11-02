@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -20,7 +19,7 @@ public class HeapedHarvest extends Card {
 
     public HeapedHarvest() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), searchForBasicLand());
-        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), new SacrificeOnlyEffect(searchForBasicLand()));
+        addTrigger(Triggers.sacrificed(ObjectRelation.THIS), searchForBasicLand());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

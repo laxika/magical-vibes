@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,8 +40,9 @@ public class JaxisTheTroublemaker extends Card {
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForAlternateCost(), new DrawCardEffect()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new DrawCardEffect());
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,10 +26,8 @@ public class GunnerConscript extends Card {
         Scaled onePerAttachment = new Scaled(new AttachmentsOnSource(true, true), 1);
         addStaticEffect(new BoostSelfEffect(onePerAttachment, onePerAttachment));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentIsEnchantedPredicate(), junkToken()));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(
-                new PermanentIsEquippedPredicate(), junkToken()));
+        addTrigger(Triggers.dies(new PermanentIsEnchantedPredicate(), ObjectRelation.THIS), junkToken());
+        addTrigger(Triggers.dies(new PermanentIsEquippedPredicate(), ObjectRelation.THIS), junkToken());
     }
 
     private static CreateTokenEffect junkToken() {

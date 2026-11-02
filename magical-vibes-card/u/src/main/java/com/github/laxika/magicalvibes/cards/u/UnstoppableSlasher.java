@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSK", collectorNumber = "119")
@@ -24,17 +24,8 @@ public class UnstoppableSlasher extends Card {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()), LoseLifeRecipient.TARGET_PLAYER));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new NotCondition(new SourceCounterThreshold(1, CounterType.ANY)),
-                ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                        .filter(new CardIsSelfPredicate())
-                        .source(GraveyardSearchScope.ALL_GRAVEYARDS)
-                        .returnAll(true)
-                        .underOwnersControl(true)
-                        .enterTapped(true)
-                        .enterWithCounter(CounterType.STUN)
-                        .enterWithCounterCount(2)
-                        .build()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCounterThreshold(1, CounterType.ANY))),
+                ReturnCardFromGraveyardEffect.builder() .destination(GraveyardChoiceDestination.BATTLEFIELD) .filter(new CardIsSelfPredicate()) .source(GraveyardSearchScope.ALL_GRAVEYARDS) .returnAll(true) .underOwnersControl(true) .enterTapped(true) .enterWithCounter(CounterType.STUN) .enterWithCounterCount(2) .build());
     }
 }

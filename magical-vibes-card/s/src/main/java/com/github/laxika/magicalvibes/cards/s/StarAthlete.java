@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerMaySacrificeOrDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSC", collectorNumber = "29")
@@ -26,7 +27,8 @@ public class StarAthlete extends Card {
                         new TargetPermanentControllerMaySacrificeOrDamageEffect(5));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new CastForAlternateCost(), new DrawCardEffect(1)));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
+                new DrawCardEffect(1));
     }
 }

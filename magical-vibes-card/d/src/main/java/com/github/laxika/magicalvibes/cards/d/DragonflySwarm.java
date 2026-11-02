@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -17,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,8 +32,8 @@ public class DragonflySwarm extends Card {
         )), CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(noncreatureNonlandCards, new Fixed(3)));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON)),
-                new DrawCardEffect()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON))),
+                new DrawCardEffect());
     }
 }

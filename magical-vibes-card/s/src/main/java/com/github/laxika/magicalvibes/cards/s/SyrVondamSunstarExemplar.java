@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfExiledFromBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +33,9 @@ public class SyrVondamSunstarExemplar extends Card {
         ConditionalEffect destroyIfPowerAtLeast = new ConditionalEffect(
                 new SourcePowerAtLeast(4), new DestroyTargetPermanentEffect());
         target(TargetFilters.nonlandPermanent(), 0, 1)
-                .addTrigger(Triggers.dies(ObjectRelation.THIS), destroyIfPowerAtLeast)
+                .addTrigger(Triggers.dies(new PermanentPowerAtLeastPredicate(4), ObjectRelation.THIS),
+                        new DestroyTargetPermanentEffect())
+                .bindEffect(destroyIfPowerAtLeast)
                 .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new SelfExiledFromBattlefieldEffect(destroyIfPowerAtLeast));
     }

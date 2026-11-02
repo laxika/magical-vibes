@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +28,7 @@ public class WeatherseedTotem extends Card {
                         5, 3, List.of(CardSubtype.TREEFOLK), Set.of(Keyword.TRAMPLE), CardColor.GREEN)),
                 "{2}{G}{G}{G}: This artifact becomes a 5/3 green Treefolk artifact creature with trample until end of turn."
         ));
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new SourceIsCreature(), new ReturnSourceCardFromGraveyardToOwnerHandEffect()));
+        addTrigger(Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS),
+                new ReturnSourceCardFromGraveyardToOwnerHandEffect());
     }
 }

@@ -71,8 +71,11 @@ public enum ObjectRelation {
         return this == YOU_CONTROL || this == ANOTHER_YOU_CONTROL || this == THIS_OR_ANOTHER_YOU_CONTROL;
     }
 
-    /** Whether the source itself is always the object, whatever the trigger's filter says: "this or another". */
+    /**
+     * Whether the source itself is always the object, whatever the trigger's filter says: "this or another". A
+     * {@link #THIS} trigger's filter is about the source: "when this creature dies, if it was a creature".
+     */
     public boolean thisAlwaysMatches() {
-        return this == THIS || this == THIS_OR_ANOTHER_YOU_CONTROL || this == THIS_OR_ANOTHER;
+        return this == THIS_OR_ANOTHER_YOU_CONTROL || this == THIS_OR_ANOTHER;
     }
 }

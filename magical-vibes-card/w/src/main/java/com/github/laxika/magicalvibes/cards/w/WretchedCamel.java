@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -30,11 +31,8 @@ public class WretchedCamel extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new AnyOf(List.of(
-                        new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
-                        new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
-                )),
-                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)));
+        )).addTrigger(Triggers.dies(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new AnyOf(List.of(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)), new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))))),
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
     }
 }

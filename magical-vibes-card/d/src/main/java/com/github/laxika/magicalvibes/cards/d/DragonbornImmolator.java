@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterOneShotCreatureSpellPerpetualPowerBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class DragonbornImmolator extends Card {
                 "{2}{R}: This creature gets +1/+0 until end of turn."
         ));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new ConditionalEffect(new SourcePowerAtLeast(1),
-                        new RegisterOneShotCreatureSpellPerpetualPowerBoostEffect()));
+                TriggerOptions.DEFAULT.withInterveningIf(new SourcePowerAtLeast(1)),
+                new RegisterOneShotCreatureSpellPerpetualPowerBoostEffect());
     }
 }

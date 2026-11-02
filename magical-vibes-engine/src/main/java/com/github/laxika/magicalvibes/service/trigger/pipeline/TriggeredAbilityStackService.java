@@ -51,9 +51,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>effects that make abilities trigger an additional time (Teysa Karlov's, Panharmonicon-like ones) add
  *       copies.</li>
  * </ul>
- * An ability of one effect, which every card's ability of the moved families is until step 14 of
- * effect-slot-refactor.md, has its trigger-only wrappers read by {@link LegacyTriggerOptions} and goes on the
- * stack through {@link LegacyTriggerBindings}, with the event data its effect needs bound in. An ability of several
+ * An ability of one effect goes on the stack through {@link LegacyTriggerBindings}, with the event data its effect
+ * needs bound in. Its options are the only trigger-level properties read: the source's own zone-change abilities
+ * carry no trigger-only wrapper effects (step 14 of effect-slot-refactor.md). An ability of several
  * effects is one stack object (CR 603.3), with a "when this dies" ability's effects bound to the card that died: if it
  * targets, it waits for its targets as a
  * {@link PermanentChoiceContext.DeathTriggerTarget}, chosen through {@code TriggerTargetCollector} as it goes on
@@ -74,7 +74,6 @@ public class TriggeredAbilityStackService {
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
-    private final LegacyTriggerOptions legacyTriggerOptions;
     private final LegacyTriggerBindings legacyTriggerBindings;
 
     public TriggeredAbilityStackService(@Lazy ConditionEvaluationService conditionEvaluationService,
@@ -82,14 +81,12 @@ public class TriggeredAbilityStackService {
                                         @Lazy GraveyardTargetingSupport graveyardTargetingSupport,
                                         @Lazy GameLogService gameLogService,
                                         @Lazy TriggerCollectionService triggerCollectionService,
-                                        LegacyTriggerOptions legacyTriggerOptions,
                                         LegacyTriggerBindings legacyTriggerBindings) {
         this.triggerCollectionService = triggerCollectionService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.gameQueryService = gameQueryService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
         this.gameLogService = gameLogService;
-        this.legacyTriggerOptions = legacyTriggerOptions;
         this.legacyTriggerBindings = legacyTriggerBindings;
     }
 
@@ -121,7 +118,7 @@ public class TriggeredAbilityStackService {
         boolean triggered;
         if (registrations.size() == 1) {
             triggered = triggerBound(gameData, candidate, event, kind, registrations.getFirst().effect(),
-                    interveningIf);
+                    interveningIf, options.limit());
         } else {
             triggered = triggerAll(gameData, candidate, event, kind, registrations, interveningIf, options);
         }
@@ -211,32 +208,22 @@ public class TriggeredAbilityStackService {
     }
 
     /**
-     * An ability of one effect, as the old slot collectors put it on the stack: its wrappers taken off, its event
-     * data bound and its targets or mode chosen by {@link LegacyTriggerBindings}.
+     * An ability of one effect, as the old slot collectors put it on the stack: its event data bound and its targets
+     * or mode chosen by {@link LegacyTriggerBindings}.
      */
     private boolean triggerBound(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
-                                 LegacyTriggerBindings.Kind kind, CardEffect authored, Condition interveningIf) {
-        LegacyTriggerOptions.Resolved resolved = legacyTriggerOptions.resolve(gameData, kind, event, candidate,
-                authored);
-        if (resolved == null) {
-            return false;
-        }
-        CardEffect effect = interveningIf == null ? resolved.effect()
-                : new ConditionalEffect(interveningIf, resolved.effect(), true);
+                                 LegacyTriggerBindings.Kind kind, CardEffect authored, Condition interveningIf,
+                                 TriggerLimit limit) {
+        CardEffect effect = interveningIf == null ? authored : new ConditionalEffect(interveningIf, authored, true);
         // "This ability triggers only once each turn" can't be made to trigger an additional time (Clara Oswald).
-        int copies = LegacyTriggerOptions.triggersOnlyOnceEachTurn(authored) ? 1
+        int copies = limit == TriggerLimit.ONCE_EACH_TURN ? 1
                 : 1 + additionalTriggers(gameData, candidate, event, kind);
         int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
-        boolean triggered;
         try {
-            triggered = legacyTriggerBindings.trigger(gameData, candidate, event, kind, effect);
+            return legacyTriggerBindings.trigger(gameData, candidate, event, kind, effect);
         } finally {
             gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
-        if (triggered) {
-            legacyTriggerOptions.markLimit(gameData, candidate, resolved);
-        }
-        return triggered;
     }
 
     /** An ability of several effects: one stack object (CR 603.3), with targets chosen as it goes on the stack. */

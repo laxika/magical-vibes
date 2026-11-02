@@ -222,6 +222,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -4223,8 +4224,8 @@ public class SpellCastingService {
             // (applied by the stack entry as the permanent enters), never from enters triggers.
             if (!printedBlitzCast) {
                 preparedCard = preparedCard.createRuntimeCopy();
-                preparedCard.addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                        new CastForAlternateCost(), new DrawCardEffect(1)));
+                preparedCard.addTrigger(Triggers.dies(ObjectRelation.THIS),
+                        TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()), new DrawCardEffect(1));
                 hand.set(cardIndex, preparedCard);
             }
         }

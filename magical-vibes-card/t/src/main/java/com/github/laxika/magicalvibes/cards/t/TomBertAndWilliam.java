@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -38,15 +36,7 @@ public class TomBertAndWilliam extends Card {
                         + "then discard a card."
         ));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new ConditionalEffect(
-                new SourceIsCreature(),
-                ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                        .filter(new CardIsSelfPredicate())
-                        .returnAll(true)
-                        .battlefieldEffectGrants(List.of(
-                                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET)))
-                        .build()
-        ));
+        addTrigger(Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS),
+                ReturnCardFromGraveyardEffect.builder() .destination(GraveyardChoiceDestination.BATTLEFIELD) .filter(new CardIsSelfPredicate()) .returnAll(true) .battlefieldEffectGrants(List.of(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET))) .build());
     }
 }

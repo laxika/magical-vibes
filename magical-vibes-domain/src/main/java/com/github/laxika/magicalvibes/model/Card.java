@@ -1828,6 +1828,15 @@ public class Card {
     }
 
     /**
+     * Adds a triggered ability with one trigger condition, which functions from {@code trigger}'s default zones, and
+     * {@code options}: "when this creature dies, if you have no cards in hand, …" is
+     * {@code TriggerOptions.DEFAULT.withInterveningIf(…)} (CR 603.4).
+     */
+    public void addTrigger(Trigger trigger, TriggerOptions options, CardEffect... effects) {
+        addTrigger(new TriggerCondition(trigger), options, effects);
+    }
+
+    /**
      * Adds a triggered ability like {@link #addTrigger(Trigger, CardEffect...)} whose registrations carry
      * {@code triggerMode}. A "when this enters" ability marked {@link TriggerMode#INDEPENDENT} goes on the stack as an
      * object of its own with its own targets; the card's other plain "when this enters" abilities share one, as the

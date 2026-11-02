@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,8 +16,7 @@ public class GuanYuSaintedWarrior extends Card {
         // Horsemanship is auto-loaded from Scryfall (evasion handled by the combat engine).
         // "When Guan Yu is put into your graveyard from the battlefield, you may shuffle Guan Yu
         // into your library."
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new TriggeringPermanentConditionalEffect(new PermanentOwnedBySourceControllerPredicate(), new MayEffect(
-                new ShuffleSelfFromGraveyardIntoLibraryEffect(),
-                "Shuffle Guan Yu into your library?")));
+        addTrigger(Triggers.dies(new PermanentOwnedBySourceControllerPredicate(), ObjectRelation.THIS),
+                new MayEffect(new ShuffleSelfFromGraveyardIntoLibraryEffect(), "Shuffle Guan Yu into your library?"));
     }
 }
